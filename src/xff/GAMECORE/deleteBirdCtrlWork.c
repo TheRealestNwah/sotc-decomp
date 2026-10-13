@@ -1,0 +1,4 @@
+void deleteBirdCtrlWork(void)
+{
+
+}

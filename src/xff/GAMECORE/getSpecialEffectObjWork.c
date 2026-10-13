@@ -1,0 +1,4 @@
+int getSpecialEffectObjWork(void *arg0)
+{
+    return (*(int *)((char *)(arg0) + 0x30));
+}
