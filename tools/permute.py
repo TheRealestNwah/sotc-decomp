@@ -34,6 +34,7 @@ import re
 import shutil
 import subprocess
 import sys
+from base64 import b64encode
 from pathlib import Path
 
 from elftools.elf.elffile import ELFFile
@@ -182,6 +183,52 @@ def normalize_objdump(text: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+C_TOKEN_RE = re.compile(
+    r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\''
+    r"|\b(?:__asm__|__asm|asm)\b|[()]",
+    re.S,
+)
+
+
+def protect_inline_asm(source: str) -> str:
+    """Keep inline asm verbatim through the permuter's C parser.
+
+    This is the literal-code pragma produced by PERM_IGNORE. Encoding after
+    preprocessing also handles asm hidden in macros and GCC's multiline strings.
+    Parentheses in strings and comments are not operand delimiters.
+    """
+    replacements = []
+    start = None
+    depth = 0
+    for token in C_TOKEN_RE.finditer(source):
+        text = token.group()
+        if text.startswith(('"', "'", "//", "/*")):
+            continue
+        if start is None:
+            if text in {"__asm__", "__asm", "asm"}:
+                start = token.start()
+            continue
+        if text == "(":
+            depth += 1
+        elif text == ")":
+            depth -= 1
+            if depth == 0:
+                suffix = re.match(
+                    r"\s*(?:(?:/\*.*?\*/|//[^\n]*\n)\s*)*;", source[token.end() :], re.S
+                )
+                if suffix is None:
+                    raise ValueError("inline asm is missing its terminating semicolon")
+                end = token.end() + suffix.end()
+                encoded = b64encode(source[start:end].encode("utf-8")).decode("ascii")
+                replacements.append((start, end, f"\n#pragma _permuter b64literal {encoded}\n"))
+                start = None
+    if start is not None:
+        raise ValueError("unterminated inline asm")
+    for start, end, literal in reversed(replacements):
+        source = source[:start] + literal + source[end:]
+    return source
+
+
 def objdump(obj: str) -> int:
     out = subprocess.run(
         [f"{CROSS}objdump", "-drz", "-m", "mips:5900", obj],
@@ -211,11 +258,12 @@ def run(directory: Path, extra: list[str]) -> int:
             f'"$ld" --library-path {I386_LIBS} "$0" -P -nostdinc -DPERMUTER "$work/in.c"; '
             'status=$?; rm -rf "$work"; exit $status'
         )
-        return subprocess.check_output(
+        source = subprocess.check_output(
             ["wsl", "-e", "bash", "-c", script, wsl_path(cpp0), wsl_path(Path(filename))],
             text=True,
             encoding="utf-8",
         )
+        return protect_inline_asm(source)
 
     permuter_main.preprocess = preprocess
     sys.argv = ["permuter.py", str(directory), *extra]
