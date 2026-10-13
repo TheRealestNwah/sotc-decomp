@@ -10,6 +10,8 @@ The aim is C source that compiles back to a byte-identical copy of the original 
 - The game code lives in the `.XFF` modules (custom `xff2` format, see [docs/xff2.md](docs/xff2.md)).
   - All three (`KERNEL`, `MANAGER`, `GAMECORE`) split into assembly that reassembles with every section and relocation matching the originals. That's about 70,000 relocations.
   - The modules keep their original symbol names.
+- **Compiler identified:** Sony `ee-gcc` 2.96, `-O2 -G0`.
+- **Decompilation has started:** C in `src/xff/` is compiled and spliced into the modules, and the build still matches. The first 5 GAMECORE functions are in C.
 - Nothing is decompiled to C yet.
 
 See [docs/findings.md](docs/findings.md) for what's known about the binaries, the compiler and the linked Sony SDK libraries.
