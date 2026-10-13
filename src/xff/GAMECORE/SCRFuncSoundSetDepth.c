@@ -1,0 +1,4 @@
+void SCRFuncSoundSetDepth(void)
+{
+
+}

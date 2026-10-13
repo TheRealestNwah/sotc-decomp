@@ -1,0 +1,4 @@
+void deleteSavePoint(void)
+{
+
+}

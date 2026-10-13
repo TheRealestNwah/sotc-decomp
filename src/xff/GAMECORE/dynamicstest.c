@@ -1,0 +1,4 @@
+void dynamicstest(void)
+{
+
+}

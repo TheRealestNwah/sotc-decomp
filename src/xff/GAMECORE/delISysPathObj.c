@@ -1,0 +1,4 @@
+void delISysPathObj(void)
+{
+
+}
