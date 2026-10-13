@@ -342,19 +342,17 @@ static void func_000C1998(int boss)
 "                             "sqc2 vf05, 0x0(%0)
 "                                  :                                                       : "r"(dst), "r"(src)                                    : "memory")
 
-#ifdef NONMATCHING
-/* Close: only float register allocation differs (the original keeps one 0.0f for
-   both clamps and copies `ambient` to $f13 first). */
 static inline float ratio01(float x, float lo, float hi)
 {
     float r = (x - lo) / (hi - lo);
-    if (r < 0.0f) {
-        return 0.0f;
-    }
-    if (r > 1.0f) {
-        return 1.0f;
-    }
-    return r;
+    return CLAMP01(r);
+}
+
+/* Updating the input before clamping preserves the original register reuse. */
+static inline float ratio01InPlace(float *x, float lo, float hi)
+{
+    *x = (*x - lo) / (hi - lo);
+    return CLAMP01(*x);
 }
 
 static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
@@ -364,13 +362,16 @@ static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
     sceVu0FVECTOR zero;
     sceVu0FVECTOR identity;
     float ambientRatio;
+    float scale;
 
     if (bossStatGetActiveBoss()) {
         VU0_NORMALIZE(dir, m->dir);
         GetQuaternionByAxisDirZY(rot, dir, D_0017B090);
+        scale = ambient;
         ambientRatio = ratio01(ambient, minAmbientWeak, maxAmbientWeak);
-        ambient = ratio01(ambient, minAmbientLineWeak, maxAmbientLineWeak);
-        func_000C0EB0((power - D_0017B128) / (D_0017B12C - D_0017B128), ambient);
+        ambient = ratio01InPlace(&ambient, minAmbientLineWeak, maxAmbientLineWeak);
+        /* Sounds use raw brightness; the emitters use the clamped ratios. */
+        func_000C0EB0((power - D_0017B128) / (D_0017B12C - D_0017B128), scale);
         func_000C1440(rot, m->pos, 1, power * maxLineAngleWeak, ambientRatio, ambient);
     } else {
         memset(zero, 0, sizeof(zero));
@@ -380,7 +381,6 @@ static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
         func_000C1440(identity, zero, 1, 0.0f, 0.0f, 0.0f);
     }
 }
-#endif
 
 /* A glow reaction on something the sword hits. */
 typedef struct {
