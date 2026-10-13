@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,378 functions** come from matching C: 792 GAMECORE, 480 MANAGER and 106 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,432 functions** come from matching C: 792 GAMECORE, 480 MANAGER and 160 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -16,7 +16,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Issue #76 recovers another 129 GAMECORE routines using opaque pointer types and external calls whose results are discarded. All 129 passed original code, data and relocation validation and the full build. The retry checked 635 candidates: 129 matched, 201 differed and 305 remained unresolved. Local evidence is under `build/auto40-prototypes/GAMECORE/`.
 - The Windows splice command exceeded the process command-line limit at 740 GAMECORE objects containing 792 matching functions. Issue #78 / PR #79 fixes it with Ninja JSON response files; positional object arguments still work. Tests now total 89. Do not revert this fix when updating older parked branches.
 - Issue #81 adds 190 MANAGER routines from 543 previously unusable drafts (190 matched, 149 differed and 204 remained unresolved). There are 186 new files; four case-distinct pointer getters share their existing value-getter files to avoid Windows filename collisions. Local evidence is under `build/auto40-prototypes/MANAGER/`; the final complete build log is `build/manager-prototypes-final-check.log`.
-- In progress: issue #83 on `kernel-small-prototypes` retries 339 previously unusable small KERNEL drafts with the same recovery rules and SDK exclusions. No new KERNEL candidates are counted yet. Local log: `build/kernel40-prototypes-run.log`; outputs: `build/auto40-prototypes/KERNEL/`. Copy the completed log there as `run.log`, then run `build/cand/validate_kernel_prototypes.py` before retaining matches.
+- Issue #83 adds 54 KERNEL routines from 339 previously unusable drafts (54 matched, 166 differed and 119 remained unresolved), retaining prior SDK/stdlib exclusions. All 54 passed original code, data and relocation validation and the full build. Local evidence is under `build/auto40-prototypes/KERNEL/`.
 - Every remaining sword.c function has a near-match parked behind `NONMATCHING` in a draft PR:
 
 | Function | Draft PR | Status |
