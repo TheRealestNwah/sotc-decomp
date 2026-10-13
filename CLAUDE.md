@@ -13,7 +13,7 @@ Current phase:
 - The three game modules (`KERNEL.XFF`, `MANAGER.XFF`, `GAMECORE.XFF`, format in `docs/xff2.md`) split into assembly that reassembles to objects whose sections and relocations match the originals exactly.
 - `ninja check` covers all of it.
 - Not done yet: rebuilding the XFF files themselves byte-for-byte. That needs the original symbol table order (see `docs/xff2.md`).
-- The compiler is identified (see Matching rules). The C build isn't set up yet.
+- The compiler is identified (see Matching rules), and the C build works: `src/xff/<MODULE>/*.c` is compiled and spliced into the module (see "Decompiling a function").
 
 ## Matching rules
 
@@ -51,6 +51,24 @@ The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
 - `check` compares the flattened code and data images (every loaded byte). It doesn't compare ELF headers.
 - `python tools/check_baserom.py` checks that `iso/SCUS_974.72` is the expected dump (SHA1 in `config/baserom.json`).
 
+## Decompiling a function (XFF modules)
+
+1. Find the function in `asm/xff/<MODULE>/text.s` (`glabel <name>`). Small functions, and functions grouped with known ones by `tools/xff_tus.py`, are good starting points.
+2. Write it in `src/xff/<MODULE>/<name>.c`. One file per function for now; files will be regrouped by original source file later. Use struct layouts with explicit padding until real headers exist.
+3. Iterate with `python tools/try_compilers.py src/xff/<MODULE>/<name>.c --module <MODULE> --only ee-gcc2.96 --flags "-O2 -G0"` until it says MATCH.
+4. Run `python configure.py` (picks up new C files), then `ninja check`.
+
+How it builds:
+- `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` (in WSL).
+- `tools/xff_splice.py` writes `build/xff/<MODULE>/spliced/`, which is the module's asm with each C function replaced by the compiled words. Relocated words become explicit `.reloc` directives.
+- The module is assembled from that copy and checked as usual.
+
+The splice step refuses any C function that doesn't match the original exactly, so a wrong function fails the build instead of slipping in.
+
+Splice limitations:
+- C that needs its own data isn't supported yet. That covers string literals, `switch` jump tables, and data in `.rodata`/`.data`.
+- Whether a reference is section-relative (same original file) or by name is taken from the original relocation at that spot, until the C files mirror the original file layout.
+
 ## Tests and lint
 
 - `pytest` covers the Python tools in `tools/` and `configure.py`'s helpers
@@ -67,10 +85,14 @@ The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
   - `xff2.py`: XFF reader/writer and XFF <-> ELF converter (`info`, `to-elf`, `from-elf`, `roundtrip`)
   - `xff_split.py`: disassembles an XFF with spimdisasm, then post-processes the asm so it reassembles exactly (rules in its docstring)
   - `xff_tus.py`: infers the original source-file boundaries from relocations (`--list` prints every group); results summarized in `docs/findings.md`
+  - `ee_cc.py`: compiles one C file with the game's toolchain
+  - `xff_splice.py`: splices compiled C functions into a module's asm, verifying they match
+  - `try_compilers.py`: compiles C with candidate compilers/flags and diffs against the original functions
 - `asm/xff/<MODULE>/`: generated XFF assembly (gitignored like all asm)
 - `include/xff_macro.inc`: label macros for XFF asm. Labels are local by default; `.globl` comes from the original symbol table.
 - `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
-- `src/`: decompiled C (empty for now). Mirror the asm path: `asm/<segment>/x.s` becomes `src/<segment>/x.c`.
+- `src/xff/<MODULE>/`: decompiled C for the XFF modules, one file per function for now
+- `experiments/`: C used to identify the compiler (not part of the build)
 - `docs/findings.md`: what we know about the binaries, the compiler and the SDK
 - `config/baserom.json`: expected original executable path and SHA1
 
