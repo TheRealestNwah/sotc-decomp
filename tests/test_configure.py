@@ -26,10 +26,11 @@ def test_generate_wires_every_source_into_the_link():
 
 
 def test_generate_adds_xff_module_checks():
-    ninja = generate("mips64r5900el-ps2-elf-", [], ["KERNEL"])
-    assert "build build/xff/KERNEL.o: xff2elf iso/KERNEL.XFF" in ninja
-    assert "build check-KERNEL: xffcheck build/xff/KERNEL.o build/xff/KERNEL/KERNEL.o" in ninja
-    assert "build check: phony check-elf check-KERNEL" in ninja
-    assert "  asflags = $asflags -I asm/xff/KERNEL" in ninja
+    # A module without decompiled C (none in src/xff/TESTMOD) assembles its split directly.
+    ninja = generate("mips64r5900el-ps2-elf-", [], ["TESTMOD"])
+    assert "build build/xff/TESTMOD.o: xff2elf iso/TESTMOD.XFF" in ninja
+    assert "build check-TESTMOD: xffcheck build/xff/TESTMOD.o build/xff/TESTMOD/TESTMOD.o" in ninja
+    assert "build check: phony check-elf check-TESTMOD" in ninja
+    assert "  asflags = $asflags -I asm/xff/TESTMOD" in ninja
     assert "cross = mips64r5900el-ps2-elf-" in ninja
     assert "ld -m elf32lr5900 " in ninja
