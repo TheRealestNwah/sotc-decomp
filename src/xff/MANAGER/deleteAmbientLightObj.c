@@ -1,0 +1,4 @@
+void deleteAmbientLightObj(void)
+{
+
+}

@@ -1,0 +1,4 @@
+void CancelRequestCollisionWideAreaSearch(void)
+{
+
+}

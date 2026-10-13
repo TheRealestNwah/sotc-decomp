@@ -1,0 +1,4 @@
+void createBinaryMemoryInfoWindow(void)
+{
+
+}

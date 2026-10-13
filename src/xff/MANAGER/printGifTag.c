@@ -1,0 +1,4 @@
+void printGifTag(void)
+{
+
+}

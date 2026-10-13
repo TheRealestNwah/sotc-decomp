@@ -1,0 +1,4 @@
+void iosInitDebPc(void)
+{
+
+}

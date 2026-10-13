@@ -1,0 +1,4 @@
+void DeleteModifiedManager(void)
+{
+
+}

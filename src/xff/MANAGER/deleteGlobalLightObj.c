@@ -1,0 +1,4 @@
+void deleteGlobalLightObj(void)
+{
+
+}

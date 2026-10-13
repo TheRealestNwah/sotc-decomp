@@ -1,0 +1,4 @@
+void iosInitMessageSystem(void)
+{
+
+}
