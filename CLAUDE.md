@@ -54,7 +54,7 @@ The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
 ## Decompiling a function (XFF modules)
 
 1. Find the function in `asm/xff/<MODULE>/text.s` (`glabel <name>`). Small functions, and functions grouped with known ones by `tools/xff_tus.py`, are good starting points.
-2. Write it in `src/xff/<MODULE>/<name>.c`. One file per function for now; files will be regrouped by original source file later. Use struct layouts with explicit padding until real headers exist.
+2. Write it in `src/xff/<MODULE>/<name>.c`. One file per function for now (plus any unnamed static helpers it calls); files will be regrouped by original source file later. Use struct layouts with explicit padding until real headers exist.
 3. Iterate with `python tools/try_compilers.py src/xff/<MODULE>/<name>.c --module <MODULE> --only ee-gcc2.96 --flags "-O2 -G0"` until it says MATCH.
 4. Run `python configure.py` (picks up new C files), then `ninja check`.
 
@@ -65,8 +65,12 @@ How it builds:
 
 The splice step refuses any C function that doesn't match the original exactly, so a wrong function fails the build instead of slipping in.
 
+C data (string literals, `switch` jump tables, constants and statics in `.rodata`/`.data`/`.bss`):
+- Each C data section is placed where the original references it (the original relocation paired with each C reference, or an original symbol of the same name). All anchors must agree, so a C file's data has to be laid out like the original's.
+- Its bytes and relocations must match there; the matching lines in `rodata.s`/`data.s` are regenerated from the C output.
+- A `static` function the original has no name for (spimdisasm's `func_XXXXXXXX`) can go in the same C file as a caller; it's placed by the caller's reference.
+
 Splice limitations:
-- C that needs its own data isn't supported yet. That covers string literals, `switch` jump tables, and data in `.rodata`/`.data`.
 - Whether a reference is section-relative (same original file) or by name is taken from the original relocation at that spot, until the C files mirror the original file layout.
 
 ## Tests and lint

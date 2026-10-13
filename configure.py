@@ -181,7 +181,8 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
             extra = " ".join(f"{spliced}/{name}" for name in asm_files if name != f"{m}.s")
             inputs = " ".join(c_objects)
             lines += [
-                f"build {spliced}/{m}.s | {extra}: splice {inputs} | {original} {deps}",
+                f"build {spliced}/{m}.s | {extra}: splice {inputs}"
+                f" | {original} tools/xff_splice.py {deps}",
                 f"  module = {m}",
                 f"  outdir = {spliced}",
             ]
