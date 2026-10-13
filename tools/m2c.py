@@ -49,7 +49,20 @@ def extract(lines: list[str], name: str, through: str | None) -> list[str]:
             body = lines[first : i + 1]
             # One function for m2c: drop the split's inner function boundaries.
             inner = re.compile(r"\s*(glabel|dlabel|end\w*label|nonmatching)\b")
-            return [body[0]] + [x for x in body[1:-1] if not inner.match(x)] + [body[-1]]
+            body = [body[0]] + [x for x in body[1:-1] if not inner.match(x)] + [body[-1]]
+            # m2c interprets a plain func_XXXXXXXX label as another function.
+            # Split tails and their references must stay local to this draft.
+            aliases = {
+                x.strip()[:-1]
+                for x in body
+                if x.startswith(".Lxff.") and x.endswith(":") and x != f".Lxff.{name}:"
+            }
+            for alias in aliases:
+                body = [
+                    re.sub(re.escape(alias) + r"(?![\w.])", alias.replace(".Lxff.", ".Lm2c."), x)
+                    for x in body
+                ]
+            return body
     raise SystemExit(f"{last_label}: no endlabel after {name}")
 
 
@@ -118,7 +131,8 @@ def disassemble_words(lines: list[str], section_bases: dict[str, int] | None = N
             out.append(line)
             continue
         m = DATA_WORD_RE.match(line)
-        if not m or RAW_WORD_RE.match(line):
+        comment = RAW_WORD_RE.match(line)
+        if not m or (comment and not comment.group(2).lstrip().startswith(".word")):
             out.append(line)
             reloc = None
             continue
