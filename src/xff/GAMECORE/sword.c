@@ -82,11 +82,34 @@ extern int bossStatBootChk(void);
 extern int SeList_sword_boss_test;
 extern int SeList_sword_weak_test;
 extern sceVu0FVECTOR B_0019CE70; /* in sword.c's .bss */
+extern sceVu0FVECTOR B_0019CEB0;
+extern sceVu0FVECTOR B_0019CEC0;
+extern void T_000C2620();
+extern int SParticleSheetData_S_GLOW_CLEAR;
+extern void GetCollisionDBGroupCallBack(void *group, void (*func)(), void *query);
+extern void SetGeometryPointerGlobalState(void *geom, sceVu0FVECTOR a, sceVu0FVECTOR b);
+extern void ConvertGeometryPointerZNormalMode(void *dst, void *src);
+extern void boot_weakpoint_effect(sceVu0FVECTOR pos, float power, float a, float b);
+
+typedef unsigned int u_long128 __attribute__((mode(TI)));
+
+/* Collision query for the sword's glow: filled in by T_000C2620. */
+typedef struct {
+    u_long128 pos;
+    float dist;
+    int hit;
+    char pad18[4];
+    float power;
+    char pad20[0x10];
+    sceVu0FVECTOR hitPos;
+    char geometry[0x90];
+} SwordGlowQuery;
 
 typedef struct {
     char pad0[0x178];
     float time;
-    char pad17C[0x2B0 - 0x17C];
+    char pad17C[0x258 - 0x17C];
+    char colGroup[0x2B0 - 0x258];
     char playerList[1];
 } GcGlobalVar;
 
@@ -151,7 +174,10 @@ static int swordEmitterCount = 0;
 static float swordGlowDistMin = 3.0f;
 static float swordGlowDistMax = 5.0f;
 static int D_0017B1BC = 0;
-static int D_0017B1C0[2] = { 0, 0 };
+static struct {
+    int id;
+    char *emitter;
+} glowClearEmitter = { 0, 0 };
 static float collisionGlowSpeed = 1.0f;
 static float collisionGlowTime = 0.05f;
 static float collisionPosOffset = 0.1f;
@@ -182,7 +208,15 @@ void BossSprStatusEnd(void)
 #define ABS(x) ((x) < 0.0f ? -(x) : (x))
 
 /* Moves `vol` towards `target` by at most 0.1. */
-#define STEP_VOL(vol, target)                     do {                                              float d = (target) - (vol);                   if (ABS(d) > 0.1f) {                              (vol) += SIGN(d) * 0.1f;                  } else {                                          (vol) += d;                               }                                         } while (0)
+#define STEP_VOL(vol, target)        \
+    do {                             \
+        float d = (target) - (vol);  \
+        if (ABS(d) > 0.1f) {         \
+            (vol) += SIGN(d) * 0.1f; \
+        } else {                     \
+            (vol) += d;              \
+        }                            \
+    } while (0)
 
 /* Starts the sword's sounds at `pos`, silent; bossSe/weakSe 0 stops that one. */
 static void func_000C0D48(int bossSe, int weakSe, void *pos)
@@ -430,8 +464,68 @@ static void func_000C2D20(SwordReaction *r)
 }
 #endif
 
+/* Glow strength for a hit at `dist`: 1 at the minimum distance, 0 at the maximum. */
+#define GLOW_POWER(power, dist, scale)                                                 \
+    do {                                                                               \
+        float r;                                                                       \
+        float sc = (scale);                                                            \
+        (power) = ((dist) - swordGlowDistMin) / (swordGlowDistMax - swordGlowDistMin); \
+        r = CLAMP01(power);                                                            \
+        (power) = (1.0f - r) * sc;                                                     \
+    } while (0)
+#define UPDATE_GLOW_CLEAR(power)                                                            \
+    do {                                                                                    \
+        if (glowClearEmitter.id != 0) {                                                     \
+            SetGeometryPointerGlobalState(glowClearEmitter.emitter + 0xD0, B_0019CEB0,      \
+                                          B_0019CEC0);                                      \
+            set_npe_blend_ratio_particle_emitter(1.0f - (power),                            \
+                                                 SParticleSheetData_S_GLOW_CLEAR,           \
+                                                 glowClearEmitter.id);                      \
+        }                                                                                   \
+    } while (0)
+
+#ifdef NONMATCHING
+/* Scheduling differs around the clamp. */
+/* Lights the weak point the sword points at, and fades the glow-clear emitter. */
+static void func_000C29B0(u_long128 *pos)
+{
+    SwordGlowQuery q;
+    SwordGlowQuery init;
+    float power;
+
+    memset(&init, 0, sizeof(init));
+    init.dist = swordGlowDistMax;
+    q = init;
+    q.pos = *pos;
+    GetCollisionDBGroupCallBack(gcGlobalVar.colGroup, T_000C2620, &q);
+    if (q.hit) {
+        GLOW_POWER(power, q.dist, q.power);
+        UPDATE_GLOW_CLEAR(power);
+        ConvertGeometryPointerZNormalMode(q.geometry, q.geometry);
+        boot_weakpoint_effect(q.hitPos, power, q.hitPos[2], q.hitPos[3]);
+    } else {
+        GLOW_POWER(power, 0.0f, 0.0f);
+        UPDATE_GLOW_CLEAR(power);
+    }
+}
+#endif
+
 /* Written out in each function: a static helper isn't inlined at -O2. */
-#define STOP_SWORD_SE()                        do {                                           if (swordSe.se[0] != 0) {                      seStop(swordSe.se[0]);                     swordSe.se[0] = 0;                     }                                          if (swordSe.se[1] != 0) {                      seStop(swordSe.se[1]);                     swordSe.se[1] = 0;                     }                                          if (swordSe.se[2] != 0) {                      seStop(swordSe.se[2]);                     swordSe.se[2] = 0;                     }                                      } while (0)
+#define STOP_SWORD_SE()            \
+    do {                           \
+        if (swordSe.se[0] != 0) {  \
+            seStop(swordSe.se[0]); \
+            swordSe.se[0] = 0;     \
+        }                          \
+        if (swordSe.se[1] != 0) {  \
+            seStop(swordSe.se[1]); \
+            swordSe.se[1] = 0;     \
+        }                          \
+        if (swordSe.se[2] != 0) {  \
+            seStop(swordSe.se[2]); \
+            swordSe.se[2] = 0;     \
+        }                          \
+    } while (0)
 
 void CancelSwordEffect(void)
 {
