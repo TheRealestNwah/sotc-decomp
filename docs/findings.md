@@ -16,6 +16,22 @@ Notes on what's on the NTSC-U disc (`SCUS-97472`) and what we know about how it 
 
 Almost all game code lives in the `.XFF` modules, a custom relocatable format with the magic `xff2`. The ELF loads them at runtime. A couple of source filenames survive inside them (`effectmanager.c` in MANAGER, `sword.c` in GAMECORE). Reversing the format is tracked separately.
 
+## Original source files in the XFF modules
+
+The original relocations show where each `.c` file started and ended (`tools/xff_tus.py`):
+- **Same-file references:** a reference made section-relative stays inside one source file. Statics always are; a global only when it's defined in the same file. Since `ld -r` keeps each file's code contiguous, every function between the two ends belongs to that file.
+- **Cross-file references:** a reference by name to a global defined in the same module crosses files.
+
+| Module | Functions | Groups | Functions in multi-function groups | Same-file refs | Cross-file refs | Conflicts |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| KERNEL | 940 | 375 | 608 | 491 | 1,017 | 31 |
+| MANAGER | 2,277 | 592 | 1,765 | 2,227 | 4,739 | 62 |
+| GAMECORE | 2,755 | 773 | 2,096 | 2,763 | 6,972 | 88 |
+
+- **Groups are lower bounds.** A real file may span several adjacent groups when nothing ties them together.
+- **Conflicts** are by-name references between functions that other evidence places in one file. They're about 1–3% of by-name references, and they persist with calls-only evidence, so they're likely real by-name references within one file. Treat the "by name means another file" rule as strong evidence, not proof.
+- **Names:** only a few strings name source files. A group of 35 GAMECORE functions references `sword.c` (path `basescript/src/sword.c`), and MANAGER has `effectmanager.c`.
+
 ## Loader ELF (`SCUS_974.72`)
 
 - ELF32, little-endian MIPS, `ET_EXEC`, `e_flags = 0x20924001` (R5900), entry `0x100010`

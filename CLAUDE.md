@@ -60,6 +60,7 @@ The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
   - `elf2rom.py`, `check.py`, `check_baserom.py`: loader ELF
   - `xff2.py`: XFF reader/writer and XFF <-> ELF converter (`info`, `to-elf`, `from-elf`, `roundtrip`)
   - `xff_split.py`: disassembles an XFF with spimdisasm, then post-processes the asm so it reassembles exactly (rules in its docstring)
+  - `xff_tus.py`: infers the original source-file boundaries from relocations (`--list` prints every group); results summarized in `docs/findings.md`
 - `asm/xff/<MODULE>/`: generated XFF assembly (gitignored like all asm)
 - `include/xff_macro.inc`: label macros for XFF asm. Labels are local by default; `.globl` comes from the original symbol table.
 - `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
