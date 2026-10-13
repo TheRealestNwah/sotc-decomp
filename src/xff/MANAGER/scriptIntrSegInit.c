@@ -1,0 +1,4 @@
+void scriptIntrSegInit(void)
+{
+
+}

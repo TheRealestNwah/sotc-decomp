@@ -1,0 +1,4 @@
+void entrymanager(void)
+{
+
+}

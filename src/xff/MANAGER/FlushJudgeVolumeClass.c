@@ -1,0 +1,4 @@
+void FlushJudgeVolumeClass(void)
+{
+
+}
