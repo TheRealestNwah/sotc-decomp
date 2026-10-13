@@ -499,6 +499,99 @@ static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
     }
 }
 
+/* Weak-point query for the boss: aims the beam at the marker and glows on a hit. */
+extern void T_000C1D80();
+extern void sprWeaponGetMarkerPos(sceVu0FVECTOR pos);
+extern float GetAmbientBrightnessOfLayoutObject(GameObj *obj);
+extern void GetCollisionDBSurfBoundary(sceVu0FVECTOR boundary, void *surface);
+extern void boot_weakpoint_hit_effect(void *target, float power);
+extern int ShockList_digi2;
+extern void shockRequest(int shock);
+
+#define VU_SUB_XYZ(dst, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0(%1)\n" \
+                         "lqc2 vf06, 0(%2)\n" \
+                         "vsub.xyz vf05, vf05, vf06\n" \
+                         "sqc2 vf05, 0(%0)\n" \
+                         : : "r"(dst), "r"(a), "r"(b) : "memory")
+
+typedef struct {
+    u_long128 pos;
+    float dist;
+    int hit;
+    char pad18[0x18];
+    sceVu0FVECTOR target;
+    char geometry[0x50];
+    int surface[2];
+    char pad98[0x18];
+    sceVu0FVECTOR dir;
+    float bestDot;
+    char padC4[0xC];
+} SwordBeamQuery;
+
+extern const SwordBeamQuery RO_00180600;
+
+static void func_000C2318(GameObj *obj, u_long128 *pos)
+{
+    SwordBeamQuery query = RO_00180600;
+    sceVu0FVECTOR marker;
+    float brightness = 100.0f;
+    float power;
+    int sheet;
+    int mainLod;
+    int subLod;
+    float *mainEffect;
+    float *subEffect;
+    float minRadians;
+
+    sprWeaponGetMarkerPos(marker);
+    query.pos = *pos;
+    if (getSelectWeapon() != 2) {
+        brightness = GetAmbientBrightnessOfLayoutObject(obj);
+    }
+    if (brightness < 0.0f) {
+        brightness = 0.0f;
+    }
+    VU_SUB_XYZ(query.dir, marker, pos);
+    power = (brightness - minAmbientLineWeak) / (maxAmbientLineWeak - minAmbientLineWeak);
+    query.dir[3] = 1.0f;
+    power = CLAMP01(power);
+    sheet = SParticleSheetData_S_LINE_BOSS;
+    mainLod = get_main_particle_effect_lod_from_sheet(sheet);
+    subLod = get_sub_particle_effect_lod_from_sheet(sheet);
+    mainEffect = (float *)get_top_particle_effect_from_lod(mainLod);
+    subEffect = (float *)get_top_particle_effect_from_lod(subLod);
+    query.dist = subEffect[0x24 / 4] * subEffect[0x3C / 4]
+        + (mainEffect[0x24 / 4] * mainEffect[0x3C / 4]
+           - subEffect[0x24 / 4] * subEffect[0x3C / 4]) * power;
+    VU0_NORMALIZE(query.dir, query.dir);
+    GetCollisionDBGroupCallBack(gcGlobalVar.colGroup, T_000C1D80, &query);
+    if (query.hit) {
+        GetCollisionDBSurfBoundary((float *)(query.geometry + 0x40), query.surface);
+        ConvertGeometryPointerZNormalMode(query.geometry, query.geometry);
+        boot_weakpoint_effect(query.target, 1.0f, query.target[2], query.target[3]);
+        boot_weakpoint_hit_effect(query.target, 1.0f);
+        {
+            int shocks[2] = { ShockList_digi2, ShockList_digi2 };
+            if (gcGlobalVar.time - (float)D_0017B140[0] > (float)D_0017B140[1]) {
+                shockRequest(shocks[0]);
+                D_0017B140[0] = (int)gcGlobalVar.time;
+            }
+        }
+    }
+    {
+        float one = 1.0f;
+        float angle = 3.1415926f;
+        float dot = query.bestDot;
+        float lo = minAngleWeak * 0.017453292f;
+        float hi = maxAngleWeak * 0.017453292f;
+
+        /* Map the best dot product to an angle, normalized to [lo, hi]. */
+        dot = one - (dot + one) * 0.5f;
+        func_000C1BA8((SwordMatrix *)&query, (angle * dot - lo) / (hi - lo), brightness);
+    }
+}
+
 /* Glow strength for a hit at `dist`: 1 at the minimum distance, 0 at the maximum. */
 #define GLOW_POWER(power, dist, scale)                                                 \
     {                                                                               \
