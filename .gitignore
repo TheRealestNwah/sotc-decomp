@@ -42,3 +42,6 @@ __pycache__/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Local overnight status notes for the maintainer
+OVERNIGHT.md
