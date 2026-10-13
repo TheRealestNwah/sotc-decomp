@@ -162,7 +162,7 @@ def test_named_c_data_is_placed_by_the_original_symbol():
 
 def test_text_reference_into_c_data_goes_through_the_local_label():
     obj = data_object(b"hi\0\0")
-    resolver = Resolver({}, [(0, 8, 0x40)], {".rodata": Place(".rodata", 0x20)})
+    resolver = Resolver({}, text=[(0, 8, 0x40)], data={".rodata": Place(".rodata", 0x20)})
     resolver.labels = {Place(".rodata", 0x20): ".Lxff.RO_str"}
     theirs = {0: Reloc(5, ".rodata", True, 0x20), 1: Reloc(6, ".rodata", True, 0x20)}
     lines, _ = generate(obj.functions[0], [LUI, ADDIU], theirs, resolver)
@@ -177,7 +177,7 @@ def test_jump_table_entries_map_to_the_original_function():
     sec = DataSection(".rodata", 4, (8).to_bytes(4, "little"), False,
                       {0: Reloc(2, ".text", True, 8)}, {})  # fmt: skip
     original = original_rodata((0x108).to_bytes(4, "little"), {0: Reloc(2, ".text", True, 0x108)})
-    resolver = Resolver({}, [(0, 0x10, 0x100)], {}, {Place(".text", 0x108): ".Lxff..L108"})
+    resolver = Resolver({}, text=[(0, 0x10, 0x100)], labels={Place(".text", 0x108): ".Lxff..L108"})
     lines, _ = generate_data("f", sec, Place(".rodata", 0), original, resolver)
     assert lines == {
         0: [
@@ -191,7 +191,7 @@ def test_jump_table_entry_to_the_wrong_case_is_an_error():
     sec = DataSection(".rodata", 4, (4).to_bytes(4, "little"), False,
                       {0: Reloc(2, ".text", True, 4)}, {})  # fmt: skip
     original = original_rodata((0x108).to_bytes(4, "little"), {0: Reloc(2, ".text", True, 0x108)})
-    resolver = Resolver({}, [(0, 0x10, 0x100)])
+    resolver = Resolver({}, text=[(0, 0x10, 0x100)])
     with pytest.raises(SpliceError, match=r"points at \.text\+0x104"):
         generate_data("f", sec, Place(".rodata", 0), original, resolver)
 
@@ -253,3 +253,52 @@ def test_unreferenced_unnamed_static_is_an_error():
     static = CompiledFunction("g", "f", [0], {}, 0, local=True)
     with pytest.raises(SpliceError, match="can't be placed"):
         place_functions(CompiledObject("f", [static], {}), {}, {})
+
+
+def test_replace_function_continues_through_a_false_split():
+    # spimdisasm ended f at a tail call and called the rest func_8.
+    lines = [
+        "glabel f",
+        "    /* 000100 00000100 00000000 */  .word 0",
+        "endlabel f",
+        "glabel func_8",
+        "    /* 000104 00000104 00000000 */  .word 0",
+        "endlabel func_8",
+        "glabel g",
+    ]
+    out = replace_function(lines, "f", 0x100, 0, [["    A"], ["    B"]], "f")
+    assert out == [
+        "glabel f",
+        "    /* 0000 from C (f.c) */",
+        "    A",
+        "endlabel f",
+        "glabel func_8",
+        "    /* 0004 from C (f.c) */",
+        "    B",
+        "endlabel func_8",
+        "glabel g",
+    ]
+
+
+def test_replace_function_stops_at_the_next_label_without_endlabel():
+    lines = [
+        "glabel f",
+        "    /* 000100 00000100 00000000 */  .word 0",
+        "  /* static variable */",
+        "alabel T_00000104",
+        "    /* 000104 00000104 00000000 */  .word 0",
+    ]
+    out = replace_function(lines, "f", 0x100, 0, [["    A"]], "f")
+    assert out[3:] == lines[2:] and out[1:3] == ["    /* 0000 from C (f.c) */", "    A"]
+
+
+def test_unnamed_original_objects_resolve_by_label_name():
+    resolver = Resolver({}, sections={".data": (0x1000, 0x100)})
+    assert resolver.place(Reloc(5, "D_00001010", False, 4)) == Place(".data", 0x14)
+    assert resolver.place(Reloc(5, "unknown", False, 0)) is None
+
+
+def test_static_named_after_its_label_is_placed_there():
+    static = CompiledFunction("func_00000140", "f", [0], {}, 0, local=True)
+    starts = place_functions(CompiledObject("f", [static], {}), {}, {}, text_base=0x40)
+    assert starts == {"func_00000140": 0x100}

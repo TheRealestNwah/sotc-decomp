@@ -49,6 +49,7 @@ from elftools.elf.elffile import ELFFile
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.xff2 import parse, to_elf  # noqa: E402
 from tools.xff_split import (  # noqa: E402
+    ADDRESS_NAME_RE,
     LINE_RE,
     RELOC_NAMES,
     SECTION_RE,
@@ -191,6 +192,7 @@ class Resolver:
     and names those places in assembly."""
 
     symbols: dict[str, Symbol]
+    sections: dict[str, tuple[int, int]] = field(default_factory=dict)  # name -> (base, size)
     text: list[tuple[int, int, int]] = field(default_factory=list)  # C start, end, original
     data: dict[str, Place] = field(default_factory=dict)  # C section -> original place
     labels: dict[Place, str] = field(default_factory=dict)  # local labels in the asm
@@ -199,9 +201,9 @@ class Resolver:
         addend = reloc.addend or 0
         if not reloc.section_relative:
             symbol = self.symbols.get(reloc.target)
-            if symbol is None or symbol.section is None:
-                return None
-            return Place(symbol.section, symbol.value + addend)
+            if symbol is not None:
+                return Place(symbol.section, symbol.value + addend) if symbol.section else None
+            return self.unnamed(reloc.target, addend)
         if reloc.target == ".text":
             for start, end, original in self.text:
                 if start <= addend < end:
@@ -209,6 +211,18 @@ class Resolver:
             return None
         base = self.data.get(reloc.target)
         return Place(base.section, base.offset + addend) if base else None
+
+    def unnamed(self, name: str, addend: int) -> Place | None:
+        """Something the original has no symbol for, named after its asm label
+        (func_000C3BA0, D_0017B0EC): C can refer to it before it's decompiled."""
+        m = ADDRESS_NAME_RE.fullmatch(name)
+        if not m:
+            return None
+        address = int(m.group(1), 16)
+        for section, (base, size) in self.sections.items():
+            if base <= address < base + size:
+                return Place(section, address - base + addend)
+        return None
 
     def relative(self, place: Place) -> str:
         """Expression for a place's offset from its section start."""
@@ -235,7 +249,7 @@ class Resolver:
             raise SpliceError(f"{describe(mine)} isn't in the original {theirs.target}")
         if theirs.addend is not None and place.offset != theirs.addend:
             raise SpliceError(f"points at {place}, original at {theirs.target}+{theirs.addend:#x}")
-        if mine.section_relative:
+        if mine.section_relative or mine.target not in self.symbols:
             value = self.relative(place)
         else:
             value = f"{twin(mine.target)} - {section_start(place.section)} + {mine.addend or 0:#x}"
@@ -245,7 +259,13 @@ class Resolver:
         )
 
     def twins_needed(self, mine: Reloc | None, theirs: Reloc | None) -> set[str]:
-        if mine and theirs and theirs.section_relative and not mine.section_relative:
+        if (
+            mine
+            and theirs
+            and theirs.section_relative
+            and not mine.section_relative
+            and mine.target in self.symbols
+        ):
             return {mine.target}
         return set()
 
@@ -298,16 +318,23 @@ def generate(
 
 
 def place_functions(
-    obj: CompiledObject, symbols: dict[str, Symbol], text_relocs: dict[int, Reloc]
+    obj: CompiledObject,
+    symbols: dict[str, Symbol],
+    text_relocs: dict[int, Reloc],
+    text_base: int = 0,
 ) -> dict[str, int]:
-    """Original .text offset of each C function. Functions are found by name;
-    a static the original has no name for is placed by the references other
-    spliced functions make to it."""
+    """Original .text offset of each C function. Functions are found by name.
+    A static the original has no name for is found by its asm label's name
+    (func_000C5468) or placed by the references other spliced functions make
+    to it."""
     starts: dict[str, int] = {}
     for fn in obj.functions:
         symbol = symbols.get(fn.name)
+        address = ADDRESS_NAME_RE.fullmatch(fn.name)
         if symbol is not None and symbol.section == ".text":
             starts[fn.name] = symbol.value
+        elif symbol is None and fn.local and address:
+            starts[fn.name] = int(address.group(1), 16) - text_base
         elif not fn.local:
             raise SpliceError(f"{fn.name} ({obj.source}.c): no such function in the module")
     pending = [fn for fn in obj.functions if fn.name not in starts]
@@ -349,13 +376,14 @@ def place_functions(
 
 
 def function_names(lines: list[str], base: int) -> dict[int, str]:
-    """Original .text offset -> the function label the asm uses there."""
+    """Original .text offset -> the function label the asm uses there
+    (glabel, or alabel for code spimdisasm didn't see as a function)."""
     names, pending = {}, None
     for line in lines:
-        if line.startswith("glabel "):
+        if re.match(r"\s*[ga]label\s", line):
             pending = label_name(line)
         elif pending and (m := ADDRESS_RE.match(line)):
-            names[int(m.group(1), 16) - base] = pending
+            names.setdefault(int(m.group(1), 16) - base, pending)
             pending = None
     return names
 
@@ -367,7 +395,7 @@ def place_data(
     symbols: dict[str, Symbol],
 ) -> dict[str, Place]:
     """Where each of the C object's data sections lands in the original."""
-    anchors: dict[str, set[Place]] = {}
+    anchors: dict[str, dict[Place, str]] = {}  # C section -> start -> first evidence
     for fn in obj.functions:
         for i, mine in fn.relocs.items():
             if not mine.section_relative or mine.target not in obj.data:
@@ -379,27 +407,32 @@ def place_data(
                     f"the original {describe(theirs)}"
                 )
             offset = theirs.addend - (mine.addend or 0)
-            anchors.setdefault(mine.target, set()).add(Place(theirs.target, offset))
+            anchors.setdefault(mine.target, {}).setdefault(
+                Place(theirs.target, offset), f"{fn.name} word {i}"
+            )
     for sec in obj.data.values():
         for name, value in sec.symbols.items():
             symbol = symbols.get(name)
             if symbol is not None and symbol.section is not None:
-                anchors.setdefault(sec.name, set()).add(Place(symbol.section, symbol.value - value))
+                anchors.setdefault(sec.name, {}).setdefault(
+                    Place(symbol.section, symbol.value - value), f"symbol {name}"
+                )
     placed = {}
     for sec in obj.data.values():
-        found = anchors.get(sec.name, set())
+        found = anchors.get(sec.name, {})
         if not found:
             raise SpliceError(
                 f"{obj.source}.c: its {sec.name} ({sec.size:#x} bytes) isn't referenced by "
                 "anything the original also references, so it can't be placed"
             )
         if len(found) > 1:
-            where = ", ".join(sorted(str(p) for p in found))
+            where = ", ".join(f"{p} per {why}" for p, why in sorted(found.items(), key=str))
             raise SpliceError(
                 f"{obj.source}.c: its {sec.name} would have to start at several places in the "
-                f"original ({where}); the C data isn't laid out like the original's"
+                f"original ({where}); either a function doesn't match yet or the C data isn't "
+                "laid out like the original's"
             )
-        placed[sec.name] = found.pop()
+        placed[sec.name] = next(iter(found))
     return placed
 
 
@@ -534,17 +567,25 @@ def replace_data(
 def replace_function(
     lines: list[str], name: str, base: int, start: int, generated: list[list[str]], source: str
 ) -> list[str]:
-    try:
-        first = next(i for i, line in enumerate(lines) if label_name(line) == name)
-        last = next(
-            i
-            for i in range(first, len(lines))
-            if re.match(rf"\s*endlabel\s+{re.escape(name)}\b", lines[i])
-        )
-    except StopIteration:
-        raise SpliceError(f"{name}: not found in the module's text.s") from None
-    out, used = [], 0
-    for line in lines[first : last + 1]:
+    """Replaces the function's words, starting at its label. A function
+    spimdisasm split in two (it ends a function at a tail call) carries on
+    through the next labels until every word is replaced."""
+    first = next((i for i, line in enumerate(lines) if label_name(line) == name), None)
+    if first is None:
+        raise SpliceError(f"{name}: not found in the module's text.s")
+    out, used, i = [], 0, first
+    while i < len(lines):
+        line = lines[i]
+        i += 1
+        if used == len(generated):
+            if re.match(r"\s*endlabel\s", line):
+                out.append(line)
+                break
+            if LINE_RE.match(line) or label_name(line) is not None:
+                i -= 1  # spimdisasm put no endlabel here; keep the next thing
+                break
+            out.append(line)
+            continue
         if line.strip().startswith(".reloc "):
             continue  # regenerated below
         m = LINE_RE.match(line)
@@ -552,12 +593,14 @@ def replace_function(
             out.append(line)
             continue
         index = (int(m.group(2), 16) - base - start) // 4
+        if index != used:
+            raise SpliceError(f"{name}: word {used} isn't where expected in text.s")
         out.append(f"    /* {index * 4:04X} from C ({source}.c) */")
         out.extend(generated[index])
         used += 1
     if used != len(generated):
         raise SpliceError(f"{name}: replaced {used} of {len(generated)} words")
-    return lines[:first] + out + lines[last + 1 :]
+    return lines[:first] + out + lines[i:]
 
 
 def add_missing_twins(files: dict[str, list[str]], names: set[str]) -> None:
@@ -629,9 +672,10 @@ def splice(module: str, objects: list[Path], asm_dir: Path, out_dir: Path, origi
     count = 0
     for path in objects:
         obj = load_object(path)
-        starts = place_functions(obj, symbols, text.relocs)
+        starts = place_functions(obj, symbols, text.relocs, text.base)
         resolver = Resolver(
             symbols,
+            {n: (sec.base, sec.size) for n, sec in sections.items()},
             [(fn.start, fn.start + 4 * len(fn.words), starts[fn.name]) for fn in obj.functions],
             place_data(obj, starts, text.relocs, symbols),
             labels,
