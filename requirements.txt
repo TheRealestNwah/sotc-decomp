@@ -1,0 +1,7 @@
+# Dev tooling
+pytest>=8
+ruff>=0.6
+
+# Decomp tooling (needed once splitting starts)
+splat64[mips]>=0.27
+spimdisasm>=1.30
