@@ -11,14 +11,17 @@ The aim is C source that compiles back to a byte-identical copy of the original 
   - All three (`KERNEL`, `MANAGER`, `GAMECORE`) split into assembly that reassembles with every section and relocation matching the originals. That's about 70,000 relocations.
   - The modules keep their original symbol names.
 - **Compiler identified:** Sony `ee-gcc` 2.96, `-O2 -G0`.
-- **Decompilation has started:** C in `src/xff/` is compiled and spliced into the modules, and the build still matches. The first 5 GAMECORE functions are in C.
-- Nothing is decompiled to C yet.
+- **57 GAMECORE functions are compiled from matching C**, including sword beam,
+  weak-point glow, collision reaction, particle emitter and reaction-thread updates. C in `src/xff/`
+  is compiled and spliced into the modules; the full build still matches.
+- Complete byte-identical reconstruction of the `.XFF` files and the native PC
+  port remain future work.
 
 See [docs/findings.md](docs/findings.md) for what's known about the binaries, the compiler and the linked Sony SDK libraries.
 
 ## You need your own copy of the game
 
-This repo contains **no game code, data or assets**. Dump your own disc and copy `SCUS_974.72` into `iso/`. Never commit anything from the disc.
+This repo contains **no original game binaries or assets**. Dump your own disc and copy `SCUS_974.72` into `iso/`. Never commit anything from the disc.
 
 ## Setup (Windows)
 
@@ -39,7 +42,7 @@ python -m venv .venv
 1. ~~Verify the base executable hash~~
 2. ~~Split the loader ELF with splat and rebuild it byte-for-byte~~
 3. ~~Reverse the `xff2` module format and split `KERNEL`/`MANAGER`/`GAMECORE.XFF`~~; next: rebuild the `.XFF` files themselves byte-for-byte
-4. Pin down the original compiler version and get C matching
+4. ~~Pin down the original compiler version and get C matching~~
 5. Decompile functions one at a time, using [decomp.me](https://decomp.me) to match them
 6. Once fully matching, build a PC port layer (graphics, audio, input)
 
@@ -51,19 +54,20 @@ python -m venv .venv
 | `configure.py` | Generates `build.ninja` |
 | `config/` | Expected original executable path and hash |
 | `docs/` | Findings about the binaries and toolchain |
-| `src/` | Decompiled C source (empty for now) |
+| `src/` | Matching C source for the XFF modules |
 | `include/` | Assembler macros and headers |
 | `tools/` | Helper scripts (ELF flattener, match checker) |
 | `tests/` | Tests for the helper scripts |
 
 ## AI disclosure
 
-This project was built with [Claude Code](https://claude.com/claude-code), Anthropic's
-AI coding assistant. Claude wrote the code, tests and documentation. The
+This project is developed with [Claude Code](https://claude.com/claude-code),
+Anthropic's AI coding assistant, and [OpenAI Codex](https://openai.com/codex/).
+These assistants contribute code, tests and documentation. The
 maintainer ([@TheRealestNwah](https://github.com/TheRealestNwah)) decided what
 it should do, tested it, and made the release decisions. Commits written with
-Claude carry a `Co-Authored-By: Claude` trailer, so the git history shows which
-changes were AI-written.
+Claude carry a `Co-Authored-By: Claude` trailer. This disclosure also covers
+Codex contributions.
 
 ## Support
 
