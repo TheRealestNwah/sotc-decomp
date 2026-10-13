@@ -132,6 +132,14 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
         "  command = $python tools/xff_split.py --compare $in",
         "  description = CHECK $in",
         "",
+        "rule eecc",
+        "  command = $python tools/ee_cc.py $in $out",
+        "  description = EECC $in",
+        "",
+        "rule splice",
+        "  command = $python tools/xff_splice.py $module $in --out $outdir",
+        "  description = SPLICE $module",
+        "",
         "rule configure",
         "  command = $python configure.py --cross $cross",
         "  generator = 1",
@@ -157,11 +165,29 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
         original = f"{BUILD_DIR}/xff/{m}.o"
         rebuilt = f"{BUILD_DIR}/xff/{m}/{m}.o"
         asm_dir = f"asm/xff/{m}"
-        deps = " ".join(
-            ninja_path(p.relative_to(ROOT)) for p in sorted((ROOT / asm_dir).glob("*.s"))
-        )
+        asm_files = sorted(p.name for p in (ROOT / asm_dir).glob("*.s"))
+        deps = " ".join(f"{asm_dir}/{name}" for name in asm_files)
+        lines.append(f"build {original}: xff2elf iso/{m}.XFF")
+
+        # Decompiled C (src/xff/<MODULE>/*.c) replaces its functions' assembly.
+        c_files = sorted((ROOT / "src" / "xff" / m).glob("*.c"))
+        if c_files:
+            c_objects = []
+            for c in c_files:
+                obj = f"{BUILD_DIR}/src/xff/{m}/{c.stem}.o"
+                lines.append(f"build {obj}: eecc {ninja_path(c.relative_to(ROOT))}")
+                c_objects.append(obj)
+            spliced = f"{BUILD_DIR}/xff/{m}/spliced"
+            extra = " ".join(f"{spliced}/{name}" for name in asm_files if name != f"{m}.s")
+            inputs = " ".join(c_objects)
+            lines += [
+                f"build {spliced}/{m}.s | {extra}: splice {inputs} | {original} {deps}",
+                f"  module = {m}",
+                f"  outdir = {spliced}",
+            ]
+            asm_dir, deps = spliced, extra
+
         lines += [
-            f"build {original}: xff2elf iso/{m}.XFF",
             f"build {rebuilt}: as {asm_dir}/{m}.s | include/xff_macro.inc {deps}",
             f"  asflags = $asflags -I {asm_dir}",
             f"build check-{m}: xffcheck {original} {rebuilt}",
