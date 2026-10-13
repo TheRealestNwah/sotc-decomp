@@ -49,7 +49,20 @@ def extract(lines: list[str], name: str, through: str | None) -> list[str]:
             body = lines[first : i + 1]
             # One function for m2c: drop the split's inner function boundaries.
             inner = re.compile(r"\s*(glabel|dlabel|end\w*label|nonmatching)\b")
-            return [body[0]] + [x for x in body[1:-1] if not inner.match(x)] + [body[-1]]
+            body = [body[0]] + [x for x in body[1:-1] if not inner.match(x)] + [body[-1]]
+            # m2c interprets a plain func_XXXXXXXX label as another function.
+            # Split tails and their references must stay local to this draft.
+            aliases = {
+                x.strip()[:-1]
+                for x in body
+                if x.startswith(".Lxff.") and x.endswith(":") and x != f".Lxff.{name}:"
+            }
+            for alias in aliases:
+                body = [
+                    re.sub(re.escape(alias) + r"(?![\w.])", alias.replace(".Lxff.", ".Lm2c."), x)
+                    for x in body
+                ]
+            return body
     raise SystemExit(f"{last_label}: no endlabel after {name}")
 
 
@@ -85,9 +98,6 @@ def reloc_names(lines: list[str], section_bases: dict[str, int]) -> dict[int, st
     names = {}
     for k, (i, rtype, target, word) in enumerate(sites):
         section = target[len("start") :] if target.startswith("start.") else None
-        if section is None or section not in section_bases:
-            names[i] = target
-            continue
         if rtype == "R_MIPS_26":
             offset = (word & 0x3FFFFFF) << 2
         elif rtype == "R_MIPS_HI16":
@@ -98,6 +108,10 @@ def reloc_names(lines: list[str], section_bases: dict[str, int]) -> dict[int, st
                 (s[3] for s in reversed(sites[:k]) if s[1] == "R_MIPS_HI16" and s[2] == target), 0
             )
             offset = ((hi & 0xFFFF) << 16) + sext16(word)
+        if section is None or section not in section_bases:
+            suffix = f" {'+' if offset > 0 else '-'} 0x{abs(offset):X}" if offset else ""
+            names[i] = target + suffix
+            continue
         prefix = SECTION_PREFIXES.get(section, "D")
         names[i] = f"{prefix}_{section_bases[section] + offset:08X}"
     return names
@@ -118,7 +132,8 @@ def disassemble_words(lines: list[str], section_bases: dict[str, int] | None = N
             out.append(line)
             continue
         m = DATA_WORD_RE.match(line)
-        if not m or RAW_WORD_RE.match(line):
+        comment = RAW_WORD_RE.match(line)
+        if not m or (comment and not comment.group(2).lstrip().startswith(".word")):
             out.append(line)
             reloc = None
             continue
