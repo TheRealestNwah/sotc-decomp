@@ -56,7 +56,28 @@ The original relocations show where each `.c` file started and ended (`tools/xff
 
 splat finds 1,038 functions and about 51,000 instructions in `.text`.
 
-## Compiler fingerprint
+## Compiler (game code): `ee-gcc` 2.96, `-O2 -G0`
+
+**Chosen:** Sony's `ee-gcc` 2.96 (`2.96-ee-001003-1`, from decomp.me's compiler archive), `-O2 -G0`, assembled with the `ee-as` shipped alongside it. I tested by compiling hand-written C for 11 GAMECORE functions with every PS2 GCC in the archive (`tools/try_compilers.py`, sources in `experiments/`), and comparing instruction by instruction, ignoring relocated fields.
+
+| Candidate | Exact matches (of 11) | Why it's ruled out |
+| --- | ---: | --- |
+| **ee-gcc 2.96 + its ee-as** | **9** | Best match. The 2 misses differ only in register allocation or scheduling (see below). |
+| ee-gcc 2.95.2 / 2.95.3 (all builds) | 8 | Can't produce `ResetObject`'s tail call (2.95 has no sibling-call optimization), and lays out `getPathExFinish`'s jump table differently. |
+| ee-gcc 2.9 (990721, 991111) | 7 | Misses the tail call, the jump table and `GAMEUTIL_reset_position_filter`. |
+| ee-gcc 3.2 (030926, 040921) | 0 | Different code generation everywhere. |
+
+- **Both 2.96 misses differ only in register allocation or scheduling, which points to the exact source shape:**
+  - `calcFadeParam` has identical structure, but the floats land in different registers.
+  - `GAMEUTIL_reset_position_filter` has the same instructions in a different order. 2.95 happens to match this one, which is consistent with my C being slightly different from the original.
+- **Assembler matters:** 2.96 emits macros (`move`, `lw reg, table(reg)`) that the assembler expands. The original expansions (`daddu rd, rs, $zero`; jump-table address via `addu`) match the package's `ee-as`, not modern binutils. All 84 GAMECORE jump tables use `addu`.
+- **`-G0`:** none of the three modules contains a single gp-relative relocation.
+- **`-O2` over `-O3`:** 41 tiny static functions (6 instructions or fewer) across the modules are still called rather than inlined, which `-O3` would have done.
+- **Float literals** must be written precisely. 2.96 rounds decimal literals differently from 2.95: `0.017453292f` gives `0x3C8EFA34`, while the original `0x3C8EFA35` (π/180) needs `0.0174532925f`.
+
+Running the compilers: the Linux builds are 32-bit, so they run under WSL with a private 32-bit libc, unpacked from Ubuntu's `libc6:i386` package into `~/i386libs` (no `sudo` needed). They must run from WSL's own filesystem, because old 32-bit programs can't read files on Windows-mounted drives ("Value too large for defined data type").
+
+## Compiler fingerprint (loader ELF, earlier static analysis)
 
 **GCC-based, not Metrowerks: high confidence (about 90%).**
 - The section set is what GNU `ld` produces from GCC objects: `.reginfo`, `.mdebug.eabi64`, `.ctors`/`.dtors` holding only the `-1`/`0` sentinels from `crtbegin`/`crtend`, and a 4-byte `.eh_frame` terminator.

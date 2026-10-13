@@ -12,14 +12,15 @@ Current phase:
 - The loader ELF `SCUS_974.72` splits with splat and rebuilds byte-for-byte from assembly.
 - The three game modules (`KERNEL.XFF`, `MANAGER.XFF`, `GAMECORE.XFF`, format in `docs/xff2.md`) split into assembly that reassembles to objects whose sections and relocations match the originals exactly.
 - `ninja check` covers all of it.
-- Not done yet: rebuilding the XFF files themselves byte-for-byte. That needs the original symbol table order (see `docs/xff2.md`). The game code itself lives in `KERNEL.XFF`, `MANAGER.XFF` and `GAMECORE.XFF` (custom `xff2` format), which isn't split yet. See `docs/findings.md`.
+- Not done yet: rebuilding the XFF files themselves byte-for-byte. That needs the original symbol table order (see `docs/xff2.md`).
+- The compiler is identified (see Matching rules). The C build isn't set up yet.
 
 ## Matching rules
 
 - **Never edit generated assembly to force a match.** If something doesn't match, fix the split config, the build flags or the C, never the asm by hand.
 - **C must compile to identical bytes.** A function counts as decompiled only when the compiled output matches the original exactly, with no hand-written asm patching around it.
 - **No game files in git.** Everything from the disc (`iso/`), everything splat generates (`asm/`, `*.ld`, `undefined_*_auto.txt`) and all build output stay gitignored.
-- **Don't guess the compiler.** It's GCC-based, probably 2.9x-era EE GCC (Sony `ee-gcc` vs SN ProDG is undecided). Ask the user before picking a compiler or version, and record the evidence in `docs/findings.md`.
+- **Compiler: Sony `ee-gcc` 2.96 (`2.96-ee-001003-1`), `-O2 -G0`, assembled with that package's own `ee-as`.** Chosen by evidence (with the user's OK), recorded in `docs/findings.md`. Don't switch compilers or flags without new evidence. Modern binutils expands `move` and jump-table loads differently from the original assembler, so C must go through the package's `ee-as`.
 - Sony SDK 3.0.x libraries (listed in `docs/findings.md`) get identified by signature, not decompiled by hand.
 
 ## Toolchain (native Windows)
@@ -29,6 +30,11 @@ Current phase:
   - The Windows build is 32-bit and needs a **32-bit** `libzstd.dll`, which it doesn't ship. Put one (from the official zstd `win32` release) next to the `.exe`s in `ee\bin`. A 64-bit copy on `PATH` (e.g. Git's) makes it fail with exit code `0xC000007B`.
   - The linker must run with `-m elf32lr5900` (set in `configure.py`). Its default `n32` mode rejects our EABI objects with "ABI is incompatible".
 - No `objcopy` needed: `tools/elf2rom.py` flattens ELFs in Python (`tools/objcopy.cmd` wraps it for `splat create_config --objcopy`).
+- **Original compilers** (from decomp.me's archive, `gh release download compilers --repo decompme/compilers`) are extracted under `D:\Modding\compilers\<name>` (override with `SOTC_COMPILERS`).
+  - The 2.96 (and 2.9/3.2) builds are 32-bit Linux programs: they run under WSL (Ubuntu) with a private 32-bit libc unpacked from Ubuntu's `libc6:i386` package into `~/i386libs/root` (no `sudo`; override with `SOTC_I386_LIBS`).
+  - Old 32-bit programs can't read files on `/mnt/<drive>` ("Value too large for defined data type"), so always copy inputs into WSL's `/tmp` first. `tools/try_compilers.py` does this.
+  - The 2.95.x builds are Windows `cc1.exe` and run natively.
+- `tools/try_compilers.py <file.c> --module GAMECORE`: compiles every function in a C file with each candidate compiler and flag set, and reports instruction differences against the original functions of the same name. Useful for any matching work, not just compiler ID.
 
 ## Build and check
 
