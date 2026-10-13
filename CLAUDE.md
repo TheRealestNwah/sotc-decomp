@@ -35,6 +35,11 @@ Current phase:
   - Old 32-bit programs can't read files on `/mnt/<drive>` ("Value too large for defined data type"), so always copy inputs into WSL's `/tmp` first. `tools/try_compilers.py` does this.
   - The 2.95.x builds are Windows `cc1.exe` and run natively.
 - `tools/try_compilers.py <file.c> --module GAMECORE`: compiles every function in a C file with each candidate compiler and flag set, and reports instruction differences against the original functions of the same name. Useful for any matching work, not just compiler ID.
+- **Decomp tools** (open source, cloned outside the repo into `D:\Modding\decomp-tools`):
+  - m2c (`SOTC_M2C`) needs the `graphviz` Python package.
+  - decomp-permuter (`SOTC_PERMUTER`) needs `toml`.
+  - Both packages are installed in `.venv`; neither is in `requirements.txt`, since CI doesn't use them.
+  - The permuter runs from Windows Python with Git's bash (`SOTC_BASH`), ee-gcc 2.96's `cpp0` under WSL, and the PS2DEV objdump. `tools/permute.py` sets that up.
 
 ## Build and check
 
@@ -55,8 +60,14 @@ The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
 
 1. Find the function in `asm/xff/<MODULE>/text.s` (`glabel <name>`). Small functions, and functions grouped with known ones by `tools/xff_tus.py`, are good starting points.
 2. Write it in `src/xff/<MODULE>/<name>.c`. When `tools/xff_tus.py` has identified the original source file, use one C file for it (e.g. `src/xff/GAMECORE/sword.c`), with its statics in the original order and functions in original order; otherwise one file per function. Use struct layouts with explicit padding until real headers exist.
+   `python tools/m2c.py <function>` prints a first draft from m2c. Add `--through func_XXXXXXXX` when spimdisasm split the function at a tail call. Expect to fix types and structure by hand.
 3. Iterate with `python tools/try_compilers.py src/xff/<MODULE>/<name>.c --module <MODULE> --only ee-gcc2.96 --flags "-O2 -G0"` until it says MATCH. `--diff` prints a side-by-side listing of each mismatch.
 4. Run `python configure.py` (picks up new C files), then `ninja check`.
+5. If it's close but stuck on register allocation or instruction order, park the attempt in `#ifdef NONMATCHING` (with an `#else` declaring it extern if other C calls it). Then let the permuter search:
+   - `python tools/permute.py setup <file.c> <function>`
+   - `python tools/permute.py run build/permuter/<function> -j5 --best-only --stop-on-zero`
+   - Improvements land in `build/permuter/<function>/output-<score>-*/`. A score of 0 is a match.
+   - Copy the useful change back by hand, then check with try_compilers.
 
 How it builds:
 - `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` (in WSL).
@@ -94,6 +105,7 @@ Splice limitations:
   - `ee_cc.py`: compiles one C file with the game's toolchain
   - `xff_splice.py`: splices compiled C functions into a module's asm, verifying they match
   - `try_compilers.py`: compiles C with candidate compilers/flags and diffs against the original functions
+  - `m2c.py`, `permute.py`: run m2c and decomp-permuter on an XFF function
 - `asm/xff/<MODULE>/`: generated XFF assembly (gitignored like all asm)
 - `include/xff_macro.inc`: label macros for XFF asm. Labels are local by default; `.globl` comes from the original symbol table.
 - `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
