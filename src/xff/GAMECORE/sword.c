@@ -210,16 +210,18 @@ void BossSprStatusEnd(void)
 #define SIGN(x) ((x) < 0.0f ? -1.0f : ((x) > 0.0f ? 1.0f : 0.0f))
 #define ABS(x) ((x) < 0.0f ? -(x) : (x))
 
-/* Moves `vol` towards `target` by at most 0.1. */
-#define STEP_VOL(vol, target)        \
-    do {                             \
-        float d = (target) - (vol);  \
-        if (ABS(d) > 0.1f) {         \
-            (vol) += SIGN(d) * 0.1f; \
-        } else {                     \
-            (vol) += d;              \
-        }                            \
-    } while (0)
+/* Moves `vol` towards `target` by at most 0.1. The original stores through
+   the pointer but rereads `vol` by name in each branch. */
+#define STEP_VOL(vol, target)             \
+    {                                     \
+        float *p = &(vol);                \
+        float d = (target) - *p;          \
+        if (ABS(d) > 0.1f) {              \
+            *p = (vol) + SIGN(d) * 0.1f;  \
+        } else {                          \
+            *p = (vol) + d;               \
+        }                                 \
+    }
 
 /* Starts the sword's sounds at `pos`, silent; bossSe/weakSe 0 stops that one. */
 static void func_000C0D48(int bossSe, int weakSe, void *pos)
@@ -263,8 +265,6 @@ static void func_000C0D48(int bossSe, int weakSe, void *pos)
 #define SWORD_LINE(boss) ((boss) ? SParticleSheetData_S_LINE_BOSS : SParticleSheetData_S_LINE)
 #define SWORD_SHEETS(boss)                                                                        {                                                                                                 SParticleSheetData_S_GLOW, SParticleSheetData_S_AURA, SParticleSheetData_S_FLARE,                 SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss),                       SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss)                }
 
-#ifdef NONMATCHING
-/* The first clamp matches; the later ones (on the statics) branch differently. */
 /* Sets the sword sound volumes from the glow power (0..1) and `scale`. */
 static void func_000C0EB0(float power, float scale)
 {
@@ -292,9 +292,6 @@ static void func_000C0EB0(float power, float scale)
         seSetVol(swordSe.se[0], humVol);
     }
 }
-#else
-extern void func_000C0EB0(float power, float scale);
-#endif
 
 /* Boots the sword's particle emitters that aren't running. */
 static void func_000C11E8(int boss)
