@@ -58,8 +58,17 @@ def extract(lines: list[str], name: str, through: str | None) -> list[str]:
                 if x.startswith(".Lxff.") and x.endswith(":") and x != f".Lxff.{name}:"
             }
             for alias in aliases:
+                plain = alias.removeprefix(".Lxff.")
+                local = alias.replace(".Lxff.", ".Lm2c.")
+                # spimdisasm may emit both a plain label and its local twin.
+                # Leaving the plain definition makes m2c start another function.
+                body = [x for x in body if x.strip() != f"{plain}:"]
                 body = [
-                    re.sub(re.escape(alias) + r"(?![\w.])", alias.replace(".Lxff.", ".Lm2c."), x)
+                    re.sub(
+                        rf"(?<![\w.]){re.escape(plain)}(?![\w.])",
+                        local,
+                        re.sub(re.escape(alias) + r"(?![\w.])", local, x),
+                    )
                     for x in body
                 ]
             return body

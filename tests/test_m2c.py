@@ -24,6 +24,37 @@ def test_extract_through_a_false_split_drops_inner_boundaries():
     assert "endlabel f" not in out and "glabel func_8 # 2" not in out
 
 
+def test_interior_plain_twins_and_branches_stay_local():
+    lines = [
+        "glabel f",
+        ".Lxff.f:",
+        "    b .Lxff.jtbl_20",
+        "    nop",
+        "  jtbl_20:",
+        ".Lxff.jtbl_20:",
+        "    b jtbl_30",
+        "    nop",
+        "  jtbl_30:",
+        ".Lxff.jtbl_30:",
+        "    jal external_jtbl_30",
+        "    nop",
+        "endlabel f",
+    ]
+    out = clean(extract(lines, "f", None))
+    assert "f:" in out
+    assert out.count(".Lm2c.jtbl_20:") == 1
+    assert out.count(".Lm2c.jtbl_30:") == 1
+    assert "    b .Lm2c.jtbl_20" in out
+    assert "    b .Lm2c.jtbl_30" in out
+    assert "    jal external_jtbl_30" in out
+    assert not any(line.strip() in {"jtbl_20:", "jtbl_30:"} for line in out)
+
+
+def test_plain_labels_without_twins_are_preserved():
+    lines = ["glabel f", "    b .L20", ".L20:", "    nop", "endlabel f"]
+    assert clean(extract(lines, "f", None)) == lines
+
+
 def test_clean_restores_raw_words_and_twin_labels():
     out = clean(LINES[:6])
     assert out[1] == "f:"
