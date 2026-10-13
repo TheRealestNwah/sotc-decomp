@@ -108,9 +108,12 @@ typedef struct {
 typedef struct {
     char pad0[0x178];
     float time;
-    char pad17C[0x258 - 0x17C];
+    char pad17C[0x1AC - 0x17C];
+    int pause;
+    char pad1B0[0x258 - 0x1B0];
     char colGroup[0x2B0 - 0x258];
-    char playerList[1];
+    char playerList[0x360 - 0x2B0];
+    u_long128 cameraDir;
 } GcGlobalVar;
 
 extern GcGlobalVar gcGlobalVar;
@@ -528,7 +531,7 @@ typedef struct {
 
 extern const SwordBeamQuery RO_00180600;
 
-static void func_000C2318(GameObj *obj, u_long128 *pos)
+static void func_000C2318(GameObj *obj, u_long128 *pos, u_long128 *unusedDir)
 {
     SwordBeamQuery query = RO_00180600;
     sceVu0FVECTOR marker;
@@ -834,6 +837,145 @@ static void func_000C2EB0(sceVu0FVECTOR pos, u_long128 *dir, float power)
         ((union { int i; float f; } *)&reaction->target)->f = 1.0f;
     }
 }
+
+extern void func_000C3198(GameObj *obj, u_long128 *pos, u_long128 *dir);
+
+/* libvu0's sceVu0ApplyMatrix, inlined: dst = m * v. */
+#define VU_APPLY_MATRIX(dst, m, v) \
+    __asm__ __volatile__("lqc2 vf08, 0x0(%2)\n" \
+                         "lqc2 vf14, 0x0(%1)\n" \
+                         "lqc2 vf15, 0x10(%1)\n" \
+                         "lqc2 vf16, 0x20(%1)\n" \
+                         "lqc2 vf17, 0x30(%1)\n" \
+                         "vmulax.xyzw ACC, vf14, vf08x\n" \
+                         "vmadday.xyzw ACC, vf15, vf08y\n" \
+                         "vmaddaz.xyzw ACC, vf16, vf08z\n" \
+                         "vmaddw.xyzw vf10, vf17, vf08w\n" \
+                         "sqc2 vf10, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(m), "r"(v) : "memory")
+
+typedef union {
+    u_long128 q;
+    struct {
+        float x, y, z, w;
+    } v;
+} SwordVec;
+
+typedef struct {
+    char pad0[0x144];
+    struct {
+        char pad0[0x260];
+        unsigned long flags;
+    } *info;
+} SwordHitLayout;
+
+typedef struct {
+    char pad0[0xC0];
+    char geometry[0x124 - 0xC0];
+    int hasGeometry;
+    char pad128[0x158 - 0x128];
+    sceVu0FVECTOR *matrix;
+} SwordLayout;
+
+extern GameObj *isysGetThisSubThread(void);
+extern SwordLayout *GetLayoutClass(GameObj *obj);
+extern void nico_weaponUpdateGeometry(SwordLayout *layout);
+extern void FlushCollisionWork(GameObj *obj);
+extern int isSeamlessStage(void);
+extern void GetQuaternionFromMatrix(sceVu0FVECTOR q, sceVu0FVECTOR *m);
+extern sceVu0FVECTOR XUnitVector;
+extern sceVu0FVECTOR IdentityQuaternion;
+extern sceVu0FVECTOR ZeroPoint;
+extern void SetGeometryPointerNodePosState(void *geom, GameObj *obj, int node, sceVu0FVECTOR rot,
+                                           sceVu0FVECTOR pos);
+extern float iosGetATan2fExact(float y, float x);
+extern float iosGetCosf(float x);
+extern void iosApplyRotMatrix(sceVu0FVECTOR dst, sceVu0FVECTOR *m, sceVu0FVECTOR src);
+extern int isWeaponTargetMarker(GameObj *obj);
+extern int CheckSCRCharaAIWorkPtr(GameObj *obj);
+extern GameObj *GetGeometryPointerObject(void *geom);
+extern int _omakeSelectFlagChk(int flag);
+extern void SetLayoutObjAccessSwitch(GameObj *obj, int on);
+
+#ifdef NONMATCHING
+/* Parked: 290 words vs the original 288. The rotation addresses (rotX/rotZ)
+   get callee-saved registers instead of the D_0017B150/D_0017B154 high parts
+   and `origin`. See issue #51. */
+/* The sword's script thread: each frame, places the sword's lights and runs
+   the beam update for the current target. */
+void nico_swordstart(void)
+{
+    GameObj *obj = isysGetThisSubThread();
+    SwordLayout *layout = GetLayoutClass(obj);
+    sceVu0FVECTOR pos;
+    sceVu0FVECTOR dir;
+    sceVu0FVECTOR dirLocal = { -1.0f, 0.0f, 0.0f, 1.0f };
+    sceVu0FVECTOR origin = { 0.0f, 0.0f, 0.0f, 1.0f };
+    sceVu0FVECTOR tip = { 0.0f, 0.0f, 0.1f, 1.0f };
+    sceVu0FVECTOR rotX;
+    sceVu0FVECTOR rotZ;
+    SwordVec a;
+    SwordVec b;
+    SwordHitLayout *hit;
+
+    for (;;) {
+        swordFlareHitPlaneAttribute = 0;
+        if (gcGlobalVar.pause == 0) {
+            nico_weaponUpdateGeometry(layout);
+            FlushCollisionWork(obj);
+        }
+        if (isSeamlessStage()) {
+            VU_APPLY_MATRIX(B_0019CEC0, layout->matrix, tip);
+            GetQuaternionFromMatrix(B_0019CEB0, layout->matrix);
+            SetQuaternionByAxisRotateVWithNoRegularize(rotX, -0x8000, XUnitVector);
+            VU_QUAT_MUL(B_0019CEB0, B_0019CEB0, rotX);
+            SetQuaternionByAxisRotateVWithNoRegularize(rotZ, -0x8000, ZUnitVector);
+            VU_QUAT_MUL(B_0019CEB0, B_0019CEB0, rotZ);
+            SetGeometryPointerNodePosState(B_0019CE70, obj, 0, IdentityQuaternion, ZeroPoint);
+            if (D_0017B154 != 0 || D_0017B150 != 0) {
+                float t;
+
+                a.q = *(u_long128 *)dir;
+                b.q = gcGlobalVar.cameraDir;
+                a.v.z += a.v.y;
+                b.v.z += b.v.y;
+                VU0_NORMALIZE(&a, &a);
+                VU0_NORMALIZE(&b, &b);
+                t = iosGetCosf(iosGetATan2fExact(a.v.z, a.v.x) * 8.0f);
+                t += 1.0f;
+                t *= 0.5f;
+                t = (t + (iosGetSinf(iosGetATan2fExact(-b.v.z, b.v.x)) + 1.0f) * 0.5f) * 0.5f;
+                origin[2] = t * 0.55f * D_0017B0EC + -0.55f;
+            }
+            VU_APPLY_MATRIX(pos, layout->matrix, origin);
+            iosApplyRotMatrix(dir, layout->matrix, dirLocal);
+            if (D_0017B154 != 0) {
+                func_000C3198(obj, (u_long128 *)pos, (u_long128 *)dir);
+            } else if (D_0017B150 != 0) {
+                if (isWeaponTargetMarker(SCRGetFirstObj(gcGlobalVar.playerList))) {
+                    func_000C2318(obj, (u_long128 *)pos, (u_long128 *)dir);
+                }
+            } else {
+                D_0017B104 = 0.0f;
+                D_0017B100 = 0.0f;
+            }
+            if (CheckSCRCharaAIWorkPtr(SCRGetFirstObj(gcGlobalVar.playerList + 8))) {
+                func_000C29B0((u_long128 *)pos);
+            } else if (glowClearEmitter.id != 0) {
+                set_npe_blend_ratio_particle_emitter(SParticleSheetData_S_GLOW_CLEAR,
+                                                     glowClearEmitter.id, 1.0f);
+            }
+            hit = layout->hasGeometry ? (SwordHitLayout *)GetLayoutClass(GetGeometryPointerObject(layout->geometry)) : 0;
+            if ((hit != 0 && (hit->info->flags & 0x30)) || _omakeSelectFlagChk(7)) {
+                SetLayoutObjAccessSwitch(obj, 0);
+            } else {
+                SetLayoutObjAccessSwitch(obj, 1);
+            }
+        }
+        scrRun();
+    }
+}
+#endif
 
 /* Written out in each function: a static helper isn't inlined at -O2. */
 #define STOP_SWORD_SE()            \
