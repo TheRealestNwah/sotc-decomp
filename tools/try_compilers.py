@@ -147,6 +147,30 @@ def functions_in(elf: ELFFile) -> dict[str, Function]:
     return out
 
 
+ADDRESS_NAME_RE = re.compile(r"[A-Za-z]+_([0-9A-F]{8})")
+
+
+def unnamed_target(elf: ELFFile, name: str, size: int) -> Function | None:
+    """A static the original has no symbol for, named after its asm label
+    (func_000C5468): the original words at that address."""
+    m = ADDRESS_NAME_RE.fullmatch(name)
+    if not m:
+        return None
+    text = elf.get_section_by_name(".text")
+    start = int(m.group(1), 16) - text["sh_offset"]  # asm addresses are file offsets
+    data = text.data()
+    if not 0 <= start < len(data):
+        return None
+    words = [int.from_bytes(data[o : o + 4], "little") for o in range(start, start + size, 4)]
+    relocs: dict[int, int] = {}
+    rel = elf.get_section_by_name(".rel.text")
+    if rel is not None:
+        for r in rel.iter_relocations():
+            if start <= r["r_offset"] < start + size:
+                relocs[(r["r_offset"] - start) // 4] = r["r_info_type"]
+    return Function(words, relocs)
+
+
 def strip_padding(words: list[int]) -> list[int]:
     while words and words[-1] == 0:
         words = words[:-1]
@@ -167,6 +191,34 @@ def diff(target: Function, built: Function) -> int:
     return count
 
 
+def disassemble(word: int) -> str:
+    import rabbitizer  # comes with spimdisasm
+
+    return rabbitizer.Instruction(word, 0, rabbitizer.InstrCategory.R5900).disassemble()
+
+
+def show_diff(name: str, target: Function, built: Function) -> None:
+    """Side-by-side listing, original on the left; `*` marks differing words."""
+    a, b = strip_padding(target.words), strip_padding(built.words)
+    print(f"\n{name}: original {len(a)} words, C {len(b)} words")
+    for i in range(max(len(a), len(b))):
+        x = a[i] if i < len(a) else None
+        y = b[i] if i < len(b) else None
+        same = (
+            x is not None
+            and y is not None
+            and diff(
+                Function([x], {0: target.relocs[i]} if i in target.relocs else {}),
+                Function([y], {0: built.relocs[i]} if i in built.relocs else {}),
+            )
+            == 0
+        )
+        mark = " " if same else "*"
+        left = disassemble(x) if x is not None else ""
+        right = disassemble(y) if y is not None else ""
+        print(f"{mark} {4 * i:4X}  {left:40} {right}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
@@ -176,6 +228,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--compilers", type=Path, default=DEFAULT_COMPILERS)
     parser.add_argument("--only", nargs="*", help="compiler directory names to try")
     parser.add_argument("--flags", nargs="*", default=DEFAULT_FLAGS)
+    parser.add_argument(
+        "--diff", action="store_true", help="print a side-by-side listing of every mismatch"
+    )
     parser.add_argument(
         "--modern-as", action="store_true",
         help="always use modern binutils, even when the package ships ee-as",
@@ -213,6 +268,11 @@ def main(argv: list[str] | None = None) -> int:
                     continue
                 with obj.open("rb") as f:
                     built = functions_in(ELFFile(f))
+                for n, fn in built.items():
+                    if n not in targets:
+                        found = unnamed_target(original, n, 4 * len(fn.words))
+                        if found is not None:
+                            targets[n] = found
                 names = [n for n in built if n in targets]
                 if header is None:
                     header = names
@@ -221,6 +281,10 @@ def main(argv: list[str] | None = None) -> int:
                 total = sum(cells)
                 print(f"{label} " + " ".join(f"{('MATCH' if c == 0 else c):>14}" for c in cells)
                       + f"   total {total}")  # fmt: skip
+                if args.diff:
+                    for n in header:
+                        if n in built and diff(targets[n], built[n]):
+                            show_diff(n, targets[n], built[n])
     return 0
 
 
