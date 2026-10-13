@@ -1,6 +1,30 @@
+import json
 from pathlib import Path
 
+import configure
 from configure import find_cross, generate, ninja_path, object_for
+
+
+def test_splice_uses_response_file_for_large_object_lists(tmp_path, monkeypatch):
+    source_dir = tmp_path / "src/xff/TEST"
+    source_dir.mkdir(parents=True)
+    names = [f"routine_{i:04d}_{'x' * 40}.c" for i in range(800)] + ["a $name.c"]
+    for name in names:
+        (source_dir / name).touch()
+    monkeypatch.setattr(configure, "ROOT", tmp_path)
+    ninja = generate("test-", [], ["TEST"])
+    rule = ninja.split("rule splice\n", 1)[1].split("\n\n", 1)[0]
+    command = rule.splitlines()[0]
+    assert "--objects-file" in command
+    assert "$in" not in command
+    assert "rspfile_content = $objects_json" in rule
+    assert len(command) < 200
+    encoded = next(line for line in ninja.splitlines() if "  objects_json = " in line)
+    objects = json.loads(encoded.split(" = ", 1)[1].replace("$$", "$"))
+    expected = [f"build/src/xff/TEST/{Path(name).stem}.o" for name in sorted(names)]
+    assert objects == expected
+    assert len(json.dumps(objects)) > 32767
+    assert "build build/src/xff/TEST/a$ $$name.o: eecc" in ninja
 
 
 def test_ninja_path_escapes_special_characters():

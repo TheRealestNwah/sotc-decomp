@@ -1,5 +1,9 @@
+import json
+from pathlib import Path
+
 import pytest
 
+from tools import xff_splice
 from tools.xff_splice import (
     CompiledFunction,
     CompiledObject,
@@ -16,6 +20,7 @@ from tools.xff_splice import (
     generate_data,
     place_data,
     place_functions,
+    read_object_list,
     replace_data,
     replace_function,
 )
@@ -23,6 +28,40 @@ from tools.xff_split import Reloc
 
 JAL = 0x0C000000
 SYMBOLS = {"callee": Symbol(0x40, ".text"), "other_file": Symbol(0x80, ".text")}
+
+
+def test_object_response_file_preserves_order_and_path_characters(tmp_path):
+    names = ["build/a b.o", "build/$name.o", r"C:\objects\file.o", "build/日本語.o"]
+    response = tmp_path / "objects.rsp"
+    response.write_text(json.dumps(names), encoding="utf-8")
+    assert read_object_list(response) == [Path(name) for name in names]
+
+
+@pytest.mark.parametrize("content", ["not json", "{}", "[1]", '[""]', '"one.o"'])
+def test_invalid_object_response_file_is_rejected(tmp_path, content):
+    response = tmp_path / "objects.rsp"
+    response.write_text(content, encoding="utf-8")
+    with pytest.raises(SpliceError, match="object list|object paths"):
+        read_object_list(response)
+
+
+def test_missing_object_response_file_is_rejected(tmp_path):
+    with pytest.raises(SpliceError, match="cannot read object list"):
+        read_object_list(tmp_path / "missing.rsp")
+
+
+def test_splice_cli_accepts_response_file_and_positional_objects(tmp_path, monkeypatch):
+    original = tmp_path / "build/xff/TEST.o"
+    original.parent.mkdir(parents=True)
+    original.touch()
+    response = tmp_path / "objects.rsp"
+    response.write_text('["second.o", "third.o"]', encoding="utf-8")
+    monkeypatch.setattr(xff_splice, "ROOT", tmp_path)
+    calls = []
+    monkeypatch.setattr(xff_splice, "splice", lambda *args: calls.append(args) or 3)
+    assert xff_splice.main(["TEST", "first.o", "--objects-file", str(response)]) == 0
+    assert calls[0][0] == "TEST"
+    assert calls[0][1] == [Path("first.o"), Path("second.o"), Path("third.o")]
 
 
 def fn(words, relocs=None):
