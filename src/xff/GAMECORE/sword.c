@@ -809,6 +809,33 @@ static int T_000C5570(int a, int b)
     return a != b;
 }
 
+extern unsigned long *GetCollisionDBAttributeAdr(void *surface);
+
+/* Filter collision surfaces by the packed material and reaction flags. */
+static int T_000C5580(void *surface)
+{
+    unsigned long attribute = *GetCollisionDBAttributeAdr(surface);
+    unsigned long flags = attribute & (0xF800UL << 20);
+    unsigned long material = attribute & 0x7C000000UL;
+    unsigned long mode = attribute & (0xF000UL << 30);
+    unsigned long blocked = attribute & (0x8E00UL << 38);
+
+    if (blocked != 0) {
+        return 1;
+    }
+    if (material == 0x04000000UL || material == 0x64000000UL
+        || material == 0x68000000UL || material == 0x6C000000UL || material == 0x24000000UL) {
+        return 0;
+    }
+    if (flags == (0xE000UL << 18) || flags == (0x8000UL << 18)
+        || flags == (0xB800UL << 20) || flags == (0xC000UL << 18)
+        || flags == (0xA000UL << 19) || flags == (0xA000UL << 18)
+        || mode == (0x8000UL << 28)) {
+        return 0;
+    }
+    return 1;
+}
+
 void checkChangeWeaponTypeSwordToOther(int from, int to)
 {
     /* Nested ifs: `from > 0 && from < 4` would be folded into one unsigned
