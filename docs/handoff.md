@@ -7,16 +7,19 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,059 functions** come from matching C: 663 GAMECORE, 290 MANAGER and 106 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,188 functions** come from matching C: 792 GAMECORE, 290 MANAGER and 106 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
 - Issue #73 checks the 41–80 instruction GAMECORE range and adds `Kite_SucceedKitePathWork`. Of 291 candidates, one matched, 49 differed and 241 had no usable draft. A conservative retry using byte-array declarations for address-only opaque globals added no matches (nine more usable drafts, all different). Local evidence remains under `build/auto80/GAMECORE/` and `build/auto80-retry/GAMECORE/`.
 - Issue #75 recovers eight small GAMECORE routines from the earlier unusable drafts using byte-array declarations for address-only opaque globals. All eight passed original code, data and relocation validation. The retry checked 717 candidates: eight matched, 74 differed and 635 still had no usable draft. Local evidence remains under `build/auto40-addr/GAMECORE/`.
+- Issue #76 recovers another 129 GAMECORE routines using opaque pointer types and external calls whose results are discarded. All 129 passed original code, data and relocation validation and the full build. The retry checked 635 candidates: 129 matched, 201 differed and 305 remained unresolved. Local evidence is under `build/auto40-prototypes/GAMECORE/`.
+- The Windows splice command exceeded the process command-line limit at 792 GAMECORE objects. Issue #78 / PR #79 fixes it with Ninja JSON response files; positional object arguments still work. Tests now total 89. Do not revert this fix when updating older parked branches.
 - Every remaining sword.c function has a near-match parked behind `NONMATCHING` in a draft PR:
 
 | Function | Draft PR | Status |
 | --- | --- | --- |
+| Drafts contain unknown pointed-to types or unknown external scalar results | Use `void *` for opaque pointers. A call whose result is discarded can use a `void` return declaration; do this only when every recovered use discards it. Keep other unknown scalar types unresolved and finish with full code/data/relocation validation. | small GAMECORE pass (#76) |
 | Separate early returns merge into the wrong branch layout | Send both comparison arms explicitly to shared return labels. This preserves the original shared blocks and branch direction. | `GAMEUTIL_is_nearly_equal_zero` (#69), `GAMEUTIL_is_nearly_equal_zero3D` (#71) |
 | `nico_swordstart` (sword thread) | #62 | +2 words: GCSE-hoisted stack addresses win callee-saved registers over two `%hi` parts and `origin` |
 | `T_000C1D80`, `T_000C2620` (collision callbacks) | #53 | 5 words each: the shared ignore flag is allocated to v0 instead of v1 |
