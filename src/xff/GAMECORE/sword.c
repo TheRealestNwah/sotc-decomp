@@ -462,9 +462,13 @@ static int func_000C2BE0(SwordReaction *r)
     return done;
 }
 
-#ifdef NONMATCHING
-/* 5 instructions off: the original stores active/target/value in field order
-   and indexes the reset loop from emitters[0].id. */
+/* Clear both 32-bit words of an emitter slot, including its pointer. */
+static inline void resetReactionEmitter(int *slot)
+{
+    slot[0] = 0;
+    slot[1] = 0;
+}
+
 /* Script thread for a glow reaction: runs until it has faded out, then ends
    its emitters and resets it. */
 static void func_000C2D20(SwordReaction *r)
@@ -496,16 +500,16 @@ static void func_000C2D20(SwordReaction *r)
             }
         }
     }
-    r->active = 0;
+    /* Clear the status word alongside the float controls. This access keeps
+       the original store order with the historical compiler. */
+    *(float *)&r->active = 0.0f;
     r->target = 0.0f;
     r->value = 0.0f;
     r->time = gcGlobalVar.time;
     for (j = 0; j < 2; j++) {
-        *(int *)&r->emitters[j].emitter = 0;
-        r->emitters[j].id = 0;
+        resetReactionEmitter((int *)&r->emitters[j]);
     }
 }
-#endif
 
 /* Written out in each function: a static helper isn't inlined at -O2. */
 #define STOP_SWORD_SE()            \
