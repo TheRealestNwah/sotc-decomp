@@ -56,6 +56,22 @@ python -m venv .venv
 | `tools/` | Helper scripts (ELF flattener, match checker) |
 | `tests/` | Tests for the helper scripts |
 
+## AI disclosure
+
+This project was built with [Claude Code](https://claude.com/claude-code), Anthropic's
+AI coding assistant. Claude wrote the code, tests and documentation. The
+maintainer ([@TheRealestNwah](https://github.com/TheRealestNwah)) decided what
+it should do, tested it, and made the release decisions. Commits written with
+Claude carry a `Co-Authored-By: Claude` trailer, so the git history shows which
+changes were AI-written.
+
+## Support
+
+Everything on my GitHub is free of charge and open source. If you find it
+useful and want to leave a tip or buy me a coffee, you can do that at
+[ko-fi.com/morrowheat23](https://ko-fi.com/morrowheat23). It's appreciated,
+never expected.
+
 ## License
 
 The code and tools in this repo are dedicated to the public domain under [CC0 1.0](LICENSE). This covers only the repo's own contents, never the game or anything derived from your disc.
