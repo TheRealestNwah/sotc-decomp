@@ -7,13 +7,12 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **59 GAMECORE functions** come from matching C, all in `src/xff/GAMECORE/sword.c` (issue #18).
+- **736 functions** come from matching C: 482 GAMECORE, 197 MANAGER and 57 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - Every remaining sword.c function has a near-match parked behind `NONMATCHING` in a draft PR:
 
 | Function | Draft PR | Status |
 | --- | --- | --- |
-| `func_000C3198` (boss-cloud beam) | #50 | 2 words: `a2 = 0` scheduled before the f14 argument of `func_000C1440` instead of into its delay slot |
-| `nico_swordstart` (sword thread) | #50 | +2 words: GCSE-hoisted stack addresses win callee-saved registers over two `%hi` parts and `origin` |
+| `nico_swordstart` (sword thread) | #62 | +2 words: GCSE-hoisted stack addresses win callee-saved registers over two `%hi` parts and `origin` |
 | `T_000C1D80`, `T_000C2620` (collision callbacks) | #53 | 5 words each: the shared ignore flag is allocated to v0 instead of v1 |
 | `DispWithSwordBlur`, `DispWithTorchBlur` | #56 | 616 of 629 words: loop-invariant hoisting and constant sharing differ |
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
@@ -32,6 +31,7 @@ All of these are for Sony `ee-gcc` 2.96 at `-O2 -G0`.
 
 | Symptom | What fixed it | Example |
 | --- | --- | --- |
+| Constant integer argument scheduled before a live float argument instead of in the call delay slot | Put the integer flag after the float arguments in the emitter declaration, definition and calls. The EE ABI keeps the same integer and float register assignments; source parameter order changes scheduling. | `func_000C3198` (#50) |
 | Pointer offset rebased onto another register (`geometry+0x50` instead of `reaction+0x60`) | cse2 knew `reaction == geometry - 0x10` and folded the offset. Reassigning the base after its last use (`geometry = (char *)reaction;`) removes that equivalence. | `func_000C2EB0` |
 | Two independent loop-preheader or increment instructions swapped | Walk the array with a source-level pointer (`int *sheet = sheets;`) and order the increments (`sheet++, i++`). Hoisted invariants are emitted before giv inits, so the insn order decides scheduler ties. | `func_000C2EB0` |
 | Float registers swapped in an expression | Hold the subexpressions in locals and try every declaration order. Local allocation follows declaration order. | `func_000C2318` |
