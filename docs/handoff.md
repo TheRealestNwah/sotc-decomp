@@ -7,8 +7,15 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **59 GAMECORE functions** come from matching C, all in `src/xff/GAMECORE/sword.c` (issue #18). Nothing is parked behind `NONMATCHING` any more.
-- Left in sword.c: `func_000C3198`, `nico_swordstart`, `T_000C1D80`, `T_000C2620`, `DispWithSwordBlur`, `DispWithTorchBlur`.
+- **59 GAMECORE functions** come from matching C, all in `src/xff/GAMECORE/sword.c` (issue #18).
+- Every remaining sword.c function has a near-match parked behind `NONMATCHING` in a draft PR:
+
+| Function | Draft PR | Status |
+| --- | --- | --- |
+| `func_000C3198` (boss-cloud beam) | #50 | 2 words: `a2 = 0` scheduled before the f14 argument of `func_000C1440` instead of into its delay slot |
+| `nico_swordstart` (sword thread) | #50 | +2 words: GCSE-hoisted stack addresses win callee-saved registers over two `%hi` parts and `origin` |
+| `T_000C1D80`, `T_000C2620` (collision callbacks) | #53 | 5 words each: the shared ignore flag is allocated to v0 instead of v1 |
+| `DispWithSwordBlur`, `DispWithTorchBlur` | #56 | 616 of 629 words: loop-invariant hoisting and constant sharing differ |
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Resuming safely
@@ -31,5 +38,11 @@ All of these are for Sony `ee-gcc` 2.96 at `-O2 -G0`.
 | Original reloads a global in each branch, C keeps it in a register | Store through a pointer but read the global by name (`*p = (vol) + d;`). | `func_000C0EB0` (`STEP_VOL`) |
 | Store order inside a struct differs | Write through a union view of the word (`((union { int i; float f; } *)&r->target)->f = 1.0f`), or store an int field as float (`*(float *)&r->active = 0.0f`) to group it with neighbouring float stores. | `func_000C2EB0`, `func_000C2D20` |
 | Macro-scheduled code differs | Plain `{ }` scopes instead of `do { } while (0)`. | glow macros |
+| Branchy 0/1 flag where C gives store-flag (`sltu`) or `movz` code | Use one condition whose `x = 1`/`x = 0` blocks are shared by both arms (`if (hard ? !(a & B) : (a & B) != 0) return 1; return 0;`). Separate if/else arms get converted by the jump or if-conversion passes. | `isIgnoredSurface` (#53) |
+| Float loads reordered above a 128-bit `lq/sq` copy | A `*(u_long128 *)` copy doesn't alias `float` under strict aliasing. Copy through a union of `u_long128` and a float struct. | `nico_swordstart` (#50) |
+| Constants sit in callee-saved FP registers from the top of a block | The original holds them in locals initialized there (`float z0 = 0.05f;`). | blur trail (#56) |
+| Unused `static inline` functions | gcc 2.96 still emits their string literals into `.rodata`, so unused helpers can be needed for `.rodata` to line up. | `getWeakIndexWeak` (#53) |
+
+Register-allocation leftovers are the hardest residue. Our reading of gcc 2.96's global allocator (unconfirmed): it first tries registers already in use that no *conflicting* allocno prefers, and preferences of allocnos that cross calls are pruned.
 
 To see which compiler pass rewrites an expression, run `cc1` with `-da` under WSL (copy the input to `/tmp` first, as `tools/try_compilers.py` does) and compare the per-pass RTL dumps (`*.loop`, `*.cse2`, `*.combine`, `*.sched`) for the function.
