@@ -5,6 +5,14 @@
  * below are the file's whole .data block, in the original order. */
 
 typedef struct GameObj GameObj;
+typedef float sceVu0FVECTOR[4] __attribute__((aligned(16)));
+
+/* The sword's transform: position, then its direction at 0xB0. */
+typedef struct {
+    sceVu0FVECTOR pos;
+    char pad10[0xA0];
+    sceVu0FVECTOR dir;
+} SwordMatrix;
 typedef struct SpriteMenuObjDef SpriteMenuObjDef;
 
 extern SpriteMenuObjDef *ScriptSpriteMenuObjDef_SPRITE_BOSS_LIFE_LAYOUT;
@@ -34,12 +42,22 @@ typedef struct {
     char pad20[0x20];
 } ParticleParam;
 
+extern float iosGetSinf(float x);
+extern int bossStatGetActiveBoss(void);
+extern void GetQuaternionByAxisDirZY(sceVu0FVECTOR q, sceVu0FVECTOR dir, sceVu0FVECTOR up);
+
 extern int SeList_sword_test;
 extern int sePlay3D(int se, void *pos, int a2, int a3);
 extern void seSetVol(int handle, float vol);
 extern void seStop(int handle);
 extern GameObj *SCRGetFirstObj(void *list);
 extern void nico_playerEndHoistSword(GameObj *obj);
+extern void nico_playerBeginHoistSword(GameObj *obj);
+extern int getSelectWeapon(void);
+extern int bossStatBootChk(void);
+extern int SeList_sword_boss_test;
+extern int SeList_sword_weak_test;
+extern sceVu0FVECTOR B_0019CE70; /* in sword.c's .bss */
 
 typedef struct {
     char pad0[0x2B0];
@@ -51,7 +69,8 @@ extern GcGlobalVar gcGlobalVar;
 static void func_000C5468(int *done);
 
 /* Not decompiled yet; named after their labels in the assembly. */
-extern void func_000C3BA0();
+extern void func_000C1440(sceVu0FVECTOR rot, sceVu0FVECTOR pos, int a2, float lineAngle,
+                          float ambient, float ambientLine);
 extern void func_000C5718();
 
 static int bossSprStatus[4] = { 0, 0, 0, 0 };
@@ -87,11 +106,11 @@ static struct {
     void *pos;
     int se[3]; /* sound handles: sword hum, boss, weak point */
 } swordSe = { 0, { 0, 0, 0 } };
-static int D_0017B118 = 0;
-static int D_0017B11C = 0;
-static int D_0017B120 = 0;
-static int D_0017B124 = 0;
-static int D_0017B128 = 0;
+static float humVolTarget = 0.0f;
+static float glowVolTarget = 0.0f;
+static float humVol = 0.0f;
+static float glowVol = 0.0f;
+static float D_0017B128 = 0.0f;
 static float D_0017B12C = 0.2f;
 static int D_0017B130 = 0;
 static float D_0017B134 = 0.2f;
@@ -117,7 +136,7 @@ static int D_0017B1DC = 0;
 static int D_0017B1E0 = 0;
 static int swordIndicateAimPoint = 0;
 static float D_0017B1E8 = 1.0f;
-static int D_0017B1EC = 0;
+static int swordHoisted = 0;
 
 void BossSprStatusBegin(void)
 {
@@ -132,6 +151,13 @@ void BossSprStatusEnd(void)
 {
     bossSprStatus[0] = 0;
 }
+
+#define CLAMP01(x) ((x) < 0.0f ? 0.0f : ((x) > 1.0f ? 1.0f : (x)))
+#define SIGN(x) ((x) < 0.0f ? -1.0f : ((x) > 0.0f ? 1.0f : 0.0f))
+#define ABS(x) ((x) < 0.0f ? -(x) : (x))
+
+/* Moves `vol` towards `target` by at most 0.1. */
+#define STEP_VOL(vol, target)                     do {                                              float d = (target) - (vol);                   if (ABS(d) > 0.1f) {                              (vol) += SIGN(d) * 0.1f;                  } else {                                          (vol) += d;                               }                                         } while (0)
 
 /* Starts the sword's sounds at `pos`, silent; bossSe/weakSe 0 stops that one. */
 static void func_000C0D48(int bossSe, int weakSe, void *pos)
@@ -175,6 +201,39 @@ static void func_000C0D48(int bossSe, int weakSe, void *pos)
 #define SWORD_LINE(boss) ((boss) ? SParticleSheetData_S_LINE_BOSS : SParticleSheetData_S_LINE)
 #define SWORD_SHEETS(boss)                                                                        {                                                                                                 SParticleSheetData_S_GLOW, SParticleSheetData_S_AURA, SParticleSheetData_S_FLARE,                 SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss),                       SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss)                }
 
+#ifdef NONMATCHING
+/* The first clamp matches; the later ones (on the statics) branch differently. */
+/* Sets the sword sound volumes from the glow power (0..1) and `scale`. */
+static void func_000C0EB0(float power, float scale)
+{
+    if (D_0017B080[0] != 0) {
+        return;
+    }
+    power = CLAMP01(power);
+
+    glowVolTarget = (1.0f - power) * 0.8f * (scale * 1.25f) + 0.15f;
+    glowVolTarget = CLAMP01(glowVolTarget);
+    glowVolTarget = iosGetSinf(glowVolTarget * 0.25f * 3.1415926f);
+    STEP_VOL(glowVol, glowVolTarget);
+    if (swordSe.se[1] != 0) {
+        seSetVol(swordSe.se[1], glowVol);
+    }
+    if (swordSe.se[2] != 0) {
+        seSetVol(swordSe.se[2], glowVol);
+    }
+
+    humVolTarget = power * 0.8f * (scale * 1.25f) + 0.15f;
+    humVolTarget = CLAMP01(humVolTarget);
+    humVolTarget = iosGetSinf(humVolTarget * 0.25f * 3.1415926f);
+    STEP_VOL(humVol, humVolTarget);
+    if (swordSe.se[0] != 0) {
+        seSetVol(swordSe.se[0], humVol);
+    }
+}
+#else
+extern void func_000C0EB0(float power, float scale);
+#endif
+
 /* Boots the sword's particle emitters that aren't running. */
 static void func_000C11E8(int boss)
 {
@@ -212,6 +271,58 @@ static void func_000C1998(int boss)
     D_0017B080[0] = 1;
 }
 
+/* libvu0's sceVu0Normalize, inlined: dst = normalized xyz of src. */
+#define VU0_NORMALIZE(dst, src)                             __asm__ __volatile__("lqc2 vf05, 0x0(%1)
+"                                  "vmul.xyz vf07, vf05, vf05
+"                           "vmulax.w ACC, vf00, vf07
+"                            "vmadday.w ACC, vf00, vf07
+"                           "vmaddz.w vf07, vf00, vf07
+"                           "vrsqrt Q, vf00w, vf07w
+"                              "vwaitq
+"                                              "vmulq.xyz vf05, vf05, Q
+"                             "sqc2 vf05, 0x0(%0)
+"                                  :                                                       : "r"(dst), "r"(src)                                    : "memory")
+
+#ifdef NONMATCHING
+/* Close: only float register allocation differs (the original keeps one 0.0f for
+   both clamps and copies `ambient` to $f13 first). */
+static inline float ratio01(float x, float lo, float hi)
+{
+    float r = (x - lo) / (hi - lo);
+    if (r < 0.0f) {
+        return 0.0f;
+    }
+    if (r > 1.0f) {
+        return 1.0f;
+    }
+    return r;
+}
+
+static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
+{
+    sceVu0FVECTOR dir;
+    sceVu0FVECTOR rot;
+    sceVu0FVECTOR zero;
+    sceVu0FVECTOR identity;
+    float ambientRatio;
+
+    if (bossStatGetActiveBoss()) {
+        VU0_NORMALIZE(dir, m->dir);
+        GetQuaternionByAxisDirZY(rot, dir, D_0017B090);
+        ambientRatio = ratio01(ambient, minAmbientWeak, maxAmbientWeak);
+        ambient = ratio01(ambient, minAmbientLineWeak, maxAmbientLineWeak);
+        func_000C0EB0((power - D_0017B128) / (D_0017B12C - D_0017B128), ambient);
+        func_000C1440(rot, m->pos, 1, power * maxLineAngleWeak, ambientRatio, ambient);
+    } else {
+        memset(zero, 0, sizeof(zero));
+        zero[3] = 1.0f;
+        memset(identity, 0, sizeof(identity));
+        identity[3] = 1.0f;
+        func_000C1440(identity, zero, 1, 0.0f, 0.0f, 0.0f);
+    }
+}
+#endif
+
 /* Written out in each function: a static helper isn't inlined at -O2. */
 #define STOP_SWORD_SE()                        do {                                           if (swordSe.se[0] != 0) {                      seStop(swordSe.se[0]);                     swordSe.se[0] = 0;                     }                                          if (swordSe.se[1] != 0) {                      seStop(swordSe.se[1]);                     swordSe.se[1] = 0;                     }                                          if (swordSe.se[2] != 0) {                      seStop(swordSe.se[2]);                     swordSe.se[2] = 0;                     }                                      } while (0)
 
@@ -228,7 +339,45 @@ void CancelSwordEffect(void)
         STOP_SWORD_SE();
     }
     nico_playerEndHoistSword(SCRGetFirstObj(gcGlobalVar.playerList));
-    D_0017B1EC = 0;
+    swordHoisted = 0;
+}
+
+/* Motion callback: raises the sword and starts its effects if a sword is selected. */
+static void func_000C3BA0(void)
+{
+    int weapon = getSelectWeapon();
+
+    if (weapon < 4) {
+        if (weapon > 0) {
+            goto sword;
+        }
+    }
+    swordHoisted = 0;
+    return;
+sword:
+    if (swordHoisted == 0) {
+        if (D_0017B150 == 0 && D_0017B154 == 0) {
+            if (bossStatBootChk() > 0) {
+                if (D_0017B150 == 0) {
+                    func_000C11E8(1);
+                    D_0017B150 = 1;
+                    func_000C0D48(SeList_sword_boss_test, SeList_sword_weak_test,
+                                  B_0019CE70);
+                    D_0017B1D4 = 0;
+                    D_0017B1D8 = 1.0f;
+                    D_0017B1DC = 0;
+                    D_0017B1E0 = 0;
+                }
+            } else if (D_0017B154 == 0) {
+                func_000C11E8(0);
+                D_0017B154 = 1;
+                func_000C0D48(SeList_sword_boss_test, 0, B_0019CE70);
+            }
+        }
+        swordIndicateAimPoint = 0;
+        nico_playerBeginHoistSword(SCRGetFirstObj(gcGlobalVar.playerList));
+    }
+    swordHoisted = 1;
 }
 
 int CheckSwordIndicateAimPoint(GameObj *obj)
