@@ -382,6 +382,49 @@ static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
     }
 }
 
+/* Glow strength for a hit at `dist`: 1 at the minimum distance, 0 at the maximum. */
+#define GLOW_POWER(power, dist, scale)                                                 \
+    {                                                                               \
+        float r;                                                                       \
+        float sc = (scale);                                                            \
+        (power) = ((dist) - swordGlowDistMin) / (swordGlowDistMax - swordGlowDistMin); \
+        r = CLAMP01(power);                                                            \
+        (power) = (1.0f - r) * sc;                                                     \
+    }
+#define UPDATE_GLOW_CLEAR(power)                                                            \
+    {                                                                                    \
+        if (glowClearEmitter.id != 0) {                                                     \
+            SetGeometryPointerGlobalState(glowClearEmitter.emitter + 0xD0, B_0019CEB0,      \
+                                          B_0019CEC0);                                      \
+            set_npe_blend_ratio_particle_emitter(1.0f - (power),                            \
+                                                 SParticleSheetData_S_GLOW_CLEAR,           \
+                                                 glowClearEmitter.id);                      \
+        }                                                                                   \
+    }
+
+/* Lights the weak point the sword points at, and fades the glow-clear emitter. */
+static void func_000C29B0(u_long128 *pos)
+{
+    SwordGlowQuery q;
+    SwordGlowQuery init;
+    float power;
+
+    memset(&init, 0, sizeof(init));
+    init.dist = swordGlowDistMax;
+    q = init;
+    q.pos = *pos;
+    GetCollisionDBGroupCallBack(gcGlobalVar.colGroup, T_000C2620, &q);
+    if (q.hit) {
+        GLOW_POWER(power, q.dist, q.power);
+        UPDATE_GLOW_CLEAR(power);
+        ConvertGeometryPointerZNormalMode(q.geometry, q.geometry);
+        boot_weakpoint_effect(q.hitPos, power, q.hitPos[2], q.hitPos[3]);
+    } else {
+        GLOW_POWER(power, 0.0f, 0.0f);
+        UPDATE_GLOW_CLEAR(power);
+    }
+}
+
 /* A glow reaction on something the sword hits. */
 typedef struct {
     int active;
@@ -460,52 +503,6 @@ static void func_000C2D20(SwordReaction *r)
     for (j = 0; j < 2; j++) {
         *(int *)&r->emitters[j].emitter = 0;
         r->emitters[j].id = 0;
-    }
-}
-#endif
-
-/* Glow strength for a hit at `dist`: 1 at the minimum distance, 0 at the maximum. */
-#define GLOW_POWER(power, dist, scale)                                                 \
-    do {                                                                               \
-        float r;                                                                       \
-        float sc = (scale);                                                            \
-        (power) = ((dist) - swordGlowDistMin) / (swordGlowDistMax - swordGlowDistMin); \
-        r = CLAMP01(power);                                                            \
-        (power) = (1.0f - r) * sc;                                                     \
-    } while (0)
-#define UPDATE_GLOW_CLEAR(power)                                                            \
-    do {                                                                                    \
-        if (glowClearEmitter.id != 0) {                                                     \
-            SetGeometryPointerGlobalState(glowClearEmitter.emitter + 0xD0, B_0019CEB0,      \
-                                          B_0019CEC0);                                      \
-            set_npe_blend_ratio_particle_emitter(1.0f - (power),                            \
-                                                 SParticleSheetData_S_GLOW_CLEAR,           \
-                                                 glowClearEmitter.id);                      \
-        }                                                                                   \
-    } while (0)
-
-#ifdef NONMATCHING
-/* Scheduling differs around the clamp. */
-/* Lights the weak point the sword points at, and fades the glow-clear emitter. */
-static void func_000C29B0(u_long128 *pos)
-{
-    SwordGlowQuery q;
-    SwordGlowQuery init;
-    float power;
-
-    memset(&init, 0, sizeof(init));
-    init.dist = swordGlowDistMax;
-    q = init;
-    q.pos = *pos;
-    GetCollisionDBGroupCallBack(gcGlobalVar.colGroup, T_000C2620, &q);
-    if (q.hit) {
-        GLOW_POWER(power, q.dist, q.power);
-        UPDATE_GLOW_CLEAR(power);
-        ConvertGeometryPointerZNormalMode(q.geometry, q.geometry);
-        boot_weakpoint_effect(q.hitPos, power, q.hitPos[2], q.hitPos[3]);
-    } else {
-        GLOW_POWER(power, 0.0f, 0.0f);
-        UPDATE_GLOW_CLEAR(power);
     }
 }
 #endif
