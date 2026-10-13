@@ -7,8 +7,9 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **908 functions** come from matching C: 654 GAMECORE, 197 MANAGER and 57 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **957 functions** come from matching C: 654 GAMECORE, 197 MANAGER and 106 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
+- Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Every remaining sword.c function has a near-match parked behind `NONMATCHING` in a draft PR:
 
 | Function | Draft PR | Status |
