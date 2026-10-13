@@ -1,0 +1,6 @@
+extern int B_001885F0;
+
+int opflowChkAbort(void)
+{
+    return B_001885F0 != 0;
+}

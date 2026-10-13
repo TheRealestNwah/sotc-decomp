@@ -1,0 +1,14 @@
+extern void *SCRGetBossWork();
+
+int SCRConditionOverMyselfLife(float fparg0)
+{
+    int var_v1;
+    void *temp_v0;
+
+    temp_v0 = SCRGetBossWork();
+    var_v1 = 1;
+    if (!(fparg0 <= (((*(float *)((char *)(temp_v0) + 0x44)) / (*(float *)((char *)(temp_v0) + 0x40))) * 100.0f))) {
+        var_v1 = 0;
+    }
+    return var_v1;
+}
