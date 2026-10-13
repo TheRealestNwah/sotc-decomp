@@ -1,24 +1,63 @@
 # sotc-decomp
 
-Matching decompilation of Shadow of the Colossus (PS2, NTSC-U `SCUS-97472`), aiming for a later native PC port. See README.md for the roadmap.
+Matching decompilation of Shadow of the Colossus (PS2, NTSC-U `SCUS-97472`), with a native PC port as the long-term goal.
 
-## Commands
+## Goals
 
-- Install: `pip install -r requirements.txt` (inside `.venv`)
-- Test: `pytest`
-- Lint: `ruff check .` and `ruff format --check .` (fix with `ruff format .`)
-- Verify base executable: `python tools/check_baserom.py`
+1. Rebuild the original binaries byte-for-byte from source in this repo.
+2. Replace assembly with C, one function at a time, keeping the build matching at every step.
+3. Once fully matching, build a PC port on top of the decompiled code.
 
-CI (`.github/workflows/ci.yml`) runs lint + tests on every PR.
+Current phase: the loader ELF `SCUS_974.72` splits with splat and is meant to rebuild from assembly. The game code itself lives in `KERNEL.XFF`, `MANAGER.XFF` and `GAMECORE.XFF` (custom `xff2` format), which isn't split yet. See `docs/findings.md`.
+
+## Matching rules
+
+- **Never edit generated assembly to force a match.** If something doesn't match, fix the split config, the build flags or the C, never the asm by hand.
+- **C must compile to identical bytes.** A function counts as decompiled only when the compiled output matches the original exactly, with no hand-written asm patching around it.
+- **No game files in git.** Everything from the disc (`iso/`), everything splat generates (`asm/`, `*.ld`, `undefined_*_auto.txt`) and all build output stay gitignored.
+- **Don't guess the compiler.** It's GCC-based, probably 2.9x-era EE GCC (Sony `ee-gcc` vs SN ProDG is undecided). Ask the user before picking a compiler or version, and record the evidence in `docs/findings.md`.
+- Sony SDK 3.0.x libraries (listed in `docs/findings.md`) get identified by signature, not decompiled by hand.
+
+## Toolchain (native Windows)
+
+- Python 3.11+ with a venv: `python -m venv .venv`, then `.venv\Scripts\pip install -r requirements.txt` (installs splat, pyelftools, ninja, pytest, ruff)
+- PS2 EE binutils from PS2DEV (`mips64r5900el-ps2-elf-as` / `-ld`) on `PATH`. To use another prefix, pass `--cross` or set `SOTC_CROSS`.
+- No `objcopy` needed: `tools/elf2rom.py` flattens ELFs in Python (`tools/objcopy.cmd` wraps it for `splat create_config --objcopy`).
+
+## Build and check
+
+The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
+
+```
+.venv\Scripts\python configure.py     # splits with splat if asm/ is missing, writes build.ninja
+.venv\Scripts\ninja                   # assemble, link, flatten -> build/SCUS_974.72.rom
+.venv\Scripts\ninja check             # compare build/SCUS_974.72.rom with the original
+```
+
+- `configure.py --split` forces a fresh split (do this after editing `SCUS_974.72.yaml` or `symbol_addrs.txt`).
+- `check` compares the flattened code and data images (every loaded byte). It doesn't compare ELF headers.
+- `python tools/check_baserom.py` checks that `iso/SCUS_974.72` is the expected dump (SHA1 in `config/baserom.json`).
+
+## Tests and lint
+
+- `pytest` covers the Python tools in `tools/` and `configure.py`'s helpers
+- `ruff check .` and `ruff format --check .` (fix with `ruff format .`)
+- CI (`.github/workflows/ci.yml`) runs both on every PR. CI has no game files and no PS2 toolchain, so it can't run the matching build.
 
 ## Layout
 
-- `config/baserom.json`: expected executable name, path and SHA-1 (`sha1` is `null` until verified against a known-good dump)
-- `tools/`: Python helper scripts; `tests/` covers them
-- `src/`, `include/`: decompiled C code and headers (empty for now)
+- `SCUS_974.72.yaml`: splat config. Its `sha1` is the flattened image's hash, not the ELF's.
+- `symbol_addrs.txt`: named symbols (hand-maintained). `linker_script_extra.ld`: entry point.
+- `configure.py`: generates `build.ninja`
+- `tools/`: helper scripts (`elf2rom.py`, `check.py`, `check_baserom.py`); `tests/` covers them
+- `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
+- `src/`: decompiled C (empty for now). Mirror the asm path: `asm/<segment>/x.s` becomes `src/<segment>/x.c`.
+- `docs/findings.md`: what we know about the binaries, the compiler and the SDK
+- `config/baserom.json`: expected original executable path and SHA1
 
 ## Gotchas
 
-- **Never commit game files.** `baserom/`, ELFs, ISOs and everything splat generates (`asm/`, `assets/`, `build/`) are gitignored. Keep it that way.
-- The game is MIPS R5900 (Emotion Engine). Matching needs the original compiler version, which hasn't been identified yet.
-- Don't fill in `sha1` in `config/baserom.json` from memory or the web without the user confirming it against their dump.
+- The original sections aren't 16-byte aligned, so the splat config sets `ld_align_section_vram_end: False`. Re-enabling it shifts everything after `.text`.
+- `.data_nop` (0x39D84) is typed `sdata` in the splat config so it links between `.lit4` and `.sdata`. As `data` it would be linked too early.
+- `.text_nop` and `.reginfo` sit in the data blob at `0x31BAC`. That's fine for the image match, but not a real `.reginfo`.
+- Windows PowerShell 5 here: `Set-Content -NoNewline` isn't available.

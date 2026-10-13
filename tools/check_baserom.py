@@ -38,7 +38,7 @@ def check(config_path: Path, root: Path) -> tuple[bool, str]:
     if not rom_path.is_file():
         return False, (
             f"Missing {config['path']}. Copy {config['elf_name']} from your own "
-            "disc into the baserom/ folder."
+            "disc into the iso/ folder."
         )
 
     actual = sha1_of(rom_path)

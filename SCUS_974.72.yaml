@@ -1,0 +1,97 @@
+name: Shadow of the Colossus (NTSC-U, SCUS-97472) loader ELF
+# sha1 is of the flattened image made by tools/elf2rom.py, not of the ELF file itself.
+sha1: 325b0c60131d3f7ae877119cf70d8482d90c57b7
+options:
+  basename: SCUS_974.72
+  target_path: iso/SCUS_974.72.rom
+  elf_path: build/SCUS_974.72.elf
+  base_path: .
+  platform: ps2
+  compiler: EEGCC
+
+  gp_value: 0x00141D70
+  ld_gp_expression: cod_LIT4_START + 0x7FF0
+
+  # asm_path: asm
+  # src_path: src
+  # build_path: build
+
+  ld_script_path: SCUS_974.72.ld
+  ld_dependencies: True
+  ld_wildcard_sections: True
+  ld_bss_contains_common: True
+  # The original sections aren't 16-byte aligned (.text ends at 0x131BAC), so don't pad between them.
+  ld_align_section_vram_end: False
+  ld_align_segment_vram_end: False
+
+  create_asm_dependencies: True
+
+  find_file_boundaries: False
+
+  o_as_suffix: True
+
+  symbol_addrs_path:
+    - symbol_addrs.txt
+  reloc_addrs_path:
+    - reloc_addrs.txt
+
+  # undefined_funcs_auto_path: undefined_funcs_auto.txt
+  # undefined_syms_auto_path: undefined_syms_auto.txt
+
+  # extensions_path: tools/splat_ext
+
+  string_encoding: ASCII
+  data_string_encoding: ASCII
+  rodata_string_guesser_level: 2
+  data_string_guesser_level: 2
+
+  named_regs_for_c_funcs: False
+
+  section_order:
+    - .text
+    # - .text_nop
+    - .data
+    # - .ctors
+    # - .dtors
+    # - .eh_frame
+    - .rodata
+    - .lit4
+    # - .data_nop
+    - .sdata
+    - .sbss
+    - .bss
+
+  auto_link_sections:
+    # - .text_nop
+    - .data
+    # - .ctors
+    # - .dtors
+    # - .eh_frame
+    - .rodata
+    - .lit4
+    # - .data_nop
+    - .sdata
+    - .sbss
+    - .bss
+
+segments:
+  - name: cod
+    type: code
+    start: 0x000000
+    vram: 0x00100000
+    bss_size: 0x301A8
+    subalign: null
+    subsegments:
+      - [0x000000, asm, cod/000000] # .text
+      - [0x031BAC, data, cod/031BAC] # .text_nop
+      - [0x031C00, data, cod/031C00] # .data
+      - [0x0360CC, data, cod/0360CC] # .ctors
+      - [0x0360D4, data, cod/0360D4] # .dtors
+      - [0x0360E0, data, cod/0360E0] # .eh_frame
+      - [0x036100, rodata, cod/036100] # .rodata
+      - [0x039D80, lit4, cod/039D80] # .lit4
+      - [0x039D84, sdata, cod/039D84] # .data_nop, typed sdata so it links between .lit4 and .sdata
+      - [0x039E00, sdata, cod/039E00] # .sdata
+      - { type: sbss, vram: 0x0013A180, name: cod/0013A180 } # .sbss
+      - { type: bss, vram: 0x0013A200, name: cod/0013A200 } # .bss
+  - [0x3A180]
