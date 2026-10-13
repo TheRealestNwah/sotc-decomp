@@ -499,7 +499,7 @@ static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
     }
 }
 
-/* Parked boss weak-point query: 193 words, 16 differing words. See issue #38. */
+/* Parked boss weak-point query: 193 words, 12 differing words. See issue #38. */
 #ifdef NONMATCHING
 extern void T_000C1D80();
 extern void sprWeaponGetMarkerPos(sceVu0FVECTOR pos);
@@ -580,10 +580,19 @@ static void func_000C2318(GameObj *obj, u_long128 *pos)
         }
         }
     }
-    minRadians = minAngleWeak * 0.017453292f;
-    func_000C1BA8((SwordMatrix *)&query,
-        (((1.0f - (query.bestDot + 1.0f) * 0.5f) * 3.1415926f) - minRadians)
-          / (maxAngleWeak * 0.017453292f - minRadians), brightness);
+    {
+        float one = 1.0f;
+        float angle = 3.1415926f;
+        float dot = query.bestDot;
+        float lo = minAngleWeak * 0.017453292f;
+
+        dot += one;
+        dot *= 0.5f;
+        dot = one - dot;
+        angle *= dot;
+        func_000C1BA8((SwordMatrix *)&query,
+            (angle - lo) / (maxAngleWeak * 0.017453292f - lo), brightness);
+    }
 }
 #endif
 
