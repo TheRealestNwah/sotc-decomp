@@ -1,4 +1,4 @@
-from tools.m2c import clean, extract
+from tools.m2c import clean, extract, reloc_names
 
 LINES = [
     "glabel f # 1",
@@ -64,3 +64,16 @@ def test_split_tail_alias_and_branch_stay_in_one_function():
     assert ".Lm2c.func_000C3160:" in out
     assert "    b .Lm2c.func_000C3160" in out
     assert "func_000C3160:" not in out
+
+
+def test_named_raw_relocations_keep_paired_addends():
+    lines = [
+        '.reloc ., R_MIPS_HI16, "gcGlobalVar"',
+        "    /* 0C2624 000C2624 0000023C */ .word 0x3C020000 /* .word 0x3C020000 */",
+        '.reloc ., R_MIPS_LO16, "gcGlobalVar"',
+        "    /* 0C2630 000C2630 B8024424 */ .word 0x244402B8 /* .word 0x244402B8 */",
+    ]
+    assert reloc_names(lines, {}) == {1: "gcGlobalVar + 0x2B8", 3: "gcGlobalVar + 0x2B8"}
+    out = clean(lines)
+    assert "%hi(gcGlobalVar + 0x2B8)" in out[0]
+    assert "%lo(gcGlobalVar + 0x2B8)" in out[1]

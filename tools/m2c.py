@@ -98,9 +98,6 @@ def reloc_names(lines: list[str], section_bases: dict[str, int]) -> dict[int, st
     names = {}
     for k, (i, rtype, target, word) in enumerate(sites):
         section = target[len("start") :] if target.startswith("start.") else None
-        if section is None or section not in section_bases:
-            names[i] = target
-            continue
         if rtype == "R_MIPS_26":
             offset = (word & 0x3FFFFFF) << 2
         elif rtype == "R_MIPS_HI16":
@@ -111,6 +108,10 @@ def reloc_names(lines: list[str], section_bases: dict[str, int]) -> dict[int, st
                 (s[3] for s in reversed(sites[:k]) if s[1] == "R_MIPS_HI16" and s[2] == target), 0
             )
             offset = ((hi & 0xFFFF) << 16) + sext16(word)
+        if section is None or section not in section_bases:
+            suffix = f" {'+' if offset > 0 else '-'} 0x{abs(offset):X}" if offset else ""
+            names[i] = target + suffix
+            continue
         prefix = SECTION_PREFIXES.get(section, "D")
         names[i] = f"{prefix}_{section_bases[section] + offset:08X}"
     return names
