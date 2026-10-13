@@ -53,3 +53,7 @@ python -m venv .venv
 | `include/` | Assembler macros and headers |
 | `tools/` | Helper scripts (ELF flattener, match checker) |
 | `tests/` | Tests for the helper scripts |
+
+## License
+
+The code and tools in this repo are dedicated to the public domain under [CC0 1.0](LICENSE). This covers only the repo's own contents, never the game or anything derived from your disc.
