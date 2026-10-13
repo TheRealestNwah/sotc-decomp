@@ -627,7 +627,6 @@ static void func_000C2D20(SwordReaction *r)
     }
 }
 
-#ifdef NONMATCHING
 /* Character collision fields used by the sword ray. */
 typedef struct {
     char pad0[0x370];
@@ -664,18 +663,20 @@ static int T_000C5580(void *surface);
                          : : "r"(dst), "r"(a), "r"(b) : "memory")
 
 /* Keep emitter initialization in a semantic inline helper. The union view
-   retains the original target-word store ordering with this compiler. */
+   retains the original target-word store ordering with this compiler, and the
+   sheet pointer (incremented before the index) the original loop scheduling. */
 static inline void startSwordReaction(SwordReaction *reaction)
 {
     int i;
     int sheets[2] = { SParticleSheetData_S_REACTION_SUB, SParticleSheetData_S_REACTION };
+    int *sheet = sheets;
 
     reaction->active = 1;
     ((union { int i; float f; } *)&reaction->target)->f = 1.0f;
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 2; sheet++, i++) {
         if (reaction->emitters[i].id == 0) {
             reaction->emitters[i].id = boot_particle_emitter(
-                get_particle_effect_id_from_sheet(sheets[i]), reaction->geometry,
+                get_particle_effect_id_from_sheet(*sheet), reaction->geometry,
                 func_000C5568, &reaction->active);
             reaction->emitters[i].emitter = get_particle_emitter_from_emitter_id(
                 reaction->emitters[i].id);
@@ -684,8 +685,7 @@ static inline void startSwordReaction(SwordReaction *reaction)
     gcCreateScriptObj(func_000C2D20, reaction, rootPtn, 0x2000, 0, 8, RO_001806D0);
 }
 
-/* Cast the sword ray and start or refresh its collision glow reaction.
-   Parked: two differing words in emitter-slot address calculation. See issue #43. */
+/* Cast the sword ray and start or refresh its collision glow reaction. */
 static void func_000C2EB0(sceVu0FVECTOR pos, u_long128 *dir, float power)
 {
     sceVu0FVECTOR end;
@@ -735,13 +735,15 @@ static void func_000C2EB0(sceVu0FVECTOR pos, u_long128 *dir, float power)
     GetQuaternionByAxisDirZY(rotation, (float *)&normal, D_0017B090);
     reaction = (SwordReaction *)(geometry - 0x10);
     SetGeometryPointerGlobalState(geometry, rotation, (float *)(geometry + 0x40));
+    /* Reusing the pointer keeps the emitter slots addressed from the reaction
+       (the compiler otherwise folds them into geometry + 0x50). */
+    geometry = (char *)reaction;
     if (reaction->active == 0) {
         startSwordReaction(reaction);
     } else if (reaction->target <= 1.0f) {
         ((union { int i; float f; } *)&reaction->target)->f = 1.0f;
     }
 }
-#endif
 
 /* Written out in each function: a static helper isn't inlined at -O2. */
 #define STOP_SWORD_SE()            \
