@@ -1,4 +1,14 @@
-from tools.permute import PLACEHOLDER, normalize_objdump, only_target, target_asm
+from base64 import b64decode
+
+import pytest
+
+from tools.permute import (
+    PLACEHOLDER,
+    normalize_objdump,
+    only_target,
+    protect_inline_asm,
+    target_asm,
+)
 
 SOURCE = """int a(void) { return 1; }
 
@@ -51,3 +61,29 @@ def test_normalize_objdump_hides_symbol_names_and_addends():
     assert out[1].endswith(PLACEHOLDER) and out[3].endswith(PLACEHOLDER)
     assert out[2].endswith("addiu\ta0,s1,0")
     assert out[4] == " 794:\t10400025 \tbeqz\tv0,82c <f+0xb4>"
+
+
+def test_protect_inline_asm_preserves_multiline_strings_and_constraints():
+    asm = '__asm__ __volatile__("load (\nstore )\n" : "=r"(out) : "r"(in) : "memory");'
+    out = protect_inline_asm(f"void f(void) {{ {asm} return; }}")
+    encoded = out.split("#pragma _permuter b64literal ")[1].splitlines()[0]
+    assert b64decode(encoded).decode("utf-8") == asm
+    assert "return; }" in out and "__asm__" not in out
+
+
+def test_protect_inline_asm_ignores_comments_and_quoted_mentions():
+    unchanged = '/* asm("(") */ const char *s = "__asm__("; // asm(")")\n'
+    assert protect_inline_asm(unchanged) == unchanged
+    asm = 'asm /* ) */ volatile ("nop" /* ( */) /* ) */ ;'
+    out = protect_inline_asm(unchanged + asm + '\n__asm("nop");')
+    assert out.startswith(unchanged)
+    assert out.count("#pragma _permuter b64literal") == 2
+    encoded = out.split("#pragma _permuter b64literal ")[1].splitlines()[0]
+    assert b64decode(encoded).decode("utf-8") == asm
+
+
+def test_protect_inline_asm_rejects_incomplete_statements():
+    with pytest.raises(ValueError, match="unterminated"):
+        protect_inline_asm('__asm__("nop"')
+    with pytest.raises(ValueError, match="semicolon"):
+        protect_inline_asm('__asm__("nop")')
