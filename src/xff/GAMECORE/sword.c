@@ -31,7 +31,7 @@ extern int SParticleSheetData_S_LINE_BOSS;
 extern int SParticleSheetData_S_REACTION;
 extern int SParticleSheetData_S_REACTION_SUB;
 extern void CopyGeometryPointer(void *dst, void *src);
-extern void set_npe_blend_ratio_particle_emitter(float ratio, int effect, int id);
+extern void set_npe_blend_ratio_particle_emitter(int effect, int id, float ratio);
 extern void *memset(void *dst, int c, unsigned int n);
 extern int get_particle_effect_id_from_sheet(int sheet);
 extern int boot_particle_emitter(int effect, void *param, void (*onEnd)(int *done), int *idOut);
@@ -118,7 +118,7 @@ extern GcGlobalVar gcGlobalVar;
 static void func_000C5468(int *done);
 
 /* Not decompiled yet; named after their labels in the assembly. */
-extern void func_000C1440(sceVu0FVECTOR rot, sceVu0FVECTOR pos, int a2, float lineAngle,
+static void func_000C1440(sceVu0FVECTOR rot, sceVu0FVECTOR pos, int a2, float lineAngle,
                           float ambient, float ambientLine);
 
 static int bossSprStatus[4] = { 0, 0, 0, 0 };
@@ -148,8 +148,8 @@ static float bossHPRatioBase = 0.7f;
 static float D_0017B0F4 = 0.3f;
 static float D_0017B0F8 = 1.0f;
 static float D_0017B0FC = 1.0f;
-static int D_0017B100 = 0;
-static int D_0017B104 = 0;
+static float D_0017B100 = 0.0f;
+static float D_0017B104 = 0.0f;
 static struct {
     void *pos;
     int se[3]; /* sound handles: sword hum, boss, weak point */
@@ -314,6 +314,123 @@ static void func_000C11E8(int boss)
     }
 }
 
+/* Quaternion product, as inlined in the original game code. */
+#define VU_QUAT_MUL(dst, a, b) \
+    __asm__ __volatile__( \
+        "lqc2 vf11, 0(%0)\n" \
+        "lqc2 vf12, 0(%1)\n" \
+        "vmul.xyzw vf13, vf11, vf12\n" \
+        "vaddy.x vf13, vf13, vf13y\n" \
+        "vaddz.x vf13, vf13, vf13z\n" \
+        "vsubx.w vf13, vf13, vf13x\n" \
+        "vmulw.xyz vf14, vf12, vf11w\n" \
+        "vmulw.xyz vf15, vf11, vf12w\n" \
+        "vopmula.xyz ACC, vf12, vf11\n" \
+        "vopmsub.xyz vf16, vf11, vf12\n" \
+        "vadd.xyz vf13, vf14, vf15\n" \
+        "vadd.xyz vf13, vf13, vf16\n" \
+        "sqc2 vf13, 0(%2)\n" \
+        : : "r"(a), "r"(b), "r"(dst) : "memory")
+
+extern int get_main_particle_effect_lod_from_sheet(int sheet);
+extern int get_sub_particle_effect_lod_from_sheet(int sheet);
+extern volatile float *get_top_particle_effect_from_lod(int lod);
+extern void SetQuaternionByAxisRotateVWithNoRegularize(sceVu0FVECTOR q, short angle,
+                                                      sceVu0FVECTOR axis);
+extern sceVu0FVECTOR ZUnitVector;
+extern sceVu0FVECTOR YUnitVector;
+extern void fogSetFogColorMulRatio(float ratio);
+
+typedef struct {
+    int values[11];
+} SwordSheets;
+/* The original reuses the sheet initializer's scratch space for rotations. */
+typedef union {
+    SwordSheets initial;
+    struct {
+        sceVu0FVECTOR line;
+        sceVu0FVECTOR z;
+        sceVu0FVECTOR pad20;
+        sceVu0FVECTOR y;
+    } rotations;
+} SwordScratch;
+
+static void func_000C1440(sceVu0FVECTOR rot, sceVu0FVECTOR pos, int boss, float lineAngle,
+                         float ambient, float ambientLine)
+{
+    SwordSheets sheetList;
+    SwordScratch scratch;
+    int mainLod;
+    int subLod;
+    volatile float *mainEffect;
+    volatile float *subEffect;
+    float fog;
+    float quarter;
+    float one;
+    short angle;
+    int i;
+
+    scratch.initial.values[0] = SParticleSheetData_S_GLOW;
+    scratch.initial.values[1] = SParticleSheetData_S_AURA;
+    scratch.initial.values[2] = SParticleSheetData_S_FLARE;
+    scratch.initial.values[3] = SWORD_LINE(boss);
+    scratch.initial.values[4] = SWORD_LINE(boss);
+    scratch.initial.values[5] = SWORD_LINE(boss);
+    scratch.initial.values[6] = SWORD_LINE(boss);
+    scratch.initial.values[7] = SWORD_LINE(boss);
+    scratch.initial.values[8] = SWORD_LINE(boss);
+    scratch.initial.values[9] = SWORD_LINE(boss);
+    scratch.initial.values[10] = SWORD_LINE(boss);
+    sheetList = scratch.initial;
+
+    mainLod = get_main_particle_effect_lod_from_sheet(SWORD_LINE(boss));
+    subLod = get_sub_particle_effect_lod_from_sheet(SWORD_LINE(boss));
+    mainEffect = get_top_particle_effect_from_lod(mainLod);
+    subEffect = get_top_particle_effect_from_lod(subLod);
+    if (D_0017B104 != D_0017B100) {
+        D_0017B100 += (D_0017B104 - D_0017B100) * swordLineChangeSpeed;
+    }
+    /* Shared particle metadata is written before inspecting the emitter ID. */
+    mainEffect[0x5C / 4] = D_0017B100 * 30.0f;
+    subEffect[0x5C / 4] = D_0017B100 * 30.0f;
+    if (*(volatile int *)&swordEmitters[0].id != 0) {
+        SetGeometryPointerGlobalState((char *)swordEmitters[0].emitter + 0xD0,
+                                      B_0019CEB0, B_0019CEC0);
+        set_npe_blend_ratio_particle_emitter(sheetList.values[0], swordEmitters[0].id, 1.0f - ambient);
+    }
+    if (swordEmitters[1].id != 0) {
+        SetGeometryPointerGlobalState((char *)swordEmitters[1].emitter + 0xD0, rot, pos);
+        set_npe_blend_ratio_particle_emitter(sheetList.values[1], swordEmitters[1].id, 1.0f - ambient);
+    }
+    if (swordEmitters[2].id != 0) {
+        SetGeometryPointerGlobalState((char *)swordEmitters[2].emitter + 0xD0, rot, pos);
+        set_npe_blend_ratio_particle_emitter(sheetList.values[2], swordEmitters[2].id, 1.0f - ambient);
+    }
+    angle = (short)(lineAngle * 0.017453292f * 32768.0f / 3.1415926f);
+    quarter = 0.78539815f;
+    one = 1.0f;
+    for (i = 3; i < 11; i++) {
+        if (swordEmitters[i].id != 0) {
+            short zAngle = (short)(i * quarter * 32768.0f / 3.1415926f);
+            SetQuaternionByAxisRotateVWithNoRegularize(scratch.rotations.z, -zAngle, ZUnitVector);
+            VU_QUAT_MUL(scratch.rotations.line, rot, scratch.rotations.z);
+            SetQuaternionByAxisRotateVWithNoRegularize(scratch.rotations.y, -angle, YUnitVector);
+            VU_QUAT_MUL(scratch.rotations.line, scratch.rotations.line, scratch.rotations.y);
+            SetGeometryPointerGlobalState((char *)swordEmitters[i].emitter + 0xD0,
+                                          scratch.rotations.line, pos);
+            set_npe_blend_ratio_particle_emitter(sheetList.values[i], swordEmitters[i].id,
+                                                 one - ambientLine);
+        }
+    }
+    fog = 1.0f;
+    if (D_0017B080[0] == 0) {
+        fog = 1.0f - ambient * maxFogMulVal;
+    }
+    D_0017B0FC = fog;
+    D_0017B0F8 += (fog - D_0017B0F8) * fogChangeSpeed;
+    fogSetFogColorMulRatio(D_0017B0F8);
+}
+
 /* Ends the sword's looping particle emitters. */
 static void func_000C1998(int boss)
 {
@@ -396,9 +513,8 @@ static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
         if (glowClearEmitter.id != 0) {                                                     \
             SetGeometryPointerGlobalState(glowClearEmitter.emitter + 0xD0, B_0019CEB0,      \
                                           B_0019CEC0);                                      \
-            set_npe_blend_ratio_particle_emitter(1.0f - (power),                            \
-                                                 SParticleSheetData_S_GLOW_CLEAR,           \
-                                                 glowClearEmitter.id);                      \
+            set_npe_blend_ratio_particle_emitter(SParticleSheetData_S_GLOW_CLEAR,               \
+                                                 glowClearEmitter.id, 1.0f - (power));                      \
         }                                                                                   \
     }
 
@@ -456,7 +572,7 @@ static int func_000C2BE0(SwordReaction *r)
     for (i = 0; i < 2; i++) {
         if (r->emitters[i].id != 0) {
             CopyGeometryPointer(r->emitters[i].emitter + 0xD0, r->geometry);
-            set_npe_blend_ratio_particle_emitter(1.0f - r->value, sheets[i], r->emitters[i].id);
+            set_npe_blend_ratio_particle_emitter(sheets[i], r->emitters[i].id, 1.0f - r->value);
         }
     }
     return done;
