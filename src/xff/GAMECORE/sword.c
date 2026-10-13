@@ -638,7 +638,7 @@ typedef struct {
 
 extern SwordCharacterCollision *GetCharacterClass(GameObj *obj);
 extern int ClipCollisionDirectCallBack(void *geometry, void *start, void *end,
-    int *attributes, int (*filter)(int, int), int a5, int a6, void (*hit)(), GameObj *boss);
+    int *attributes, int (*filter)(int, int), int a5, int a6, int (*hit)(void *), GameObj *boss);
 extern long charrootdyn_getCollisionAttribute(void *geometry);
 extern u_long128 *GetGeometryPointerSurfacePlane(void *geometry);
 extern char B_0019CEE0[];
@@ -648,7 +648,7 @@ extern void gcCreateScriptObj(void (*script)(SwordReaction *), SwordReaction *pa
     void *parent, int stackSize, int a4, int priority, const char *name);
 static int T_000C5570(int a, int b);
 static void func_000C5568(int *done);
-extern void T_000C5580();
+static int T_000C5580(void *surface);
 
 #define VU_SCALE_XYZ(dst, src, scale) \
     __asm__ __volatile__("lqc2 vf05, 0(%1)\n" \
@@ -663,14 +663,15 @@ extern void T_000C5580();
                          "sqc2 vf05, 0(%0)\n" \
                          : : "r"(dst), "r"(a), "r"(b) : "memory")
 
-/* Keep emitter initialization in a semantic inline helper. */
+/* Keep emitter initialization in a semantic inline helper. The union view
+   retains the original target-word store ordering with this compiler. */
 static inline void startSwordReaction(SwordReaction *reaction)
 {
     int i;
     int sheets[2] = { SParticleSheetData_S_REACTION_SUB, SParticleSheetData_S_REACTION };
 
     reaction->active = 1;
-    reaction->target = 1.0f;
+    ((union { int i; float f; } *)&reaction->target)->f = 1.0f;
     for (i = 0; i < 2; i++) {
         if (reaction->emitters[i].id == 0) {
             reaction->emitters[i].id = boot_particle_emitter(
@@ -684,7 +685,7 @@ static inline void startSwordReaction(SwordReaction *reaction)
 }
 
 /* Cast the sword ray and start or refresh its collision glow reaction.
-   Parked: seven differing words in emitter initialization. See issue #43. */
+   Parked: two differing words in emitter-slot address calculation. See issue #43. */
 static void func_000C2EB0(sceVu0FVECTOR pos, u_long128 *dir, float power)
 {
     sceVu0FVECTOR end;
@@ -737,7 +738,7 @@ static void func_000C2EB0(sceVu0FVECTOR pos, u_long128 *dir, float power)
     if (reaction->active == 0) {
         startSwordReaction(reaction);
     } else if (reaction->target <= 1.0f) {
-        reaction->target = 1.0f;
+        ((union { int i; float f; } *)&reaction->target)->f = 1.0f;
     }
 }
 #endif
