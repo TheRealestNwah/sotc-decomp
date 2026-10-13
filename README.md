@@ -6,7 +6,7 @@ The aim is C source that compiles back to a byte-identical copy of the original 
 
 ## Status
 
-- The loader ELF `SCUS_974.72` splits with [splat](https://github.com/ethteck/splat) (1,038 functions) and has a ninja build plus a byte-for-byte `check`.
+- The loader ELF `SCUS_974.72` splits with [splat](https://github.com/ethteck/splat) (1,038 functions) and **rebuilds byte-for-byte** from assembly (`ninja check` passes).
 - The game code itself lives in the `.XFF` modules (custom `xff2` format). These aren't split yet.
 - Nothing is decompiled to C yet.
 
@@ -19,7 +19,7 @@ This repo contains **no game code, data or assets**. Dump your own disc and copy
 ## Setup (Windows)
 
 1. Install Python 3.11+.
-2. Install the PS2DEV EE toolchain and put its `bin` folder (containing `mips64r5900el-ps2-elf-as.exe`) on `PATH`.
+2. Install the PS2DEV EE toolchain (`ps2dev-windows-latest.tar.gz` from the [ps2dev/ps2dev releases](https://github.com/ps2dev/ps2dev/releases)) and put its `ee\bin` folder on `PATH`. It also needs a 32-bit `libzstd.dll` (from the [zstd releases](https://github.com/facebook/zstd/releases), `win32` zip) copied into `ee\bin`.
 3. Then:
 
 ```bash
@@ -33,7 +33,7 @@ python -m venv .venv
 ## Roadmap
 
 1. ~~Verify the base executable hash~~
-2. ~~Split the loader ELF with splat~~ and rebuild it byte-for-byte
+2. ~~Split the loader ELF with splat and rebuild it byte-for-byte~~
 3. Reverse the `xff2` module format and split `KERNEL`/`MANAGER`/`GAMECORE.XFF`
 4. Pin down the original compiler version and get C matching
 5. Decompile functions one at a time, using [decomp.me](https://decomp.me) to match them

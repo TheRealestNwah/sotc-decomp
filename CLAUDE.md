@@ -8,7 +8,7 @@ Matching decompilation of Shadow of the Colossus (PS2, NTSC-U `SCUS-97472`), wit
 2. Replace assembly with C, one function at a time, keeping the build matching at every step.
 3. Once fully matching, build a PC port on top of the decompiled code.
 
-Current phase: the loader ELF `SCUS_974.72` splits with splat and is meant to rebuild from assembly. The game code itself lives in `KERNEL.XFF`, `MANAGER.XFF` and `GAMECORE.XFF` (custom `xff2` format), which isn't split yet. See `docs/findings.md`.
+Current phase: the loader ELF `SCUS_974.72` splits with splat and rebuilds byte-for-byte from assembly (`ninja check` passes). The game code itself lives in `KERNEL.XFF`, `MANAGER.XFF` and `GAMECORE.XFF` (custom `xff2` format), which isn't split yet. See `docs/findings.md`.
 
 ## Matching rules
 
@@ -21,7 +21,9 @@ Current phase: the loader ELF `SCUS_974.72` splits with splat and is meant to re
 ## Toolchain (native Windows)
 
 - Python 3.11+ with a venv: `python -m venv .venv`, then `.venv\Scripts\pip install -r requirements.txt` (installs splat, pyelftools, ninja, pytest, ruff)
-- PS2 EE binutils from PS2DEV (`mips64r5900el-ps2-elf-as` / `-ld`) on `PATH`. To use another prefix, pass `--cross` or set `SOTC_CROSS`.
+- PS2 EE binutils from PS2DEV (`mips64r5900el-ps2-elf-as` / `-ld`, tested with v2.0.0 / binutils 2.45.1) on `PATH`. On this machine it's at `D:\Modding\ps2dev\ps2dev\ee\bin`. To use another prefix, pass `--cross` or set `SOTC_CROSS`.
+  - The Windows build is 32-bit and needs a **32-bit** `libzstd.dll`, which it doesn't ship. Put one (from the official zstd `win32` release) next to the `.exe`s in `ee\bin`. A 64-bit copy on `PATH` (e.g. Git's) makes it fail with exit code `0xC000007B`.
+  - The linker must run with `-m elf32lr5900` (set in `configure.py`). Its default `n32` mode rejects our EABI objects with "ABI is incompatible".
 - No `objcopy` needed: `tools/elf2rom.py` flattens ELFs in Python (`tools/objcopy.cmd` wraps it for `splat create_config --objcopy`).
 
 ## Build and check

@@ -23,3 +23,4 @@ def test_generate_wires_every_source_into_the_link():
     assert "build/asm/data/cod/031C00.data.o" in ninja.split("build build/SCUS_974.72.elf")[1]
     assert "build check: check build/SCUS_974.72.rom iso/SCUS_974.72.rom" in ninja
     assert "cross = mips64r5900el-ps2-elf-" in ninja
+    assert "ld -m elf32lr5900 " in ninja

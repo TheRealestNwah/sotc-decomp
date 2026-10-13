@@ -33,6 +33,8 @@ CROSS_CANDIDATES = [
 ]
 
 ASFLAGS = "-EL -march=r5900 -mabi=eabi -G 0 -no-pad-sections -I include"
+# Modern PS2DEV ld defaults to n32; the original (and our objects) are EABI.
+LDFLAGS = "-m elf32lr5900"
 LD_SCRIPTS = [
     "undefined_syms_auto.txt",
     "undefined_funcs_auto.txt",
@@ -90,7 +92,7 @@ def generate(cross: str, sources: list[Path]) -> str:
         "  description = AS $in",
         "",
         "rule ld",
-        f"  command = ${{cross}}ld {ld_scripts} -Map {BUILD_DIR}/{BASENAME}.map"
+        f"  command = ${{cross}}ld {LDFLAGS} {ld_scripts} -Map {BUILD_DIR}/{BASENAME}.map"
         " --no-check-sections -o $out",
         "  description = LD $out",
         "",
