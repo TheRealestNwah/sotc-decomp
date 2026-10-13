@@ -7,7 +7,9 @@ The aim is C source that compiles back to a byte-identical copy of the original 
 ## Status
 
 - The loader ELF `SCUS_974.72` splits with [splat](https://github.com/ethteck/splat) (1,038 functions) and **rebuilds byte-for-byte** from assembly (`ninja check` passes).
-- The game code itself lives in the `.XFF` modules (custom `xff2` format). These aren't split yet.
+- The game code lives in the `.XFF` modules (custom `xff2` format, see [docs/xff2.md](docs/xff2.md)).
+  - All three (`KERNEL`, `MANAGER`, `GAMECORE`) split into assembly that reassembles with every section and relocation matching the originals. That's about 70,000 relocations.
+  - The modules keep their original symbol names.
 - Nothing is decompiled to C yet.
 
 See [docs/findings.md](docs/findings.md) for what's known about the binaries, the compiler and the linked Sony SDK libraries.
@@ -34,7 +36,7 @@ python -m venv .venv
 
 1. ~~Verify the base executable hash~~
 2. ~~Split the loader ELF with splat and rebuild it byte-for-byte~~
-3. Reverse the `xff2` module format and split `KERNEL`/`MANAGER`/`GAMECORE.XFF`
+3. ~~Reverse the `xff2` module format and split `KERNEL`/`MANAGER`/`GAMECORE.XFF`~~; next: rebuild the `.XFF` files themselves byte-for-byte
 4. Pin down the original compiler version and get C matching
 5. Decompile functions one at a time, using [decomp.me](https://decomp.me) to match them
 6. Once fully matching, build a PC port layer (graphics, audio, input)

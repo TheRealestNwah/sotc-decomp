@@ -35,6 +35,7 @@ CROSS_CANDIDATES = [
 ASFLAGS = "-EL -march=r5900 -mabi=eabi -G 0 -no-pad-sections -I include"
 # Modern PS2DEV ld defaults to n32; the original (and our objects) are EABI.
 LDFLAGS = "-m elf32lr5900"
+XFF_MODULES = ["KERNEL", "MANAGER", "GAMECORE"]
 LD_SCRIPTS = [
     "undefined_syms_auto.txt",
     "undefined_funcs_auto.txt",
@@ -66,7 +67,25 @@ def run_split() -> None:
 
 
 def asm_sources() -> list[Path]:
-    return sorted(p.relative_to(ROOT) for p in (ROOT / "asm").rglob("*.s"))
+    """Loader ELF sources from splat. asm/xff/ belongs to the XFF modules."""
+    return sorted(
+        p.relative_to(ROOT)
+        for p in (ROOT / "asm").rglob("*.s")
+        if (ROOT / "asm" / "xff") not in p.parents
+    )
+
+
+def xff_modules() -> list[str]:
+    return [m for m in XFF_MODULES if (ROOT / f"iso/{m}.XFF").is_file()]
+
+
+def run_xff_split(modules: list[str]) -> None:
+    if modules:
+        subprocess.run(
+            [sys.executable, "tools/xff_split.py", *(f"iso/{m}.XFF" for m in modules)],
+            cwd=ROOT,
+            check=True,
+        )
 
 
 def object_for(source: Path) -> Path:
@@ -74,7 +93,8 @@ def object_for(source: Path) -> Path:
     return Path(BUILD_DIR) / source.with_suffix(".o")
 
 
-def generate(cross: str, sources: list[Path]) -> str:
+def generate(cross: str, sources: list[Path], modules: list[str] | None = None) -> str:
+    modules = modules or []
     python = f'"{sys.executable}"'.replace("$", "$$")
     elf = f"{BUILD_DIR}/{BASENAME}.elf"
     rom = f"{BUILD_DIR}/{BASENAME}.rom"
@@ -104,6 +124,14 @@ def generate(cross: str, sources: list[Path]) -> str:
         "  command = $python tools/check.py $in",
         "  description = CHECK",
         "",
+        "rule xff2elf",
+        "  command = $python tools/xff2.py to-elf $in $out",
+        "  description = XFF2ELF $in",
+        "",
+        "rule xffcheck",
+        "  command = $python tools/xff_split.py --compare $in",
+        "  description = CHECK $in",
+        "",
         "rule configure",
         "  command = $python configure.py --cross $cross",
         "  generator = 1",
@@ -118,9 +146,32 @@ def generate(cross: str, sources: list[Path]) -> str:
         f"build {elf}: ld | {' '.join(objects)} {' '.join(LD_SCRIPTS)}",
         f"build {rom}: flatten {elf}",
         f"build {BASE_ROM}: flatten {BASE_ELF}",
-        f"build check: check {rom} {BASE_ROM}",
+        f"build check-elf: check {rom} {BASE_ROM}",
         "",
-        f"default {rom}",
+    ]
+
+    # XFF modules: assemble the split and compare sections + relocations with
+    # the original object converted from the disc's XFF.
+    checks = ["check-elf"]
+    for m in modules:
+        original = f"{BUILD_DIR}/xff/{m}.o"
+        rebuilt = f"{BUILD_DIR}/xff/{m}/{m}.o"
+        asm_dir = f"asm/xff/{m}"
+        deps = " ".join(
+            ninja_path(p.relative_to(ROOT)) for p in sorted((ROOT / asm_dir).glob("*.s"))
+        )
+        lines += [
+            f"build {original}: xff2elf iso/{m}.XFF",
+            f"build {rebuilt}: as {asm_dir}/{m}.s | include/xff_macro.inc {deps}",
+            f"  asflags = $asflags -I {asm_dir}",
+            f"build check-{m}: xffcheck {original} {rebuilt}",
+        ]
+        checks.append(f"check-{m}")
+    lines += [
+        "",
+        f"build check: phony {' '.join(checks)}",
+        "",
+        f"default {rom} {' '.join(f'{BUILD_DIR}/xff/{m}/{m}.o' for m in modules)}".rstrip(),
         "",
     ]
     return "\n".join(lines)
@@ -137,14 +188,16 @@ def main(argv: list[str] | None = None) -> int:
     if not (ROOT / BASE_ELF).is_file():
         print(f"Missing {BASE_ELF}. Copy it from your own disc first.", file=sys.stderr)
         return 1
-    if args.split or not (ROOT / "asm").is_dir():
+    if args.split or not (ROOT / "asm" / "cod").is_dir():
         run_split()
+    modules = xff_modules()
+    run_xff_split([m for m in modules if args.split or not (ROOT / f"asm/xff/{m}/{m}.s").is_file()])
 
     cross = find_cross(args.cross)
     if not shutil.which(cross + "as"):
         print(f"warning: {cross}as not found on PATH; `ninja` will fail until it's installed.")
 
-    (ROOT / "build.ninja").write_text(generate(cross, asm_sources()), encoding="utf-8")
+    (ROOT / "build.ninja").write_text(generate(cross, asm_sources(), modules), encoding="utf-8")
     print(f"Wrote build.ninja (cross = {cross})")
     return 0
 

@@ -67,6 +67,18 @@ In order, with zero padding:
 
 Descriptors for empty tables point at the current A/B positions.
 
+## Splitting into assembly
+
+`tools/xff_split.py` converts a module to ELF, disassembles it with spimdisasm's `elfObjDisasm`, then rewrites the output so it reassembles exactly. The rewrite rules, all derived from the original object:
+- **Local labels:** labels are local by default (`include/xff_macro.inc`). Only symbols that are global in the original symbol table get `.globl`.
+- **Section-relative references:** the original refers to these as section+offset (locals, and globals defined in the same original source file). They go through local twin labels (`.Lxff.<name>`), so the assembler emits the same section-relative relocation.
+- **Address check:** every relocated line is checked against the target the original relocation implies, pairing `HI16`/`LO16` to get the full addend. If spimdisasm's name or addend is wrong, the line keeps its original bytes and gets an explicit `.reloc` instead.
+- **Plain words:** words that spimdisasm symbolized, but that have no relocation in the original, become plain values.
+- **Branches:** branches to global labels, or to addresses spimdisasm never labeled, resolve locally like the original, with no relocation.
+- **Tails:** an unaligned tail at the end of a section is written as `.byte`.
+
+Result: every section's bytes and every relocation match the original for all three modules. The `.XFF` files themselves aren't rebuilt from the assembly yet. The reassembled object's symbol table order differs from the original, so a byte-identical rebuild needs that order recorded.
+
 ## Notes
 
 - **Section data is unrelocated.** Every relocation site still holds its original word, so the contents are exactly what the assembler or linker produced.
