@@ -14,6 +14,29 @@ extern int GAMEUTIL_is_player_obj(GameObj *obj);
 extern void fadeout_weakpoint_effect(void);
 extern void cancel_fadeout_weakpoint_effect(void);
 extern void RequestCharacterMotionShiftFunc(GameObj *obj, void (*func)());
+extern int SParticleSheetData_S_GLOW;
+extern int SParticleSheetData_S_AURA;
+extern int SParticleSheetData_S_FLARE;
+extern int SParticleSheetData_S_LINE;
+extern int SParticleSheetData_S_LINE_BOSS;
+extern void *memset(void *dst, int c, unsigned int n);
+extern int get_particle_effect_id_from_sheet(int sheet);
+extern int boot_particle_emitter(int effect, void *param, void (*onEnd)(int *done), int *idOut);
+extern void *get_particle_emitter_from_emitter_id(int id);
+extern int is_loop_particle(int effect);
+extern void end_particle_emitter(int effect, int id, int a2);
+
+typedef struct {
+    char pad0[0xC];
+    float f0C;
+    char pad10[0xC];
+    float f1C;
+    char pad20[0x20];
+} ParticleParam;
+
+extern int SeList_sword_test;
+extern int sePlay3D(int se, void *pos, int a2, int a3);
+extern void seSetVol(int handle, float vol);
 extern void seStop(int handle);
 extern GameObj *SCRGetFirstObj(void *list);
 extern void nico_playerEndHoistSword(GameObj *obj);
@@ -25,8 +48,9 @@ typedef struct {
 
 extern GcGlobalVar gcGlobalVar;
 
+static void func_000C5468(int *done);
+
 /* Not decompiled yet; named after their labels in the assembly. */
-extern void func_000C1998(int a0);
 extern void func_000C3BA0();
 extern void func_000C5718();
 
@@ -60,8 +84,8 @@ static float D_0017B0FC = 1.0f;
 static int D_0017B100 = 0;
 static int D_0017B104 = 0;
 static struct {
-    int unk0;
-    int se[3];
+    void *pos;
+    int se[3]; /* sound handles: sword hum, boss, weak point */
 } swordSe = { 0, { 0, 0, 0 } };
 static int D_0017B118 = 0;
 static int D_0017B11C = 0;
@@ -75,8 +99,11 @@ static long swordFlareHitPlaneAttribute = 0;
 static int D_0017B140[4] = { 0, 0, 0, 0 };
 static int D_0017B150 = 0;
 static int D_0017B154 = 0;
-static int D_0017B158[22] = { 0 };
-static int swordSeStopTimer = 0;
+static struct {
+    int id;
+    void *emitter;
+} swordEmitters[11] = { { 0 } };
+static int swordEmitterCount = 0;
 static float swordGlowDistMin = 3.0f;
 static float swordGlowDistMax = 5.0f;
 static int D_0017B1BC = 0;
@@ -104,6 +131,85 @@ void BossSprStatusBegin(void)
 void BossSprStatusEnd(void)
 {
     bossSprStatus[0] = 0;
+}
+
+/* Starts the sword's sounds at `pos`, silent; bossSe/weakSe 0 stops that one. */
+static void func_000C0D48(int bossSe, int weakSe, void *pos)
+{
+    int handle;
+
+    if (swordSe.se[0] == 0) {
+        swordSe.pos = pos;
+        swordSe.se[0] = sePlay3D(SeList_sword_test, pos, 0, 0);
+    }
+    if (bossSe != 0 && swordSe.se[1] == 0) {
+        handle = sePlay3D(bossSe, pos, 0, 0);
+        swordSe.se[1] = handle;
+        if (handle != 0) {
+            seSetVol(handle, 0.0f);
+        }
+    } else {
+        if (swordSe.se[1] != 0) {
+            seStop(swordSe.se[1]);
+        }
+        swordSe.se[1] = 0;
+    }
+    if (weakSe != 0 && swordSe.se[2] == 0) {
+        handle = sePlay3D(weakSe, pos, 0, 0);
+        swordSe.se[2] = handle;
+        if (handle != 0) {
+            seSetVol(handle, 0.0f);
+        }
+    } else {
+        if (swordSe.se[2] != 0) {
+            seStop(swordSe.se[2]);
+        }
+        swordSe.se[2] = 0;
+    }
+    if (swordSe.se[0] != 0) {
+        seSetVol(swordSe.se[0], 0.0f);
+    }
+}
+
+/* The particle sheet of each emitter slot. */
+#define SWORD_LINE(boss) ((boss) ? SParticleSheetData_S_LINE_BOSS : SParticleSheetData_S_LINE)
+#define SWORD_SHEETS(boss)                                                                        {                                                                                                 SParticleSheetData_S_GLOW, SParticleSheetData_S_AURA, SParticleSheetData_S_FLARE,                 SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss),                       SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss), SWORD_LINE(boss)                }
+
+/* Boots the sword's particle emitters that aren't running. */
+static void func_000C11E8(int boss)
+{
+    int sheets[11] = SWORD_SHEETS(boss);
+    ParticleParam param;
+    int i;
+
+    memset(&param, 0, sizeof(param));
+    param.f0C = 1.0f;
+    param.f1C = 1.0f;
+    for (i = 0; i < 11; i++) {
+        if (swordEmitters[i].id == 0) {
+            swordEmitters[i].id = boot_particle_emitter(
+                get_particle_effect_id_from_sheet(sheets[i]), &param, func_000C5468,
+                &swordEmitters[i].id);
+            swordEmitterCount++;
+            swordEmitters[i].emitter = get_particle_emitter_from_emitter_id(swordEmitters[i].id);
+        }
+    }
+}
+
+/* Ends the sword's looping particle emitters. */
+static void func_000C1998(int boss)
+{
+    int sheets[11] = SWORD_SHEETS(boss);
+    int i;
+
+    for (i = 0; i < 11; i++) {
+        if (swordEmitters[i].id != 0
+            && is_loop_particle(get_particle_effect_id_from_sheet(sheets[i]))) {
+            end_particle_emitter(get_particle_effect_id_from_sheet(sheets[i]), swordEmitters[i].id,
+                                 0);
+        }
+    }
+    D_0017B080[0] = 1;
 }
 
 /* Written out in each function: a static helper isn't inlined at -O2. */
@@ -162,7 +268,7 @@ float *getBossHPRatioBase(void) { return &bossHPRatioBase; }
 static void func_000C5468(int *done)
 {
     *done = 0;
-    if (--swordSeStopTimer > 0) {
+    if (--swordEmitterCount > 0) {
         return;
     }
     if (swordSe.se[0] != 0) {

@@ -31,6 +31,7 @@ The original relocations show where each `.c` file started and ended (`tools/xff
 - **Groups are lower bounds.** A real file may span several adjacent groups when nothing ties them together.
 - **Conflicts** are by-name references between functions that other evidence places in one file. They're about 1–3% of by-name references, and they persist with calls-only evidence, so they're likely real by-name references within one file. Treat the "by name means another file" rule as strong evidence, not proof.
 - **Names:** only a few strings name source files. A group of 35 GAMECORE functions references `sword.c` (path `basescript/src/sword.c`), and MANAGER has `effectmanager.c`.
+- **sword.c** (being decompiled in `src/xff/GAMECORE/sword.c`) starts at least at `BossSprStatusBegin` (it shares a static with the group) and runs past `SCRDirectionalArrowEnd` (which references a static at `0xC5718`). Its `.data` block is `0x17B070`–`0x17B1F0`: the sword effect tuning values the `get*` functions return, the sound handles and 11 particle emitter slots.
 
 ## Loader ELF (`SCUS_974.72`)
 
@@ -73,7 +74,7 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
 - **Assembler matters:** 2.96 emits macros (`move`, `lw reg, table(reg)`) that the assembler expands. The original expansions (`daddu rd, rs, $zero`; jump-table address via `addu`) match the package's `ee-as`, not modern binutils. All 84 GAMECORE jump tables use `addu`.
 - **`-G0`:** none of the three modules contains a single gp-relative relocation.
 - **`-O2` over `-O3`:** 41 tiny static functions (6 instructions or fewer) across the modules are still called rather than inlined, which `-O3` would have done.
-- **Float literals** must be written precisely. 2.96 rounds decimal literals differently from 2.95: `0.017453292f` gives `0x3C8EFA34`, while the original `0x3C8EFA35` (π/180) needs `0.0174532925f`.
+- **Float literals:** 2.96 truncates decimal float literals instead of rounding to nearest (`0.15f` gives `0x3E199999`, `0.735f` gives `0x3F3C28F5`). The original data has exactly these values, so plain literals like `0.15f` are right. A value that needs more digits, like π/180 (`0x3C8EFA35`), must be written with enough of them: `0.0174532925f`, not `0.017453292f`.
 
 Running the compilers: the Linux builds are 32-bit, so they run under WSL with a private 32-bit libc, unpacked from Ubuntu's `libc6:i386` package into `~/i386libs` (no `sudo` needed). They must run from WSL's own filesystem, because old 32-bit programs can't read files on Windows-mounted drives ("Value too large for defined data type").
 
