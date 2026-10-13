@@ -160,7 +160,7 @@ static float humVol = 0.0f;
 static float glowVol = 0.0f;
 static float D_0017B128 = 0.0f;
 static float D_0017B12C = 0.2f;
-static int D_0017B130 = 0;
+static float D_0017B130 = 0.0f;
 static float D_0017B134 = 0.2f;
 static long swordFlareHitPlaneAttribute = 0;
 static int D_0017B140[4] = { 0, 0, 0, 0 };
@@ -837,6 +837,110 @@ static void func_000C2EB0(sceVu0FVECTOR pos, u_long128 *dir, float power)
         ((union { int i; float f; } *)&reaction->target)->f = 1.0f;
     }
 }
+
+/* Inlined dot product of two vectors' xyz. */
+#define VU_INNER_PRODUCT(ret, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vaddw.x vf07, vf00, vf00w\n" \
+                         "vmul.xyz vf06, vf05, vf06\n" \
+                         "vaddax.x ACC, vf00, vf06x\n" \
+                         "vmadday.x ACC, vf07, vf06y\n" \
+                         "vmaddz.x vf06, vf07, vf06z\n" \
+                         "qmfc2 $2, vf06\n" \
+                         "mtc1 $2, %0\n" \
+                         : "=f"(ret) : "r"(a), "r"(b) : "$2")
+
+extern void bossStatGetBossCloudPos(sceVu0FVECTOR pos, int boss);
+
+#ifdef NONMATCHING
+/* Parked: 303 words, original length; 2 words differ (a2 = 0 is scheduled
+   before the f14 argument instead of into the func_000C1440 delay slot).
+   See issue #49. */
+/* Aims the sword beam at the active boss's cloud: sets the beam angle, line
+   width and sounds, and starts a collision reaction once it's on target. */
+static void func_000C3198(GameObj *obj, u_long128 *pos)
+{
+    sceVu0FVECTOR dir;
+    sceVu0FVECTOR cloud;
+    sceVu0FVECTOR rot;
+    sceVu0FVECTOR marker;
+    float brightness;
+    float dot;
+    float power;
+    float ambientRatio;
+    float lineRatio;
+    float width;
+    int boss;
+    int sheet;
+    int mainLod;
+    int subLod;
+
+    boss = bossStatGetActiveBoss();
+    if (boss == 0) {
+        return;
+    }
+    brightness = 100.0f;
+    if (getSelectWeapon() != 2) {
+        brightness = GetAmbientBrightnessOfLayoutObject(obj);
+    }
+    if (brightness < 0.0f) {
+        brightness = 0.0f;
+    }
+    bossStatGetBossCloudPos(cloud, boss);
+    VU_SUB_XYZ(cloud, cloud, pos);
+    VU0_NORMALIZE(cloud, cloud);
+    sprWeaponGetMarkerPos(marker);
+    VU_SUB_XYZ(dir, marker, pos);
+    VU0_NORMALIZE(dir, dir);
+    GetQuaternionByAxisDirZY(rot, dir, D_0017B090);
+    VU_INNER_PRODUCT(dot, dir, cloud);
+    VU_INNER_PRODUCT(power, dir, cloud);
+    {
+        float one = 1.0f;
+        float angle = 3.1415926f;
+        float lo = minAngle * 0.017453292f;
+        float hi = maxAngle * 0.017453292f;
+
+        power = one - (power + one) * 0.5f;
+        power = (angle * power - lo) / (hi - lo);
+        power = CLAMP01(power);
+    }
+    ambientRatio = ratio01(brightness, minAmbient, maxAmbient);
+    lineRatio = ratio01(brightness, minAmbientLine, maxAmbientLine);
+    sheet = SParticleSheetData_S_LINE;
+    mainLod = get_main_particle_effect_lod_from_sheet(sheet);
+    subLod = get_sub_particle_effect_lod_from_sheet(sheet);
+    get_top_particle_effect_from_lod(mainLod);
+    get_top_particle_effect_from_lod(subLod);
+    width = CLAMP01(dot);
+    width = width - swordLineChangeThreshold;
+    width = CLAMP01(width);
+    width = width / (1.0f - swordLineChangeThreshold);
+    width = CLAMP01(width);
+    D_0017B104 = swordLineWidthMax * width;
+    func_000C0EB0((power - D_0017B130) / (D_0017B134 - D_0017B130), lineRatio);
+    func_000C1440(rot, pos, 0, power * maxLineAngle, ambientRatio, lineRatio);
+    if (power < 0.01f) {
+        func_000C2EB0(pos, dir, lineRatio);
+        if (D_0017B1E8 >= 0.01f && D_0017B0F4 < lineRatio) {
+            int shocks[2] = { ShockList_digi2, ShockList_digi2 };
+            /* These pointers give the original's register assignment. */
+            GcGlobalVar *g = &gcGlobalVar;
+            int *timers = D_0017B140;
+            int *timer = timers + 2;
+
+            if (g->time - (float)*timer > (float)timers[3]) {
+                shockRequest(shocks[1]);
+                *timer = (int)g->time;
+            }
+        }
+        D_0017B1E8 = power;
+    } else {
+        D_0017B1E8 = 1.0f;
+    }
+}
+#endif
 
 /* Written out in each function: a static helper isn't inlined at -O2. */
 #define STOP_SWORD_SE()            \
