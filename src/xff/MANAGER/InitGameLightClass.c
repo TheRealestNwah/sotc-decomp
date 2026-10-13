@@ -1,0 +1,4 @@
+void InitGameLightClass(void)
+{
+
+}

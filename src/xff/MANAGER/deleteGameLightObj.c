@@ -1,0 +1,4 @@
+void deleteGameLightObj(void)
+{
+
+}

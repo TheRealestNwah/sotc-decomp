@@ -1,0 +1,4 @@
+void reflectionInit(void)
+{
+
+}

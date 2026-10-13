@@ -1,0 +1,4 @@
+void InitAnimationData(void)
+{
+
+}
