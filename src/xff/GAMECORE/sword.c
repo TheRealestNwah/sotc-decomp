@@ -499,8 +499,7 @@ static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
     }
 }
 
-/* Parked boss weak-point query: 193 words, 12 differing words. See issue #38. */
-#ifdef NONMATCHING
+/* Weak-point query for the boss: aims the beam at the marker and glows on a hit. */
 extern void T_000C1D80();
 extern void sprWeaponGetMarkerPos(sceVu0FVECTOR pos);
 extern float GetAmbientBrightnessOfLayoutObject(GameObj *obj);
@@ -554,7 +553,7 @@ static void func_000C2318(GameObj *obj, u_long128 *pos)
         brightness = 0.0f;
     }
     VU_SUB_XYZ(query.dir, marker, pos);
-    power = (brightness - minAmbientWeak) / (maxAmbientWeak - minAmbientWeak);
+    power = (brightness - minAmbientLineWeak) / (maxAmbientLineWeak - minAmbientLineWeak);
     query.dir[3] = 1.0f;
     power = CLAMP01(power);
     sheet = SParticleSheetData_S_LINE_BOSS;
@@ -574,10 +573,10 @@ static void func_000C2318(GameObj *obj, u_long128 *pos)
         boot_weakpoint_hit_effect(query.target, 1.0f);
         {
             int shocks[2] = { ShockList_digi2, ShockList_digi2 };
-        if (gcGlobalVar.time - (float)D_0017B140[0] > (float)D_0017B140[1]) {
-            shockRequest(shocks[0]);
-            D_0017B140[0] = (int)gcGlobalVar.time;
-        }
+            if (gcGlobalVar.time - (float)D_0017B140[0] > (float)D_0017B140[1]) {
+                shockRequest(shocks[0]);
+                D_0017B140[0] = (int)gcGlobalVar.time;
+            }
         }
     }
     {
@@ -585,16 +584,13 @@ static void func_000C2318(GameObj *obj, u_long128 *pos)
         float angle = 3.1415926f;
         float dot = query.bestDot;
         float lo = minAngleWeak * 0.017453292f;
+        float hi = maxAngleWeak * 0.017453292f;
 
-        dot += one;
-        dot *= 0.5f;
-        dot = one - dot;
-        angle *= dot;
-        func_000C1BA8((SwordMatrix *)&query,
-            (angle - lo) / (maxAngleWeak * 0.017453292f - lo), brightness);
+        /* Map the best dot product to an angle, normalized to [lo, hi]. */
+        dot = one - (dot + one) * 0.5f;
+        func_000C1BA8((SwordMatrix *)&query, (angle * dot - lo) / (hi - lo), brightness);
     }
 }
-#endif
 
 /* Glow strength for a hit at `dist`: 1 at the minimum distance, 0 at the maximum. */
 #define GLOW_POWER(power, dist, scale)                                                 \
