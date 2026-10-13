@@ -46,8 +46,10 @@ class Function:
 
 
 def wsl_path(path: Path) -> str:
-    p = path.resolve().as_posix()
-    return f"/mnt/{p[0].lower()}{p[2:]}" if p[1] == ":" else p
+    p = str(path).replace("\\", "/")
+    if not re.match(r"[A-Za-z]:/", p):  # not already a Windows absolute path
+        p = Path(path).resolve().as_posix()
+    return f"/mnt/{p[0].lower()}{p[2:]}" if re.match(r"[A-Za-z]:/", p) else p
 
 
 def find_cc1(compiler_dir: Path) -> Path:
