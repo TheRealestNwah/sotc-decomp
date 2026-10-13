@@ -627,6 +627,124 @@ static void func_000C2D20(SwordReaction *r)
     }
 }
 
+/* Character collision fields used by the sword ray. */
+typedef struct {
+    char pad0[0x370];
+    short collisionIndex;
+    char pad372[0xE38 - 0x372];
+    int *attributes;
+} SwordCharacterCollision;
+
+extern SwordCharacterCollision *GetCharacterClass(GameObj *obj);
+extern int ClipCollisionDirectCallBack(void *geometry, void *start, void *end,
+    int *attributes, int (*filter)(int, int), int a5, int a6, int (*hit)(void *), GameObj *boss);
+extern long charrootdyn_getCollisionAttribute(void *geometry);
+extern u_long128 *GetGeometryPointerSurfacePlane(void *geometry);
+extern char B_0019CEE0[];
+extern char rootPtn[];
+extern const char RO_001806D0[];
+extern void gcCreateScriptObj(void (*script)(SwordReaction *), SwordReaction *param,
+    void *parent, int stackSize, int a4, int priority, const char *name);
+static int T_000C5570(int a, int b);
+static void func_000C5568(int *done);
+static int T_000C5580(void *surface);
+
+#define VU_SCALE_XYZ(dst, src, scale) \
+    __asm__ __volatile__("lqc2 vf05, 0(%1)\n" \
+                         "qmtc2 %2, vf06\n" \
+                         "vmulx.xyz vf05, vf05, vf06x\n" \
+                         "sqc2 vf05, 0(%0)\n" \
+                         : : "r"(dst), "r"(src), "r"(scale) : "memory")
+#define VU_ADD_XYZ(dst, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0(%1)\n" \
+                         "lqc2 vf06, 0(%2)\n" \
+                         "vadd.xyz vf05, vf05, vf06\n" \
+                         "sqc2 vf05, 0(%0)\n" \
+                         : : "r"(dst), "r"(a), "r"(b) : "memory")
+
+/* Keep emitter initialization in a semantic inline helper. The union view
+   retains the original target-word store ordering with this compiler, and the
+   sheet pointer (incremented before the index) the original loop scheduling. */
+static inline void startSwordReaction(SwordReaction *reaction)
+{
+    int i;
+    int sheets[2] = { SParticleSheetData_S_REACTION_SUB, SParticleSheetData_S_REACTION };
+    int *sheet = sheets;
+
+    reaction->active = 1;
+    ((union { int i; float f; } *)&reaction->target)->f = 1.0f;
+    for (i = 0; i < 2; sheet++, i++) {
+        if (reaction->emitters[i].id == 0) {
+            reaction->emitters[i].id = boot_particle_emitter(
+                get_particle_effect_id_from_sheet(*sheet), reaction->geometry,
+                func_000C5568, &reaction->active);
+            reaction->emitters[i].emitter = get_particle_emitter_from_emitter_id(
+                reaction->emitters[i].id);
+        }
+    }
+    gcCreateScriptObj(func_000C2D20, reaction, rootPtn, 0x2000, 0, 8, RO_001806D0);
+}
+
+/* Cast the sword ray and start or refresh its collision glow reaction. */
+static void func_000C2EB0(sceVu0FVECTOR pos, u_long128 *dir, float power)
+{
+    sceVu0FVECTOR end;
+    sceVu0FVECTOR normal;
+    sceVu0FVECTOR offset;
+    sceVu0FVECTOR rotation;
+    GameObj *player;
+    GameObj *boss;
+    SwordCharacterCollision *character;
+    int sheet;
+    int mainLod;
+    int subLod;
+    float *mainEffect;
+    float *subEffect;
+    float range;
+    char *geometry;
+    SwordReaction *reaction;
+
+    player = SCRGetFirstObj(gcGlobalVar.playerList);
+    if (player == 0) {
+        return;
+    }
+    character = GetCharacterClass(player);
+    sheet = SParticleSheetData_S_LINE;
+    mainLod = get_main_particle_effect_lod_from_sheet(sheet);
+    subLod = get_sub_particle_effect_lod_from_sheet(sheet);
+    mainEffect = (float *)get_top_particle_effect_from_lod(mainLod);
+    subEffect = (float *)get_top_particle_effect_from_lod(subLod);
+    range = subEffect[9] * subEffect[15]
+        + (mainEffect[9] * mainEffect[15] - subEffect[9] * subEffect[15]) * power;
+    *(u_long128 *)end = *dir;
+    VU0_NORMALIZE(&end, &end);
+    VU_SCALE_XYZ(&end, &end, range);
+    VU_ADD_XYZ(&end, &end, pos);
+    ((float *)&end)[3] = 1.0f;
+    boss = SCRGetFirstObj(gcGlobalVar.playerList + 4);
+    geometry = B_0019CEE0;
+    if (!ClipCollisionDirectCallBack(geometry, pos, &end,
+        character->attributes + character->collisionIndex, T_000C5570, 0, 0,
+        T_000C5580, boss)) {
+        return;
+    }
+    swordFlareHitPlaneAttribute = charrootdyn_getCollisionAttribute(geometry);
+    *(u_long128 *)normal = *GetGeometryPointerSurfacePlane(geometry);
+    VU_SCALE_XYZ(offset, &normal, collisionPosOffset);
+    VU_ADD_XYZ(geometry + 0x40, geometry + 0x40, offset);
+    GetQuaternionByAxisDirZY(rotation, (float *)&normal, D_0017B090);
+    reaction = (SwordReaction *)(geometry - 0x10);
+    SetGeometryPointerGlobalState(geometry, rotation, (float *)(geometry + 0x40));
+    /* Reusing the pointer keeps the emitter slots addressed from the reaction
+       (the compiler otherwise folds them into geometry + 0x50). */
+    geometry = (char *)reaction;
+    if (reaction->active == 0) {
+        startSwordReaction(reaction);
+    } else if (reaction->target <= 1.0f) {
+        ((union { int i; float f; } *)&reaction->target)->f = 1.0f;
+    }
+}
+
 /* Written out in each function: a static helper isn't inlined at -O2. */
 #define STOP_SWORD_SE()            \
     do {                           \
