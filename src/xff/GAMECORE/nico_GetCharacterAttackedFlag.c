@@ -1,6 +1,6 @@
-extern int *GetDamageClass();
+extern void *GetDamageClass(void *);
 
-int nico_GetCharacterAttackedFlag(void)
+int nico_GetCharacterAttackedFlag(void *actor)
 {
-    return *GetDamageClass() == 3;
+    return *(int *)GetDamageClass(actor) == 3;
 }

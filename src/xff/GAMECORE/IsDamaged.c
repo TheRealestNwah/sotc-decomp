@@ -4,12 +4,12 @@ typedef struct {
     float time;
 } DamageClass;
 
-extern DamageClass *GetDamageClass(void);
+extern void *GetDamageClass(void *);
 extern int GetDamagerClassDamageSheetType(DamageClass *);
 
-int IsDamaged(void *unused, int type)
+int IsDamaged(void *actor, int type)
 {
-    DamageClass *d = GetDamageClass();
+    DamageClass *d = GetDamageClass(actor);
 
     if (d->state == 1 && (type < 0 || GetDamagerClassDamageSheetType(d) == type) && d->time > 0.0f) {
         return 1;
