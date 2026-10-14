@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,529 functions** come from matching C: 885 GAMECORE, 483 MANAGER and 161 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,536 functions** come from matching C: 888 GAMECORE, 487 MANAGER and 161 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -29,6 +29,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-13)
+
+Issue #111 retries 392 unmatched small FP candidates after the CVT decoder repair, retaining prior SDK/stdlib exclusions. Seven routines matched and passed per-object and full code/data/relocation checks: three GAMECORE and four MANAGER. Another 206 differed or failed compilation; 179 had no usable draft. Exact float32 decimal literals preserve recovered constant bits under GCC 2.96 truncation, and explicit mode(TI) types are supplied when needed. Evidence: `build/auto40-fp-retry/<MODULE>/validation.json` and `build/retry-fp-final-check.log`.
 
 Issue #108 fixes raw `cvt.w.s` normalization in the m2c wrapper. The R5900 decoder considered the instructions valid but printed `.word`, so m2c silently omitted the conversions. A restricted CPU decode for the canonical single-precision encoding preserves the instructions; reserved encodings and double format remain raw. The real `GetStageContext` draft now uses integer casts/division rather than float-bit arithmetic. All 97 tests, Ruff and the full matching build pass; the verified function count is unchanged. Evidence: `build/stage-context-helper-fixed-m2c.log` and `build/m2c-cvt-fix-final-check.log`.
 
