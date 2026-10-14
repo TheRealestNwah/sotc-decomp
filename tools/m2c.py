@@ -3,6 +3,7 @@
     python tools/m2c.py getMinAmbient
     python tools/m2c.py func_000C0D48 --through func_000C0E78 --module GAMECORE
     python tools/m2c.py getMinAmbient --context ctx.c   # other options go to m2c
+    python tools/m2c.py getMinAmbient --ee-context native-ee-types.c
 
 m2c (github.com/matt-kempster/m2c) decompiles MIPS assembly into C. The
 output is a starting point: it has the right control flow and data accesses,
@@ -205,6 +206,63 @@ def section_bases(module: str) -> dict[str, int]:
     return {s.name: s["sh_offset"] for s in elf.iter_sections() if s.name}
 
 
+def ee_context(source: str) -> str:
+    """Represent native EE 8-byte integer long as m2c's 8-byte long long.
+
+    Context must be self-contained C declarations, without preprocessor directives.
+    Preserve comments/literals and the other native 8-byte spellings (long long
+    and long double). Never rewrite the user's file or the external decompiler.
+    """
+    tokens = re.findall(
+        r'/\*[\s\S]*?\*/|//[^\r\n]*|"(?:\\.|[^"\\])*"|'
+        r"'(?:\\.|[^'\\])*'|[A-Za-z_]\w*|\s+|.",
+        source,
+    )
+    significant = [
+        i
+        for i, token in enumerate(tokens)
+        if not token.isspace() and not token.startswith(("/*", "//"))
+    ]
+    if any(tokens[i] == "#" for i in significant):
+        raise ValueError(
+            "--ee-context requires self-contained declarations without preprocessor directives"
+        )
+    specifiers = {
+        "long",
+        "short",
+        "signed",
+        "unsigned",
+        "int",
+        "char",
+        "float",
+        "double",
+        "void",
+        "const",
+        "volatile",
+        "restrict",
+        "typedef",
+        "extern",
+        "static",
+        "register",
+        "auto",
+    }
+    replacements = []
+    for position, index in enumerate(significant):
+        if tokens[index] != "long":
+            continue
+        start = end = position
+        while start and tokens[significant[start - 1]] in specifiers:
+            start -= 1
+        while end + 1 < len(significant) and tokens[significant[end + 1]] in specifiers:
+            end += 1
+        group = [tokens[i] for i in significant[start : end + 1]]
+        if group.count("long") == 1 and "double" not in group:
+            replacements.append(index)
+    for index in replacements:
+        tokens[index] += " long"
+    return "".join(tokens)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
@@ -212,6 +270,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("function")
     parser.add_argument("--module", default="GAMECORE")
     parser.add_argument("--through", help="include spimdisasm's split-off rest up to this label")
+    parser.add_argument(
+        "--ee-context",
+        action="append",
+        type=Path,
+        default=[],
+        metavar="FILE",
+        help="native EE declarations: adapt 8-byte long for m2c; no preprocessor directives",
+    )
     args, m2c_args = parser.parse_known_args(argv)  # the rest goes to m2c
 
     text = ROOT / f"asm/xff/{args.module.upper()}/text.s"
@@ -222,6 +288,14 @@ def main(argv: list[str] | None = None) -> int:
     with tempfile.TemporaryDirectory() as tmp:
         asm = Path(tmp) / "fn.s"
         asm.write_text("\n".join(body) + "\n", encoding="latin-1")
+        for index, context in enumerate(args.ee_context):
+            try:
+                source = ee_context(context.read_text(encoding="utf-8"))
+            except ValueError as error:
+                parser.error(str(error))
+            converted = Path(tmp) / f"ee-context-{index}.c"
+            converted.write_text(source, encoding="utf-8")
+            m2c_args.extend(["--context", str(converted)])
         result = subprocess.run(
             [sys.executable, str(M2C / "m2c.py"), "-t", "mipsee-gcc-c", *m2c_args, str(asm)]
         )
