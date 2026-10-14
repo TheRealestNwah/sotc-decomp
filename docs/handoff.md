@@ -27,12 +27,13 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - **128-bit loads not hoisted out of a loop:** wrap the `s128` in a one-member struct (#174).
 - **Branch layout of small range checks:** explicit shared return labels (`goto ok; ... ok: return 1; ng: return 0;`), found by Codex (#209).
 - **Clamped values:** clamp into a new local with a ternary (`float t = (dt < MIN) ? MIN : dt;`), not in place (#224).
+- **A separately strength-reduced offset:** keep an explicit offset induction variable (`offset += 8`) next to the loop counter (Codex, #277).
 - **Load/store order kept strictly sequential:** first try alias-set unions (vector union copied through `.q`; float/int word unions; see #261). A `volatile` view sometimes also reproduces it (`iosDlGetTransBufId`, Codex's `add_element_expression_change`).
 
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,654 functions** come from matching C: 954 GAMECORE, 531 MANAGER and 169 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,659 functions** come from matching C: 956 GAMECORE, 534 MANAGER and 169 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -54,6 +55,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issues #279 and #280, plus Codex's #277 (PR #281): `set_screen_wide_and_progressive`, `SetDefaultViewContext`, `constructor_game_camera_mode_local_parameter`, `is_emitter_need_disp` and `SCRGetBossPartsDamage` match. The two constructors match with stores in field order. `is_emitter_need_disp` needs one combined `&&` condition (and `func_000BFF48` takes no arguments). Codex matched `SCRGetBossPartsDamage`, which I had parked, by keeping an explicit byte-offset induction variable (`offset += 8`). Parked, free to claim: `GAMEUTIL_get_vel_limit_position`, `calcDownSpeedRatio`, `GAMEUTIL_init_col_plane_info_filter`, `UpdateGlobalLightAmbient`. Evidence: `build/near-miss-batch17-final-check.log` (956 GAMECORE, 534 MANAGER); 97 tests and Ruff pass.
 
 Issue #275, plus Codex's #245 (PR #276): `iosGetACosfExact`, `iosGetASinfExact`, `adjustAnglePI`, `endingflowSetTimePlayerHpMax` and `glColor4f` match. The KERNEL and angle helpers are plain early returns or else-ifs once the float literals are right. `endingflowSetTimePlayerHpMax` needs the max HP in a local before the subtraction; otherwise gcc keeps the global's address in a saved register across the calls. **Correction to the #177 literal note:** the conversion isn't strictly truncation (`3.1415927f` gives 0x40490FDB, not FDA). The reliable rule is the shortest decimal that round-trips to the wanted float, which `safe()` in `build/cand/literal_retry.py` computes (e.g. `3.1415926e+00f` for 0x40490FDA, `6.2831851e+00f` for 0x40C90FDA, `1.5707963f` for 0x3FC90FDA). Evidence: `build/near-miss-batch16-final-check.log` (954 GAMECORE, 531 MANAGER, 169 KERNEL); 97 tests and Ruff pass.
 
