@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,553 functions** come from matching C: 899 GAMECORE, 490 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,554 functions** come from matching C: 899 GAMECORE, 491 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -29,6 +29,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #136 adds `mouseSetCursorPosition`, fully verified. A typed two-float cursor view with volatile fields preserves both the shared base address and y-before-x stores. Direct byte casts with volatile float stores added an extra address adjustment; struct, array and union views all matched. Original qualifiers remain unknown. Evidence: `build/mouse-{byte-one,struct,cast-struct,array,union}-diff.log` and `build/mouse-position-final-check.log`; 97 tests and Ruff pass. Issue #138 is the next time-attack getter item.
 
 Issue #134 adds `adpcmSetPitch` and `adpcmSetVol`, fully verified. Explicit channel layouts preserve the 0x560-byte stride; volume reads the 64-bit flags at +0x38 and tests bit 39. Volatile float field views preserve the original store order, with qualifiers remaining provisional matching aids. The two translation units use identical layouts. Evidence: `build/adpcm-{pitch,volume}-{baseline,typed}-diff.log` and `build/adpcm-channel-final-check.log`; 97 tests and Ruff pass. Issue #136 is the next mouse-position setter item.
 
