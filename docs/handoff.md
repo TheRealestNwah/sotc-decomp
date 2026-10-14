@@ -32,7 +32,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,636 functions** come from matching C: 944 GAMECORE, 525 MANAGER and 167 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,641 functions** come from matching C: 947 GAMECORE, 527 MANAGER and 167 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -54,6 +54,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issues #268 and #269: `glColor3fv`, `glColor4fv`, `getCameraPosOnMap`, `SCRConditionPlayerBossParentOverTime` and `setParamBirdCtrlWork` match. The `glColor` pair uses the GL-state view with a `color[4]` array at +0x90 and a 4-entry 0..255 clamp loop. `getCameraPosOnMap` needs the word union (#261) on the stage map's int fields so the second int load stays after the first float store. `setParamBirdCtrlWork` needs the truncation-safe literal `0.0174532925f` for degrees-to-radians (#177). Evidence: `build/near-miss-batch14-final-check.log` (947 GAMECORE, 527 MANAGER); 97 tests and Ruff pass.
 
 Issue #265, plus Codex's #252 (PR #260): `SeemlessInitFogTargetParamWorldLayout`, `getTurnLimitInterp`, `set_node_data_expression` and `forceSetPerceptionWork` match. `getTurnLimitInterp` clamps with a ternary (same pattern as #224). `set_node_data_expression` needs the count in a local, an explicit `if (n > 0)` before a do/while, and its stores rotated by one. The seamless fog init loads `max` into a local before storing the constant 1.0 rate, which reproduces the original interleaving. Evidence: `build/near-miss-batch13-final-check.log` (944 GAMECORE, 525 MANAGER); 97 tests and Ruff pass.
 
