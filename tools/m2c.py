@@ -129,7 +129,8 @@ def reloc_names(lines: list[str], section_bases: dict[str, int]) -> dict[int, st
 def disassemble_words(lines: list[str], section_bases: dict[str, int] | None = None) -> list[str]:
     """Code that spimdisasm emitted as .word data (functions only reached
     through pointers) becomes instructions, with labels for branch targets.
-    Words that carry spimdisasm's disassembly in a comment are left to clean()."""
+    Mnemonic comments are reused unless an authoritative HI16/LO16 relocation
+    can correct their address operand. Jump comments keep extracted local aliases."""
     import rabbitizer  # comes with spimdisasm
 
     names = reloc_names(lines, section_bases or {})
@@ -142,7 +143,13 @@ def disassemble_words(lines: list[str], section_bases: dict[str, int] | None = N
             continue
         m = DATA_WORD_RE.match(line)
         comment = RAW_WORD_RE.match(line)
-        if not m or (comment and not comment.group(2).lstrip().startswith(".word")):
+        relocated = False
+        if reloc and reloc[0] in {"R_MIPS_HI16", "R_MIPS_LO16"}:
+            target = reloc[1].removeprefix(".Lxff.")
+            relocated = not target.startswith("start.") or target[5:] in (section_bases or {})
+        if not m or (
+            comment and not comment.group(2).lstrip().startswith(".word") and not relocated
+        ):
             out.append(line)
             reloc = None
             continue
