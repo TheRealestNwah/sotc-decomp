@@ -4,7 +4,153 @@ A snapshot for whoever picks up the matching work next, human or agent (Codex, C
 
 Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/findings.md` first.
 
-## Working state (2026-10-14, Claude Code coordinating, Codex working)
+## Claude resume checkpoint (2026-10-14, handoff issue #360)
+
+This section supersedes older working-state notes below. Verified main is
+`601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There are **2,392
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL**, and **105
+Python tests**. Actor-interface corrections below do not add functions.
+The native PC port has not started; this is still original-PS2 reconstruction,
+with no new playable download or release. Whole-XFF file reproduction remains
+blocked on original symbol/relocation ordering (#8), despite matching loaded
+sections. Do not substitute copied original metadata for independently rebuilt
+output.
+
+The user asked Codex to continue and integrate while Claude was out of usage.
+That temporary takeover is recorded in coordinator issue #205. Claude remains
+the intended coordinator. Read the latest #205 comments and live PR/issue state
+before resuming; announce ownership there before either agent makes further
+assignments or merges. Preserve the primary checkout and all its unfinished
+changes. All Codex implementation work uses isolated `.worktrees/` checkouts.
+Local machine details are also in ignored `.worktrees/CODEX-HANDOFF.md`.
+
+### What Codex completed
+
+Recent matching batches added **30 functions** after the 2,362-function
+checkpoint. Earlier checkpoint entries below retain function names and detailed
+matching techniques; the following PRs are merged:
+
+| Issue / PR | Result |
+| --- | --- |
+| #329 / #332 | 14 new matches: 6 GAMECORE, 7 MANAGER, 1 KERNEL. |
+| #331 / #333 | `tools/m2c.py --ee-context FILE`: explicit native integer-width context adaptation, with five regression tests. |
+| #334 / #335 | 8 new matches: 4 GAMECORE, 4 MANAGER. |
+| #336 / #338 | 4 new matches: 2 GAMECORE, 1 MANAGER, 1 KERNEL. |
+| #339 / #340 | Two player-expression getters now explicitly accept their actor pointer and return pointers. |
+| #337 / #342 | Four GAMECORE matches: `SCRGetPlayerTiredParam`, `AI_GetRandomSphereOfs`, `doit_camera_dist_to_look_at`, `init_player_expression`. |
+| #343 / #352 | Correct actor forwarding in 18 `GetCharacterClass` callers. |
+| #344 / #354 | Correct actor forwarding in 8 `GetLayoutClass` callers. |
+| #345 / #355 | Correct actor inputs in `IsDamaged` and `nico_GetCharacterAttackedFlag`. |
+| #347 / #356 | Forward existing argument zero in `CheckSCRCharaAIWorkPtr` and `getArrowInfo`. |
+| #346 / #357 | Correct AI-work interfaces across 89 sources: 83 direct callers and six related callers. |
+| #348 / #359 | Correct actor forwarding in `demoManBootChk`, `demoManChkStart`, `ForwardTime__DemoMan`. |
+
+These interface repairs address m2c drafts that declared a getter with no
+arguments even though the original assembly reads the actor in a0. An apparent
+byte match can hide an incorrect source interface when a register happens to
+retain its incoming value. Review actual callee inputs, matching C callers,
+float argument placement, and return types together; do not blindly prepend a
+parameter to an existing actor argument.
+
+The #346 review also made five getters return pointers (`getPlayerColCont`,
+`getPlayerColCont2`, `getPlayerMVHIST`, `getWormIKWork`, `SCRGetBossWork`) and
+made `IsHorseCalled_withFlgOff` return int consistently with its caller while
+retaining its loaded unsigned-byte range. All 89 affected objects were rebuilt.
+Original native comparisons and full local loader/module code, data, BSS,
+relocation and MANAGER VU-text checks passed; pytest, Ruff and exact-head PR CI
+passed before each merge. Latest completed local evidence:
+
+- `.worktrees/codex-ai-work-actors/build/346-full-check.log` (89-source repair).
+- `.worktrees/codex-script-layout-actors/build/348-full-check.log` (three demo helpers).
+- `.worktrees/codex-engine-81-160/build/337-full-check.log` (latest four new matches).
+
+### Finish this first: #349 data-control actor forwarding
+
+**Unmerged, 44 modified C files**, branch `codex/data-control-actors`, worktree
+`.worktrees/codex-data-control-actors`, based on `ff4b955` (before #359).
+There is no #349 PR yet. All 44 standalone original-compiler comparisons passed;
+the standalone process has exited successfully. **Full matching, final Python
+checks, CI and merge have not happened. Do not count this as completed.**
+
+- Scope: the 44 actual empty `getSCRDataCtrlWork()` calls. The canonical helper
+  interface is `void *getSCRDataCtrlWork(void *)`. Preserve existing actor
+  arguments, float arguments, and the eight-argument wrapper's slot positions.
+  Explicit casts retain existing 32-bit work-handle views where necessary.
+- Evidence: `build/349-standalone.log` ends `Total 44 / 44`;
+  `build/349-standalone-results.json` records each comparison;
+  `build/349-actor-audit.json` maps the original family audit;
+  `build/original349/` retains pre-edit sources. Paths are relative to this
+  worker. `build/349-existing-callers.json` is empty.
+- The one-time edit/validation script `build/update349.py` has already run.
+  **Do not rerun it**: its assertions expect old prototypes, and it creates the
+  original snapshots. No compiler/permuter jobs remain running at this checkpoint.
+- Review `git diff`, fetch current main, and bring in #359 and subsequent docs
+  without overwriting #346 fixes already present in three shared caller files.
+  No #348 source overlaps #349. Use only a completed worker's build cache,
+  explicitly delete all 44 changed C object files, run configure and full
+  `ninja -j4 check`, then pytest/Ruff and diff checks. Open a bug-labeled PR
+  closing #349; merge only after fresh exact-head CI and delete its branch.
+- Leave the separate void-result defects in #358 for their own PR.
+
+### Next independent work, in suggested order
+
+These bugs are filed and unclaimed at this checkpoint. Check current claims
+before acting and use one issue/branch/PR per item:
+
+1. **#351:** reconcile `nico_UnparentObject` and its callers with actual
+   `void ForceUnparentLayoutObj(void *actor)`. The wrapper guesses four integer
+   inputs and a return value. Preserve any genuine script callback interface;
+   #344 is merged, so the dependency is clear.
+2. **#353:** review `SCRConditionAttacked` forwarding to the now-corrected
+   `nico_GetCharacterAttackedFlag` actor/int interface. Preserve genuine callback
+   arguments; #345 is merged.
+3. **#350:** replace false one-byte bounds on address-only external objects.
+   Confirmed examples: `DebugIsPlayer`'s `RO_0017C110` string;
+   `ForceUnparentLayoutObj`'s `IdentityQuaternion`/`ZeroPoint` vectors;
+   `gcGlobalVar` references in `SCRFuncKirinFallRockMain`, `torchAttached`,
+   `SCRPlayerCallHorse`. Use incomplete arrays or appropriate opaque views only
+   where size/index semantics permit. Preserve byte arithmetic: changing
+   `&gcGlobalVar` to a pointer-to-incomplete-array expression can break it.
+   Do not mechanically replace true one-element vectors or objects used by sizeof.
+4. **#358, after #349 merges:** repair invented return values in
+   `SCRFuncResetPathSystem`, `SCRFuncSetCreateTempAttain`, `SCRFuncSetGpCalcDist`.
+   Actual matching helpers `resetPassageWork`, `setCreateTempAttain`,
+   `setGpCalcDist` return void. Review wrappers/callers against assembly.
+5. Resume new matching candidates after these source-contract repairs. **#341**
+   (161-320-word native-context pass) is parked with no validated matches;
+   `.worktrees/codex-engine-161-320` and its unmerged investigation branch retain
+   evidence. Closest ranked draft `execObjectWithNonTaskSwitch` still differs by
+   173 words. Avoid repeating this scan without a new approach.
+
+Other parked work remains uncounted: #336 `fadeIn` is two register differences
+away; #337 boss-health lookup variants differ by 53-80 words; #208/#210 audio
+and cloth attempts and draft PRs #53/#56/#62/#96/#110 need new evidence before
+another attempt. No search/permuter remains live. Preserve ignored experiments
+and check ownership before reviving a parked draft.
+
+### Validation and tooling reminders
+
+Use Sony ee-gcc 2.96 `2.96-ee-001003-1`, `-O2 -G0`, and that package's assembler.
+Standalone comparisons are necessary but do not replace full code/data/BSS and
+relocation validation. CI has no private game files or native compiler; green
+CI alone cannot establish matching. Do not change assembly, flags, or verifier
+rules to force matches, and reject matches relying on uninitialized values.
+
+The native compiler uses 8-byte long/long long/long double, 4-byte int/pointers
+and 16-byte TI. m2c assumes 4-byte long. Use explicit repeatable `--ee-context`
+for self-contained native C context: it adapts integer long to long long in a
+temporary context, preserves floating types/comments/literals, and rejects
+preprocessor directives. Ordinary `--context` behavior is unchanged. Context
+hints still need assembly evidence.
+
+Never copy a live worker's mutable build cache. After copying a completed cache,
+delete every changed source's object so timestamp reuse cannot hide an edit.
+For unchanged tracked C only, an EOL-normalized text equality check permits
+copying the completed baseline's exact source bytes/timestamps; see
+`.worktrees/codex-script-layout-actors/build/full348.py`. Never apply that
+normalization to differing source or generated Shift-JIS assembly.
+
+## Earlier working state (2026-10-14, historical)
 
 Claude coordinates and merges; Codex claims items through GitHub issues and works in `.worktrees/` (see `docs/collaboration.md`). Check open issues for claims before starting anything.
 
