@@ -8,8 +8,6 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 Work was paused on request mid-way through the near-miss list. To resume:
 
-- **Matched but not yet in a PR.** These files sit untracked in `src/xff/GAMECORE/` and already pass `ninja check` together with everything on main. Each has an open issue; commit them in PRs of up to three:
-  - `initPinAttackIKWork` (#192), `SCRFuncUnagiSetAttackParam0` (#195), `Update_TimeFloatSpeed` (#196)
 - **Parked near-misses** (no issue yet; drafts in the gitignored `build/cand/`, permuter directories already set up under `build/permuter/<name>/`, no search running):
   - `GAMEUTIL_is_yaw_pitch_get_direction` (MANAGER), 6 words: branch layout of the two range tests. Draft `build/cand/b2/yaw-p.c`.
   - `addPlayerO2` (GAMECORE), 8 words: float register choice in the 0..100 clamp. Draft `build/cand/b4/o2-p.c`.
@@ -29,7 +27,7 @@ Work was paused on request mid-way through the near-miss list. To resume:
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,589 functions** come from matching C: 919 GAMECORE, 504 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,592 functions** come from matching C: 922 GAMECORE, 504 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -51,6 +49,8 @@ Work was paused on request mid-way through the near-miss list. To resume:
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issues #192, #195 and #196: `initPinAttackIKWork`, `SCRFuncUnagiSetAttackParam0` and `Update_TimeFloatSpeed` match. `initPinAttackIKWork` takes the work array as its third argument, uses the one-member `s128` struct for `ZeroPoint`/`ZeroVector`, and stores pos, dir, weight, time in that order. The Unagi setter matches with a typed work struct and the four stores in field order. `Update_TimeFloatSpeed` matches with nested ifs for the clamp. Evidence: `build/near-miss-batch6-final-check.log` (922 GAMECORE); 97 tests and Ruff pass.
 
 Issues #189, #190 and #191: `startAttackEffect`, `SCRFuncKameSetMissileRadius` and `SCRFuncUnagiSetAttackParam1` match. `startAttackEffect` uses a typed view of `B_0019CD28` with the stores ordered active, scale_x, scale_y, time, power (found with `permlines.py`). The Kame setter is a plain else-if chain storing 0..3 at +0x41C4. For the Unagi setter, store order picks which callee-saved float register holds each argument; the match stores the arguments in order a, b, c to +0x5AC4, +0x5AC8, +0x5AC0. Evidence: `build/near-miss-batch5-final-check.log` (919 GAMECORE); 97 tests and Ruff pass.
 
