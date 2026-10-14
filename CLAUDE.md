@@ -112,6 +112,7 @@ Splice limitations:
 - `src/xff/<MODULE>/`: decompiled C for the XFF modules, one file per function for now
 - `experiments/`: C used to identify the compiler (not part of the build)
 - `docs/findings.md`: what we know about the binaries, the compiler and the SDK
+- `docs/handoff.md`: matching-work status snapshot and techniques that closed gaps (update it when handing work over)
 - `config/baserom.json`: expected original executable path and SHA1
 
 ## Gotchas

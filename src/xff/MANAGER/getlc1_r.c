@@ -1,0 +1,6 @@
+extern unsigned char B_001486F0[1];
+
+void *getlc1_r(void)
+{
+    return &B_001486F0;
+}

@@ -1,3 +1,7 @@
+import re
+
+import pytest
+
 from tools.m2c import clean, extract, reloc_names
 
 LINES = [
@@ -24,12 +28,57 @@ def test_extract_through_a_false_split_drops_inner_boundaries():
     assert "endlabel f" not in out and "glabel func_8 # 2" not in out
 
 
+def test_interior_plain_twins_and_branches_stay_local():
+    lines = [
+        "glabel f",
+        ".Lxff.f:",
+        "    b .Lxff.jtbl_20",
+        "    nop",
+        "  jtbl_20:",
+        ".Lxff.jtbl_20:",
+        "    b jtbl_30",
+        "    nop",
+        "  jtbl_30:",
+        ".Lxff.jtbl_30:",
+        "    jal external_jtbl_30",
+        "    nop",
+        "endlabel f",
+    ]
+    out = clean(extract(lines, "f", None))
+    assert "f:" in out
+    assert out.count(".Lm2c.jtbl_20:") == 1
+    assert out.count(".Lm2c.jtbl_30:") == 1
+    assert "    b .Lm2c.jtbl_20" in out
+    assert "    b .Lm2c.jtbl_30" in out
+    assert "    jal external_jtbl_30" in out
+    assert not any(line.strip() in {"jtbl_20:", "jtbl_30:"} for line in out)
+
+
+def test_plain_labels_without_twins_are_preserved():
+    lines = ["glabel f", "    b .L20", ".L20:", "    nop", "endlabel f"]
+    assert clean(extract(lines, "f", None)) == lines
+
+
 def test_clean_restores_raw_words_and_twin_labels():
     out = clean(LINES[:6])
     assert out[1] == "f:"
     assert out[2].endswith("jal         g")
     assert out[3] == "    /* 000104 00000104 0000023C */ lui $v0, %hi(D_1)"
     assert not any(".reloc" in line for line in out)
+
+
+@pytest.mark.parametrize("destination, source", [(1, 0), (0, 1), (3, 6), (31, 30)])
+def test_clean_preserves_raw_single_precision_integer_conversions(destination, source):
+    word = 0x46000024 | (source << 11) | (destination << 6)
+    out = clean([f"    /* 000100 00000100 00000000 */ .word 0x{word:08X}"])
+    instruction = out[0].split("*/", 1)[1].strip()
+    assert re.fullmatch(rf"cvt\.w\.s\s+\$f{destination},\s+\$f{source}", instruction)
+
+
+@pytest.mark.parametrize("word", [0x46010064, 0x46200064])
+def test_clean_leaves_reserved_conversion_bits_and_double_format_raw(word):
+    out = clean([f"    /* 000100 00000100 00000000 */ .word 0x{word:08X}"])
+    assert out[0].strip().endswith(f".word 0x{word:08X}")
 
 
 def test_clean_decodes_relocated_words_with_raw_word_comments():

@@ -1,6 +1,10 @@
 """Replace functions in an XFF module's assembly with compiled C.
 
     python tools/xff_splice.py GAMECORE build/src/xff/GAMECORE/*.o
+    python tools/xff_splice.py GAMECORE --objects-file objects.json
+
+The object list is a JSON array of paths, in splice order. Ninja uses this
+response-file form to avoid Windows process command-line length limits.
 
 Reads asm/xff/<MODULE>/ (from tools/xff_split.py) and writes a copy to
 build/xff/<MODULE>/spliced/ where every function defined in the given C
@@ -38,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import re
 import shutil
 import sys
@@ -722,14 +727,31 @@ def splice(module: str, objects: list[Path], asm_dir: Path, out_dir: Path, origi
     return count
 
 
+def read_object_list(path: Path) -> list[Path]:
+    """Read Ninja's JSON response file without shell path quoting or length limits."""
+    try:
+        objects = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise SpliceError(f"{path}: cannot read object list: {e}") from e
+    if not isinstance(objects, list) or any(not isinstance(p, str) or not p for p in objects):
+        raise SpliceError(f"{path}: expected a JSON list of nonempty object paths")
+    return [Path(p) for p in objects]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument("module")
     parser.add_argument("objects", type=Path, nargs="*")
+    parser.add_argument("--objects-file", type=Path, help="JSON response file listing object paths")
     parser.add_argument("--out", type=Path, help="default build/xff/<MODULE>/spliced")
     args = parser.parse_args(argv)
+    if args.objects_file:
+        try:
+            args.objects.extend(read_object_list(args.objects_file))
+        except SpliceError as e:
+            parser.error(str(e))
     module = args.module.upper()
     out = args.out or ROOT / f"build/xff/{module}/spliced"
     original = ROOT / f"build/xff/{module}.o"

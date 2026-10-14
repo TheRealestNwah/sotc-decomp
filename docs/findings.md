@@ -68,9 +68,9 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
 | ee-gcc 2.9 (990721, 991111) | 7 | Misses the tail call, the jump table and `GAMEUTIL_reset_position_filter`. |
 | ee-gcc 3.2 (030926, 040921) | 0 | Different code generation everywhere. |
 
-- **Both 2.96 misses differ only in register allocation or scheduling, which points to the exact source shape:**
-  - `calcFadeParam` has identical structure, but the floats land in different registers.
-  - `GAMEUTIL_reset_position_filter` has the same instructions in a different order. 2.95 happens to match this one, which is consistent with my C being slightly different from the original.
+- **Both initial 2.96 misses differed only in register allocation or scheduling, which points to the exact source shape:**
+  - `calcFadeParam` had identical structure, but the floats landed in different registers. It now matches in `src/xff/GAMECORE/calcFadeParam.c`: normalize the time local in place, then accumulate into the value local. The original compiler-ID experiment is retained unchanged.
+  - `GAMEUTIL_reset_position_filter` initially had the same instructions in a different order. It now matches with 2.96 in `src/xff/GAMECORE/GAMEUTIL_reset_position_filter.c`: a union view of the filter preserves the original 128-bit copy and count-store order. Both initial misses are now fully verified; the compiler-ID experiments remain unchanged.
 - **Assembler matters:** 2.96 emits macros (`move`, `lw reg, table(reg)`) that the assembler expands. The original expansions (`daddu rd, rs, $zero`; jump-table address via `addu`) match the package's `ee-as`, not modern binutils. All 84 GAMECORE jump tables use `addu`.
 - **`-G0`:** none of the three modules contains a single gp-relative relocation.
 - **`-O2` over `-O3`:** 41 tiny static functions (6 instructions or fewer) across the modules are still called rather than inlined, which `-O3` would have done.

@@ -1,0 +1,4 @@
+void iosCreatePrintMgr(void)
+{
+
+}

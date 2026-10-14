@@ -1,0 +1,4 @@
+void bgmStageInit(void)
+{
+
+}

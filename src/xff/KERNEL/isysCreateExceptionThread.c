@@ -1,0 +1,4 @@
+void isysCreateExceptionThread(void)
+{
+
+}

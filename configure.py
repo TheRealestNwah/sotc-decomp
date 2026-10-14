@@ -12,6 +12,7 @@ be overridden with --cross or the SOTC_CROSS environment variable.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -137,7 +138,10 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
         "  description = EECC $in",
         "",
         "rule splice",
-        "  command = $python tools/xff_splice.py $module $in --out $outdir",
+        "  command = $python tools/xff_splice.py $module"
+        ' --objects-file "$outdir.rsp" --out $outdir',
+        "  rspfile = $outdir.rsp",
+        "  rspfile_content = $objects_json",
         "  description = SPLICE $module",
         "",
         "rule configure",
@@ -175,16 +179,18 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
             c_objects = []
             for c in c_files:
                 obj = f"{BUILD_DIR}/src/xff/{m}/{c.stem}.o"
-                lines.append(f"build {obj}: eecc {ninja_path(c.relative_to(ROOT))}")
+                lines.append(f"build {ninja_path(obj)}: eecc {ninja_path(c.relative_to(ROOT))}")
                 c_objects.append(obj)
             spliced = f"{BUILD_DIR}/xff/{m}/spliced"
             extra = " ".join(f"{spliced}/{name}" for name in asm_files if name != f"{m}.s")
-            inputs = " ".join(c_objects)
+            inputs = " ".join(ninja_path(obj) for obj in c_objects)
+            objects_json = json.dumps(c_objects).replace("$", "$$")
             lines += [
                 f"build {spliced}/{m}.s | {extra}: splice {inputs}"
                 f" | {original} tools/xff_splice.py {deps}",
                 f"  module = {m}",
                 f"  outdir = {spliced}",
+                f"  objects_json = {objects_json}",
             ]
             asm_dir, deps = spliced, extra
 

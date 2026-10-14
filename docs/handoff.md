@@ -1,0 +1,196 @@
+# Matching-work handoff
+
+A snapshot for whoever picks up the matching work next, human or agent (Codex, Claude Code). It records where things stand, how to resume safely and the techniques that have closed gaps so far. Day-to-day notes stay in the local, gitignored `OVERNIGHT.md`.
+
+Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/findings.md` first.
+
+## Paused here (2026-10-14, Claude Code)
+
+Work was paused on request mid-way through the near-miss list. To resume:
+
+- **Matched but not yet in a PR.** These files sit untracked in `src/xff/GAMECORE/` and already pass `ninja check` together with everything on main. Each has an open issue; commit them in PRs of up to three:
+  - `initPinAttackIKWork` (#192), `SCRFuncUnagiSetAttackParam0` (#195), `Update_TimeFloatSpeed` (#196)
+- **Parked near-misses** (no issue yet; drafts in the gitignored `build/cand/`, permuter directories already set up under `build/permuter/<name>/`, no search running):
+  - `GAMEUTIL_is_yaw_pitch_get_direction` (MANAGER), 6 words: branch layout of the two range tests. Draft `build/cand/b2/yaw-p.c`.
+  - `addPlayerO2` (GAMECORE), 8 words: float register choice in the 0..100 clamp. Draft `build/cand/b4/o2-p.c`.
+  - `SCRFuncBuddhaMissileInit2` (GAMECORE), 6 words: the `RO_0017D130` load must be scheduled before the stores. Draft `build/cand/b4/buddha-p.c`.
+- **Next candidates:** `build/cand/remaining-ranked.txt` ranks the 128 earlier batch drafts that compiled but differed, fewest differing words first (built by `build/cand/rank_remaining.py`). Skip any name that now has a file in `src/xff/`. `build/cand/literal-retry/` holds versions with float literals already fixed for truncation (see #177).
+- **Local helpers** (gitignored, in `build/cand/`): `permlines.py FILE MODULE` tries every order of lines tagged `/*P*/`; `literal_retry.py` rewrites float literals and retests; `update_docs.py` bumps totals but misplaced notes twice, so check its output or edit the handoff by hand.
+
+### Techniques that closed these gaps
+
+- **Store order:** gcc 2.96 often emits the *last* store of a straight-line run first, so rotating the source order by one is a quick first try; otherwise use `permlines.py`.
+- **Float literals:** ee-gcc 2.96 truncates decimal float literals, so m2c's exact-value literals come out one ULP low. Write a decimal at or just above the wanted float (#177).
+- **Offset folded into the base address:** use a typed struct view of the global (`gl->s` with `GlState *gl = &D_00130480`) instead of byte-offset casts.
+- **Counted loops that compare with -1:** write `while (n--)`.
+- **Float zero via `mtc1` instead of `sw $zero`:** chain the assignments (`a = b = 0.0f`); mixed int chains work too (`mouseClearStatus`).
+- **128-bit loads not hoisted out of a loop:** wrap the `s128` in a one-member struct (#174).
+
+## Where things stand (2026-10-14)
+
+- Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
+- **1,589 functions** come from matching C: 919 GAMECORE, 504 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
+- Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
+- Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
+- Issue #73 checks the 41–80 instruction GAMECORE range and adds `Kite_SucceedKitePathWork`. Of 291 candidates, one matched, 49 differed and 241 had no usable draft. A conservative retry using byte-array declarations for address-only opaque globals added no matches (nine more usable drafts, all different). Local evidence remains under `build/auto80/GAMECORE/` and `build/auto80-retry/GAMECORE/`.
+- Issue #75 recovers eight small GAMECORE routines from the earlier unusable drafts using byte-array declarations for address-only opaque globals. All eight passed original code, data and relocation validation. The retry checked 717 candidates: eight matched, 74 differed and 635 still had no usable draft. Local evidence remains under `build/auto40-addr/GAMECORE/`.
+- Issue #76 recovers another 129 GAMECORE routines using opaque pointer types and external calls whose results are discarded. All 129 passed original code, data and relocation validation and the full build. The retry checked 635 candidates: 129 matched, 201 differed and 305 remained unresolved. Local evidence is under `build/auto40-prototypes/GAMECORE/`.
+- The Windows splice command exceeded the process command-line limit at 740 GAMECORE objects containing 792 matching functions. Issue #78 / PR #79 fixes it with Ninja JSON response files; positional object arguments still work. Do not revert this fix when updating older parked branches.
+- Issue #81 adds 190 MANAGER routines from 543 previously unusable drafts (190 matched, 149 differed and 204 remained unresolved). There are 186 new files; four case-distinct pointer getters share their existing value-getter files to avoid Windows filename collisions. Local evidence is under `build/auto40-prototypes/MANAGER/`; the final complete build log is `build/manager-prototypes-final-check.log`.
+- Issue #83 adds 54 KERNEL routines from 339 previously unusable drafts (54 matched, 166 differed and 119 remained unresolved), retaining prior SDK/stdlib exclusions. All 54 passed original code, data and relocation validation and the full build. Local evidence is under `build/auto40-prototypes/KERNEL/`.
+- Issue #85 fixes m2c's splitting of complete functions at interior plain-label twins such as `jtbl_00003A20`. The wrapper now removes redundant plain definitions and localizes both plain and `.Lxff` references. `GAMEUTIL_is_nearly_equal_zero3D` now produces one complete draft; older unresolved candidates may benefit from redrafting. Tests increased to 91.
+- Issue #87 / PR #88 adds `calcFadeParam`, fully verified with the original compiler and the complete matching build. Reusing both normalized time and output-value locals preserves the original float registers. Main is at `763b094`; all 91 tests, Ruff and CI passed.
+- Every remaining sword.c function has a near-match parked behind `NONMATCHING` in a draft PR:
+
+| Function | Draft PR | Status |
+| --- | --- | --- |
+| `nico_swordstart` (sword thread) | #62 | +2 words: GCSE-hoisted stack addresses win callee-saved registers over two `%hi` parts and `origin` |
+| `T_000C1D80`, `T_000C2620` (collision callbacks) | #53 | 5 words each: the shared ignore flag is allocated to v0 instead of v1 |
+| `DispWithSwordBlur`, `DispWithTorchBlur` | #56 | 616 of 629 words: loop-invariant hoisting and constant sharing differ |
+- Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
+
+## Current checkpoint (2026-10-14)
+
+Issues #189, #190 and #191: `startAttackEffect`, `SCRFuncKameSetMissileRadius` and `SCRFuncUnagiSetAttackParam1` match. `startAttackEffect` uses a typed view of `B_0019CD28` with the stores ordered active, scale_x, scale_y, time, power (found with `permlines.py`). The Kame setter is a plain else-if chain storing 0..3 at +0x41C4. For the Unagi setter, store order picks which callee-saved float register holds each argument; the match stores the arguments in order a, b, c to +0x5AC4, +0x5AC8, +0x5AC0. Evidence: `build/near-miss-batch5-final-check.log` (919 GAMECORE); 97 tests and Ruff pass.
+
+Issues #188 and #194: `GAMEUTIL_reset_interp_value_cntrl` and `mouseClearStatus` match. The interp reset is typed as returning the tail-called getter's float, with the three stores in start, value, hope order. `mouseClearStatus` needs chained zero assignments: one int chain for the button arrays and deltas, then `x = y = z = 0.0f`, then the wheel. Evidence: `build/near-miss-batch4-final-check.log` (504 MANAGER); 97 tests and Ruff pass.
+
+Issues #185, #186 and #187: `kColor`, `DecreaseDamageLockTime` and `ResetCharacterClassIKInfo` match. The first two are store-order fixes: a typed global view for `kColor` (`D_001359F0`, fields +0x90..+0xA0) and the rotate-by-one rule (last source store is emitted first). `ResetCharacterClassIKInfo` needs a `while (n--)` loop: GCC turns it into the original decrement-then-compare-with-minus-one, loading the IK array only after the count test. `build/cand/permlines.py FILE MODULE` tries every order of lines tagged `/*P*/` and is the quickest tool for store-order near-misses. Evidence: `build/near-miss-batch3-final-check.log` (502 MANAGER); 97 tests and Ruff pass.
+
+Issues #181 and #182: `chkMoveAngle` and `bosslifebar_resethp` match. `chkMoveAngle` needs the final comparison written as `fabsf(a) >= fabsf(b)` (operand order picks the abs registers). `bosslifebar_resethp` uses a typed life-bar struct at `D_0017B050` plus the separate `D_0017B064` scale global; the three ratio stores are written target, shown, hp. General rule seen across these store-order near-misses: gcc 2.96 often emits the *last* source store of a straight-line run first, so rotating the source order by one is a quick first try. Evidence: `build/near-miss-batch2-final-check.log` (916 GAMECORE); 97 tests and Ruff pass.
+
+Issues #179 and #180: `glTexCoord2f`, `glTexCoord2fv` and `init_texture_animation_parameter` match. A typed view of the GL state global `D_00130480` (fields +0xA0..+0xAC) keeps the base address in a register instead of folding the offset into it. `glTexCoord2fv` also needs an empty `do {} while (0)` (found by the permuter) between the r and q stores to reproduce the original scheduling. The texture-animation reset matches with its four 1.0f stores written in field order. Evidence: `build/near-miss-batch1-final-check.log` (499 MANAGER); 97 tests and Ruff pass. Ranked list of remaining near-misses: `build/cand/remaining-ranked.txt`; literal-fixed retries in `build/cand/literal-retry/`.
+
+Issue #177: `iosGetACosf` and `iosGetACos` match. ee-gcc 2.96 **truncates** decimal float literals instead of rounding, so the exact-value literals m2c prints come out one ULP low. Write a decimal at or just above the wanted float (here 1.5707963f, 0.16666666f, 0.075f, 0.044642855f, 0.030381943f, 4.65661e-10f). Evidence: `build/kernel-acos-final-check.log` (166 KERNEL); 97 tests and Ruff pass. Remaining near-misses from the earlier batches, ranked by differing words: `build/cand/remaining-ranked.txt` (from `build/cand/rank_remaining.py`).
+
+Issue #174: `reset_camera_target_visible_angle_manager` matches. Wrapping the 128-bit `ZeroPoint` in a one-member struct (`struct { s128 q; }`) stops GCC hoisting the load, giving the original per-store `lq`/`sq` pairs; plain `s128` hoists it and `volatile` misschedules it. The chained `angle0 = angle1 = 0.0f` gives the original `mtc1` + two `swc1` in +0x3D4, +0x3D8 order. Evidence: `build/camera-angle-manager-final-check.log` (914 GAMECORE); 97 tests and Ruff pass.
+
+Issue #172 adds `setRatioGazeIKWork`, fully verified with plain offset casts: null guard, three float inequality tests that set the ratio at +0x70 to 1.0, then the x/y/z stores in original order (913 GAMECORE functions).
+
+Issue #170: both fog-factor getters match using identical padded global layouts and unchanged arithmetic association. Full proof: `build/fog-factor-final-check.log` (496 MANAGER, 912 GAMECORE); 97 tests and Ruff pass. Next item: gaze IK ratio setter, issue #172.
+
+Issue #168 adds `getStageNormalizePosition` and `getStageChipIDFloat`, fully verified. Identical typed global views keep the shared `D_0017A340` base, scale fields +0x40/+0x44 and offsets +0x50/+0x54. Plain fields and unchanged expressions match both original bodies, including the x store before z reload. Separate source files use consistent layouts. Evidence: `build/stage-normalization-typed-diff.log` and `build/stage-normalization-final-check.log` (912 GAMECORE functions); 97 tests and Ruff pass. Issue #170 is the next fog-factor getter pair.
+
+Issue #166 adds `SCRCharaAccel`, fully verified. Restore actor forwarding and preserve the float-converted integer-control zero test. Volatile views in the initialization branch retain +0x814, +0x81C, +0x818 store order; the compiler already emits a word-zero float reset, so no union is needed. Original qualifiers remain unknown. Evidence: `build/character-acceleration-{actor,ordered,clean}-diff.log` and `build/character-acceleration-final-check.log` (910 GAMECORE functions); 97 tests and Ruff pass. Issue #168 is the next pair of stage-coordinate normalization helpers.
+
+Issue #164 adds `SCRFuncYamoriBSetBellyDamageInitWork`, fully verified. Restore the actor and load `RO_00180E94` into a local before either store to reproduce the original load/zero/float-store order. Plain and const declarations match; production uses const, with no representation cast or volatile qualifier. Evidence: `build/yamori-belly-{actor,local,const-local,volatile-local,clean}-diff.log` and `build/yamori-belly-final-check.log` (909 GAMECORE functions); 97 tests and Ruff pass. Issue #166 is the next character acceleration helper item.
+
+Issue #162 adds `SCRFuncPoseidonAngryMain`, fully verified. Restore the actor before its integer threshold; use a float/int union for the timer so reset emits an integer-zero store. Volatile reset views preserve the original flags-then-timer order; original field qualifiers remain unknown. Evidence: `build/poseidon-anger-{union,ordered}-diff.log` and `build/poseidon-anger-final-check.log` (908 GAMECORE functions); 97 tests and Ruff pass. Issue #164 is the next Yamori belly-damage initialization item.
+
+Issue #160 adds `nico_setHorseRidingStatusForHorse`, fully verified. Restore the actor forwarded to the AI-work getter, load the horse pointer at +0x4248 and retain the null guard/tail call. The helper uses a parent pointer, node value, vector pointer and float span; recovering these keeps the incoming a1/a2/a3 arguments in their original registers. Evidence: `build/horse-riding-forward-diff.log` and `build/horse-riding-final-check.log` (907 GAMECORE functions); 97 tests and Ruff pass. Issue #162 is the next Poseidon anger helper item.
+
+Issue #158 adds `SCRFuncSetAcceleParamWormCtrlParam`, fully verified. Restore actor forwarding and the known int result of `setAttainSpeedWormCtrlWork`. Deriving the +0x3D10 work pointer inside the mode==3 guard produces the original mode-check registers; the compiler hoists the address calculation as required. The manual candidate matches and is retained; a short permuter also found zero after 121 iterations and exited. Evidence: `build/worm-acceleration-{work-inside,clean}-diff.log` and `build/worm-acceleration-final-check.log`; 97 tests and Ruff pass. Issue #160 is the next horse-riding wrapper item.
+
+When promoting a copied candidate over a previously parked file, refresh its source timestamp: Windows `Copy-Item` can preserve an older timestamp and Ninja can reuse the parked empty object. Rewrite the file in place, regenerate the build and verify the object defines the function plus the splice reports the increased count. This occurred during #158 and was caught before committing; the final log includes EECC and 906 GAMECORE functions.
+
+Issue #156 adds `timeAttackTimeScriptEnd`, fully verified. Typed flags at +0xC and elapsed float at +0x18 preserve the shared global base, float load and flag store in the return delay slot. Evidence: `build/time-attack-end-typed-diff.log` and `build/time-attack-end-final-check.log`; 97 tests and Ruff pass. Issue #158 is the next independent worm acceleration-wrapper item.
+
+Issue #154 adds `SRCConditionHorseAngleFromPlayerToHorse`, fully verified. Place the final result assignment outside the lower-bound block, preserving the original return-register copy in the branch delay slot. Keep the actor argument, -1 sentinel, nested comparisons and verified `0.0174532925f` constants. The permuter found zero after 1,852 iterations and exited; both generated and formatted candidates independently matched. Current main was merged before final validation. Evidence: `build/horse-angle-{zero,clean}-diff.log`, `build/horse-angle-final-check.log` and `build/permuter/SRCConditionHorseAngleFromPlayerToHorse/output-0-1/source.c`; 97 tests and Ruff pass. No search remains running.
+
+Issue #150 adds `__execScrLwsOri`, fully verified against the corrected camera API. A typed global view keeps the shared base at `gcGlobalVar`, interval at +0x188 and context at +0x370. Plain interval and pointer-first `ViewIntervalClip` arguments match; no volatile field is needed. The context uses a GNU trailing-array view. Evidence: `build/lws-orientation-{typed,volatile,pointer-first}-diff.log` and `build/lws-orientation-final-check.log`; 97 tests and Ruff pass. Issue #154 is the next horse-angle condition item.
+
+Issue #152 corrects pointer returns in the already matching camera getter chain. `get_camera_obj` dereferences its manager argument; `get_main_cameraman_camera_obj` returns that camera through a typed selector/table view (selector +0, pointer table +8). GCC 2.96 needs GNU `[0]` trailing-array syntax rather than C99 `[]`. Both retain identical bytes and this item did not change the count. Evidence: `build/camera-getter-pointer-final-check.log`; 97 tests and Ruff pass.
+
+Issue #148 adds `update_clip_screen`, fully verified. Float-first/int-second parameter order for `func_000E95C8` preserves the original f12 load and a0 load in the call delay slot, while keeping the same EE argument registers. Retain the returned float across later helpers and the final tail call. Evidence: `build/clip-screen-float-first-diff.log` and `build/clip-screen-final-check.log`; 97 tests and Ruff pass. Issue #150 is the next script LWS orientation-wrapper item.
+
+Issue #146 adds `doit_camera_region_manager`, fully verified. Traverse 50 contiguous void-pointer entries with a one-element increment; the draft's int-pointer `+= 4` advanced 16 bytes instead of the original four. The helper treats its second argument as an actor pointer. Evidence: `build/camera-region-stride-diff.log` and `build/camera-region-final-check.log`; 97 tests and Ruff pass. Issue #148 is the next clip-screen update-wrapper item.
+
+Issue #144 adds `MotSpdCtrl_SetSpeed`, fully verified. Compute the first condition before initializing the return value and retain the `do { ... } while (0)` block; this reproduces the original byte-check register and branch delay slot. Permuter base score 210 reached zero after 236 iterations and exited; both the generated and formatted candidates independently matched before full validation. Evidence: `build/permuter/MotSpdCtrl_SetSpeed/output-0-1/source.c`, `build/motion-speed-{zero,clean}-diff.log` and `build/motion-speed-final-check.log`; 97 tests and Ruff pass. No search remains running. Issue #146 is next: the camera region-manager draft advances its int pointer by 16 bytes rather than the original four.
+
+Issue #142 adds `getMotionFloatFrameWithLimitCaribration`, fully verified. Restore the output and motion pointers in a0/a1, selector in a2 and frame in f12. The capped path passes the motion+4 short in a2 and selector in a3; the uncapped tail call retains the incoming arguments. Helpers write vector output and do not deliberately return a scalar, so keep void declarations. Evidence: `build/motion-limit-forward-diff.log` and `build/motion-limit-final-check.log`; 97 tests and Ruff pass. Issue #144 is the next motion-speed setter item.
+
+Issue #140 adds `getAreaSize`, fully verified. A plain signed integer field allows the original direct `lwc1`/`cvt.s.w` sequence; the volatile float view preserves the later +0x40 load. Making the integer volatile forced `lw`/`mtc1` and worsened the draft. The float qualifier remains provisional. Evidence: `build/area-size-{typed,nonvolatile-int}-diff.log` and `build/area-size-final-check.log`; 97 tests and Ruff pass. Issue #142 is next: recover forwarded a0/a1 and the frame input in `getMotionFloatFrameWithLimitCaribration`; verify helper return behavior rather than guessing from its name.
+
+Issue #138 adds `GetTimeAttackTimeLimit`, fully verified. Typed volatile field views and explicit locals preserve the +0x18 then +0x14 load order and shared base address before subtraction. Original qualifiers remain unknown. Evidence: `build/time-attack-limit-typed-diff.log` and `build/time-attack-limit-final-check.log`; 97 tests and Ruff pass.
+
+Issue #136 adds `mouseSetCursorPosition`, fully verified. A typed two-float cursor view with volatile fields preserves both the shared base address and y-before-x stores. Direct byte casts with volatile float stores added an extra address adjustment; struct, array and union views all matched. Original qualifiers remain unknown. Evidence: `build/mouse-{byte-one,struct,cast-struct,array,union}-diff.log` and `build/mouse-position-final-check.log`; 97 tests and Ruff pass. Issue #138 is the next time-attack getter item.
+
+Issue #134 adds `adpcmSetPitch` and `adpcmSetVol`, fully verified. Explicit channel layouts preserve the 0x560-byte stride; volume reads the 64-bit flags at +0x38 and tests bit 39. Volatile float field views preserve the original store order, with qualifiers remaining provisional matching aids. The two translation units use identical layouts. Evidence: `build/adpcm-{pitch,volume}-{baseline,typed}-diff.log` and `build/adpcm-channel-final-check.log`; 97 tests and Ruff pass. Issue #136 is the next mouse-position setter item.
+
+Issue #133 adds both base yaw/pitch controller updates, fully verified. Forward the controller pointer to its enable predicate. Declaring the helper's three float parameters before its pointer preserves the original scheduling of f13 and a0 moves; EE register arguments remain unchanged. Evidence: `build/base-{pitch,yaw}-forward-diff.log`, `build/base-{pitch,yaw}-float-first-diff.log` and `build/base-controller-final-check.log`; 97 tests and Ruff pass. Issue #134 is the next ADPCM pitch/volume near-match item.
+
+Issue #130 adds `SCRFuncYamoriBSetRandomRadius2`, fully verified. Volatile views preserve the original flag-store order at +0x41D4 then +0x41D0; these views are matching aids, not proof of the original field qualifiers. The saved float allocation already matched. Both radius setters now explicitly forward the actor pointer to the AI-work getter, with the existing setter retaining its bytes. Evidence: `build/yamori-radius2-actor-diff.log`, `build/yamori-radius2-volatile-diff.log` and `build/yamori-radius2-final-check.log`; 97 tests and Ruff pass.
+
+Issue #128 adds both camera-manager parameter wrappers, fully verified. Position is forwarded unchanged in a1 to `set_camera_position`, leaving direction/up in a2/a3. Recover opaque pointer arguments and the existing `get_clip_screen` pointer result; all three affected routines match. Evidence: `build/cameraman-position-final-check.log`; 97 tests and Ruff pass.
+
+Issue #127 adds `setOffsetParamWormCtrlWork`, fully verified. Restore the actor argument passed unchanged to `GetLayoutClass`; work and mode belong in a1/a2. Preserve the original mixed float/integer store order. Evidence: `build/worm-offset-final-check.log`; 97 tests and Ruff pass. Issue #128 tracks the similar omitted position argument in the two camera-manager parameter-wrapper drafts and is the next small-function item to investigate.
+
+Issue #124 adds `iosGetSinCos`, fully verified. The output pointer is forwarded unchanged in a0 to `iosGetSinCosf`; the integer angle occupies a1. The helper stores a vector through that pointer, and `iosGetTanf` corroborates the output-buffer interface. Evidence: `build/sincos-output-final-check.log`; 97 tests and Ruff pass.
+
+Issue #123 retries six small FP near-matches with literals one quarter ULP above each recovered float32 magnitude. This avoids GCC 2.96 parsing an exact boundary one bit low. `gluGetBrightness`, `iosGetSin` and `iosGetCos` match and pass original code/data/relocation checks; the sine/cosine helpers explicitly return f0, so preserve float return declarations rather than the draft's void placeholders. The other three candidates remain excluded. Evidence: `build/fp-interior-search.log`, `build/auto40-fp-interior/<MODULE>/validation.json` and `build/fp-interior-final-check.log`. Issue #124 separately tracks the omitted output pointer in `iosGetSinCos`; its angle occupies a1 in the original.
+
+Issue #121 adds `SCRConditionAnglePlayerWorldXZ`. Restore the actor pointer forwarded unchanged in a0 through `getSCRDataCtrlWork` to the AI-work getter; the angle limit remains in f12. The existing data-work getter and route-angle wrapper now declare and forward that argument explicitly while retaining identical bytes. The condition also needs `0.0174532925f` for constant 0x3C8EFA35. Evidence: `build/script-world-angle-final-check.log`; 97 tests and Ruff pass.
+
+Issue #119 adds `SCRGetBossWeakPointAngleFromIndex` and corrects the already matching AI-work getter/Yamori initializer signatures. The actor pointer is forwarded in a0 to `GetScriptCharacterClass`, and the angle-query index is in a1. All three affected routines retain identical bytes; the getter was already counted, so this item adds one function. Evidence: `build/script-ai-context-final-check.log`.
+
+Issue #117 adds `set_option_parameter_nico_sight_on`, fully verified. Restore the incoming yaw flag forwarded in a1 to the first setter; the pitch flag then occupies a2 as the original requires. The same missing-argument pattern can hide in caller drafts even when no explicit move passes the register. Evidence: `build/sight-options-final-check.log`.
+
+Issue #115 adds `SCRFuncYamoriBDamageCheckInit`, fully verified. The recovered draft used a byte stride as an element count: `float_pointer -= 4` moved 16 bytes, while the original moved four. A one-element decrement restores the four contiguous -1.0f stores. Check typed pointer arithmetic against the original address increments. Evidence: `build/yamori-init-final-check.log`.
+
+Issue #113 adds `SCRFuncSetNextRouteMaxAngle`, fully verified. Even the exact decimal representation of float32 0x3C8EFA35 compiled one bit low in GCC 2.96; `0.0174532925f` produces the correct constant. Exact-decimal normalization is a candidate strategy, not a guarantee: always check emitted bits. Evidence: `build/route-angle-final-check.log`.
+
+Issue #111 retries 392 unmatched small FP candidates after the CVT decoder repair, retaining prior SDK/stdlib exclusions. Seven routines matched and passed per-object and full code/data/relocation checks: three GAMECORE and four MANAGER. Another 206 differed or failed compilation; 179 had no usable draft. Exact float32 decimal literals preserve recovered constant bits under GCC 2.96 truncation, and explicit mode(TI) types are supplied when needed. Evidence: `build/auto40-fp-retry/<MODULE>/validation.json` and `build/retry-fp-final-check.log`.
+
+Issue #108 fixes raw `cvt.w.s` normalization in the m2c wrapper. The R5900 decoder considered the instructions valid but printed `.word`, so m2c silently omitted the conversions. A restricted CPU decode for the canonical single-precision encoding preserves the instructions; reserved encodings and double format remain raw. The real `GetStageContext` draft now uses integer casts/division rather than float-bit arithmetic. All 97 tests, Ruff and the full matching build pass; the verified function count is unchanged. Evidence: `build/stage-context-helper-fixed-m2c.log` and `build/m2c-cvt-fix-final-check.log`.
+
+Issue #107 (`GetStageContext`) is parked in draft PR #110, branch `stage-context-helper`, head `26ce211`. Its typed source is behind `NONMATCHING`: 136 original words, 50 differences. Merge current main carefully before resuming. The permuter was stopped after about 3,679 iterations; `build/permuter/GetStageContext/output-1285-1/source.c` has a lower search score but verifies worse (134 words, 125 differences), so do not copy it based on score alone. Pointer/int union and volatile views are provisional matching aids. Evidence: `build/stage-helper-parked-diff.log`, `build/stage-helper-permuter-1285-diff.log` and `build/stage-helper-parked-check.log`.
+
+Issue #105 adds `GetStageContextByPos`, `GetStageAreaNumberByPos` and `GetStageNumberByPos`, fully verified. Direct returns preserve the original return register and remove an extra move. Despite its name, `GetStageNumberByPos` reads the global position; no used position parameter was added. Evidence: `build/stage-by-pos-control.log` and `build/stage-context-queries-final-check.log`.
+
+Issue #103 adds `GetStageName`, `GetStageAreaNumber` and `GetStageNumberNumber` using the restored local context. A volatile read of the area field preserves the original conditional load instead of if-conversion to `movn`. All three passed the original compiler and full code/data/relocation checks. Evidence: `build/stage-area-variants.log` and `build/stage-queries-final-check.log`.
+
+Issue #101 adds `GetStageCenter`, fully verified. Restore its 0x40-byte local context, position pointer at offset 4 and 128-bit center at offset 0x30. `GetStageContext` explicitly returns 0/1 in the original; declaring it `int` instead of the discarded-result `void` placeholder preserves the original vector register. Evidence: `build/stage-context-variants.log` and `build/stage-center-final-check.log`.
+
+Issue #99 recovers nine small routines with explicit signed/unsigned 128-bit scalar types (`mode(TI)`): five GAMECORE, three MANAGER and one KERNEL. `SetCurrentQuaternion` also needs a 128-bit destination array, matching the original 16-byte indexed store. All nine passed per-object code/data/relocation validation and the full matching build; 21 other candidates remained excluded. Evidence: `build/auto40-128/<MODULE>/validation.json` and `build/retry-128-final-check.log`.
+
+Issue #97 adds `GAMEUTIL_constructor_move_angle`, fully verified with the original compiler and complete matching build. Precise float literals, local declaration order and selected volatile stores preserve the original constant loads, float registers and store sequence. Evidence: `build/angle-match-volatile-37.c` and `build/angle-constructor-final-check.log`.
+
+Issue #93 adds 78 small GAMECORE script wrappers. Their drafts omitted the incoming character argument that the original forwards unchanged to `RequestCharacterMotionShiftFunc`. Restoring that argument matches all 78 with the original compiler; every separate object and the complete matching build passed code, data and relocation checks. Evidence: `build/script-wrappers-match.log`, `build/script-wrappers/validation.json` and `build/script-wrappers/final-check.log`.
+
+Issue #89 adds `GAMEUTIL_reset_position_filter`, now verified with ee-gcc 2.96 and the full code, data and relocation checks. The source uses a union containing a three-element 128-bit word array and a struct view with two 128-bit fields followed by the count. This changes alias analysis to preserve the original copy/store order. Evidence remains in ignored `build/filter-union-11.c`, `build/filter-variants.log` and `build/filter-final-check.log`.
+
+The documentation pause checkpoint (#90 / PR #91) merged with green CI at `c00838c`; work then resumed at the user's request. The three sword draft PRs above remain parked.
+
+## Parked KERNEL display-list getters (#95 / draft PR #96)
+
+The `kernel-display-list-getters` branch preserves four drafts behind `NONMATCHING` in `src/xff/KERNEL/iosDlState.c`. The original computes the 0x30-byte `B_00065018` state base separately before loading its fields; drafts fold the offsets into symbol references. Struct/union, storage, volatile, inline, return-width and control-flow probes did not match. The permuter was stopped after 4,137 iterations, with best score 60. `build/permuter/iosDlGetLayer/output-60-1/source.c` has two differing words: its load occupies the return delay slot instead of preceding it. None of these four functions is counted.
+
+Local evidence: `build/dl-getters-*.log`, `build/permuter/iosDlGetLayer/`. Inspect existing processes before restarting a search; check useful candidates with the original compiler and full matching build. Update this old draft branch with current main before continuing. Its parked checkpoint passed the full build, all 91 tests, Ruff and CI, but remains a draft because the functions do not match.
+
+## Resuming safely
+
+- Start from an up-to-date `main` and a clean tree. Each unfinished function gets its own issue, branch and PR.
+- An unfinished candidate can be committed behind `#ifdef NONMATCHING` (with an `#else` extern if other C calls it) and pushed as a draft PR. Never merge a draft until the function matches and `ninja check` passes.
+- Permuter searches live in `build/permuter/<name>/` (gitignored). Before starting one, check for Python processes that are already running a search, so you don't run duplicates. A permuter score is a search metric, not proof of a match.
+- Verify every candidate with `tools/try_compilers.py ... --only ee-gcc2.96 --flags "-O2 -G0"` and then `ninja check`.
+- **The instruction diff masks relocations.** A function can show zero differing words and still reference the wrong symbol (for example `minAmbientWeak` instead of `minAmbientLineWeak`). The splice step in `ninja check` catches this, so a function isn't done until `ninja check` passes.
+
+## Techniques that closed gaps
+
+All of these are for Sony `ee-gcc` 2.96 at `-O2 -G0`.
+
+| Symptom | What fixed it | Example |
+| --- | --- | --- |
+| Ignored helper result declared void changes the caller's vector register | Inspect the helper's return paths. Preserve a known scalar return declaration even when this caller discards it; `GetStageContext` explicitly returns 0/1. | `GetStageCenter` (#101) |
+| Tail-call wrapper uses the wrong argument register and loses its stack frame | Recover the incoming argument that is forwarded unchanged, even when the draft omits it. Passing the character argument before the callback address preserves the original a0/a1 assignments and stack instructions. | `SCRArrowLoopEnd` and 77 related wrappers (#93) |
+| 128-bit copies and an integer count store are reordered | Use a union view containing both a word array and the field struct to preserve the original alias relationships and instruction order. | `GAMEUTIL_reset_position_filter` (#89) |
+| Float registers rotate while the instruction sequence already matches | Normalize the existing time local in place and accumulate into the existing value local. Replacing these updates with fresh expression results changed register allocation. | `calcFadeParam` (#87) |
+| Function names differ only by letter case and collide as Windows filenames | Keep adjacent pointer/value getter pairs in one C file, preserving the case-sensitive function names and original order. | `getColLightDebugSts` / `GetColLightDebugSts`, `getDebPcWin*` / `GetDebPcWin*` (#81) |
+| Drafts contain unknown pointed-to types or unknown external scalar results | Use `void *` for opaque pointers. A call whose result is discarded can use a `void` return declaration; do this only when every recovered use discards it. Keep other unknown scalar types unresolved and finish with full code/data/relocation validation. | small GAMECORE pass (#76) |
+| Separate early returns merge into the wrong branch layout | Send both comparison arms explicitly to shared return labels. This preserves the original shared blocks and branch direction. | `GAMEUTIL_is_nearly_equal_zero` (#69), `GAMEUTIL_is_nearly_equal_zero3D` (#71) |
+| Constant integer argument scheduled before a live float argument instead of in the call delay slot | Put the integer flag after the float arguments in the emitter declaration, definition and calls. The EE ABI keeps the same integer and float register assignments; source parameter order changes scheduling. | `func_000C3198` (#50) |
+| Pointer offset rebased onto another register (`geometry+0x50` instead of `reaction+0x60`) | cse2 knew `reaction == geometry - 0x10` and folded the offset. Reassigning the base after its last use (`geometry = (char *)reaction;`) removes that equivalence. | `func_000C2EB0` |
+| Two independent loop-preheader or increment instructions swapped | Walk the array with a source-level pointer (`int *sheet = sheets;`) and order the increments (`sheet++, i++`). Hoisted invariants are emitted before giv inits, so the insn order decides scheduler ties. | `func_000C2EB0` |
+| Float registers swapped in an expression | Hold the subexpressions in locals and try every declaration order. Local allocation follows declaration order. | `func_000C2318` |
+| Original reloads a global in each branch, C keeps it in a register | Store through a pointer but read the global by name (`*p = (vol) + d;`). | `func_000C0EB0` (`STEP_VOL`) |
+| Store order inside a struct differs | Write through a union view of the word (`((union { int i; float f; } *)&r->target)->f = 1.0f`), or store an int field as float (`*(float *)&r->active = 0.0f`) to group it with neighbouring float stores. | `func_000C2EB0`, `func_000C2D20` |
+| Macro-scheduled code differs | Plain `{ }` scopes instead of `do { } while (0)`. | glow macros |
+| Branchy 0/1 flag where C gives store-flag (`sltu`) or `movz` code | Use one condition whose `x = 1`/`x = 0` blocks are shared by both arms (`if (hard ? !(a & B) : (a & B) != 0) return 1; return 0;`). Separate if/else arms get converted by the jump or if-conversion passes. | `isIgnoredSurface` (#53) |
+| Float loads reordered above a 128-bit `lq/sq` copy | A `*(u_long128 *)` copy doesn't alias `float` under strict aliasing. Copy through a union of `u_long128` and a float struct. | `nico_swordstart` (#50) |
+| Constants sit in callee-saved FP registers from the top of a block | The original holds them in locals initialized there (`float z0 = 0.05f;`). | blur trail (#56) |
+| Unused `static inline` functions | gcc 2.96 still emits their string literals into `.rodata`, so unused helpers can be needed for `.rodata` to line up. | `getWeakIndexWeak` (#53) |
+
+Register-allocation leftovers are the hardest residue. Our reading of gcc 2.96's global allocator (unconfirmed): it first tries registers already in use that no *conflicting* allocno prefers, and preferences of allocnos that cross calls are pruned.
+
+To see which compiler pass rewrites an expression, run `cc1` with `-da` under WSL (copy the input to `/tmp` first, as `tools/try_compilers.py` does) and compare the per-pass RTL dumps (`*.loop`, `*.cse2`, `*.combine`, `*.sched`) for the function.
