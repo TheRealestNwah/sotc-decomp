@@ -6,10 +6,10 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Where things stand (2026-10-14)
 
-- Issue #174: `reset_camera_target_visible_angle_manager` matches. Wrapping the 128-bit `ZeroPoint` in a one-member struct (`struct { s128 q; }`) stops GCC hoisting the load, giving the original per-store `lq`/`sq` pairs; plain `s128` hoists it and `volatile` misschedules it. The chained `angle0 = angle1 = 0.0f` gives the original `mtc1` + two `swc1` in +0x3D4, +0x3D8 order. Evidence: `build/camera-angle-manager-final-check.log` (914 GAMECORE); 97 tests and Ruff pass.
+- Issue #177: `iosGetACosf` and `iosGetACos` match. ee-gcc 2.96 **truncates** decimal float literals instead of rounding, so the exact-value literals m2c prints come out one ULP low. Write a decimal at or just above the wanted float (here 1.5707963f, 0.16666666f, 0.075f, 0.044642855f, 0.030381943f, 4.65661e-10f). Evidence: `build/kernel-acos-final-check.log` (166 KERNEL); 97 tests and Ruff pass. Remaining near-misses from the earlier batches, ranked by differing words: `build/cand/remaining-ranked.txt` (from `build/cand/rank_remaining.py`).
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,574 functions** come from matching C: 914 GAMECORE, 496 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,576 functions** come from matching C: 914 GAMECORE, 496 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -31,6 +31,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #174: `reset_camera_target_visible_angle_manager` matches. Wrapping the 128-bit `ZeroPoint` in a one-member struct (`struct { s128 q; }`) stops GCC hoisting the load, giving the original per-store `lq`/`sq` pairs; plain `s128` hoists it and `volatile` misschedules it. The chained `angle0 = angle1 = 0.0f` gives the original `mtc1` + two `swc1` in +0x3D4, +0x3D8 order. Evidence: `build/camera-angle-manager-final-check.log` (914 GAMECORE); 97 tests and Ruff pass.
 
 Issue #172 adds `setRatioGazeIKWork`, fully verified with plain offset casts: null guard, three float inequality tests that set the ratio at +0x70 to 1.0, then the x/y/z stores in original order (913 GAMECORE functions).
 
