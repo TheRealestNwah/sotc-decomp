@@ -4,15 +4,19 @@ A snapshot for whoever picks up the matching work next, human or agent (Codex, C
 
 Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/findings.md` first.
 
-## Paused here (2026-10-14, Claude Code)
+## Working state (2026-10-14, Claude Code coordinating, Codex working)
 
-Work was paused on request mid-way through the near-miss list. To resume:
+Claude coordinates and merges; Codex claims items through GitHub issues and works in `.worktrees/` (see `docs/collaboration.md`). Check open issues for claims before starting anything.
 
-- **Parked near-misses** (no issue yet; drafts in the gitignored `build/cand/`, permuter directories already set up under `build/permuter/<name>/`, no search running):
+- **Draft PRs #53, #56, #62, #96, #110** were each re-attempted on 2026-10-14; findings are in a comment on each PR. Only `iosDlGetTransBufId` (from #96) was recovered (#248). The rest stay parked.
+- **Parked near-misses**, free to claim (drafts in the gitignored `build/cand/`):
   - `addPlayerO2` (GAMECORE), 8 words: float register choice in the 0..100 clamp. Draft `build/cand/b4/o2-p.c`.
   - `SCRFuncBuddhaMissileInit2` (GAMECORE), 6 words: the `RO_0017D130` load must be scheduled before the stores. Draft `build/cand/b4/buddha-p.c`.
-- **Next candidates:** `build/cand/remaining-ranked.txt` ranks the 128 earlier batch drafts that compiled but differed, fewest differing words first (built by `build/cand/rank_remaining.py`). Skip any name that now has a file in `src/xff/`. `build/cand/literal-retry/` holds versions with float literals already fixed for truncation (see #177).
-- **Local helpers** (gitignored, in `build/cand/`): `permlines.py FILE MODULE` tries every order of lines tagged `/*P*/`; `literal_retry.py` rewrites float literals and retests; `update_docs.py` bumps totals but misplaced notes twice, so check its output or edit the handoff by hand.
+  - `setAttainmentObjAndOffset` (GAMECORE), 8 words: the 128-bit offset copy is scheduled after the scalar stores in the original. Draft `build/cand/b6/setAttainmentObjAndOffset.c`.
+  - `glReset`, `motrootdyn_startchainhang`, `graphFsEffectReset`, `SetInitFogColClassFromStageData`, `GetLayoutClassCollisionBoundaryInfo` (MANAGER): see the #236/#239/#243 checkpoint note below.
+- **Next candidates:** `build/cand/remaining-ranked.txt` ranks the earlier batch drafts that compiled but differed, fewest differing words first (built by `build/cand/rank_remaining.py`). Skip any name that has a file in `src/xff/` or an open claim. `build/cand/literal-retry/` holds versions with float literals already fixed for truncation (see #177).
+- **Local helpers** (gitignored, in `build/cand/`): `permlines.py FILE MODULE` tries every order of lines tagged `/*P*/`; `merge_queue.sh PR...` updates, waits for CI and merges PRs one at a time (main requires branches to be up to date); `literal_retry.py` rewrites float literals and retests.
+- **Permuter on sword.c:** `tools/permute.py setup` keeps only the target's own NONMATCHING block, which drops helpers the sword callbacks depend on. Unwrap all blocks into a copy first (see the #53 comment).
 
 ### Techniques that closed these gaps
 
@@ -22,11 +26,14 @@ Work was paused on request mid-way through the near-miss list. To resume:
 - **Counted loops that compare with -1:** write `while (n--)`.
 - **Float zero via `mtc1` instead of `sw $zero`:** chain the assignments (`a = b = 0.0f`); mixed int chains work too (`mouseClearStatus`).
 - **128-bit loads not hoisted out of a loop:** wrap the `s128` in a one-member struct (#174).
+- **Branch layout of small range checks:** explicit shared return labels (`goto ok; ... ok: return 1; ng: return 0;`), found by Codex (#209).
+- **Clamped values:** clamp into a new local with a ternary (`float t = (dt < MIN) ? MIN : dt;`), not in place (#224).
+- **Load/store order kept strictly sequential:** a `volatile` view sometimes reproduces it (`iosDlGetTransBufId`, Codex's `add_element_expression_change`).
 
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,617 functions** come from matching C: 933 GAMECORE, 518 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,618 functions** come from matching C: 933 GAMECORE, 518 MANAGER and 167 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -48,6 +55,8 @@ Work was paused on request mid-way through the near-miss list. To resume:
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #248: `iosDlGetTransBufId` matches with a typed volatile view of `B_00065018`, split out of draft PR #96. Evidence: `build/kernel-transbuf-final-check.log` (167 KERNEL).
 
 Issues #236, #239 and #243, plus Codex's #219 (PR #226), #222 (PR #228), #223 (PR #230), #227 (PR #233) and #232 (PR #237): `SetVSMatrix`, `constructor_camera_lws_anime_data`, `doit_camera_lws_animation_manager`, `glLightVector`, `GAMEUTIL_get_interp_value_ratio_pow`, `getRatioFromInterp`, `AI_GetInterRatioOutCut`, `getPosOnMap` and `setDischargeParam` match. `glLightVector` reads per-light x/y/z arrays at +0x130/+0x140/+0x150 of the GL state. The LWS constructor matches with every store in field order (one-member `s128` struct for the vectors); the manager is a plain 10-entry loop over 0xC0-byte records. Tried and parked (free to claim): `glReset` (2 words, loop compare register), `motrootdyn_startchainhang` (2 words, 128-bit zero stored as `sq $zero` through a separately computed address), `graphFsEffectReset` (original does not tail-call its last call), `SetInitFogColClassFromStageData` and `GetLayoutClassCollisionBoundaryInfo` (the original keeps every load after the preceding store; gcc hoists them even with volatile views). Evidence: `build/near-miss-batch10-final-check.log` (933 GAMECORE, 518 MANAGER); 97 tests and Ruff pass.
 
