@@ -1,9 +1,15 @@
-extern void GetGeometryPointerSurfaceAttribute(long *, void *);
+typedef int GeometryAttributeVector __attribute__((mode(TI)));
+typedef union {
+    GeometryAttributeVector vector;
+    long words[2];
+} GeometryAttribute;
+
+extern void GetGeometryPointerSurfaceAttribute(GeometryAttribute *, void *);
 
 long GetGeometryPointerCharColAttr(void *geometry)
 {
-    long attribute;
+    GeometryAttribute attribute;
 
     GetGeometryPointerSurfaceAttribute(&attribute, geometry);
-    return attribute;
+    return attribute.words[0];
 }
