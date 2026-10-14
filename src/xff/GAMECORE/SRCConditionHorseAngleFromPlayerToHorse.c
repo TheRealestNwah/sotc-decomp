@@ -1,26 +1,22 @@
-#ifdef NONMATCHING
 extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SRCConditionHorseAngleFromPlayerToHorse(void *actor, float fparg0, float fparg1) {
-    float temp_f1;
-    int var_v0;
-    int var_v1;
+int SRCConditionHorseAngleFromPlayerToHorse(void *actor, float lower, float upper)
+{
+    float angle;
+    int result;
+    int selected;
 
-    temp_f1 = (*(float *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x4234));
-    var_v0 = 0;
-    var_v1 = 0;
-    if (temp_f1 != -1.0f) {
-        var_v0 = 0;
-        if ((fparg0 * 0.0174532925f) <= temp_f1) {
-            if (temp_f1 <= (fparg1 * 0.0174532925f)) {
-                var_v1 = 1;
+    angle = *(float *)((char *)GetSCRCharaAIWorkPtr(actor) + 0x4234);
+    result = 0;
+    selected = 0;
+    if (angle != -1.0f) {
+        result = 0;
+        if (lower * 0.0174532925f <= angle) {
+            if (angle <= upper * 0.0174532925f) {
+                selected = 1;
             }
-            var_v0 = var_v1;
         }
+        result = selected;
     }
-    return var_v0;
+    return result;
 }
-
-#else
-extern int SRCConditionHorseAngleFromPlayerToHorse(void *, float, float);
-#endif
