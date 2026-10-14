@@ -1,9 +1,9 @@
-extern void GetGeometryPointerSurfaceAttribute(long *, int);
+extern void GetGeometryPointerSurfaceAttribute(long *, void *);
 
-long GetGeometryPointerCharColAttr(int a)
+long GetGeometryPointerCharColAttr(void *geometry)
 {
-    long r;
+    long attribute;
 
-    GetGeometryPointerSurfaceAttribute(&r, a);
-    return r;
+    GetGeometryPointerSurfaceAttribute(&attribute, geometry);
+    return attribute;
 }

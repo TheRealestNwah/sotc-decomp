@@ -1,9 +1,9 @@
-extern void GetGeometryPointerSurfaceAttribute(long *, int);
+extern void GetGeometryPointerSurfaceAttribute(long *, void *);
 
-long charrootdyn_getCollisionAttribute(int a)
+long charrootdyn_getCollisionAttribute(void *geometry)
 {
-    long r;
+    long attribute;
 
-    GetGeometryPointerSurfaceAttribute(&r, a);
-    return r;
+    GetGeometryPointerSurfaceAttribute(&attribute, geometry);
+    return attribute;
 }
