@@ -1,11 +1,11 @@
-extern void *GetSCRCharaAIWorkPtr(void);
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncYamoriBDamageCheckInit(void)
+void SCRFuncYamoriBDamageCheckInit(void *actor)
 {
     float *slot;
     int count;
 
-    slot = (float *)((char *)GetSCRCharaAIWorkPtr() + 0x41BC);
+    slot = (float *)((char *)GetSCRCharaAIWorkPtr(actor) + 0x41BC);
     count = 3;
     do {
         count -= 1;
