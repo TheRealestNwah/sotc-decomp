@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,434 functions** come from matching C: 794 GAMECORE, 480 MANAGER and 160 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,512 functions** come from matching C: 872 GAMECORE, 480 MANAGER and 160 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -30,6 +30,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Current checkpoint (2026-10-13)
 
+Issue #93 adds 78 small GAMECORE script wrappers. Their drafts omitted the incoming character argument that the original forwards unchanged to `RequestCharacterMotionShiftFunc`. Restoring that argument matches all 78 with the original compiler; every separate object and the complete matching build passed code, data and relocation checks. Evidence: `build/script-wrappers-match.log`, `build/script-wrappers/validation.json` and `build/script-wrappers/final-check.log`.
+
 Issue #89 adds `GAMEUTIL_reset_position_filter`, now verified with ee-gcc 2.96 and the full code, data and relocation checks. The source uses a union containing a three-element 128-bit word array and a struct view with two 128-bit fields followed by the count. This changes alias analysis to preserve the original copy/store order. Evidence remains in ignored `build/filter-union-11.c`, `build/filter-variants.log` and `build/filter-final-check.log`.
 
 The documentation pause checkpoint (#90 / PR #91) merged with green CI at `c00838c`; work then resumed at the user's request. The three sword draft PRs above remain parked.
@@ -48,6 +50,7 @@ All of these are for Sony `ee-gcc` 2.96 at `-O2 -G0`.
 
 | Symptom | What fixed it | Example |
 | --- | --- | --- |
+| Tail-call wrapper uses the wrong argument register and loses its stack frame | Recover the incoming argument that is forwarded unchanged, even when the draft omits it. Passing the character argument before the callback address preserves the original a0/a1 assignments and stack instructions. | `SCRArrowLoopEnd` and 77 related wrappers (#93) |
 | 128-bit copies and an integer count store are reordered | Use a union view containing both a word array and the field struct to preserve the original alias relationships and instruction order. | `GAMEUTIL_reset_position_filter` (#89) |
 | Float registers rotate while the instruction sequence already matches | Normalize the existing time local in place and accumulate into the existing value local. Replacing these updates with fresh expression results changed register allocation. | `calcFadeParam` (#87) |
 | Function names differ only by letter case and collide as Windows filenames | Keep adjacent pointer/value getter pairs in one C file, preserving the case-sensitive function names and original order. | `getColLightDebugSts` / `GetColLightDebugSts`, `getDebPcWin*` / `GetDebPcWin*` (#81) |
