@@ -1,6 +1,6 @@
-extern int GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int nico_playerGetExpressionChange(void)
+void *nico_playerGetExpressionChange(void *actor)
 {
-    return GetSCRCharaAIWorkPtr() + 0xD10;
+    return (char *)GetSCRCharaAIWorkPtr(actor) + 0xD10;
 }
