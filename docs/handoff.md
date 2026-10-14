@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,540 functions** come from matching C: 892 GAMECORE, 487 MANAGER and 161 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,541 functions** come from matching C: 893 GAMECORE, 487 MANAGER and 161 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -30,6 +30,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Current checkpoint (2026-10-13)
 
+Issue #121 adds `SCRConditionAnglePlayerWorldXZ`. Restore the actor pointer forwarded unchanged in a0 through `getSCRDataCtrlWork` to the AI-work getter; the angle limit remains in f12. The existing data-work getter and route-angle wrapper now declare and forward that argument explicitly while retaining identical bytes. The condition also needs `0.0174532925f` for constant 0x3C8EFA35. Evidence: `build/script-world-angle-final-check.log`; 97 tests and Ruff pass.
+
 Issue #119 adds `SCRGetBossWeakPointAngleFromIndex` and corrects the already matching AI-work getter/Yamori initializer signatures. The actor pointer is forwarded in a0 to `GetScriptCharacterClass`, and the angle-query index is in a1. All three affected routines retain identical bytes; the getter was already counted, so this item adds one function. Evidence: `build/script-ai-context-final-check.log`.
 
 Issue #117 adds `set_option_parameter_nico_sight_on`, fully verified. Restore the incoming yaw flag forwarded in a1 to the first setter; the pitch flag then occupies a2 as the original requires. The same missing-argument pattern can hide in caller drafts even when no explicit move passes the register. Evidence: `build/sight-options-final-check.log`.
@@ -42,7 +44,7 @@ Issue #111 retries 392 unmatched small FP candidates after the CVT decoder repai
 
 Issue #108 fixes raw `cvt.w.s` normalization in the m2c wrapper. The R5900 decoder considered the instructions valid but printed `.word`, so m2c silently omitted the conversions. A restricted CPU decode for the canonical single-precision encoding preserves the instructions; reserved encodings and double format remain raw. The real `GetStageContext` draft now uses integer casts/division rather than float-bit arithmetic. All 97 tests, Ruff and the full matching build pass; the verified function count is unchanged. Evidence: `build/stage-context-helper-fixed-m2c.log` and `build/m2c-cvt-fix-final-check.log`.
 
-Issue #107 (`GetStageContext`) is next: the local `stage-context-helper` branch has no production source or PR yet. Resume it from updated main and use a typed context with separate 128-bit and float views of its center. The untyped draft still confuses the initial whole-vector copy with later float component writes.
+Issue #107 (`GetStageContext`) is parked in draft PR #110, branch `stage-context-helper`, head `26ce211`. Its typed source is behind `NONMATCHING`: 136 original words, 50 differences. Merge current main carefully before resuming. The permuter was stopped after about 3,679 iterations; `build/permuter/GetStageContext/output-1285-1/source.c` has a lower search score but verifies worse (134 words, 125 differences), so do not copy it based on score alone. Pointer/int union and volatile views are provisional matching aids. Evidence: `build/stage-helper-parked-diff.log`, `build/stage-helper-permuter-1285-diff.log` and `build/stage-helper-parked-check.log`.
 
 Issue #105 adds `GetStageContextByPos`, `GetStageAreaNumberByPos` and `GetStageNumberByPos`, fully verified. Direct returns preserve the original return register and remove an extra move. Despite its name, `GetStageNumberByPos` reads the global position; no used position parameter was added. Evidence: `build/stage-by-pos-control.log` and `build/stage-context-queries-final-check.log`.
 
