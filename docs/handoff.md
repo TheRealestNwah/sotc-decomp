@@ -32,7 +32,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,282 functions** come from matching C: 1,284 GAMECORE, 738 MANAGER and 260 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,341 functions** come from matching C: 1,334 GAMECORE, 747 MANAGER and 260 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -54,6 +54,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #315: 59 more small routines match (50 GAMECORE, 9 MANAGER), bringing the verified total to 2,341. A fresh 14-16-word pass found 24 direct matches; reviewed manual work recovered another 35. Texture-alpha wrappers need full float prototypes and short decimal literals (`-0.0075f` for Smokeman); collision conversion uses an aligned three-vector temporary. New script wrappers explicitly forward their actors, camera queries use 128-bit copies, and `ExecScriptLayoutObj` declares the actual two-argument damage callback. `AI_GetInterRatio` reuses its range argument; the grip clamp keeps a separate result local. Full loader/module code/data/bss/relocation checks pass in `.worktrees/codex-small-engine-14-16/build/315-final-check.log` (1334 GAMECORE, 747 MANAGER, 260 KERNEL), with 97 pytest tests and Ruff passing. Initial full checks caught stale m2c RO labels in `InitDamageLetter`; verified original .rodata offsets give `RO_00141E40`/`RO_00141E58`. The separate drafting-tool defect is #319. No assembly or verifier was changed for this batch. Other drafts remain ignored and uncounted.
 
 Issue #314: `nico_setHorseBridleDoubleShort`, `nico_setHorseBridleLeftLong`, `nico_setHorseBridleRightLong` and `nico_setHorseBridleDoubleLong` match their original 15-word bodies. Each forwards the actor to `GetSCRCharaAIWorkPtr`, loads the horse at +0x4248 and guards the mode 0-3 call. Full loader/module checks pass with 1284 GAMECORE, 738 MANAGER and 260 KERNEL functions; 97 pytest tests and Ruff pass. Evidence: `.worktrees/codex-horse-bridle-modes/build/314-full-check.log` and `314-current-main-check.log` after incorporating #313. Issue #311 / PR #313 restored the explicit actor argument in the already matching `player_SetGripDamage`, with no count change.
 
