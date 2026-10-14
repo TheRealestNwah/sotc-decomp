@@ -1,7 +1,7 @@
-extern int getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 extern int getPathStatus();
 
-int SCRConditionPathStatus(void)
+int SCRConditionPathStatus(void *actor)
 {
-    return getPathStatus(getSCRDataCtrlWork());
+    return getPathStatus(((int)getSCRDataCtrlWork(actor)));
 }

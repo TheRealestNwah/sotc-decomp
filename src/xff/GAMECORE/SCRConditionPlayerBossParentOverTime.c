@@ -1,7 +1,7 @@
 extern void *getPlayerColCont2(void *);
-extern char *getSCRDataCtrlWork(void);
+extern void *getSCRDataCtrlWork(void *);
 
-int SCRConditionPlayerBossParentOverTime(float time)
+int SCRConditionPlayerBossParentOverTime(void *actor, float time)
 {
-    return time <= *(float *)((char *)getPlayerColCont2(*(void **)(getSCRDataCtrlWork() + 0x4078)) + 0x24);
+    return time <= *(float *)((char *)getPlayerColCont2(*(void **)(((char *)getSCRDataCtrlWork(actor)) + 0x4078)) + 0x24);
 }

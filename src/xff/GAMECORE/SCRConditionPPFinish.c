@@ -1,7 +1,7 @@
-extern int getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 extern int getPathExFinish();
 
-int SCRConditionPPFinish(void)
+int SCRConditionPPFinish(void *actor)
 {
-    return getPathExFinish(getSCRDataCtrlWork(), 9);
+    return getPathExFinish(((int)getSCRDataCtrlWork(actor)), 9);
 }

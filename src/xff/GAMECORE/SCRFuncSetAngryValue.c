@@ -1,6 +1,6 @@
-extern void *getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 
-void SCRFuncSetAngryValue(float fparg0)
+void SCRFuncSetAngryValue(void *actor, float fparg0)
 {
-    (*(float *)((char *)(getSCRDataCtrlWork()) + 0x40F8)) = fparg0;
+    (*(float *)((char *)(getSCRDataCtrlWork(actor)) + 0x40F8)) = fparg0;
 }

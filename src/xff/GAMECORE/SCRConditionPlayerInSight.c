@@ -1,6 +1,6 @@
-extern void *getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 
-int SCRConditionPlayerInSight(void)
+int SCRConditionPlayerInSight(void *actor)
 {
-    return (*(int *)((char *)(getSCRDataCtrlWork()) + 0x405C));
+    return (*(int *)((char *)(getSCRDataCtrlWork(actor)) + 0x405C));
 }

@@ -1,7 +1,7 @@
-extern int getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 extern int getWayFinish();
 
-int SCRConditionWayFinish(void)
+int SCRConditionWayFinish(void *actor)
 {
-    return getWayFinish(getSCRDataCtrlWork());
+    return getWayFinish(((int)getSCRDataCtrlWork(actor)));
 }

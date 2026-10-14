@@ -1,4 +1,4 @@
-extern void *getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 extern void setOffsetParamWormCtrlWork(int, void *, int, float, float);
 
 void SCRFuncNargaFloatMain(int arg0, float fparg0, float fparg1, float fparg2)
@@ -8,7 +8,7 @@ void SCRFuncNargaFloatMain(int arg0, float fparg0, float fparg1, float fparg2)
     void *temp_v0;
     void *temp_v0_2;
 
-    temp_v0 = getSCRDataCtrlWork();
+    temp_v0 = getSCRDataCtrlWork((void *)arg0);
     temp_f1 = (*(float *)((char *)(temp_v0) + 0x40A4));
     temp_v0_2 = temp_v0 + 0x3D10;
     var_f12 = fparg0;
