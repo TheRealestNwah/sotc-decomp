@@ -38,6 +38,7 @@ __pycache__/
 .ruff_cache/
 
 # Editors / OS
+.worktrees/
 .vscode/
 .idea/
 Thumbs.db
