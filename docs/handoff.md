@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,441 after #364), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,493 after #366), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,441 functions** come from matching C: 1,375 GAMECORE, 794 MANAGER and 272 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,493 functions** come from matching C: 1,395 GAMECORE, 814 MANAGER and 284 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #366: 52 more hand matches among the named 14-word functions (20 GAMECORE, 20 MANAGER, 12 KERNEL). Notes: float **SCRCondition** checks against a constant keep the `r = 1; if (!(cmp)) r = 0;` form; write the comparison so its operands load in the original order (`a > b` vs `b < a`). Sequential stores that must not be reordered around loads of another type (pointer stores after `lhu`, int stores before a float load) need a union view of the destination (`union { T *p; unsigned short h[2]; }`, `Vec4`). `volatile` reproduces a store followed by a reload of the same global (`ischedRestart`). VU0 outputs go through `"=r"` on a float variable (`qmfc2` then `mtc1`). Parked: `MVHIST_Init` (128-bit zero stores use `$zero` in the original), `SCRFuncBuddhaMissileInit2`, `setTmpBasePos` (scheduling), `ClearSortList` (both loop bounds reloaded every iteration), `GetMotKToMotP`, `SpriteMenuGetSelectMenuIdBySpriteMenuClass`, the camera-region validity helpers (an `ok` flag built with branches), `ptclDisplayListPut` (last call not a tail call; no caller/callee return-type combination reproduces it), `Sg2SlotSetVolPhase`, `iFinish` (`lui`/`addiu`/`sw 0` not folded), `isysGetGroupSrhNext`, `vab_get_veltbl`. Evidence: `build/hand11-check.log`.
 
 Issue #364: 49 more hand matches: 48 named 13-word functions (10 GAMECORE, 29 MANAGER, 9 KERNEL) and `modelGetLinkCount` from #302's parked list. Notes: **VU0 macro code** is inline `__asm__ __volatile__` (lqc2/qmtc2/vmulx/sqc2 etc.; `qmtc2` assembles as `qmtc2.ni`, a float operand in an `"r"` constraint gives the original `mfc1`). When the asm block is the last thing before `jr $ra` and the original has `sqc2; jr; nop`, end the block with an empty `.set noreorder` / `.set reorder` pair so `ee-as` doesn't move the `sqc2` into the delay slot. The link-count **bitfield** is `unsigned long a:9; unsigned int cnt:15; unsigned long b:40;` (the `int` member gives the `dsll 23`/`dsra32` extraction and 32-bit add). Zeroing loops that count down with a decrementing pointer are `for (i = N - 1; i >= 0; i--) a[i] = 0;` (ee-gcc pads short loops with nops itself). Getters whose not-found path leaves `$v0` untouched return `void` (`getQuatPQSAnimIntFrame`). A float union copy (`Vec4.q`) next to float stores keeps the original load/store order where a plain 128-bit type lets the scheduler hoist the load. Parked: `demoManSkip` (last call not a tail call, like `graphFsEffectReset`), `iosKeybdInit` (epilogue restore order), `iosMakeLightColorMatrix` (argument copies to t2/v1/v0 before the four `lq`), `DebugDispVolumeShape` and `sheetFileLoadStageTex` (MANAGER rodata/text references whose original targets are uncertain). Evidence: `build/hand10-check.log`.
 
