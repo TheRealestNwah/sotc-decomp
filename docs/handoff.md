@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,548 functions** come from matching C: 896 GAMECORE, 488 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,549 functions** come from matching C: 897 GAMECORE, 488 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -30,7 +30,9 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Current checkpoint (2026-10-13)
 
-Issue #128 adds both camera-manager parameter wrappers, fully verified. Position is forwarded unchanged in a1 to `set_camera_position`, leaving direction/up in a2/a3. Recover opaque pointer arguments and the existing `get_clip_screen` pointer result; all three affected routines match. Evidence: `build/cameraman-position-final-check.log`; 97 tests and Ruff pass. Issue #130 is next: the Yamori two-radius setter's two differing words are reversed flag-store order, not saved-float allocation; `build/yamori-radius2-actor-diff.log` records the actor-signature probe.
+Issue #130 adds `SCRFuncYamoriBSetRandomRadius2`, fully verified. Volatile views preserve the original flag-store order at +0x41D4 then +0x41D0; these views are matching aids, not proof of the original field qualifiers. The saved float allocation already matched. Both radius setters now explicitly forward the actor pointer to the AI-work getter, with the existing setter retaining its bytes. Evidence: `build/yamori-radius2-actor-diff.log`, `build/yamori-radius2-volatile-diff.log` and `build/yamori-radius2-final-check.log`; 97 tests and Ruff pass.
+
+Issue #128 adds both camera-manager parameter wrappers, fully verified. Position is forwarded unchanged in a1 to `set_camera_position`, leaving direction/up in a2/a3. Recover opaque pointer arguments and the existing `get_clip_screen` pointer result; all three affected routines match. Evidence: `build/cameraman-position-final-check.log`; 97 tests and Ruff pass.
 
 Issue #127 adds `setOffsetParamWormCtrlWork`, fully verified. Restore the actor argument passed unchanged to `GetLayoutClass`; work and mode belong in a1/a2. Preserve the original mixed float/integer store order. Evidence: `build/worm-offset-final-check.log`; 97 tests and Ruff pass. Issue #128 tracks the similar omitted position argument in the two camera-manager parameter-wrapper drafts and is the next small-function item to investigate.
 
