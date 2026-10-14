@@ -26,7 +26,7 @@ Work was paused on request mid-way through the near-miss list. To resume:
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,608 functions** come from matching C: 930 GAMECORE, 512 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,617 functions** come from matching C: 933 GAMECORE, 518 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -48,6 +48,8 @@ Work was paused on request mid-way through the near-miss list. To resume:
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issues #236, #239 and #243, plus Codex's #219 (PR #226), #222 (PR #228), #223 (PR #230), #227 (PR #233) and #232 (PR #237): `SetVSMatrix`, `constructor_camera_lws_anime_data`, `doit_camera_lws_animation_manager`, `glLightVector`, `GAMEUTIL_get_interp_value_ratio_pow`, `getRatioFromInterp`, `AI_GetInterRatioOutCut`, `getPosOnMap` and `setDischargeParam` match. `glLightVector` reads per-light x/y/z arrays at +0x130/+0x140/+0x150 of the GL state. The LWS constructor matches with every store in field order (one-member `s128` struct for the vectors); the manager is a plain 10-entry loop over 0xC0-byte records. Tried and parked (free to claim): `glReset` (2 words, loop compare register), `motrootdyn_startchainhang` (2 words, 128-bit zero stored as `sq $zero` through a separately computed address), `graphFsEffectReset` (original does not tail-call its last call), `SetInitFogColClassFromStageData` and `GetLayoutClassCollisionBoundaryInfo` (the original keeps every load after the preceding store; gcc hoists them even with volatile views). Evidence: `build/near-miss-batch10-final-check.log` (933 GAMECORE, 518 MANAGER); 97 tests and Ruff pass.
 
 Issues #224 and #225 (`GetPlaneSlopeDegree` part), plus Codex's #213 (PR #215), #214 (PR #218) and #217 (PR #220): `AI_GetAccelA`, `AI_GetAccelA_at0`, `AI_GetAccelB`, `GetPlaneSlopeDegree`, `CAM_init_camera_warp_cntrl`, three `nico_setPlayerDemoAdditionClothCollision*` presets and `GAMEUTIL_get_interp_value` match. The accel getters clamp the time step into a **new local with a ternary** (`float t = (dt < 0.0333667f) ? 0.0333667f : dt;`); clamping the parameter in place, or with an if, gives different float registers. `AI_GetInterRatioOutCut` is Codex's (#223, PR #230), which claimed it first. `GetPlaneSlopeDegree` is plain early returns. Evidence: `build/near-miss-batch9-final-check.log` (930 GAMECORE, 512 MANAGER); 97 tests and Ruff pass.
 
