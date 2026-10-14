@@ -1,6 +1,9 @@
-extern void *GetScriptCharacterClass();
+extern void *GetScriptCharacterClass(void *);
 
-int GetSCRCharaAIWorkPtr(void)
+void *GetSCRCharaAIWorkPtr(void *actor)
 {
-    return (*(int *)((char *)(GetScriptCharacterClass()) + 0x1200));
+    void *script;
+
+    script = GetScriptCharacterClass(actor);
+    return *(void **)((char *)script + 0x1200);
 }
