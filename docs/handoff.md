@@ -93,23 +93,29 @@ explicitly rebuilt. 105 pytest tests and Ruff pass. Evidence:
 `.worktrees/codex-unparent-wrapper-contract/build/351-standalone.log` and
 `351-full-check.log`. No count increase; no #351 job remains live.
 
-Codex has reserved #353 in `.worktrees/codex-attacked-wrapper-contract`, branch
-`codex/attacked-wrapper-contract`: one-source actor-only condition wrapper,
-standalone MATCH and 105 tests/Ruff pass; full validation/PR still pending.
-Codex also reserved #358 in `.worktrees/codex-data-control-action-results`,
-branch `codex/data-control-action-results`: three void-result action wrappers,
-validation ongoing. Both follow-ups are separate issues/PRs. Check #205, their
-issue comments and the local checkpoint before taking over either worker.
+### #353 attacked-condition wrapper completed
+
+`SCRConditionAttacked` now explicitly takes its actor pointer and returns the
+integer condition from `nico_GetCharacterAttackedFlag(void *)`, preserving the
+original tail jump and exported symbol. No matching C caller requires its old
+four guessed integer parameters. Standalone original-compiler and full
+loader/module matching pass on baseline `d7c5d1b`, with its current object forced
+to rebuild. 105 tests and Ruff pass. Evidence remains in
+`.worktrees/codex-attacked-wrapper-contract/build/353-standalone.log` and
+`353-full-check.log`. No count increase; the full353 process exited successfully.
+
+Codex has reserved #358 in `.worktrees/codex-data-control-action-results`,
+branch `codex/data-control-action-results`: three void-result action wrappers.
+All three standalone comparisons MATCH, and 105 pytest tests/Ruff pass.
+Full matching on the integrated #353 baseline and a separate PR remain pending.
+Check #205, #358 and the local checkpoint before taking over this worker.
 
 ### Next independent work, in suggested order
 
-Remaining bugs are filed; #353 and #358 are reserved by Codex. Check current claims
+Remaining bugs are filed; #358 is reserved by Codex. Check current claims
 before acting and use one issue/branch/PR per item:
 
-1. **#353 (Codex reserved):** review `SCRConditionAttacked` forwarding to the now-corrected
-   `nico_GetCharacterAttackedFlag` actor/int interface. Preserve genuine callback
-   arguments; #345 is merged.
-2. **#350:** replace false one-byte bounds on address-only external objects.
+1. **#350:** replace false one-byte bounds on address-only external objects.
    Confirmed examples: `DebugIsPlayer`'s `RO_0017C110` string;
    `ForceUnparentLayoutObj`'s `IdentityQuaternion`/`ZeroPoint` vectors;
    `gcGlobalVar` references in `SCRFuncKirinFallRockMain`, `torchAttached`,
@@ -117,11 +123,11 @@ before acting and use one issue/branch/PR per item:
    where size/index semantics permit. Preserve byte arithmetic: changing
    `&gcGlobalVar` to a pointer-to-incomplete-array expression can break it.
    Do not mechanically replace true one-element vectors or objects used by sizeof.
-3. **#358 (Codex reserved; #349 merged):** repair invented return values in
+2. **#358 (Codex reserved; #349 merged):** repair invented return values in
    `SCRFuncResetPathSystem`, `SCRFuncSetCreateTempAttain`, `SCRFuncSetGpCalcDist`.
    Actual matching helpers `resetPassageWork`, `setCreateTempAttain`,
    `setGpCalcDist` return void. Review wrappers/callers against assembly.
-4. Resume new matching candidates after these source-contract repairs. **#341**
+3. Resume new matching candidates after these source-contract repairs. **#341**
    (161-320-word native-context pass) is parked with no validated matches;
    `.worktrees/codex-engine-161-320` and its unmerged investigation branch retain
    evidence. Closest ranked draft `execObjectWithNonTaskSwitch` still differs by
