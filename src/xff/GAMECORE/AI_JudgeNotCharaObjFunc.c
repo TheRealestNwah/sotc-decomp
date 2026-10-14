@@ -1,6 +1,6 @@
-extern int GetCharacterClass();
+extern void *GetCharacterClass(void *);
 
-int AI_JudgeNotCharaObjFunc(void)
+int AI_JudgeNotCharaObjFunc(void *actor)
 {
-    return GetCharacterClass() == 0;
+    return GetCharacterClass(actor) == 0;
 }

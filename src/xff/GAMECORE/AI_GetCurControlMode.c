@@ -1,6 +1,6 @@
-extern void *GetCharacterClass();
+extern void *GetCharacterClass(void *);
 
-int AI_GetCurControlMode(void)
+int AI_GetCurControlMode(void *actor)
 {
-    return (*(int *)((char *)(GetCharacterClass()) + 0x750));
+    return (*(int *)((char *)(GetCharacterClass(actor)) + 0x750));
 }

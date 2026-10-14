@@ -1,6 +1,6 @@
-extern void *GetCharacterClass();
+extern void *GetCharacterClass(void *);
 
-int getAimIKWork(void)
+int getAimIKWork(void *actor)
 {
-    return (*(int *)((char *)(GetCharacterClass()) + 0x1110));
+    return (*(int *)((char *)(GetCharacterClass(actor)) + 0x1110));
 }

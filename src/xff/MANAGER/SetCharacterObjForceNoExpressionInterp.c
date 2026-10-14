@@ -1,6 +1,6 @@
-extern void *GetCharacterClass();
+extern void *GetCharacterClass(void *);
 
-void SetCharacterObjForceNoExpressionInterp(void)
+void SetCharacterObjForceNoExpressionInterp(void *actor)
 {
-    (*(signed char *)((char *)(GetCharacterClass()) + 0x528)) = 1;
+    (*(signed char *)((char *)(GetCharacterClass(actor)) + 0x528)) = 1;
 }

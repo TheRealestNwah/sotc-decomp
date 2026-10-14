@@ -14,13 +14,13 @@ typedef struct {
     int flag;
 } PinAttackIK;
 
-extern void *GetCharacterClass();
+extern void *GetCharacterClass(void *);
 extern Vec4 ZeroPoint;
 extern Vec4 ZeroVector;
 
 void initPinAttackIKWork(void *arg0, void *arg1, PinAttackIK *ik)
 {
-    int n = *(int *)(*(char **)((char *)GetCharacterClass() + 0x358) + 0x20);
+    int n = *(int *)(*(char **)((char *)GetCharacterClass(arg0) + 0x358) + 0x20);
     int i;
 
     for (i = 0; i < n; i++) {

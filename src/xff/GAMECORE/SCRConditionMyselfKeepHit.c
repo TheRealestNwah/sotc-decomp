@@ -1,6 +1,6 @@
-extern void *GetCharacterClass();
+extern void *GetCharacterClass(void *);
 
-int SCRConditionMyselfKeepHit(void)
+int SCRConditionMyselfKeepHit(void *actor)
 {
-    return (*(int *)((char *)(GetCharacterClass()) + 0xFF0));
+    return (*(int *)((char *)(GetCharacterClass(actor)) + 0xFF0));
 }
