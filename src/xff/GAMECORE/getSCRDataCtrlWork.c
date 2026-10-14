@@ -1,6 +1,6 @@
-extern int GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int getSCRDataCtrlWork(void)
+void *getSCRDataCtrlWork(void *actor)
 {
-    return (GetSCRCharaAIWorkPtr() + 0x13) & ~0xF;
+    return (void *)(((unsigned int)GetSCRCharaAIWorkPtr(actor) + 0x13) & ~0xF);
 }
