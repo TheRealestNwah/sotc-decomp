@@ -1,0 +1,11 @@
+typedef int s128 __attribute__((mode(TI)));
+typedef union { s128 q; float f[4]; int i[4]; } Vec4;
+
+void CAM_set_all_camera_base_data(char *pa0, char *pa1, char *pa2, float f12, float f13, float f14)
+{
+    ((Vec4 *)(pa0 + 0x0))->q = ((Vec4 *)(pa1 + 0x0))->q;
+    ((Vec4 *)(pa0 + 0x10))->q = ((Vec4 *)(pa2 + 0x0))->q;
+    ((Vec4 *)(pa0 + 0x20))->f[0] = f12;
+    ((Vec4 *)(pa0 + 0x24))->f[0] = f13;
+    ((Vec4 *)(pa0 + 0x28))->f[0] = f14;
+}
