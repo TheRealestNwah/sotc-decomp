@@ -32,7 +32,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,278 functions** come from matching C: 1,280 GAMECORE, 738 MANAGER and 260 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,282 functions** come from matching C: 1,284 GAMECORE, 738 MANAGER and 260 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -54,6 +54,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #314: `nico_setHorseBridleDoubleShort`, `nico_setHorseBridleLeftLong`, `nico_setHorseBridleRightLong` and `nico_setHorseBridleDoubleLong` match their original 15-word bodies. Each forwards the actor to `GetSCRCharaAIWorkPtr`, loads the horse at +0x4248 and guards the mode 0-3 call. Full loader/module checks pass with 1284 GAMECORE, 738 MANAGER and 260 KERNEL functions; 97 pytest tests and Ruff pass. Evidence: `.worktrees/codex-horse-bridle-modes/build/314-full-check.log` and `314-current-main-check.log` after incorporating #313. Issue #311 / PR #313 restored the explicit actor argument in the already matching `player_SetGripDamage`, with no count change.
 
 Issue #310: Codex continued Claude's unfinished hand11 drafts while Claude was unavailable, recovering 29 routines (26 GAMECORE, 3 KERNEL). The new script/horse wrappers explicitly forward their actor, and camera getters return pointers. `iosGetTan` uses an aligned four-float buffer because `iosGetSinCosf` writes a full vector. `AI_GetAccelB_at0` reuses its second argument (`b -= a; b += b;`) and divides by a separate clamped-time local; `setPlayerMaxHp` likewise clamps into a separate local. An alias union preserves the sequential vector/scalar copies in `copy_mode_common_camera_data`. Evidence: `.worktrees/codex-small-engine-next/build/310-full-check.log`; every loader/module section and relocation passes (1280 GAMECORE, 738 MANAGER, 260 KERNEL), as do 97 pytest tests and Ruff. Existing `player_SetGripDamage` actor forwarding is tracked separately as bug #311. Other hand11 near-misses stay in ignored scratch files and are not counted.
 
