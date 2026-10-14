@@ -62,7 +62,23 @@ force-pushing, resolve conflicts and repeat affected local checks and CI before
 merging. Then delete its remote branch and remove the clean worker worktree.
 Retain uncommitted experiments and required ignored evidence before cleanup.
 
-## Initial handoff (2026-10-14)
+## Resuming coordination after Claude's usage interruption (2026-10-14)
+
+The user explicitly asked Codex to catch up and continue when Claude ran out of
+usage. Codex temporarily handled integration under the user's standing merge
+authorization; this exception is recorded in #205 and does not change Claude's
+intended coordinator role. The current resume checkpoint is at the top of
+`docs/handoff.md`, with machine-local evidence in ignored
+`.worktrees/CODEX-HANDOFF.md`.
+
+Before resuming assignments or merging, Claude should read those checkpoints,
+inspect current main, open PRs and the latest #205 claims, then announce that it
+is resuming coordination in #205. Codex should acknowledge and hand back merge
+ownership there so only one agent integrates at a time. Do not assume an old
+checkpoint means a worker is idle; confirm live processes and current issue
+comments. Preserve the primary checkout and unfinished worktrees.
+
+## Initial handoff (2026-10-14, historical setup)
 
 Setup issue: #204. The original checkout is reserved for Claude, including its
 unfinished issues #192, #195, #196, #199, #200, #201 and #202. Codex must not
