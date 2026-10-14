@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,513 functions** come from matching C: 873 GAMECORE, 480 MANAGER and 160 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,522 functions** come from matching C: 878 GAMECORE, 483 MANAGER and 161 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -30,6 +30,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Current checkpoint (2026-10-13)
 
+Issue #99 recovers nine small routines with explicit signed/unsigned 128-bit scalar types (`mode(TI)`): five GAMECORE, three MANAGER and one KERNEL. `SetCurrentQuaternion` also needs a 128-bit destination array, matching the original 16-byte indexed store. All nine passed per-object code/data/relocation validation and the full matching build; 21 other candidates remained excluded. Evidence: `build/auto40-128/<MODULE>/validation.json` and `build/retry-128-final-check.log`.
+
 Issue #97 adds `GAMEUTIL_constructor_move_angle`, fully verified with the original compiler and complete matching build. Precise float literals, local declaration order and selected volatile stores preserve the original constant loads, float registers and store sequence. Evidence: `build/angle-match-volatile-37.c` and `build/angle-constructor-final-check.log`.
 
 Issue #93 adds 78 small GAMECORE script wrappers. Their drafts omitted the incoming character argument that the original forwards unchanged to `RequestCharacterMotionShiftFunc`. Restoring that argument matches all 78 with the original compiler; every separate object and the complete matching build passed code, data and relocation checks. Evidence: `build/script-wrappers-match.log`, `build/script-wrappers/validation.json` and `build/script-wrappers/final-check.log`.
@@ -37,6 +39,12 @@ Issue #93 adds 78 small GAMECORE script wrappers. Their drafts omitted the incom
 Issue #89 adds `GAMEUTIL_reset_position_filter`, now verified with ee-gcc 2.96 and the full code, data and relocation checks. The source uses a union containing a three-element 128-bit word array and a struct view with two 128-bit fields followed by the count. This changes alias analysis to preserve the original copy/store order. Evidence remains in ignored `build/filter-union-11.c`, `build/filter-variants.log` and `build/filter-final-check.log`.
 
 The documentation pause checkpoint (#90 / PR #91) merged with green CI at `c00838c`; work then resumed at the user's request. The three sword draft PRs above remain parked.
+
+## Parked KERNEL display-list getters (#95 / draft PR #96)
+
+The `kernel-display-list-getters` branch preserves four drafts behind `NONMATCHING` in `src/xff/KERNEL/iosDlState.c`. The original computes the 0x30-byte `B_00065018` state base separately before loading its fields; drafts fold the offsets into symbol references. Struct/union, storage, volatile, inline, return-width and control-flow probes did not match. The permuter was stopped after 4,137 iterations, with best score 60. `build/permuter/iosDlGetLayer/output-60-1/source.c` has two differing words: its load occupies the return delay slot instead of preceding it. None of these four functions is counted.
+
+Local evidence: `build/dl-getters-*.log`, `build/permuter/iosDlGetLayer/`. Inspect existing processes before restarting a search; check useful candidates with the original compiler and full matching build. Update this old draft branch with current main before continuing. Its parked checkpoint passed the full build, all 91 tests, Ruff and CI, but remains a draft because the functions do not match.
 
 ## Resuming safely
 
