@@ -1,10 +1,10 @@
-extern char *GetDamageClass();
-extern void GetGeometryPointerSurfaceAttribute(long *, char *);
+extern char *GetDamageClass(void *);
+extern void GetGeometryPointerSurfaceAttribute(long *, void *);
 
-long SCRGetBossCollisionAttribute(int a)
+long SCRGetBossCollisionAttribute(void *actor)
 {
-    long r;
+    long attribute;
 
-    GetGeometryPointerSurfaceAttribute(&r, GetDamageClass(a) + 0x10);
-    return r;
+    GetGeometryPointerSurfaceAttribute(&attribute, GetDamageClass(actor) + 0x10);
+    return attribute;
 }

@@ -1,6 +1,6 @@
-extern int GetGeometryPointerCharColAttr();
+extern long GetGeometryPointerCharColAttr(void *);
 
-int nico_GetGeometryPointerAttr(int a, int b, int c, int d)
+long nico_GetGeometryPointerAttr(void *geometry)
 {
-    return GetGeometryPointerCharColAttr(a, b, c, d);
+    return GetGeometryPointerCharColAttr(geometry);
 }
