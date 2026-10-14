@@ -1,6 +1,6 @@
-extern void *GetLayoutClass();
+extern void *GetLayoutClass(void *);
 
-void SCRFuncKirinCameraNeckDownIdSet(void)
+void SCRFuncKirinCameraNeckDownIdSet(void *actor)
 {
-    (*(int *)((char *)(GetLayoutClass()) + 0x1AC)) = 0xA;
+    (*(int *)((char *)(GetLayoutClass(actor)) + 0x1AC)) = 0xA;
 }
