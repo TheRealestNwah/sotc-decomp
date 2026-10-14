@@ -147,7 +147,13 @@ def disassemble_words(lines: list[str], section_bases: dict[str, int] | None = N
             reloc = None
             continue
         address, word = int(m.group(1), 16), int(m.group(2), 16)
-        insn = rabbitizer.Instruction(word, address, rabbitizer.InstrCategory.R5900)
+        category = rabbitizer.InstrCategory.R5900
+        # R5900 disassembly emits even valid cvt.w.s as .word, which m2c
+        # ignores. Decode this canonical encoding with the CPU decoder.
+        # Keep the reserved ft field zero and leave other formats untouched.
+        if word & 0xFFFF003F == 0x46000024:
+            category = rabbitizer.InstrCategory.CPU
+        insn = rabbitizer.Instruction(word, address, category)
         override = None
         if reloc and reloc[0] in RELOC_FORMS:
             override = RELOC_FORMS[reloc[0]].format(names.get(i, reloc[1]))
