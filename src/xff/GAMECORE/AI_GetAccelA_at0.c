@@ -1,5 +1,6 @@
-float AI_GetAccelA_at0(float x0, float x1, float dt)
+float AI_GetAccelA_at0(float start, float end, float time)
 {
-    dt = (dt < 0.0333667f) ? 0.0333667f : dt;
-    return (x1 - x0) * -2.0f / (dt * dt);
+    float step = time < 0.0333667f ? 0.0333667f : time;
+
+    return ((end - start) * -2.0f) / (step * step);
 }
