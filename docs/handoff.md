@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,544 functions** come from matching C: 893 GAMECORE, 488 MANAGER and 163 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,545 functions** come from matching C: 893 GAMECORE, 488 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -29,6 +29,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-13)
+
+Issue #124 adds `iosGetSinCos`, fully verified. The output pointer is forwarded unchanged in a0 to `iosGetSinCosf`; the integer angle occupies a1. The helper stores a vector through that pointer, and `iosGetTanf` corroborates the output-buffer interface. Evidence: `build/sincos-output-final-check.log`; 97 tests and Ruff pass.
 
 Issue #123 retries six small FP near-matches with literals one quarter ULP above each recovered float32 magnitude. This avoids GCC 2.96 parsing an exact boundary one bit low. `gluGetBrightness`, `iosGetSin` and `iosGetCos` match and pass original code/data/relocation checks; the sine/cosine helpers explicitly return f0, so preserve float return declarations rather than the draft's void placeholders. The other three candidates remain excluded. Evidence: `build/fp-interior-search.log`, `build/auto40-fp-interior/<MODULE>/validation.json` and `build/fp-interior-final-check.log`. Issue #124 separately tracks the omitted output pointer in `iosGetSinCos`; its angle occupies a1 in the original.
 
