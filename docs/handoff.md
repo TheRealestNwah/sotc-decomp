@@ -9,7 +9,6 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 Work was paused on request mid-way through the near-miss list. To resume:
 
 - **Parked near-misses** (no issue yet; drafts in the gitignored `build/cand/`, permuter directories already set up under `build/permuter/<name>/`, no search running):
-  - `GAMEUTIL_is_yaw_pitch_get_direction` (MANAGER), 6 words: branch layout of the two range tests. Draft `build/cand/b2/yaw-p.c`.
   - `addPlayerO2` (GAMECORE), 8 words: float register choice in the 0..100 clamp. Draft `build/cand/b4/o2-p.c`.
   - `SCRFuncBuddhaMissileInit2` (GAMECORE), 6 words: the `RO_0017D130` load must be scheduled before the stores. Draft `build/cand/b4/buddha-p.c`.
 - **Next candidates:** `build/cand/remaining-ranked.txt` ranks the 128 earlier batch drafts that compiled but differed, fewest differing words first (built by `build/cand/rank_remaining.py`). Skip any name that now has a file in `src/xff/`. `build/cand/literal-retry/` holds versions with float literals already fixed for truncation (see #177).
@@ -27,7 +26,7 @@ Work was paused on request mid-way through the near-miss list. To resume:
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,595 functions** come from matching C: 922 GAMECORE, 507 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,599 functions** come from matching C: 923 GAMECORE, 510 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -49,6 +48,8 @@ Work was paused on request mid-way through the near-miss list. To resume:
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issues #202 and #216, plus Codex's #206 (PR #207) and #209 (PR #212): `CalcColorParamGameLight`, `GAMEUTIL_is_yaw_pitch_get_direction`, `add_element_expression_change` and `GAMEUTIL_is_diff_nearly_equal_zero` match. `CalcColorParamGameLight` uses an `unsigned char` brightness field and return type. The two MANAGER range checks need **explicit shared return labels** (`goto ok; ... ok: return 1; ng: return 0;`) to get the original branch layout; Codex found this for #209 and it also fixed the parked yaw/pitch check. `add_element_expression_change` (Codex) matches using volatile views to keep the store order. Evidence: `build/near-miss-batch8-final-check.log` (923 GAMECORE, 510 MANAGER); 97 tests and Ruff pass.
 
 Issues #199, #200 and #201: `get_dist_from_eye_to_screen`, `mouseMoveCursorPosition` and `GetImpactWorstWorkLightClass` match on the first typed rewrite. `get_dist_from_eye_to_screen` returns the float from `func_000E95C8(float, int)` (float-first, as in #148). The cursor update uses a typed view of `B_0014DBB8`. `GetImpactWorstWorkLightClass` is a plain minimum search, `for (i = 1; i < n; i++)`, over the pointer array at +0x534; the m2c draft advanced the pointer by 16 bytes instead of 4. Evidence: `build/near-miss-batch7-final-check.log` (507 MANAGER); 97 tests and Ruff pass.
 
