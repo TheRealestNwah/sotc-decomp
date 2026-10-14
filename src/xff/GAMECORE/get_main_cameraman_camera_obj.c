@@ -1,7 +1,13 @@
-extern void get_camera_obj(int);
-extern int B_0019FD20;
+struct CameraSelectionView {
+    int selected;
+    char pad04[4];
+    void *managers[0];
+};
 
-void get_main_cameraman_camera_obj(void)
+extern void *get_camera_obj(void *);
+extern struct CameraSelectionView B_0019FD20;
+
+void *get_main_cameraman_camera_obj(void)
 {
-    get_camera_obj((*(int *)((char *)(&(&B_0019FD20)[B_0019FD20]) + 8)));
+    return get_camera_obj(B_0019FD20.managers[B_0019FD20.selected]);
 }

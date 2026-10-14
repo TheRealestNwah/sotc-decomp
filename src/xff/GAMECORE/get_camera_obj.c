@@ -1,4 +1,4 @@
-int get_camera_obj(int *arg0)
+void *get_camera_obj(void *manager)
 {
-    return *arg0;
+    return *(void **)manager;
 }

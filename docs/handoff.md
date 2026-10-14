@@ -30,6 +30,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Current checkpoint (2026-10-14)
 
+Issue #152 corrects pointer returns in the already matching camera getter chain. `get_camera_obj` dereferences its manager argument; `get_main_cameraman_camera_obj` returns that camera through a typed selector/table view (selector +0, pointer table +8). GCC 2.96 needs GNU `[0]` trailing-array syntax rather than C99 `[]`. Both retain identical bytes and the count remains 1,560. Evidence: `build/camera-getter-pointer-final-check.log`; 97 tests and Ruff pass. Issue #150 now has a local MATCH with a typed `gcGlobalVar` view, but the wrapper still needs production/full validation. Its empty `script-lws-orientation` branch must be fast-forwarded to current main before resuming.
+
 Issue #148 adds `update_clip_screen`, fully verified. Float-first/int-second parameter order for `func_000E95C8` preserves the original f12 load and a0 load in the call delay slot, while keeping the same EE argument registers. Retain the returned float across later helpers and the final tail call. Evidence: `build/clip-screen-float-first-diff.log` and `build/clip-screen-final-check.log`; 97 tests and Ruff pass. Issue #150 is the next script LWS orientation-wrapper item.
 
 Issue #146 adds `doit_camera_region_manager`, fully verified. Traverse 50 contiguous void-pointer entries with a one-element increment; the draft's int-pointer `+= 4` advanced 16 bytes instead of the original four. The helper treats its second argument as an actor pointer. Evidence: `build/camera-region-stride-diff.log` and `build/camera-region-final-check.log`; 97 tests and Ruff pass. Issue #148 is the next clip-screen update-wrapper item.
