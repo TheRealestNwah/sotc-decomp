@@ -26,7 +26,7 @@ Work was paused on request mid-way through the near-miss list. To resume:
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,599 functions** come from matching C: 923 GAMECORE, 510 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,608 functions** come from matching C: 930 GAMECORE, 512 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -48,6 +48,8 @@ Work was paused on request mid-way through the near-miss list. To resume:
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issues #224 and #225 (`GetPlaneSlopeDegree` part), plus Codex's #213 (PR #215), #214 (PR #218) and #217 (PR #220): `AI_GetAccelA`, `AI_GetAccelA_at0`, `AI_GetAccelB`, `GetPlaneSlopeDegree`, `CAM_init_camera_warp_cntrl`, three `nico_setPlayerDemoAdditionClothCollision*` presets and `GAMEUTIL_get_interp_value` match. The accel getters clamp the time step into a **new local with a ternary** (`float t = (dt < 0.0333667f) ? 0.0333667f : dt;`); clamping the parameter in place, or with an if, gives different float registers. `AI_GetInterRatioOutCut` is Codex's (#223, PR #230), which claimed it first. `GetPlaneSlopeDegree` is plain early returns. Evidence: `build/near-miss-batch9-final-check.log` (930 GAMECORE, 512 MANAGER); 97 tests and Ruff pass.
 
 Issues #202 and #216, plus Codex's #206 (PR #207) and #209 (PR #212): `CalcColorParamGameLight`, `GAMEUTIL_is_yaw_pitch_get_direction`, `add_element_expression_change` and `GAMEUTIL_is_diff_nearly_equal_zero` match. `CalcColorParamGameLight` uses an `unsigned char` brightness field and return type. The two MANAGER range checks need **explicit shared return labels** (`goto ok; ... ok: return 1; ng: return 0;`) to get the original branch layout; Codex found this for #209 and it also fixed the parked yaw/pitch check. `add_element_expression_change` (Codex) matches using volatile views to keep the store order. Evidence: `build/near-miss-batch8-final-check.log` (923 GAMECORE, 510 MANAGER); 97 tests and Ruff pass.
 
