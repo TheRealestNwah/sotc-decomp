@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,555 functions** come from matching C: 900 GAMECORE, 491 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,556 functions** come from matching C: 901 GAMECORE, 491 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -30,7 +30,9 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Current checkpoint (2026-10-14)
 
-Issue #138 adds `GetTimeAttackTimeLimit`, fully verified. Typed volatile field views and explicit locals preserve the +0x18 then +0x14 load order and shared base address before subtraction. Original qualifiers remain unknown. Evidence: `build/time-attack-limit-typed-diff.log` and `build/time-attack-limit-final-check.log`; 97 tests and Ruff pass. Issue #140 is next: `getAreaSize`. Its initial volatile-integer view worsens the draft to eight words/six differences by forcing a general-register load and transfer; keep it excluded (`build/area-size-typed-diff.log`).
+Issue #140 adds `getAreaSize`, fully verified. A plain signed integer field allows the original direct `lwc1`/`cvt.s.w` sequence; the volatile float view preserves the later +0x40 load. Making the integer volatile forced `lw`/`mtc1` and worsened the draft. The float qualifier remains provisional. Evidence: `build/area-size-{typed,nonvolatile-int}-diff.log` and `build/area-size-final-check.log`; 97 tests and Ruff pass. Issue #142 is next: recover forwarded a0/a1 and the frame input in `getMotionFloatFrameWithLimitCaribration`; verify helper return behavior rather than guessing from its name.
+
+Issue #138 adds `GetTimeAttackTimeLimit`, fully verified. Typed volatile field views and explicit locals preserve the +0x18 then +0x14 load order and shared base address before subtraction. Original qualifiers remain unknown. Evidence: `build/time-attack-limit-typed-diff.log` and `build/time-attack-limit-final-check.log`; 97 tests and Ruff pass.
 
 Issue #136 adds `mouseSetCursorPosition`, fully verified. A typed two-float cursor view with volatile fields preserves both the shared base address and y-before-x stores. Direct byte casts with volatile float stores added an extra address adjustment; struct, array and union views all matched. Original qualifiers remain unknown. Evidence: `build/mouse-{byte-one,struct,cast-struct,array,union}-diff.log` and `build/mouse-position-final-check.log`; 97 tests and Ruff pass. Issue #138 is the next time-attack getter item.
 
