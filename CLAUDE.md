@@ -1,5 +1,11 @@
 # sotc-decomp
 
+## Concurrent agent work
+
+Claude is the coordinator and Codex is a worker. Before assigning, claiming,
+editing or merging concurrent work, read `docs/collaboration.md`. Claude owns
+integration and merges; workers submit validated PRs and handoffs.
+
 Matching decompilation of Shadow of the Colossus (PS2, NTSC-U `SCUS-97472`), with a native PC port as the long-term goal.
 
 ## Goals
