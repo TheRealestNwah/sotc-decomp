@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,522 functions** come from matching C: 878 GAMECORE, 483 MANAGER and 161 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,523 functions** come from matching C: 879 GAMECORE, 483 MANAGER and 161 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -29,6 +29,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-13)
+
+Issue #101 adds `GetStageCenter`, fully verified. Restore its 0x40-byte local context, position pointer at offset 4 and 128-bit center at offset 0x30. `GetStageContext` explicitly returns 0/1 in the original; declaring it `int` instead of the discarded-result `void` placeholder preserves the original vector register. Evidence: `build/stage-context-variants.log` and `build/stage-center-final-check.log`.
 
 Issue #99 recovers nine small routines with explicit signed/unsigned 128-bit scalar types (`mode(TI)`): five GAMECORE, three MANAGER and one KERNEL. `SetCurrentQuaternion` also needs a 128-bit destination array, matching the original 16-byte indexed store. All nine passed per-object code/data/relocation validation and the full matching build; 21 other candidates remained excluded. Evidence: `build/auto40-128/<MODULE>/validation.json` and `build/retry-128-final-check.log`.
 
@@ -60,6 +62,7 @@ All of these are for Sony `ee-gcc` 2.96 at `-O2 -G0`.
 
 | Symptom | What fixed it | Example |
 | --- | --- | --- |
+| Ignored helper result declared void changes the caller's vector register | Inspect the helper's return paths. Preserve a known scalar return declaration even when this caller discards it; `GetStageContext` explicitly returns 0/1. | `GetStageCenter` (#101) |
 | Tail-call wrapper uses the wrong argument register and loses its stack frame | Recover the incoming argument that is forwarded unchanged, even when the draft omits it. Passing the character argument before the callback address preserves the original a0/a1 assignments and stack instructions. | `SCRArrowLoopEnd` and 77 related wrappers (#93) |
 | 128-bit copies and an integer count store are reordered | Use a union view containing both a word array and the field struct to preserve the original alias relationships and instruction order. | `GAMEUTIL_reset_position_filter` (#89) |
 | Float registers rotate while the instruction sequence already matches | Normalize the existing time local in place and accumulate into the existing value local. Replacing these updates with fresh expression results changed register allocation. | `calcFadeParam` (#87) |
