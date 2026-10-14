@@ -6,11 +6,11 @@ typedef struct {
     float unk5ABC;
 } UnagiWork;
 
-extern UnagiWork *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncUnagiSetAttackParam0(float a, float b, float c, float d)
+void SCRFuncUnagiSetAttackParam0(void *actor, float a, float b, float c, float d)
 {
-    UnagiWork *w = GetSCRCharaAIWorkPtr();
+    UnagiWork *w = ((UnagiWork *)GetSCRCharaAIWorkPtr(actor));
 
     w->unk5AB0 = a;
     w->unk5AB4 = b;

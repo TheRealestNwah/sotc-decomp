@@ -1,6 +1,6 @@
-extern char *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
 int SCRConditionMinoCAtkCountChack(int a, int n)
 {
-    return n < *(int *)(GetSCRCharaAIWorkPtr() + 0x41E8);
+    return n < *(int *)(((char *)GetSCRCharaAIWorkPtr((void *)a)) + 0x41E8);
 }

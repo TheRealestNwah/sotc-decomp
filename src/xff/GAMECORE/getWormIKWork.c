@@ -1,6 +1,6 @@
-extern int GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int getWormIKWork(void)
+void *getWormIKWork(void *actor)
 {
-    return (GetSCRCharaAIWorkPtr() + 0x41B3) & ~0xF;
+    return (void *)(((int)GetSCRCharaAIWorkPtr(actor) + 0x41B3) & ~0xF);
 }

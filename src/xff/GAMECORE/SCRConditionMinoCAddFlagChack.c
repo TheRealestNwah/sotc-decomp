@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRConditionMinoCAddFlagChack(void)
+int SCRConditionMinoCAddFlagChack(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41EC));
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41EC));
 }

@@ -1,8 +1,8 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncKameSetMissileRadius(float r0, float r1, float r2, float r3)
+void SCRFuncKameSetMissileRadius(void *actor, float r0, float r1, float r2, float r3)
 {
-    char *work = GetSCRCharaAIWorkPtr();
+    char *work = GetSCRCharaAIWorkPtr(actor);
 
     if (r0 != 0.0f) {
         *(int *)(work + 0x41C4) = 0;

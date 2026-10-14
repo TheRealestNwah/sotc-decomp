@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRConditionNargaPlayerDamage(void)
+int SCRConditionNargaPlayerDamage(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x5AA4)) != 0;
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x5AA4)) != 0;
 }

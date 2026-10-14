@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncKirinFallRockTimerSetFlagOn(void)
+void SCRFuncKirinFallRockTimerSetFlagOn(void *actor)
 {
-    (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41B8)) = 1;
+    (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41B8)) = 1;
 }

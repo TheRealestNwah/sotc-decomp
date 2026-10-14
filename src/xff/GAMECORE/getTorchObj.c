@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int getTorchObj(void)
+int getTorchObj(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x150));
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x150));
 }

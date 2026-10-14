@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncBirdInitRotMode(void)
+void SCRFuncBirdInitRotMode(void *actor)
 {
-    (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41D0)) = 1;
+    (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41D0)) = 1;
 }

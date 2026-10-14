@@ -1,6 +1,6 @@
-extern int *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRGetBossWork(void)
+void *SCRGetBossWork(void *actor)
 {
-    return *GetSCRCharaAIWorkPtr();
+    return *(void **)GetSCRCharaAIWorkPtr(actor);
 }

@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-unsigned char IsHorseAutoControlled(void)
+unsigned char IsHorseAutoControlled(void *actor)
 {
-    return (*(unsigned char *)((char *)(GetSCRCharaAIWorkPtr()) + 0xD9D));
+    return (*(unsigned char *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0xD9D));
 }

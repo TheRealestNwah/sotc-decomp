@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRConditionKnightGetStandKeyFlag(void)
+int SCRConditionKnightGetStandKeyFlag(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41B0)) & 1;
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41B0)) & 1;
 }

@@ -1,7 +1,7 @@
 extern char *getSCRDataCtrlWork();
-extern int getTorchInfo();
+extern int getTorchInfo(void *);
 
 int SCRConditionPlayerTorch(void)
 {
-    return getTorchInfo(*(int *)(getSCRDataCtrlWork() + 0x4078));
+    return getTorchInfo(*(void **)(getSCRDataCtrlWork() + 0x4078));
 }

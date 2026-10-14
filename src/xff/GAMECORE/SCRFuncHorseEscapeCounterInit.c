@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncHorseEscapeCounterInit(float fparg0)
+void SCRFuncHorseEscapeCounterInit(void *actor, float fparg0)
 {
-    (*(float *)((char *)(GetSCRCharaAIWorkPtr()) + 0x422C)) = fparg0;
+    (*(float *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x422C)) = fparg0;
 }

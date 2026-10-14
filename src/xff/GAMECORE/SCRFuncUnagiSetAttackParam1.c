@@ -1,9 +1,9 @@
 typedef struct { char pad[0x5AC0]; float unk5AC0; float unk5AC4; float unk5AC8; } UnagiWork;
-extern UnagiWork *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncUnagiSetAttackParam1(float a, float b, float c)
+void SCRFuncUnagiSetAttackParam1(void *actor, float a, float b, float c)
 {
-    UnagiWork *w = GetSCRCharaAIWorkPtr();
+    UnagiWork *w = ((UnagiWork *)GetSCRCharaAIWorkPtr(actor));
 
     w->unk5AC4 = a;
     w->unk5AC8 = b;

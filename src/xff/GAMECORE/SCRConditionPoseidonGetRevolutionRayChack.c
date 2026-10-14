@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRConditionPoseidonGetRevolutionRayChack(void)
+int SCRConditionPoseidonGetRevolutionRayChack(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41B0));
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41B0));
 }

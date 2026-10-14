@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncPoseidonResetRevolutionDirection(void)
+void SCRFuncPoseidonResetRevolutionDirection(void *actor)
 {
-    (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41C8)) = 0;
+    (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41C8)) = 0;
 }

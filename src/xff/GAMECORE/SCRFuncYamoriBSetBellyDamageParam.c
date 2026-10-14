@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncYamoriBSetBellyDamageParam(float fparg0)
+void SCRFuncYamoriBSetBellyDamageParam(void *actor, float fparg0)
 {
-    (*(float *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41E8)) = fparg0;
+    (*(float *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41E8)) = fparg0;
 }

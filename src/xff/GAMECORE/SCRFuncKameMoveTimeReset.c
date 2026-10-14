@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncKameMoveTimeReset(void)
+void SCRFuncKameMoveTimeReset(void *actor)
 {
-    (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41DC)) = 0;
+    (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41DC)) = 0;
 }

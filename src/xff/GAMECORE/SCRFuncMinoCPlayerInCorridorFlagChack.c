@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRFuncMinoCPlayerInCorridorFlagChack(void)
+int SCRFuncMinoCPlayerInCorridorFlagChack(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41F4));
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41F4));
 }
