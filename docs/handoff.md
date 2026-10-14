@@ -9,11 +9,10 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 Claude coordinates and merges; Codex claims items through GitHub issues and works in `.worktrees/` (see `docs/collaboration.md`). Check open issues for claims before starting anything.
 
 - **Draft PRs #53, #56, #62, #96, #110** were each re-attempted on 2026-10-14; findings are in a comment on each PR. Only `iosDlGetTransBufId` (from #96) was recovered (#248). The rest stay parked.
-- **Parked near-misses**, free to claim (drafts in the gitignored `build/cand/`):
-  - `addPlayerO2` (GAMECORE), 8 words: float register choice in the 0..100 clamp. Draft `build/cand/b4/o2-p.c`.
-  - `SCRFuncBuddhaMissileInit2` (GAMECORE), 6 words: the `RO_0017D130` load must be scheduled before the stores. Draft `build/cand/b4/buddha-p.c`.
-  - `glReset`, `motrootdyn_startchainhang`, `graphFsEffectReset` (MANAGER): see the #236/#239/#243 checkpoint note below.
-- **Next candidates:** `build/cand/remaining-ranked.txt` ranks the earlier batch drafts that compiled but differed, fewest differing words first (built by `build/cand/rank_remaining.py`). Skip any name that has a file in `src/xff/` or an open claim. `build/cand/literal-retry/` holds versions with float literals already fixed for truncation (see #177).
+- **Parked near-misses**, free to claim (drafts in the gitignored `build/cand/`; each was tried and its blocker is in the checkpoint note or claim issue that mentions it):
+  - GAMECORE: `addPlayerO2` (8 words), `SCRFuncBuddhaMissileInit2` (6), `stagemanager_getCenterFromAreaId` (12), `SCRFuncResetAcceleParamWormCtrlParam` (5), `st_defaultAI` (2, one `lui` register), `getBossPartsCurDamage`, `getBossWeakCurDamage`, `calcDownSpeedRatio`, `GAMEUTIL_init_col_plane_info_filter`, `ColCont_Update`, `CAM_is_reach_aim_yaw`, `CAM_act_avoid_rot_obstacle_avoid_cntrl`.
+  - MANAGER: `glReset` (2), `motrootdyn_startchainhang` (2), `graphFsEffectReset`, `constructor_camera_context` (3), `GetMotionResourceTime` (7), `GAMEUTIL_get_vel_limit_position`, `UpdateGlobalLightAmbient`, `SpriteMenuGetFadeByLayer`.
+- **Next candidates:** the ranked list of earlier batch drafts (`build/cand/remaining-ranked.txt`, built by `build/cand/rank_remaining.py`) is **nearly exhausted**: everything left on it is parked, claimed or 33+ words off. The next useful step is a fresh drafting pass (m2c + the prototype rules from #76) over functions that had no usable draft, using the techniques below. `build/cand/literal-retry/` holds versions with float literals already fixed for truncation (see #177).
 - **Local helpers** (gitignored, in `build/cand/`): `permlines.py FILE MODULE` tries every order of lines tagged `/*P*/`; `merge_queue.sh PR...` updates, waits for CI and merges PRs one at a time (main requires branches to be up to date); `literal_retry.py` rewrites float literals and retests.
 - **Permuter on sword.c:** `tools/permute.py setup` keeps only the target's own NONMATCHING block, which drops helpers the sword callbacks depend on. Unwrap all blocks into a copy first (see the #53 comment).
 
@@ -33,7 +32,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,671 functions** come from matching C: 964 GAMECORE, 537 MANAGER and 170 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,672 functions** come from matching C: 965 GAMECORE, 537 MANAGER and 170 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -55,6 +54,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #290: `st_collisionalias` matches as a `for (;;)` thread loop with a typed `gcGlobalVar` view (delta at +0x180, time at +0x184), which keeps the global's base address in one saved register. The handoff's parked list is now consolidated in "Working state" above. Evidence: `build/near-miss-batch21-final-check.log` (965 GAMECORE); 97 tests and Ruff pass.
 
 Issue #288: `GAMEUTIL_get_new_velocity`, `GAMEUTIL_increase_yaw`, `CAM_get_yaw_velocity` and `CAM_get_pitch_velocity` match. The two MANAGER helpers inline a nearly-zero test written in Codex's shared-label style (`static inline int is_nearly_zero(float x, float eps)` with `goto yes/no`). `GAMEUTIL_increase_yaw` sets its "moved" flag after the call, so no callee-saved register is needed. The camera velocity functions take two pass-through floats (f12/f13) for the yaw/pitch difference call and need the degree conversions in locals, in the original order. Parked: `CAM_is_reach_aim_yaw`. Evidence: `build/near-miss-batch20-final-check.log` (964 GAMECORE, 537 MANAGER); 97 tests and Ruff pass.
 
