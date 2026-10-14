@@ -33,7 +33,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,667 functions** come from matching C: 962 GAMECORE, 535 MANAGER and 170 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,671 functions** come from matching C: 964 GAMECORE, 537 MANAGER and 170 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -55,6 +55,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #288: `GAMEUTIL_get_new_velocity`, `GAMEUTIL_increase_yaw`, `CAM_get_yaw_velocity` and `CAM_get_pitch_velocity` match. The two MANAGER helpers inline a nearly-zero test written in Codex's shared-label style (`static inline int is_nearly_zero(float x, float eps)` with `goto yes/no`). `GAMEUTIL_increase_yaw` sets its "moved" flag after the call, so no callee-saved register is needed. The camera velocity functions take two pass-through floats (f12/f13) for the yaw/pitch difference call and need the degree conversions in locals, in the original order. Parked: `CAM_is_reach_aim_yaw`. Evidence: `build/near-miss-batch20-final-check.log` (964 GAMECORE, 537 MANAGER); 97 tests and Ruff pass.
 
 Issues #285 and #286: `AI_GetTimeOfCurrMotion`, `YattsukeGetSeamlessAreaCenter`, `IsDamaged`, `initGazeCtrlWork` and `GetSubAnimation` match. `YattsukeGetSeamlessAreaCenter` needs the term it negates in its own local (`int x = ...; center[0] = -x;`); folded inline, gcc rewrites `-(a - b)` as `b - a` (found by the permuter, then simplified). `IsDamaged` takes an unused first argument; `GetSubAnimation` walks a plain int array with an int counter; `initGazeCtrlWork` keeps its inlined "unlink if linked" check after setting `linked = 0`. Parked, free to claim: `stagemanager_getCenterFromAreaId` (12 words; permuter output in `build/permuter/stagemanager_getCenterFromAreaId/`), `SpriteMenuGetFadeByLayer`, `ColCont_Update`, `constructor_camera_context`. Evidence: `build/near-miss-batch19-final-check.log` (962 GAMECORE, 535 MANAGER); 97 tests and Ruff pass.
 
