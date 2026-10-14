@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,560 functions** come from matching C: 902 GAMECORE, 494 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,561 functions** come from matching C: 903 GAMECORE, 494 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -30,7 +30,9 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Current checkpoint (2026-10-14)
 
-Issue #152 corrects pointer returns in the already matching camera getter chain. `get_camera_obj` dereferences its manager argument; `get_main_cameraman_camera_obj` returns that camera through a typed selector/table view (selector +0, pointer table +8). GCC 2.96 needs GNU `[0]` trailing-array syntax rather than C99 `[]`. Both retain identical bytes and the count remains 1,560. Evidence: `build/camera-getter-pointer-final-check.log`; 97 tests and Ruff pass. Issue #150 now has a local MATCH with a typed `gcGlobalVar` view, but the wrapper still needs production/full validation. Its empty `script-lws-orientation` branch must be fast-forwarded to current main before resuming.
+Issue #150 adds `__execScrLwsOri`, fully verified against the corrected camera API. A typed global view keeps the shared base at `gcGlobalVar`, interval at +0x188 and context at +0x370. Plain interval and pointer-first `ViewIntervalClip` arguments match; no volatile field is needed. The context uses a GNU trailing-array view. Evidence: `build/lws-orientation-{typed,volatile,pointer-first}-diff.log` and `build/lws-orientation-final-check.log`; 97 tests and Ruff pass. Issue #154 is the next horse-angle condition item.
+
+Issue #152 corrects pointer returns in the already matching camera getter chain. `get_camera_obj` dereferences its manager argument; `get_main_cameraman_camera_obj` returns that camera through a typed selector/table view (selector +0, pointer table +8). GCC 2.96 needs GNU `[0]` trailing-array syntax rather than C99 `[]`. Both retain identical bytes and this item did not change the count. Evidence: `build/camera-getter-pointer-final-check.log`; 97 tests and Ruff pass.
 
 Issue #148 adds `update_clip_screen`, fully verified. Float-first/int-second parameter order for `func_000E95C8` preserves the original f12 load and a0 load in the call delay slot, while keeping the same EE argument registers. Retain the returned float across later helpers and the final tail call. Evidence: `build/clip-screen-float-first-diff.log` and `build/clip-screen-final-check.log`; 97 tests and Ruff pass. Issue #150 is the next script LWS orientation-wrapper item.
 
