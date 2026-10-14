@@ -1,0 +1,51 @@
+extern void *nico_playerGetExpression(void *);
+extern void *nico_playerGetExpressionChange(void *);
+extern void add_node_expression(void *, int);
+extern void constructor_expression_change(void *);
+extern void init_expression(void *, void *);
+extern int SkelFocusDef_PLAYER_HAND_A_L;
+extern int SkelFocusDef_PLAYER_HAND_A_R;
+extern int SkelFocusDef_PLAYER_HARA;
+extern int SkelFocusDef_PLAYER_HEAD;
+extern int SkelFocusDef_PLAYER_JOWA_L;
+extern int SkelFocusDef_PLAYER_JOWA_R;
+extern int SkelFocusDef_PLAYER_KUBI;
+extern int SkelFocusDef_PLAYER_LEFT_SHOULDER;
+extern int SkelFocusDef_PLAYER_MOMO_L;
+extern int SkelFocusDef_PLAYER_MOMO_R;
+extern int SkelFocusDef_PLAYER_MUNE;
+extern int SkelFocusDef_PLAYER_RIGHT_SHOULDER;
+extern int SkelFocusDef_PLAYER_RIGHT_WAIST;
+extern int SkelFocusDef_PLAYER_SUNE_L;
+extern int SkelFocusDef_PLAYER_SUNE_R;
+extern int SkelFocusDef_PLAYER_TOE_L;
+extern int SkelFocusDef_PLAYER_TOE_R;
+extern int SkelFocusDef_PLAYER_UDE_L;
+extern int SkelFocusDef_PLAYER_UDE_R;
+
+void init_player_expression(void *arg0) {
+    void *temp_v0;
+
+    temp_v0 = nico_playerGetExpression(arg0);
+    init_expression(temp_v0, arg0);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_HARA);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_MUNE);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_KUBI);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_HEAD);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_LEFT_SHOULDER);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_JOWA_L);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_UDE_L);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_HAND_A_L);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_RIGHT_SHOULDER);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_JOWA_R);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_UDE_R);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_HAND_A_R);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_RIGHT_WAIST);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_MOMO_L);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_MOMO_R);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_SUNE_L);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_SUNE_R);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_TOE_L);
+    add_node_expression(temp_v0, SkelFocusDef_PLAYER_TOE_R);
+    constructor_expression_change(nico_playerGetExpressionChange(arg0));
+}
