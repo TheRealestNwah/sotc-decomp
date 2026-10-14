@@ -17,7 +17,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - The Windows splice command exceeded the process command-line limit at 740 GAMECORE objects containing 792 matching functions. Issue #78 / PR #79 fixes it with Ninja JSON response files; positional object arguments still work. Do not revert this fix when updating older parked branches.
 - Issue #81 adds 190 MANAGER routines from 543 previously unusable drafts (190 matched, 149 differed and 204 remained unresolved). There are 186 new files; four case-distinct pointer getters share their existing value-getter files to avoid Windows filename collisions. Local evidence is under `build/auto40-prototypes/MANAGER/`; the final complete build log is `build/manager-prototypes-final-check.log`.
 - Issue #83 adds 54 KERNEL routines from 339 previously unusable drafts (54 matched, 166 differed and 119 remained unresolved), retaining prior SDK/stdlib exclusions. All 54 passed original code, data and relocation validation and the full build. Local evidence is under `build/auto40-prototypes/KERNEL/`.
-- Issue #85 fixes m2c's splitting of complete functions at interior plain-label twins such as `jtbl_00003A20`. The wrapper now removes redundant plain definitions and localizes both plain and `.Lxff` references. `GAMEUTIL_is_nearly_equal_zero3D` now produces one complete draft; older unresolved candidates may benefit from redrafting. Tests now total 91.
+- Issue #85 fixes m2c's splitting of complete functions at interior plain-label twins such as `jtbl_00003A20`. The wrapper now removes redundant plain definitions and localizes both plain and `.Lxff` references. `GAMEUTIL_is_nearly_equal_zero3D` now produces one complete draft; older unresolved candidates may benefit from redrafting. Tests increased to 91.
 - Issue #87 / PR #88 adds `calcFadeParam`, fully verified with the original compiler and the complete matching build. Reusing both normalized time and output-value locals preserves the original float registers. Main is at `763b094`; all 91 tests, Ruff and CI passed.
 - Every remaining sword.c function has a near-match parked behind `NONMATCHING` in a draft PR:
 
@@ -29,6 +29,10 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-13)
+
+Issue #108 fixes raw `cvt.w.s` normalization in the m2c wrapper. The R5900 decoder considered the instructions valid but printed `.word`, so m2c silently omitted the conversions. A restricted CPU decode for the canonical single-precision encoding preserves the instructions; reserved encodings and double format remain raw. The real `GetStageContext` draft now uses integer casts/division rather than float-bit arithmetic. All 97 tests, Ruff and the full matching build pass; the verified function count is unchanged. Evidence: `build/stage-context-helper-fixed-m2c.log` and `build/m2c-cvt-fix-final-check.log`.
+
+Issue #107 (`GetStageContext`) is next: the local `stage-context-helper` branch has no production source or PR yet. Resume it from updated main and use a typed context with separate 128-bit and float views of its center. The untyped draft still confuses the initial whole-vector copy with later float component writes.
 
 Issue #105 adds `GetStageContextByPos`, `GetStageAreaNumberByPos` and `GetStageNumberByPos`, fully verified. Direct returns preserve the original return register and remove an extra move. Despite its name, `GetStageNumberByPos` reads the global position; no used position parameter was added. Evidence: `build/stage-by-pos-control.log` and `build/stage-context-queries-final-check.log`.
 
