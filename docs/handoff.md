@@ -32,7 +32,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,672 functions** come from matching C: 965 GAMECORE, 537 MANAGER and 170 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,765 functions** come from matching C: 1,009 GAMECORE, 565 MANAGER and 191 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -54,6 +54,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #292: 93 trivial functions match (44 GAMECORE, 28 MANAGER, 21 KERNEL): empty statics, constant returns, argument/zero setters and 128-bit copies of six or fewer instructions. `build/cand/gen_trivial.py` (local) generates C for those shapes, tries every store order and keeps only exact matches; 435 of the 533 small functions it scanned have other shapes and were skipped. Four were case-distinct twins of existing getters (`GetDebugDispType` vs `getDebugDispType`, and three more), so they are appended to the existing files to avoid Windows filename collisions. The KERNEL ones sit among the game's own engine code (Sg2 sound, iosDC), not the Sony SDK. Evidence: `build/trivial-batch-final-check.log` (1009 GAMECORE, 565 MANAGER, 191 KERNEL); 97 tests and Ruff pass.
 
 Issue #290: `st_collisionalias` matches as a `for (;;)` thread loop with a typed `gcGlobalVar` view (delta at +0x180, time at +0x184), which keeps the global's base address in one saved register. The handoff's parked list is now consolidated in "Working state" above. Evidence: `build/near-miss-batch21-final-check.log` (965 GAMECORE); 97 tests and Ruff pass.
 
