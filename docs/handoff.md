@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,561 functions** come from matching C: 903 GAMECORE, 494 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,562 functions** come from matching C: 904 GAMECORE, 494 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -30,7 +30,9 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Current checkpoint (2026-10-14)
 
-Issue #154 is parked on `horse-angle-condition`: `SRCConditionHorseAngleFromPlayerToHorse` has 31 original/compiled words and two differences after restoring its actor argument and conversion constant. The lower-bound failure branch restores ra instead of copying v1 into v0, changing its target. Source is behind `NONMATCHING` and not counted; the complete parked build, 97 tests and Ruff pass. Evidence: `build/horse-angle-*-diff.log` and `build/horse-angle-parked-check.log`. One owned permuter search is running, base score 200; its score-110 candidate verifies worse (30 words, 13 differences), so keep the two-word source. Check the live process and outputs before restarting. Issue #156 is the next independent time-attack script-end helper.
+Issue #156 adds `timeAttackTimeScriptEnd`, fully verified. Typed flags at +0xC and elapsed float at +0x18 preserve the shared global base, float load and flag store in the return delay slot. Evidence: `build/time-attack-end-typed-diff.log` and `build/time-attack-end-final-check.log`; 97 tests and Ruff pass. Issue #158 is the next independent worm acceleration-wrapper item.
+
+Issue #154 is parked in draft PR #157, `horse-angle-condition` at `3b21086`: 31 original/compiled words and two differences in the lower-bound failure branch target/delay slot. Actor forwarding and conversion constants are corrected, but the function is behind `NONMATCHING` and not counted. Parked full build, 97 tests, Ruff and draft CI pass. One owned permuter search remains running, base score 200; its score-110 candidate verifies worse (30 words, 13 differences), so keep the tracked source. Evidence: `build/horse-angle-*-diff.log`, `build/horse-angle-parked-check.log` and `build/permuter/SRCConditionHorseAngleFromPlayerToHorse/`. Check the live process and outputs before restarting; merge current main carefully before promoting a verified winner.
 
 Issue #150 adds `__execScrLwsOri`, fully verified against the corrected camera API. A typed global view keeps the shared base at `gcGlobalVar`, interval at +0x188 and context at +0x370. Plain interval and pointer-first `ViewIntervalClip` arguments match; no volatile field is needed. The context uses a GNU trailing-array view. Evidence: `build/lws-orientation-{typed,volatile,pointer-first}-diff.log` and `build/lws-orientation-final-check.log`; 97 tests and Ruff pass. Issue #154 is the next horse-angle condition item.
 
