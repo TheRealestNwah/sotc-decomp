@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,564 functions** come from matching C: 906 GAMECORE, 494 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,565 functions** come from matching C: 907 GAMECORE, 494 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -29,6 +29,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #160 adds `nico_setHorseRidingStatusForHorse`, fully verified. Restore the actor forwarded to the AI-work getter, load the horse pointer at +0x4248 and retain the null guard/tail call. The helper uses a parent pointer, node value, vector pointer and float span; recovering these keeps the incoming a1/a2/a3 arguments in their original registers. Evidence: `build/horse-riding-forward-diff.log` and `build/horse-riding-final-check.log` (907 GAMECORE functions); 97 tests and Ruff pass. Issue #162 is the next Poseidon anger helper item.
 
 Issue #158 adds `SCRFuncSetAcceleParamWormCtrlParam`, fully verified. Restore actor forwarding and the known int result of `setAttainSpeedWormCtrlWork`. Deriving the +0x3D10 work pointer inside the mode==3 guard produces the original mode-check registers; the compiler hoists the address calculation as required. The manual candidate matches and is retained; a short permuter also found zero after 121 iterations and exited. Evidence: `build/worm-acceleration-{work-inside,clean}-diff.log` and `build/worm-acceleration-final-check.log`; 97 tests and Ruff pass. Issue #160 is the next horse-riding wrapper item.
 
