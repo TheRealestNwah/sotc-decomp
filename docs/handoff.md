@@ -7,8 +7,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Claude resume checkpoint (2026-10-14, handoff issue #360)
 
 This section supersedes older working-state notes below. Verified main is
-`601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There are **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL**, and **105
+`601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,441 after #364), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,392 functions** come from matching C: 1,365 GAMECORE, 764 MANAGER and 263 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,441 functions** come from matching C: 1,375 GAMECORE, 794 MANAGER and 272 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #364: 49 more hand matches: 48 named 13-word functions (10 GAMECORE, 29 MANAGER, 9 KERNEL) and `modelGetLinkCount` from #302's parked list. Notes: **VU0 macro code** is inline `__asm__ __volatile__` (lqc2/qmtc2/vmulx/sqc2 etc.; `qmtc2` assembles as `qmtc2.ni`, a float operand in an `"r"` constraint gives the original `mfc1`). When the asm block is the last thing before `jr $ra` and the original has `sqc2; jr; nop`, end the block with an empty `.set noreorder` / `.set reorder` pair so `ee-as` doesn't move the `sqc2` into the delay slot. The link-count **bitfield** is `unsigned long a:9; unsigned int cnt:15; unsigned long b:40;` (the `int` member gives the `dsll 23`/`dsra32` extraction and 32-bit add). Zeroing loops that count down with a decrementing pointer are `for (i = N - 1; i >= 0; i--) a[i] = 0;` (ee-gcc pads short loops with nops itself). Getters whose not-found path leaves `$v0` untouched return `void` (`getQuatPQSAnimIntFrame`). A float union copy (`Vec4.q`) next to float stores keeps the original load/store order where a plain 128-bit type lets the scheduler hoist the load. Parked: `demoManSkip` (last call not a tail call, like `graphFsEffectReset`), `iosKeybdInit` (epilogue restore order), `iosMakeLightColorMatrix` (argument copies to t2/v1/v0 before the four `lq`), `DebugDispVolumeShape` and `sheetFileLoadStageTex` (MANAGER rodata/text references whose original targets are uncertain). Evidence: `build/hand10-check.log`.
 
 Issue #337: four GAMECORE routines match after targeted manual recovery from the 81-160-word pass. Direct screening produced no matches (GC37 different/174 unusable, MANAGER47/244, KERNEL10/57); ranking the 92 other failed drafts exposed two one-word and one three-word candidates. `AI_GetRandomSphereOfs` uses native `3.14159265f` to reproduce the original truncated pi bits. `doit_camera_dist_to_look_at` needs a 0xA0 byte offset and native 0.1f/0.001f literals; its original helper at T_000D78F8 consumes a0/a1/a2/f12, now explicitly forwarded. `init_player_expression` forwards its actor through both getters; the existing getter interfaces were corrected separately in #339 / PR340 without changing bytes or counts. `SCRGetPlayerTiredParam` uses scoped threshold expressions and repeated character-motion pointer reads. A two-worker permuter found that valid source shape at iteration245; it was manually reviewed for initialization, arguments and memory use, then independently compiled. All four retained versions MATCH with the original compiler and full loader/module code/data/bss/relocation checks pass at 1365 GAMECORE, 764 MANAGER and 263 KERNEL in `.worktrees/codex-engine-81-160/build/337-full-check.log`; 105 pytest tests and Ruff pass. Boss health lookup variants remain nonmatching and ignored. No assembly, compiler flags or verifier changes.
 
