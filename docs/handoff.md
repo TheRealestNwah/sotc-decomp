@@ -32,7 +32,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,981 functions** come from matching C: 1,121 GAMECORE, 643 MANAGER and 217 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,034 functions** come from matching C: 1,151 GAMECORE, 664 MANAGER and 219 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -54,6 +54,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #302: 53 of the smallest remaining functions match by hand (30 GAMECORE, 21 MANAGER, 2 KERNEL). Most needed only the obvious C, so earlier generator misses were shape gaps, not hard cases. Notes: **guarded stores** are `if (w != 0) w->f = a;` in a `void` function (a `return 1` changes the branch); **flag tests** need `if (x & M) return 1; return 0;` (`!= 0` gives `sra`/`andi`); a load scheduled **after** a 128-bit store needs the `Vec4` union (`out->q = src->q; return src[1].i[0];`), and so does an int store before a `lq`/`sq` copy; `0.05f` gives 0x3D4CCCCC under gcc 2.96 even though the shortest round-trip decimal is 0.049999997, so try the round decimal first. Still open: `getIntrGpCount`, `getVIntrCnt`, `iosGetTCount` (`lui`/`addiu`/`lw 0` that gcc folds into `%lo`), `iosMvecZero` (`daddu` zero, C gives `por`), `modelGetLinkCount` (bitfield). Evidence: `build/hand6-check.log`.
 
 Issue #300: 45 generated functions match (30 GAMECORE, 11 MANAGER, 4 KERNEL): call chains `F2(F1(args), consts)` (including 7th-argument pass-through like `execCondition(a, g)` and global-address arguments), `F1(a)->field = b` stores, table lookups and bss counter adders. The adders need an **`int *` view of the block** (`int *p = (int *)B_001498C0; p[11] += a;`); `*(int *)(B + 0x2C) += a` folds the offset into `%lo` and differs. Generator: `build/cand/gen_trivial4.py` (local; delay-slot instructions belong to the call before them). Evidence: `build/trivial5-check.log`.
 
