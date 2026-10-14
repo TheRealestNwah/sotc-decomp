@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,558 functions** come from matching C: 902 GAMECORE, 492 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,559 functions** come from matching C: 902 GAMECORE, 493 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -29,6 +29,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #146 adds `doit_camera_region_manager`, fully verified. Traverse 50 contiguous void-pointer entries with a one-element increment; the draft's int-pointer `+= 4` advanced 16 bytes instead of the original four. The helper treats its second argument as an actor pointer. Evidence: `build/camera-region-stride-diff.log` and `build/camera-region-final-check.log`; 97 tests and Ruff pass. Issue #148 is the next clip-screen update-wrapper item.
 
 Issue #144 adds `MotSpdCtrl_SetSpeed`, fully verified. Compute the first condition before initializing the return value and retain the `do { ... } while (0)` block; this reproduces the original byte-check register and branch delay slot. Permuter base score 210 reached zero after 236 iterations and exited; both the generated and formatted candidates independently matched before full validation. Evidence: `build/permuter/MotSpdCtrl_SetSpeed/output-0-1/source.c`, `build/motion-speed-{zero,clean}-diff.log` and `build/motion-speed-final-check.log`; 97 tests and Ruff pass. No search remains running. Issue #146 is next: the camera region-manager draft advances its int pointer by 16 bytes rather than the original four.
 
