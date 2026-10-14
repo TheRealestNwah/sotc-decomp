@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,563 functions** come from matching C: 905 GAMECORE, 494 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,564 functions** come from matching C: 906 GAMECORE, 494 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -29,6 +29,10 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #158 adds `SCRFuncSetAcceleParamWormCtrlParam`, fully verified. Restore actor forwarding and the known int result of `setAttainSpeedWormCtrlWork`. Deriving the +0x3D10 work pointer inside the mode==3 guard produces the original mode-check registers; the compiler hoists the address calculation as required. The manual candidate matches and is retained; a short permuter also found zero after 121 iterations and exited. Evidence: `build/worm-acceleration-{work-inside,clean}-diff.log` and `build/worm-acceleration-final-check.log`; 97 tests and Ruff pass. Issue #160 is the next horse-riding wrapper item.
+
+When promoting a copied candidate over a previously parked file, refresh its source timestamp: Windows `Copy-Item` can preserve an older timestamp and Ninja can reuse the parked empty object. Rewrite the file in place, regenerate the build and verify the object defines the function plus the splice reports the increased count. This occurred during #158 and was caught before committing; the final log includes EECC and 906 GAMECORE functions.
 
 Issue #156 adds `timeAttackTimeScriptEnd`, fully verified. Typed flags at +0xC and elapsed float at +0x18 preserve the shared global base, float load and flag store in the return delay slot. Evidence: `build/time-attack-end-typed-diff.log` and `build/time-attack-end-final-check.log`; 97 tests and Ruff pass. Issue #158 is the next independent worm acceleration-wrapper item.
 
