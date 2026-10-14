@@ -7,7 +7,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 ## Where things stand (2026-10-13)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,526 functions** come from matching C: 882 GAMECORE, 483 MANAGER and 161 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,529 functions** come from matching C: 885 GAMECORE, 483 MANAGER and 161 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -29,6 +29,8 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-13)
+
+Issue #105 adds `GetStageContextByPos`, `GetStageAreaNumberByPos` and `GetStageNumberByPos`, fully verified. Direct returns preserve the original return register and remove an extra move. Despite its name, `GetStageNumberByPos` reads the global position; no used position parameter was added. Evidence: `build/stage-by-pos-control.log` and `build/stage-context-queries-final-check.log`.
 
 Issue #103 adds `GetStageName`, `GetStageAreaNumber` and `GetStageNumberNumber` using the restored local context. A volatile read of the area field preserves the original conditional load instead of if-conversion to `movn`. All three passed the original compiler and full code/data/relocation checks. Evidence: `build/stage-area-variants.log` and `build/stage-queries-final-check.log`.
 
