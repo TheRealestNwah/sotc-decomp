@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void player_SetGripDamage(float fparg0)
+void player_SetGripDamage(void *actor, float damage)
 {
-    (*(float *)((char *)(GetSCRCharaAIWorkPtr()) + 0x138)) = fparg0;
+    *(float *)((char *)GetSCRCharaAIWorkPtr(actor) + 0x138) = damage;
 }
