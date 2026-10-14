@@ -1,4 +1,4 @@
-extern unsigned char B_0018B740[1];
+extern unsigned char B_0018B740[];
 extern unsigned char func_00080C98[1];
 extern void *D_0017AEA0;
 extern void *D_0017AEA4;
