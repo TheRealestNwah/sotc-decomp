@@ -4,15 +4,36 @@ A snapshot for whoever picks up the matching work next, human or agent (Codex, C
 
 Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/findings.md` first.
 
+## Paused here (2026-10-14, Claude Code)
+
+Work was paused on request mid-way through the near-miss list. To resume:
+
+- **Matched but not yet in a PR.** These files sit untracked in `src/xff/GAMECORE/` and already pass `ninja check` together with everything on main. Each has an open issue; commit them in PRs of up to three:
+  - `startAttackEffect` (#189), `SCRFuncKameSetMissileRadius` (#190), `SCRFuncUnagiSetAttackParam1` (#191)
+  - `initPinAttackIKWork` (#192), `SCRFuncUnagiSetAttackParam0` (#195), `Update_TimeFloatSpeed` (#196)
+- **Parked near-misses** (no issue yet; drafts in the gitignored `build/cand/`, permuter directories already set up under `build/permuter/<name>/`, no search running):
+  - `GAMEUTIL_is_yaw_pitch_get_direction` (MANAGER), 6 words: branch layout of the two range tests. Draft `build/cand/b2/yaw-p.c`.
+  - `addPlayerO2` (GAMECORE), 8 words: float register choice in the 0..100 clamp. Draft `build/cand/b4/o2-p.c`.
+  - `SCRFuncBuddhaMissileInit2` (GAMECORE), 6 words: the `RO_0017D130` load must be scheduled before the stores. Draft `build/cand/b4/buddha-p.c`.
+- **Next candidates:** `build/cand/remaining-ranked.txt` ranks the 128 earlier batch drafts that compiled but differed, fewest differing words first (built by `build/cand/rank_remaining.py`). Skip any name that now has a file in `src/xff/`. `build/cand/literal-retry/` holds versions with float literals already fixed for truncation (see #177).
+- **Local helpers** (gitignored, in `build/cand/`): `permlines.py FILE MODULE` tries every order of lines tagged `/*P*/`; `literal_retry.py` rewrites float literals and retests; `update_docs.py` bumps totals but misplaced notes twice, so check its output or edit the handoff by hand.
+
+### Techniques that closed these gaps
+
+- **Store order:** gcc 2.96 often emits the *last* store of a straight-line run first, so rotating the source order by one is a quick first try; otherwise use `permlines.py`.
+- **Float literals:** ee-gcc 2.96 truncates decimal float literals, so m2c's exact-value literals come out one ULP low. Write a decimal at or just above the wanted float (#177).
+- **Offset folded into the base address:** use a typed struct view of the global (`gl->s` with `GlState *gl = &D_00130480`) instead of byte-offset casts.
+- **Counted loops that compare with -1:** write `while (n--)`.
+- **Float zero via `mtc1` instead of `sw $zero`:** chain the assignments (`a = b = 0.0f`); mixed int chains work too (`mouseClearStatus`).
+- **128-bit loads not hoisted out of a loop:** wrap the `s128` in a one-member struct (#174).
+
 ## Where things stand (2026-10-14)
 
-- Issues #179 and #180: `glTexCoord2f`, `glTexCoord2fv` and `init_texture_animation_parameter` match. A typed view of the GL state global `D_00130480` (fields +0xA0..+0xAC) keeps the base address in a register instead of folding the offset into it. `glTexCoord2fv` also needs an empty `do {} while (0)` (found by the permuter) between the r and q stores to reproduce the original scheduling. The texture-animation reset matches with its four 1.0f stores written in field order. Evidence: `build/near-miss-batch1-final-check.log` (502 MANAGER); 97 tests and Ruff pass. Ranked list of remaining near-misses: `build/cand/remaining-ranked.txt`; literal-fixed retries in `build/cand/literal-retry/`.
-
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,584 functions** come from matching C: 916 GAMECORE, 499 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,586 functions** come from matching C: 916 GAMECORE, 504 MANAGER and 166 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
-- Issues #181 and #182: `chkMoveAngle` and `bosslifebar_resethp` match. `chkMoveAngle` needs the final comparison written as `fabsf(a) >= fabsf(b)` (operand order picks the abs registers). `bosslifebar_resethp` uses a typed life-bar struct at `D_0017B050` plus the separate `D_0017B064` scale global; the three ratio stores are written target, shown, hp. General rule seen across these store-order near-misses: gcc 2.96 often emits the *last* source store of a straight-line run first, so rotating the source order by one is a quick first try. Evidence: `build/near-miss-batch2-final-check.log` (916 GAMECORE); 97 tests and Ruff pass.
-- Issues #185, #186 and #187: `kColor`, `DecreaseDamageLockTime` and `ResetCharacterClassIKInfo` match. The first two are store-order fixes: a typed global view for `kColor` (`D_001359F0`, fields +0x90..+0xA0) and the rotate-by-one rule (last source store is emitted first). `ResetCharacterClassIKInfo` needs a `while (n--)` loop: GCC turns it into the original decrement-then-compare-with-minus-one, loading the IK array only after the count test. `build/cand/permlines.py FILE MODULE` tries every order of lines tagged `/*P*/` and is the quickest tool for store-order near-misses. Evidence: `build/near-miss-batch3-final-check.log` (502 MANAGER); 97 tests and Ruff pass.
+- Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
+- Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
 - Issue #73 checks the 41–80 instruction GAMECORE range and adds `Kite_SucceedKitePathWork`. Of 291 candidates, one matched, 49 differed and 241 had no usable draft. A conservative retry using byte-array declarations for address-only opaque globals added no matches (nine more usable drafts, all different). Local evidence remains under `build/auto80/GAMECORE/` and `build/auto80-retry/GAMECORE/`.
 - Issue #75 recovers eight small GAMECORE routines from the earlier unusable drafts using byte-array declarations for address-only opaque globals. All eight passed original code, data and relocation validation. The retry checked 717 candidates: eight matched, 74 differed and 635 still had no usable draft. Local evidence remains under `build/auto40-addr/GAMECORE/`.
 - Issue #76 recovers another 129 GAMECORE routines using opaque pointer types and external calls whose results are discarded. All 129 passed original code, data and relocation validation and the full build. The retry checked 635 candidates: 129 matched, 201 differed and 305 remained unresolved. Local evidence is under `build/auto40-prototypes/GAMECORE/`.
@@ -32,15 +53,21 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 ## Current checkpoint (2026-10-14)
 
-Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
+Issues #188 and #194: `GAMEUTIL_reset_interp_value_cntrl` and `mouseClearStatus` match. The interp reset is typed as returning the tail-called getter's float, with the three stores in start, value, hope order. `mouseClearStatus` needs chained zero assignments: one int chain for the button arrays and deltas, then `x = y = z = 0.0f`, then the wheel. Evidence: `build/near-miss-batch4-final-check.log` (504 MANAGER); 97 tests and Ruff pass.
 
-Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
+Issues #185, #186 and #187: `kColor`, `DecreaseDamageLockTime` and `ResetCharacterClassIKInfo` match. The first two are store-order fixes: a typed global view for `kColor` (`D_001359F0`, fields +0x90..+0xA0) and the rotate-by-one rule (last source store is emitted first). `ResetCharacterClassIKInfo` needs a `while (n--)` loop: GCC turns it into the original decrement-then-compare-with-minus-one, loading the IK array only after the count test. `build/cand/permlines.py FILE MODULE` tries every order of lines tagged `/*P*/` and is the quickest tool for store-order near-misses. Evidence: `build/near-miss-batch3-final-check.log` (502 MANAGER); 97 tests and Ruff pass.
+
+Issues #181 and #182: `chkMoveAngle` and `bosslifebar_resethp` match. `chkMoveAngle` needs the final comparison written as `fabsf(a) >= fabsf(b)` (operand order picks the abs registers). `bosslifebar_resethp` uses a typed life-bar struct at `D_0017B050` plus the separate `D_0017B064` scale global; the three ratio stores are written target, shown, hp. General rule seen across these store-order near-misses: gcc 2.96 often emits the *last* source store of a straight-line run first, so rotating the source order by one is a quick first try. Evidence: `build/near-miss-batch2-final-check.log` (916 GAMECORE); 97 tests and Ruff pass.
+
+Issues #179 and #180: `glTexCoord2f`, `glTexCoord2fv` and `init_texture_animation_parameter` match. A typed view of the GL state global `D_00130480` (fields +0xA0..+0xAC) keeps the base address in a register instead of folding the offset into it. `glTexCoord2fv` also needs an empty `do {} while (0)` (found by the permuter) between the r and q stores to reproduce the original scheduling. The texture-animation reset matches with its four 1.0f stores written in field order. Evidence: `build/near-miss-batch1-final-check.log` (499 MANAGER); 97 tests and Ruff pass. Ranked list of remaining near-misses: `build/cand/remaining-ranked.txt`; literal-fixed retries in `build/cand/literal-retry/`.
 
 Issue #177: `iosGetACosf` and `iosGetACos` match. ee-gcc 2.96 **truncates** decimal float literals instead of rounding, so the exact-value literals m2c prints come out one ULP low. Write a decimal at or just above the wanted float (here 1.5707963f, 0.16666666f, 0.075f, 0.044642855f, 0.030381943f, 4.65661e-10f). Evidence: `build/kernel-acos-final-check.log` (166 KERNEL); 97 tests and Ruff pass. Remaining near-misses from the earlier batches, ranked by differing words: `build/cand/remaining-ranked.txt` (from `build/cand/rank_remaining.py`).
 
 Issue #174: `reset_camera_target_visible_angle_manager` matches. Wrapping the 128-bit `ZeroPoint` in a one-member struct (`struct { s128 q; }`) stops GCC hoisting the load, giving the original per-store `lq`/`sq` pairs; plain `s128` hoists it and `volatile` misschedules it. The chained `angle0 = angle1 = 0.0f` gives the original `mtc1` + two `swc1` in +0x3D4, +0x3D8 order. Evidence: `build/camera-angle-manager-final-check.log` (914 GAMECORE); 97 tests and Ruff pass.
 
 Issue #172 adds `setRatioGazeIKWork`, fully verified with plain offset casts: null guard, three float inequality tests that set the ratio at +0x70 to 1.0, then the x/y/z stores in original order (913 GAMECORE functions).
+
+Issue #170: both fog-factor getters match using identical padded global layouts and unchanged arithmetic association. Full proof: `build/fog-factor-final-check.log` (496 MANAGER, 912 GAMECORE); 97 tests and Ruff pass. Next item: gaze IK ratio setter, issue #172.
 
 Issue #168 adds `getStageNormalizePosition` and `getStageChipIDFloat`, fully verified. Identical typed global views keep the shared `D_0017A340` base, scale fields +0x40/+0x44 and offsets +0x50/+0x54. Plain fields and unchanged expressions match both original bodies, including the x store before z reload. Separate source files use consistent layouts. Evidence: `build/stage-normalization-typed-diff.log` and `build/stage-normalization-final-check.log` (912 GAMECORE functions); 97 tests and Ruff pass. Issue #170 is the next fog-factor getter pair.
 
