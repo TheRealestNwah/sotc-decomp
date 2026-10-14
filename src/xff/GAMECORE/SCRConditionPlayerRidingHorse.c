@@ -1,7 +1,7 @@
-extern void *getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 extern int nico_GetPlayerCharacterRidingHorseObject(int);
 
-int SCRConditionPlayerRidingHorse(void)
+int SCRConditionPlayerRidingHorse(void *actor)
 {
-    return nico_GetPlayerCharacterRidingHorseObject((*(int *)((char *)(getSCRDataCtrlWork()) + 0x4078))) != 0;
+    return nico_GetPlayerCharacterRidingHorseObject((*(int *)((char *)(getSCRDataCtrlWork(actor)) + 0x4078))) != 0;
 }

@@ -1,7 +1,7 @@
-extern int getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 extern int allResetLineAttr();
 
-int SCRFuncLineAllReset(void)
+int SCRFuncLineAllReset(void *actor)
 {
-    return allResetLineAttr(getSCRDataCtrlWork());
+    return allResetLineAttr(((int)getSCRDataCtrlWork(actor)));
 }

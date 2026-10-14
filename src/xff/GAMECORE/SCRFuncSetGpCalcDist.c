@@ -1,7 +1,7 @@
-extern int getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 extern int setGpCalcDist(int, float);
 
-int SCRFuncSetGpCalcDist(float r)
+int SCRFuncSetGpCalcDist(void *actor, float r)
 {
-    return setGpCalcDist(getSCRDataCtrlWork(), r);
+    return setGpCalcDist(((int)getSCRDataCtrlWork(actor)), r);
 }

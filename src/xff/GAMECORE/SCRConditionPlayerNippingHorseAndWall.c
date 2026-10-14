@@ -1,7 +1,7 @@
-extern void *getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 extern int nico_playerCheckNippingWithHorseAndWall(int);
 
-int SCRConditionPlayerNippingHorseAndWall(void)
+int SCRConditionPlayerNippingHorseAndWall(void *actor)
 {
-    return nico_playerCheckNippingWithHorseAndWall((*(int *)((char *)(getSCRDataCtrlWork()) + 0x4078))) != 0;
+    return nico_playerCheckNippingWithHorseAndWall((*(int *)((char *)(getSCRDataCtrlWork(actor)) + 0x4078))) != 0;
 }

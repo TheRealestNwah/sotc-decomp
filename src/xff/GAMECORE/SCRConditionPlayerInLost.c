@@ -1,6 +1,6 @@
-extern void *getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 
-int SCRConditionPlayerInLost(void)
+int SCRConditionPlayerInLost(void *actor)
 {
-    return (*(int *)((char *)(getSCRDataCtrlWork()) + 0x405C)) == 0;
+    return (*(int *)((char *)(getSCRDataCtrlWork(actor)) + 0x405C)) == 0;
 }

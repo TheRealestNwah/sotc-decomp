@@ -1,7 +1,7 @@
 extern int *GetDamageClass(int);
-extern void *getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 
-int SCRConditionDamagedPlayer(void)
+int SCRConditionDamagedPlayer(void *actor)
 {
-    return *GetDamageClass((*(int *)((char *)(getSCRDataCtrlWork()) + 0x4078))) != 0;
+    return *GetDamageClass((*(int *)((char *)(getSCRDataCtrlWork(actor)) + 0x4078))) != 0;
 }

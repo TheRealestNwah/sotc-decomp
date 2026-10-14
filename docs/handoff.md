@@ -64,37 +64,33 @@ passed before each merge. Latest completed local evidence:
 - `.worktrees/codex-script-layout-actors/build/348-full-check.log` (three demo helpers).
 - `.worktrees/codex-engine-81-160/build/337-full-check.log` (latest four new matches).
 
-### Finish this first: #349 data-control actor forwarding
+### #349 data-control actor forwarding completed
 
-**Unmerged, 44 modified C files**, branch `codex/data-control-actors`, worktree
-`.worktrees/codex-data-control-actors`, based on `ff4b955` (before #359).
-There is no #349 PR yet. All 44 standalone original-compiler comparisons passed;
-the standalone process has exited successfully. **Full matching, final Python
-checks, CI and merge have not happened. Do not count this as completed.**
+The 44-call family is corrected with explicit `void *getSCRDataCtrlWork(void *)`
+interfaces and actor forwarding. Existing actor slots, float arguments, the
+eight-argument wrapper's eighth slot, and #346's related caller repairs are
+preserved. Existing native 32-bit work-handle views use explicit casts.
+This changes interfaces, not the function count.
 
-- Scope: the 44 actual empty `getSCRDataCtrlWork()` calls. The canonical helper
-  interface is `void *getSCRDataCtrlWork(void *)`. Preserve existing actor
-  arguments, float arguments, and the eight-argument wrapper's slot positions.
-  Explicit casts retain existing 32-bit work-handle views where necessary.
-- Evidence: `build/349-standalone.log` ends `Total 44 / 44`;
-  `build/349-standalone-results.json` records each comparison;
-  `build/349-actor-audit.json` maps the original family audit;
-  `build/original349/` retains pre-edit sources. Paths are relative to this
-  worker. `build/349-existing-callers.json` is empty.
-- The one-time edit/validation script `build/update349.py` has already run.
-  **Do not rerun it**: its assertions expect old prototypes, and it creates the
-  original snapshots. No compiler/permuter jobs remain running at this checkpoint.
-- Review `git diff`, fetch current main, and bring in #359 and subsequent docs
-  without overwriting #346 fixes already present in three shared caller files.
-  No #348 source overlaps #349. Use only a completed worker's build cache,
-  explicitly delete all 44 changed C object files, run configure and full
-  `ninja -j4 check`, then pytest/Ruff and diff checks. Open a bug-labeled PR
-  closing #349; merge only after fresh exact-head CI and delete its branch.
-- Leave the separate void-result defects in #358 for their own PR.
+All 44 original-compiler standalone comparisons pass. All 44 current C objects
+were explicitly deleted and rebuilt on baseline `d23aab8`; full loader and
+KERNEL/MANAGER/GAMECORE code, data, BSS, relocations and MANAGER VU-text match.
+105 pytest tests, Ruff and diff checks pass. Evidence remains in
+`.worktrees/codex-data-control-actors/build/349-standalone-results.json` and
+`349-full-check.log`; original source snapshots remain in `build/original349/`.
+The full349 process exited successfully. The one-time `build/update349.py` must
+not be rerun. No matching/permuter job from #349 remains live.
+
+The separate invented void-result contracts remain #358's scope. Codex has
+reserved #351 in branch `codex/unparent-wrapper-contract`, isolated worktree
+`.worktrees/codex-unparent-wrapper-contract`. Its one-source correction to
+`nico_UnparentObject` passes standalone matching, 105 tests and Ruff, but still
+needs full matching on the integrated #349 baseline and a separate PR. Check
+#205/#351 and local checkpoint for newer process status before taking over.
 
 ### Next independent work, in suggested order
 
-These bugs are filed and unclaimed at this checkpoint. Check current claims
+These bugs are filed; #351 is reserved by Codex as noted above. Check current claims
 before acting and use one issue/branch/PR per item:
 
 1. **#351:** reconcile `nico_UnparentObject` and its callers with actual

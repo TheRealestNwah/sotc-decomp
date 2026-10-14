@@ -1,6 +1,6 @@
-extern void *getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 
-int SCRConditionReturnStartMyself(void)
+int SCRConditionReturnStartMyself(void *actor)
 {
-    return (*(int *)((char *)(getSCRDataCtrlWork()) + 0x4198));
+    return (*(int *)((char *)(getSCRDataCtrlWork(actor)) + 0x4198));
 }

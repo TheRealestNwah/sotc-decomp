@@ -1,6 +1,6 @@
-extern void *getSCRDataCtrlWork();
+extern void *getSCRDataCtrlWork(void *);
 
-void SCRFuncResetVolumeTime0(void)
+void SCRFuncResetVolumeTime0(void *actor)
 {
-    (*(int *)((char *)(getSCRDataCtrlWork()) + 0x40AC)) = 0;
+    (*(int *)((char *)(getSCRDataCtrlWork(actor)) + 0x40AC)) = 0;
 }
