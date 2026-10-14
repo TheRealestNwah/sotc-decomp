@@ -18,18 +18,23 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 - Issue #81 adds 190 MANAGER routines from 543 previously unusable drafts (190 matched, 149 differed and 204 remained unresolved). There are 186 new files; four case-distinct pointer getters share their existing value-getter files to avoid Windows filename collisions. Local evidence is under `build/auto40-prototypes/MANAGER/`; the final complete build log is `build/manager-prototypes-final-check.log`.
 - Issue #83 adds 54 KERNEL routines from 339 previously unusable drafts (54 matched, 166 differed and 119 remained unresolved), retaining prior SDK/stdlib exclusions. All 54 passed original code, data and relocation validation and the full build. Local evidence is under `build/auto40-prototypes/KERNEL/`.
 - Issue #85 fixes m2c's splitting of complete functions at interior plain-label twins such as `jtbl_00003A20`. The wrapper now removes redundant plain definitions and localizes both plain and `.Lxff` references. `GAMEUTIL_is_nearly_equal_zero3D` now produces one complete draft; older unresolved candidates may benefit from redrafting. Tests now total 91.
+- Issue #87 / PR #88 adds `calcFadeParam`, fully verified with the original compiler and the complete matching build. Reusing both normalized time and output-value locals preserves the original float registers. Main is at `763b094`; all 91 tests, Ruff and CI passed.
 - Every remaining sword.c function has a near-match parked behind `NONMATCHING` in a draft PR:
 
 | Function | Draft PR | Status |
 | --- | --- | --- |
-| Float registers rotate while the instruction sequence already matches | Normalize the existing time local in place and accumulate into the existing value local. Replacing these updates with fresh expression results changed register allocation. | `calcFadeParam` (#87) |
-| Function names differ only by letter case and collide as Windows filenames | Keep adjacent pointer/value getter pairs in one C file, preserving the case-sensitive function names and original order. | `getColLightDebugSts` / `GetColLightDebugSts`, `getDebPcWin*` / `GetDebPcWin*` (#81) |
-| Drafts contain unknown pointed-to types or unknown external scalar results | Use `void *` for opaque pointers. A call whose result is discarded can use a `void` return declaration; do this only when every recovered use discards it. Keep other unknown scalar types unresolved and finish with full code/data/relocation validation. | small GAMECORE pass (#76) |
-| Separate early returns merge into the wrong branch layout | Send both comparison arms explicitly to shared return labels. This preserves the original shared blocks and branch direction. | `GAMEUTIL_is_nearly_equal_zero` (#69), `GAMEUTIL_is_nearly_equal_zero3D` (#71) |
 | `nico_swordstart` (sword thread) | #62 | +2 words: GCSE-hoisted stack addresses win callee-saved registers over two `%hi` parts and `origin` |
 | `T_000C1D80`, `T_000C2620` (collision callbacks) | #53 | 5 words each: the shared ignore flag is allocated to v0 instead of v1 |
 | `DispWithSwordBlur`, `DispWithTorchBlur` | #56 | 616 of 629 words: loop-invariant hoisting and constant sharing differ |
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
+
+## Paused checkpoint (2026-10-13)
+
+Work is paused at the user's request. No batch, compiler verification or permuter job remains running.
+
+Issue #89 (`GAMEUTIL_reset_position_filter`) has a seven-word instruction match in the local, ignored `build/filter-union-11.c`. It uses a union containing a three-element 128-bit word array and a struct view with two 128-bit fields followed by the count. This changes alias analysis to preserve the original copy/store order. **It has not passed full code, data and relocation validation and is not included in the 1,433 count.** No production source was added. The local `reset-position-filter` branch is clean at `763b094`, unpushed, with no PR.
+
+On resume, inspect `build/filter-union-11.c` and `build/filter-variants.log`, bring the candidate into production source under issue #89, and perform the normal original-compiler and full matching checks before counting or opening a ready PR. Experiment inputs remain local; do not commit `build/` artifacts. The three sword draft PRs above remain parked.
 
 ## Resuming safely
 
@@ -45,6 +50,10 @@ All of these are for Sony `ee-gcc` 2.96 at `-O2 -G0`.
 
 | Symptom | What fixed it | Example |
 | --- | --- | --- |
+| Float registers rotate while the instruction sequence already matches | Normalize the existing time local in place and accumulate into the existing value local. Replacing these updates with fresh expression results changed register allocation. | `calcFadeParam` (#87) |
+| Function names differ only by letter case and collide as Windows filenames | Keep adjacent pointer/value getter pairs in one C file, preserving the case-sensitive function names and original order. | `getColLightDebugSts` / `GetColLightDebugSts`, `getDebPcWin*` / `GetDebPcWin*` (#81) |
+| Drafts contain unknown pointed-to types or unknown external scalar results | Use `void *` for opaque pointers. A call whose result is discarded can use a `void` return declaration; do this only when every recovered use discards it. Keep other unknown scalar types unresolved and finish with full code/data/relocation validation. | small GAMECORE pass (#76) |
+| Separate early returns merge into the wrong branch layout | Send both comparison arms explicitly to shared return labels. This preserves the original shared blocks and branch direction. | `GAMEUTIL_is_nearly_equal_zero` (#69), `GAMEUTIL_is_nearly_equal_zero3D` (#71) |
 | Constant integer argument scheduled before a live float argument instead of in the call delay slot | Put the integer flag after the float arguments in the emitter declaration, definition and calls. The EE ABI keeps the same integer and float register assignments; source parameter order changes scheduling. | `func_000C3198` (#50) |
 | Pointer offset rebased onto another register (`geometry+0x50` instead of `reaction+0x60`) | cse2 knew `reaction == geometry - 0x10` and folded the offset. Reassigning the base after its last use (`geometry = (char *)reaction;`) removes that equivalence. | `func_000C2EB0` |
 | Two independent loop-preheader or increment instructions swapped | Walk the array with a source-level pointer (`int *sheet = sheets;`) and order the increments (`sheet++, i++`). Hoisted invariants are emitted before giv inits, so the insn order decides scheduler ties. | `func_000C2EB0` |
