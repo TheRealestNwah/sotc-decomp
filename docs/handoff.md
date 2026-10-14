@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,493 after #366), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,559 after #368), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,493 functions** come from matching C: 1,395 GAMECORE, 814 MANAGER and 284 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,559 functions** come from matching C: 1,426 GAMECORE, 836 MANAGER and 297 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #368: 66 more hand matches among the named 15-word functions (31 GAMECORE, 22 MANAGER, 13 KERNEL). Notes: MMI word ops on vectors passed by pointer (`iosAddMvec` and siblings) copy the 8-byte-aligned structs into a `union { Mvec m; s128 q; }` and use a volatile `paddw`/`psubw` asm. `(float)(int)(a / b)` gives the `cvt.w.s`/`mfc1`/`mtc1`/`cvt.s.w` sequence. Script-object creators pass their name string as an extern `RO_` reference. Clamps that test the original value twice (`slti`; `movn`; `movz`) are `if (n > 127) n = 127; else if (n < 0) n = 0;`. Parked: the `Sg2SlotSetTime*Param` family and `Sg2SlotSetVolPhase` (the slot address is computed twice with operands in different orders; inline helpers get within 9 words), `ischedStop` (final volatile store not moved into the delay slot), `constructor_expression_change`, `GetMotionResourceRotAngle`, `SetJudgeVolumeInfo`, `Kite_SetAnimalLayout`. Evidence: `build/hand12-check.log`.
 
 Issue #366: 52 more hand matches among the named 14-word functions (20 GAMECORE, 20 MANAGER, 12 KERNEL). Notes: float **SCRCondition** checks against a constant keep the `r = 1; if (!(cmp)) r = 0;` form; write the comparison so its operands load in the original order (`a > b` vs `b < a`). Sequential stores that must not be reordered around loads of another type (pointer stores after `lhu`, int stores before a float load) need a union view of the destination (`union { T *p; unsigned short h[2]; }`, `Vec4`). `volatile` reproduces a store followed by a reload of the same global (`ischedRestart`). VU0 outputs go through `"=r"` on a float variable (`qmfc2` then `mtc1`). Parked: `MVHIST_Init` (128-bit zero stores use `$zero` in the original), `SCRFuncBuddhaMissileInit2`, `setTmpBasePos` (scheduling), `ClearSortList` (both loop bounds reloaded every iteration), `GetMotKToMotP`, `SpriteMenuGetSelectMenuIdBySpriteMenuClass`, the camera-region validity helpers (an `ok` flag built with branches), `ptclDisplayListPut` (last call not a tail call; no caller/callee return-type combination reproduces it), `Sg2SlotSetVolPhase`, `iFinish` (`lui`/`addiu`/`sw 0` not folded), `isysGetGroupSrhNext`, `vab_get_veltbl`. Evidence: `build/hand11-check.log`.
 

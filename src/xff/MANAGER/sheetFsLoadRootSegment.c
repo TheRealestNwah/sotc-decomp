@@ -1,0 +1,10 @@
+extern int B_001517D0;
+extern void iosCdStStart(int);
+extern void iosCdStStop(void);
+
+void sheetFsLoadRootSegment(void (*cb)(int, int))
+{
+    iosCdStStart(B_001517D0);
+    cb(0, 0);
+    iosCdStStop();
+}
