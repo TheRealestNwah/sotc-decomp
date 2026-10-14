@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncYamoriBSetCalcPosOffset(float fparg0)
+void SCRFuncYamoriBSetCalcPosOffset(void *actor, float fparg0)
 {
-    (*(float *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41C4)) = fparg0;
+    (*(float *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41C4)) = fparg0;
 }

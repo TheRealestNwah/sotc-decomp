@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRConditionPoseidonDamageFlagSet(void)
+void SCRConditionPoseidonDamageFlagSet(void *actor)
 {
-    (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41BC)) = 1;
+    (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41BC)) = 1;
 }

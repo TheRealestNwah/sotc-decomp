@@ -1,6 +1,6 @@
-extern void **GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRGetBossPartsDamageNum(void)
+int SCRGetBossPartsDamageNum(void *actor)
 {
-    return (*(int *)((char *)(*GetSCRCharaAIWorkPtr()) + 0x54));
+    return (*(int *)((char *)(*((void **)GetSCRCharaAIWorkPtr(actor))) + 0x54));
 }

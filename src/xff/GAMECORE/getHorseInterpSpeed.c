@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-float getHorseInterpSpeed(void)
+float getHorseInterpSpeed(void *actor)
 {
-    return (*(float *)((char *)(GetSCRCharaAIWorkPtr()) + 0x3E10));
+    return (*(float *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x3E10));
 }

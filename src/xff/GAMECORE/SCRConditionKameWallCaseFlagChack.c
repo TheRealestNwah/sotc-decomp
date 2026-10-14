@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRConditionKameWallCaseFlagChack(void)
+int SCRConditionKameWallCaseFlagChack(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41D4));
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41D4));
 }

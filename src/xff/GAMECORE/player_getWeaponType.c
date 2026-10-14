@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int player_getWeaponType(void)
+int player_getWeaponType(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x70));
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x70));
 }

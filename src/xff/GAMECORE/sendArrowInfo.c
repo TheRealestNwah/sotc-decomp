@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int sendArrowInfo(void)
+int sendArrowInfo(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x20));
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x20));
 }

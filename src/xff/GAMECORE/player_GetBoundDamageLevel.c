@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-float player_GetBoundDamageLevel(void)
+float player_GetBoundDamageLevel(void *actor)
 {
-    return (*(float *)((char *)((*(void **)((char *)(GetSCRCharaAIWorkPtr()) + 0x184))) + 0x54));
+    return (*(float *)((char *)((*(void **)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x184))) + 0x54));
 }

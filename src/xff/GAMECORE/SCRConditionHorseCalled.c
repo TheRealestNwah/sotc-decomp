@@ -1,7 +1,7 @@
 extern char *getSCRDataCtrlWork();
-extern int IsHorseCalled_withFlgOff();
+extern int IsHorseCalled_withFlgOff(void *);
 
 int SCRConditionHorseCalled(void)
 {
-    return IsHorseCalled_withFlgOff(*(int *)(getSCRDataCtrlWork() + 0x4078));
+    return IsHorseCalled_withFlgOff(*(void **)(getSCRDataCtrlWork() + 0x4078));
 }

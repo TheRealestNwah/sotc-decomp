@@ -1,11 +1,11 @@
-extern void *SCRGetBossWork();
+extern void *SCRGetBossWork(void *);
 
-int SCRConditionOverMyselfLife(float fparg0)
+int SCRConditionOverMyselfLife(void *actor, float fparg0)
 {
     int var_v1;
     void *temp_v0;
 
-    temp_v0 = SCRGetBossWork();
+    temp_v0 = SCRGetBossWork(actor);
     var_v1 = 1;
     if (!(fparg0 <= (((*(float *)((char *)(temp_v0) + 0x44)) / (*(float *)((char *)(temp_v0) + 0x40))) * 100.0f))) {
         var_v1 = 0;

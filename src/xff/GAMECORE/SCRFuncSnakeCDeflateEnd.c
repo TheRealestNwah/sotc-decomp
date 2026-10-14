@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncSnakeCDeflateEnd(void)
+void SCRFuncSnakeCDeflateEnd(void *actor)
 {
-    (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x5A8C)) = 1;
+    (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x5A8C)) = 1;
 }

@@ -1,6 +1,6 @@
-extern int GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int getPlayerColCont2(void)
+void *getPlayerColCont2(void *actor)
 {
-    return GetSCRCharaAIWorkPtr() + 0xDD0;
+    return (char *)GetSCRCharaAIWorkPtr(actor) + 0xDD0;
 }

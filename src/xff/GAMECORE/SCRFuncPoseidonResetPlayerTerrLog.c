@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncPoseidonResetPlayerTerrLog(void)
+void SCRFuncPoseidonResetPlayerTerrLog(void *actor)
 {
-    (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41CC)) = 0;
+    (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41CC)) = 0;
 }

@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncSnakeCUpGroundInit(void)
+void SCRFuncSnakeCUpGroundInit(void *actor)
 {
-    (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x5A90)) = 1;
+    (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x5A90)) = 1;
 }

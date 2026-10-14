@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-unsigned char isWeaponTargetMarker(void)
+unsigned char isWeaponTargetMarker(void *actor)
 {
-    return (*(unsigned char *)((char *)(GetSCRCharaAIWorkPtr()) + 0x50));
+    return (*(unsigned char *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x50));
 }

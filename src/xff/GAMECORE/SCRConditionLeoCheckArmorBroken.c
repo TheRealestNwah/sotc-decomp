@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRConditionLeoCheckArmorBroken(void)
+int SCRConditionLeoCheckArmorBroken(void *actor)
 {
-    return (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41C0)) != 0;
+    return (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41C0)) != 0;
 }

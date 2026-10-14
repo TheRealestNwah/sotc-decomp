@@ -1,6 +1,6 @@
-extern int GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int getPlayerMVHIST(void)
+void *getPlayerMVHIST(void *actor)
 {
-    return GetSCRCharaAIWorkPtr() + 0xE00;
+    return (char *)GetSCRCharaAIWorkPtr(actor) + 0xE00;
 }

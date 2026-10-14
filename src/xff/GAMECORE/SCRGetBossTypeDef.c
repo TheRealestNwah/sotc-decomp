@@ -1,8 +1,8 @@
-extern int **GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-int SCRGetBossTypeDef(void)
+int SCRGetBossTypeDef(void *actor)
 {
-    int *b = *GetSCRCharaAIWorkPtr();
+    int *b = *((int **)GetSCRCharaAIWorkPtr(actor));
 
     if (b == 0) {
         return 0;

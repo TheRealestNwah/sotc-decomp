@@ -1,6 +1,6 @@
-extern void **GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void setBossAbsoluteDeath(void)
+void setBossAbsoluteDeath(void *actor)
 {
-    (*(int *)((char *)(*GetSCRCharaAIWorkPtr()) + 0x48)) = 1;
+    (*(int *)((char *)(*((void **)GetSCRCharaAIWorkPtr(actor))) + 0x48)) = 1;
 }

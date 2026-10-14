@@ -1,6 +1,6 @@
-extern void *GetSCRCharaAIWorkPtr();
+extern void *GetSCRCharaAIWorkPtr(void *);
 
-void SCRFuncMinoCAtkCountInit(void)
+void SCRFuncMinoCAtkCountInit(void *actor)
 {
-    (*(int *)((char *)(GetSCRCharaAIWorkPtr()) + 0x41E8)) = 0;
+    (*(int *)((char *)(GetSCRCharaAIWorkPtr(actor)) + 0x41E8)) = 0;
 }
