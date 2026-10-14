@@ -36,6 +36,12 @@ Issue #89 adds `GAMEUTIL_reset_position_filter`, now verified with ee-gcc 2.96 a
 
 The documentation pause checkpoint (#90 / PR #91) merged with green CI at `c00838c`; work then resumed at the user's request. The three sword draft PRs above remain parked.
 
+## Parked KERNEL display-list getters (#95)
+
+`src/xff/KERNEL/iosDlState.c` contains four drafts behind `NONMATCHING`, in original order: `iosDlGetWorkBufId`, `iosDlGetTransBufId`, `iosDlGetLayer` and `iosDlGetLayerNum`. These are not counted. The original forms the base address of the 0x30-byte `B_00065018` state before loading a field; the drafts fold the field offset into the symbol address. Struct/union declarations, static/extern storage, volatile loads, inline accessors and return-width probes did not match. Evidence is in ignored `build/dl-getters-variants.log` and `build/dl-getters-inline.log`.
+
+A permuter search for `iosDlGetLayer` uses `build/permuter/iosDlGetLayer/`, with progress in `build/dl-getters-permuter.log`. Check for an existing search before starting another. A search score is not proof; verify useful outputs with the original compiler and full matching checks.
+
 ## Resuming safely
 
 - Start from an up-to-date `main` and a clean tree. Each unfinished function gets its own issue, branch and PR.
