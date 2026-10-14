@@ -81,26 +81,35 @@ KERNEL/MANAGER/GAMECORE code, data, BSS, relocations and MANAGER VU-text match.
 The full349 process exited successfully. The one-time `build/update349.py` must
 not be rerun. No matching/permuter job from #349 remains live.
 
-The separate invented void-result contracts remain #358's scope. Codex has
-reserved #351 in branch `codex/unparent-wrapper-contract`, isolated worktree
-`.worktrees/codex-unparent-wrapper-contract`. Its one-source correction to
-`nico_UnparentObject` passes standalone matching, 105 tests and Ruff, but still
-needs full matching on the integrated #349 baseline and a separate PR. Check
-#205/#351 and local checkpoint for newer process status before taking over.
+### #351 unparent wrapper contract completed
+
+`nico_UnparentObject` now explicitly accepts its actor pointer and returns void,
+matching `ForceUnparentLayoutObj` and its existing `ResetObject` caller. Original
+assembly is a direct tail jump with no extra consumed inputs; no matching C
+caller requires the previous four guessed integers. The exported symbol remains.
+Standalone original-compiler and full loader/module code/data/BSS/relocation
+checks pass on integrated baseline `34086fd`, with the current wrapper object
+explicitly rebuilt. 105 pytest tests and Ruff pass. Evidence:
+`.worktrees/codex-unparent-wrapper-contract/build/351-standalone.log` and
+`351-full-check.log`. No count increase; no #351 job remains live.
+
+Codex has reserved #353 in `.worktrees/codex-attacked-wrapper-contract`, branch
+`codex/attacked-wrapper-contract`: one-source actor-only condition wrapper,
+standalone MATCH and 105 tests/Ruff pass; full validation/PR still pending.
+Codex also reserved #358 in `.worktrees/codex-data-control-action-results`,
+branch `codex/data-control-action-results`: three void-result action wrappers,
+validation ongoing. Both follow-ups are separate issues/PRs. Check #205, their
+issue comments and the local checkpoint before taking over either worker.
 
 ### Next independent work, in suggested order
 
-These bugs are filed; #351 is reserved by Codex as noted above. Check current claims
+Remaining bugs are filed; #353 and #358 are reserved by Codex. Check current claims
 before acting and use one issue/branch/PR per item:
 
-1. **#351:** reconcile `nico_UnparentObject` and its callers with actual
-   `void ForceUnparentLayoutObj(void *actor)`. The wrapper guesses four integer
-   inputs and a return value. Preserve any genuine script callback interface;
-   #344 is merged, so the dependency is clear.
-2. **#353:** review `SCRConditionAttacked` forwarding to the now-corrected
+1. **#353 (Codex reserved):** review `SCRConditionAttacked` forwarding to the now-corrected
    `nico_GetCharacterAttackedFlag` actor/int interface. Preserve genuine callback
    arguments; #345 is merged.
-3. **#350:** replace false one-byte bounds on address-only external objects.
+2. **#350:** replace false one-byte bounds on address-only external objects.
    Confirmed examples: `DebugIsPlayer`'s `RO_0017C110` string;
    `ForceUnparentLayoutObj`'s `IdentityQuaternion`/`ZeroPoint` vectors;
    `gcGlobalVar` references in `SCRFuncKirinFallRockMain`, `torchAttached`,
@@ -108,11 +117,11 @@ before acting and use one issue/branch/PR per item:
    where size/index semantics permit. Preserve byte arithmetic: changing
    `&gcGlobalVar` to a pointer-to-incomplete-array expression can break it.
    Do not mechanically replace true one-element vectors or objects used by sizeof.
-4. **#358, after #349 merges:** repair invented return values in
+3. **#358 (Codex reserved; #349 merged):** repair invented return values in
    `SCRFuncResetPathSystem`, `SCRFuncSetCreateTempAttain`, `SCRFuncSetGpCalcDist`.
    Actual matching helpers `resetPassageWork`, `setCreateTempAttain`,
    `setGpCalcDist` return void. Review wrappers/callers against assembly.
-5. Resume new matching candidates after these source-contract repairs. **#341**
+4. Resume new matching candidates after these source-contract repairs. **#341**
    (161-320-word native-context pass) is parked with no validated matches;
    `.worktrees/codex-engine-161-320` and its unmerged investigation branch retain
    evidence. Closest ranked draft `execObjectWithNonTaskSwitch` still differs by

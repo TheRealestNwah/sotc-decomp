@@ -1,6 +1,6 @@
-extern int ForceUnparentLayoutObj();
+extern void ForceUnparentLayoutObj(void *actor);
 
-int nico_UnparentObject(int a, int b, int c, int d)
+void nico_UnparentObject(void *actor)
 {
-    return ForceUnparentLayoutObj(a, b, c, d);
+    ForceUnparentLayoutObj(actor);
 }
