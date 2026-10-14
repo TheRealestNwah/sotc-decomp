@@ -4,10 +4,10 @@ A snapshot for whoever picks up the matching work next, human or agent (Codex, C
 
 Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/findings.md` first.
 
-## Where things stand (2026-10-13)
+## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,549 functions** come from matching C: 897 GAMECORE, 488 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,551 functions** come from matching C: 899 GAMECORE, 488 MANAGER and 164 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -28,7 +28,9 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 | `DispWithSwordBlur`, `DispWithTorchBlur` | #56 | 616 of 629 words: loop-invariant hoisting and constant sharing differ |
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
-## Current checkpoint (2026-10-13)
+## Current checkpoint (2026-10-14)
+
+Issue #133 adds both base yaw/pitch controller updates, fully verified. Forward the controller pointer to its enable predicate. Declaring the helper's three float parameters before its pointer preserves the original scheduling of f13 and a0 moves; EE register arguments remain unchanged. Evidence: `build/base-{pitch,yaw}-forward-diff.log`, `build/base-{pitch,yaw}-float-first-diff.log` and `build/base-controller-final-check.log`; 97 tests and Ruff pass. Issue #134 is the next ADPCM pitch/volume near-match item.
 
 Issue #130 adds `SCRFuncYamoriBSetRandomRadius2`, fully verified. Volatile views preserve the original flag-store order at +0x41D4 then +0x41D0; these views are matching aids, not proof of the original field qualifiers. The saved float allocation already matched. Both radius setters now explicitly forward the actor pointer to the AI-work getter, with the existing setter retaining its bytes. Evidence: `build/yamori-radius2-actor-diff.log`, `build/yamori-radius2-volatile-diff.log` and `build/yamori-radius2-final-check.log`; 97 tests and Ruff pass.
 
