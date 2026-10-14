@@ -78,6 +78,14 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
 
 Running the compilers: the Linux builds are 32-bit, so they run under WSL with a private 32-bit libc, unpacked from Ubuntu's `libc6:i386` package into `~/i386libs` (no `sudo` needed). They must run from WSL's own filesystem, because old 32-bit programs can't read files on Windows-mounted drives ("Value too large for defined data type").
 
+### Native EE declarations in m2c context (#331)
+
+Compile-time assertions with the original ee-gcc 2.96 confirm `sizeof(long) == 8`, `sizeof(long long) == 8`, `sizeof(int) == 4` and `sizeof(void *) == 4`. m2c currently treats a single integer `long` as 4 bytes even with the `mipsee-gcc-c` target. Passing native declarations through ordinary `--context` can therefore truncate the inferred inputs and results. This was reproduced with the 64-bit mask and return of `nico_GetCharacterAttackedGPAttr`.
+
+`python tools/m2c.py FUNCTION --ee-context types.c --valid-syntax` adapts native EE declarations into temporary m2c context: integer `long` becomes `long long`; existing `long long`, `long double`, comments and literals stay unchanged. The input file and external decompiler are never edited. Use self-contained declarations without `#include` or macros; preprocessor directives are rejected because their expansion could change the types. Repeat the option for multiple files. Ordinary `--context` files pass through unchanged and are loaded before the adapted files, so place dependencies accordingly.
+
+The adapted real-function draft retains 64-bit inputs/results (`s64`), while the same native declarations under ordinary `--context` produce `s32`. This verifies the width correction, not the rest of a draft: missing callee prototypes, pointer scaling and buffer sizes still need review. Compiler-facing source should use reviewed native declarations and must pass the original compiler and complete matching checks. Existing matching C and compiler flags are unchanged.
+
 ## Compiler fingerprint (loader ELF, earlier static analysis)
 
 **GCC-based, not Metrowerks: high confidence (about 90%).**

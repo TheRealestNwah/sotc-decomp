@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from tools.m2c import clean, extract, reloc_names
+from tools.m2c import clean, ee_context, extract, reloc_names
 
 LINES = [
     "glabel f # 1",
@@ -162,3 +162,86 @@ def test_clean_keeps_extracted_local_jump_alias_in_mnemonic_comment():
         "    /* 000100 00000100 10000008 */ .word 0x08000010 /* j .Lm2c.func_00000040 */",
     ]
     assert clean(lines, {".text": 0})[0].endswith("j .Lm2c.func_00000040")
+
+
+def test_ee_context_preserves_native_integer_widths_in_declarations():
+    source = (
+        "typedef unsigned long Mask;\n"
+        "struct Work { long value; int index; long long wide; long double real; };\n"
+        "extern long query(void *, unsigned long int, const long *);\n"
+        "extern double long real_value;\n"
+    )
+    assert ee_context(source) == (
+        "typedef unsigned long long Mask;\n"
+        "struct Work { long long value; int index; long long wide; long double real; };\n"
+        "extern long long query(void *, unsigned long long int, const long long *);\n"
+        "extern double long real_value;\n"
+    )
+
+
+def test_ee_context_keeps_comments_literals_and_already_wide_types():
+    source = (
+        '/* long #include */ char *label = "long \\" long #";\n'
+        "// unsigned long\n"
+        "char c = '#'; long /* long */ signed int value;\n"
+        "unsigned long /* gap */ long wide;\n"
+        "long const double real; int longitude;\n"
+    )
+    expected = source.replace("long /* long */ signed", "long long /* long */ signed")
+    assert ee_context(source) == expected
+    assert ee_context(expected) == expected
+
+
+@pytest.mark.parametrize("directive", ['#include "types.h"', "#define Wide long"])
+def test_ee_context_rejects_unexpanded_preprocessor_directives(directive):
+    with pytest.raises(ValueError, match="self-contained"):
+        ee_context(directive + "\nlong value;\n")
+
+
+def test_main_converts_ee_context_temporarily_and_preserves_plain_context(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from tools import m2c
+
+    text = tmp_path / "asm/xff/GAMECORE/text.s"
+    text.parent.mkdir(parents=True)
+    text.write_text("glabel f\n    jr $ra\n    nop\nendlabel f\n")
+    native = tmp_path / "native types.c"
+    native.write_text("extern long query(unsigned long);\n")
+    second = tmp_path / "extra.c"
+    second.write_text("extern long extra;\n")
+    plain = tmp_path / "plain.c"
+    plain.write_text("typedef int Plain;\n")
+    monkeypatch.setattr(m2c, "ROOT", tmp_path)
+    monkeypatch.setattr(m2c, "section_bases", lambda module: {})
+    converted_paths = []
+
+    def run(command):
+        contexts = [command[i + 1] for i, token in enumerate(command) if token == "--context"]
+        assert contexts[0] == str(plain)
+        converted_paths.extend(m2c.Path(path) for path in contexts[1:])
+        assert converted_paths[0].read_text() == "extern long long query(unsigned long long);\n"
+        assert converted_paths[1].read_text() == "extern long long extra;\n"
+        assert len(set(converted_paths)) == 2
+        assert "--valid-syntax" in command
+        return SimpleNamespace(returncode=7)
+
+    monkeypatch.setattr(m2c.subprocess, "run", run)
+    assert (
+        m2c.main(
+            [
+                "f",
+                "--context",
+                str(plain),
+                "--ee-context",
+                str(native),
+                "--ee-context",
+                str(second),
+                "--valid-syntax",
+            ]
+        )
+        == 7
+    )
+    assert native.read_text() == "extern long query(unsigned long);\n"
+    assert second.read_text() == "extern long extra;\n"
+    assert not any(path.exists() for path in converted_paths)
