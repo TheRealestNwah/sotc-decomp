@@ -1,6 +1,6 @@
-extern void *GetCharacterClass();
+extern void *GetCharacterClass(void *);
 
-int AI_GetCurMotionKind(void)
+int AI_GetCurMotionKind(void *actor)
 {
-    return (*(int *)((char *)(GetCharacterClass()) + 0x1C0));
+    return (*(int *)((char *)(GetCharacterClass(actor)) + 0x1C0));
 }

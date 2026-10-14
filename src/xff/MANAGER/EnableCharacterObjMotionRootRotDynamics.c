@@ -1,11 +1,11 @@
-extern void *GetCharacterClass();
+extern void *GetCharacterClass(void *);
 
-void EnableCharacterObjMotionRootRotDynamics(void)
+void EnableCharacterObjMotionRootRotDynamics(void *actor)
 {
     void *temp_a1;
     void *temp_v0;
 
-    temp_v0 = GetCharacterClass();
+    temp_v0 = GetCharacterClass(actor);
     temp_a1 = (*(void **)((char *)(temp_v0) + 0x19C));
     (*(unsigned char *)((char *)(temp_v0) + 0x529)) = (unsigned char) (*(unsigned char *)((char *)(temp_v0) + 0xA26));
     (*(long *)((char *)(temp_a1) + 0x40)) = (long) (*(long *)((char *)(temp_v0) + 0xA30));

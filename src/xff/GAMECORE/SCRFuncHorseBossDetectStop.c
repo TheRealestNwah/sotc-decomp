@@ -1,4 +1,4 @@
-extern void *GetCharacterClass();
+extern void *GetCharacterClass(void *);
 extern void *GetLayoutClass(int);
 extern int getSCRDataCtrlWork(int);
 extern void setAttainmentPos(int, int);
@@ -8,7 +8,7 @@ void SCRFuncHorseBossDetectStop(int arg0)
     int temp_s0;
     void *temp_v0;
 
-    temp_v0 = GetCharacterClass();
+    temp_v0 = GetCharacterClass((void *)arg0);
     if ((*(int *)((char *)(temp_v0) + 0xFF0)) == 0) {
         return;
     }

@@ -1,14 +1,14 @@
 extern void ExchangeGeometryPointerCollisionEdgeOtherSideInfo(void *, void *);
-extern void *GetCharacterClass();
+extern void *GetCharacterClass(void *);
 extern void motrootdyn_setupedgepoint(void *);
 
-void charrootdyn_exchangeEdgePointOtherSideSurface(void)
+void charrootdyn_exchangeEdgePointOtherSideSurface(void *actor)
 {
     int var_v1;
     void *temp_a0;
     void *temp_v0;
 
-    temp_v0 = GetCharacterClass();
+    temp_v0 = GetCharacterClass(actor);
     var_v1 = 0;
     temp_a0 = temp_v0 + 0xC0;
     if ((*(int *)((char *)(temp_v0) + 0x124)) != 0) {
