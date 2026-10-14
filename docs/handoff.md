@@ -12,8 +12,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - **Parked near-misses**, free to claim (drafts in the gitignored `build/cand/`):
   - `addPlayerO2` (GAMECORE), 8 words: float register choice in the 0..100 clamp. Draft `build/cand/b4/o2-p.c`.
   - `SCRFuncBuddhaMissileInit2` (GAMECORE), 6 words: the `RO_0017D130` load must be scheduled before the stores. Draft `build/cand/b4/buddha-p.c`.
-  - `setAttainmentObjAndOffset` (GAMECORE), 8 words: the 128-bit offset copy is scheduled after the scalar stores in the original. Draft `build/cand/b6/setAttainmentObjAndOffset.c`.
-  - `glReset`, `motrootdyn_startchainhang`, `graphFsEffectReset`, `SetInitFogColClassFromStageData`, `GetLayoutClassCollisionBoundaryInfo` (MANAGER): see the #236/#239/#243 checkpoint note below.
+  - `glReset`, `motrootdyn_startchainhang`, `graphFsEffectReset` (MANAGER): see the #236/#239/#243 checkpoint note below.
 - **Next candidates:** `build/cand/remaining-ranked.txt` ranks the earlier batch drafts that compiled but differed, fewest differing words first (built by `build/cand/rank_remaining.py`). Skip any name that has a file in `src/xff/` or an open claim. `build/cand/literal-retry/` holds versions with float literals already fixed for truncation (see #177).
 - **Local helpers** (gitignored, in `build/cand/`): `permlines.py FILE MODULE` tries every order of lines tagged `/*P*/`; `merge_queue.sh PR...` updates, waits for CI and merges PRs one at a time (main requires branches to be up to date); `literal_retry.py` rewrites float literals and retests.
 - **Permuter on sword.c:** `tools/permute.py setup` keeps only the target's own NONMATCHING block, which drops helpers the sword callbacks depend on. Unwrap all blocks into a copy first (see the #53 comment).
@@ -28,12 +27,12 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - **128-bit loads not hoisted out of a loop:** wrap the `s128` in a one-member struct (#174).
 - **Branch layout of small range checks:** explicit shared return labels (`goto ok; ... ok: return 1; ng: return 0;`), found by Codex (#209).
 - **Clamped values:** clamp into a new local with a ternary (`float t = (dt < MIN) ? MIN : dt;`), not in place (#224).
-- **Load/store order kept strictly sequential:** a `volatile` view sometimes reproduces it (`iosDlGetTransBufId`, Codex's `add_element_expression_change`).
+- **Load/store order kept strictly sequential:** first try alias-set unions (vector union copied through `.q`; float/int word unions; see #261). A `volatile` view sometimes also reproduces it (`iosDlGetTransBufId`, Codex's `add_element_expression_change`).
 
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,624 functions** come from matching C: 937 GAMECORE, 520 MANAGER and 167 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,632 functions** come from matching C: 942 GAMECORE, 523 MANAGER and 167 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -55,6 +54,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issues #258 and #261, plus Codex's #250 (PR #255): `constructor_mode_common_camera_data`, `testGetCamPos`, `InitLightObj`, `SetInitFogColClassFromStageData`, `GetLayoutClassCollisionBoundaryInfo`, `setAttainmentObjAndOffset`, `setReductionCosUserPathWork` and `setSearchRouteMaxAngle` match. **New technique (alias sets):** when the original keeps loads and stores strictly in source order but gcc hoists loads past stores, the accesses need overlapping alias sets. For 128-bit copies use `typedef union { s128 q; float f[4]; int i[4]; } Vec4;` and copy through `.q` (a whole-union copy becomes `ld`/`sd` pairs). For mixed float/int source data, read through `union { float f; int i; }` words. This recovered three previously parked functions. `testGetCamPos` stores the result in each branch rather than through a shared temporary. Evidence: `build/near-miss-batch12-final-check.log` (942 GAMECORE, 523 MANAGER); 97 tests and Ruff pass.
 
 Issues #253 and #254, plus Codex's #235 (PR #242) and #238 (PR #244): `GAMEUTIL_get_camera_target_look_at_position`, `SCRConditionLessHorseSpeed`, `set_npe_blend_ratio_particle_emitter`, `GetAmbientBrightnessOfLayoutObject`, `IsForwardTime__DemoMan` and `constructor_camera_pause_rise` match. Mostly first-try typed rewrites with corrected prototypes: `GetLayoutClass` takes one argument, `set_npe_blend_ratio_particle_emitter` takes an unused first argument (id in a1) and returns 0/1, and the ambient-brightness flag tests are nested ifs. Codex PRs #246 and #249 were closed as duplicates of #247. Evidence: `build/near-miss-batch11-final-check.log` (937 GAMECORE, 520 MANAGER); 97 tests and Ruff pass.
 
