@@ -20,7 +20,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ### Techniques that closed these gaps
 
 - **Store order:** gcc 2.96 often emits the *last* store of a straight-line run first, so rotating the source order by one is a quick first try; otherwise use `permlines.py`.
-- **Float literals:** ee-gcc 2.96 truncates decimal float literals, so m2c's exact-value literals come out one ULP low. Write a decimal at or just above the wanted float (#177).
+- **Float literals:** m2c's long exact-value literals often come out one ULP low with ee-gcc 2.96. Use the shortest decimal that round-trips to the wanted bits (`safe()` in `build/cand/literal_retry.py`; #177, corrected in #275).
 - **Offset folded into the base address:** use a typed struct view of the global (`gl->s` with `GlState *gl = &D_00130480`) instead of byte-offset casts.
 - **Counted loops that compare with -1:** write `while (n--)`.
 - **Float zero via `mtc1` instead of `sw $zero`:** chain the assignments (`a = b = 0.0f`); mixed int chains work too (`mouseClearStatus`).
@@ -32,7 +32,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,649 functions** come from matching C: 952 GAMECORE, 530 MANAGER and 167 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,654 functions** come from matching C: 954 GAMECORE, 531 MANAGER and 169 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -54,6 +54,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #275, plus Codex's #245 (PR #276): `iosGetACosfExact`, `iosGetASinfExact`, `adjustAnglePI`, `endingflowSetTimePlayerHpMax` and `glColor4f` match. The KERNEL and angle helpers are plain early returns or else-ifs once the float literals are right. `endingflowSetTimePlayerHpMax` needs the max HP in a local before the subtraction; otherwise gcc keeps the global's address in a saved register across the calls. **Correction to the #177 literal note:** the conversion isn't strictly truncation (`3.1415927f` gives 0x40490FDB, not FDA). The reliable rule is the shortest decimal that round-trips to the wanted float, which `safe()` in `build/cand/literal_retry.py` computes (e.g. `3.1415926e+00f` for 0x40490FDA, `6.2831851e+00f` for 0x40C90FDA, `1.5707963f` for 0x3FC90FDA). Evidence: `build/near-miss-batch16-final-check.log` (954 GAMECORE, 531 MANAGER, 169 KERNEL); 97 tests and Ruff pass.
 
 Issues #272 and #273, plus Codex's #266 (PR #270): `AI_UpdateVelocity`, `CAM_is_reach_aim_pitch`, `SCRSetCrackAnimTimer`, `GAMEUTIL_doit_status_manager`, `ScriptAnimationObjOfJudgeVolumeObject`, `GAMEUTIL_get_move_limit_position`, `adpcmCloseFadeReq` and `CAM_reset_camera_warp_cntrl` match. Prototype fixes did most of the work: `CAM_is_reach_aim_pitch` has an unused float parameter (f13), and `SetJudgeVolumeInfo` takes three vector pointers in t0–t2 before its floats. `adpcmCloseFadeReq` needs a long/int union on the flags word so the two flag ORs stay separate around the `*done` store. `GAMEUTIL_doit_status_manager` needs `prev == state` (not `!=`) for the original branch polarity. Parked: `SCRGetBossPartsDamage` (the original strength-reduces the damage-table offset `(i + 4) * 8` into its own register). Evidence: `build/near-miss-batch15-final-check.log` (952 GAMECORE, 530 MANAGER); 97 tests and Ruff pass.
 
