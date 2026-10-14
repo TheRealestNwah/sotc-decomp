@@ -1,11 +1,11 @@
-extern void *GetScriptLayoutClass();
+extern void *GetScriptLayoutClass(void *);
 
-int ForwardTime__DemoMan(float fparg0)
+int ForwardTime__DemoMan(void *actor, float fparg0)
 {
     float temp_f1;
     void *temp_v1;
 
-    temp_v1 = (*(void **)((char *)(GetScriptLayoutClass()) + 0x2D8));
+    temp_v1 = (*(void **)((char *)(GetScriptLayoutClass(actor)) + 0x2D8));
     temp_f1 = fparg0 - (*(float *)((char *)(temp_v1) + 0x34));
     (*(float *)((char *)(temp_v1) + 0x38)) = fparg0;
     (*(float *)((char *)(temp_v1) + 0x34)) = fparg0;
