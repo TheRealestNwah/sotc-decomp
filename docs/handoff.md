@@ -33,7 +33,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **1,618 functions** come from matching C: 933 GAMECORE, 518 MANAGER and 167 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **1,624 functions** come from matching C: 937 GAMECORE, 520 MANAGER and 167 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -55,6 +55,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issues #253 and #254, plus Codex's #235 (PR #242) and #238 (PR #244): `GAMEUTIL_get_camera_target_look_at_position`, `SCRConditionLessHorseSpeed`, `set_npe_blend_ratio_particle_emitter`, `GetAmbientBrightnessOfLayoutObject`, `IsForwardTime__DemoMan` and `constructor_camera_pause_rise` match. Mostly first-try typed rewrites with corrected prototypes: `GetLayoutClass` takes one argument, `set_npe_blend_ratio_particle_emitter` takes an unused first argument (id in a1) and returns 0/1, and the ambient-brightness flag tests are nested ifs. Codex PRs #246 and #249 were closed as duplicates of #247. Evidence: `build/near-miss-batch11-final-check.log` (937 GAMECORE, 520 MANAGER); 97 tests and Ruff pass.
 
 Issue #248: `iosDlGetTransBufId` matches with a typed volatile view of `B_00065018`, split out of draft PR #96. Evidence: `build/kernel-transbuf-final-check.log` (167 KERNEL).
 
