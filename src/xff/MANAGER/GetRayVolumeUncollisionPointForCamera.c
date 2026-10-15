@@ -1,4 +1,4 @@
-extern char objfilter[];
+extern int objfilter(int a, int b);
 extern int func_000A80F0();
 extern int GetRayVolumeUncollisionPoint(int, int, int, int, int, void *, int, int, void *, int);
 

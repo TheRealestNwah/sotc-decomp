@@ -5,8 +5,8 @@ extern void kbInit();
 extern void mouseGetStatus(void *);
 extern void mouseInit();
 extern unsigned char B_0014DC10[];
-extern unsigned char func_000D0628[1];
-extern unsigned char func_000D0680[1];
+extern int func_000D0628(void *status);
+extern int func_000D0680(void *status);
 
 void usbdevInit(void)
 {
