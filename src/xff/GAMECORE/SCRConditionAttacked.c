@@ -1,6 +1,6 @@
-extern int nico_GetCharacterAttackedFlag();
+extern int nico_GetCharacterAttackedFlag(void *actor);
 
-int SCRConditionAttacked(int a, int b, int c, int d)
+int SCRConditionAttacked(void *actor)
 {
-    return nico_GetCharacterAttackedFlag(a, b, c, d);
+    return nico_GetCharacterAttackedFlag(actor);
 }
