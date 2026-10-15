@@ -1,6 +1,6 @@
-extern unsigned char D_00179E90[1];
+extern unsigned char D_00179E90[];
 
 void *getCullingScreenSize(void)
 {
-    return &D_00179E90;
+    return D_00179E90;
 }

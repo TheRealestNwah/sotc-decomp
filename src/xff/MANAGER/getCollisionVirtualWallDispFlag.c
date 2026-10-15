@@ -1,6 +1,6 @@
-extern unsigned char D_00136EFC[1];
+extern unsigned char D_00136EFC[];
 
 void *getCollisionVirtualWallDispFlag(void)
 {
-    return &D_00136EFC;
+    return D_00136EFC;
 }

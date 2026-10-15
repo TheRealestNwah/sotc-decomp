@@ -1,6 +1,6 @@
-extern unsigned char D_001359F8[1];
+extern unsigned char D_001359F8[];
 
 void *getFontBoard(void)
 {
-    return &D_001359F8;
+    return D_001359F8;
 }

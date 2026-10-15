@@ -1,6 +1,6 @@
-extern unsigned char B_00147384[1];
+extern unsigned char B_00147384[];
 
 void *getFogRate(void)
 {
-    return &B_00147384;
+    return B_00147384;
 }

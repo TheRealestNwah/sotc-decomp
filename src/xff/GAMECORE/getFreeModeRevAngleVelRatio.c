@@ -1,6 +1,6 @@
-extern unsigned char D_00179AE4[1];
+extern unsigned char D_00179AE4[];
 
 void *getFreeModeRevAngleVelRatio(void)
 {
-    return &D_00179AE4;
+    return D_00179AE4;
 }

@@ -1,6 +1,6 @@
-extern unsigned char D_00139F0C[1];
+extern unsigned char D_00139F0C[];
 
 void *getSheetDebugNoLoadMode(void)
 {
-    return &D_00139F0C;
+    return D_00139F0C;
 }

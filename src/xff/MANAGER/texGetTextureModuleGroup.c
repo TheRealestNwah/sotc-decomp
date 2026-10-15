@@ -1,6 +1,6 @@
-extern unsigned char B_00148A00[1];
+extern unsigned char B_00148A00[];
 
 void *texGetTextureModuleGroup(void)
 {
-    return &B_00148A00;
+    return B_00148A00;
 }

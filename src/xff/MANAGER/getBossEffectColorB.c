@@ -1,6 +1,6 @@
-extern unsigned char D_001303A8[1];
+extern unsigned char D_001303A8[];
 
 void *getBossEffectColorB(void)
 {
-    return &D_001303A8;
+    return D_001303A8;
 }

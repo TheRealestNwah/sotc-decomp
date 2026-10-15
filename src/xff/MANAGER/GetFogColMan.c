@@ -1,6 +1,6 @@
-extern unsigned char B_00148A40[1];
+extern unsigned char B_00148A40[];
 
 void *GetFogColMan(void)
 {
-    return &B_00148A40;
+    return B_00148A40;
 }

@@ -1,6 +1,6 @@
-extern unsigned char D_00136140[1];
+extern unsigned char D_00136140[];
 
 void *getRefractBrightness(void)
 {
-    return &D_00136140;
+    return D_00136140;
 }

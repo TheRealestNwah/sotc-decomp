@@ -1,6 +1,6 @@
-extern unsigned char D_00136560[1];
+extern unsigned char D_00136560[];
 
 void *getZFogWidth(void)
 {
-    return &D_00136560;
+    return D_00136560;
 }

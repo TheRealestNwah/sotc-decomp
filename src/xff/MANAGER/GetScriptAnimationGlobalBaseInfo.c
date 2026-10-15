@@ -1,6 +1,6 @@
-extern unsigned char info[1];
+extern unsigned char info[];
 
 void *GetScriptAnimationGlobalBaseInfo(void)
 {
-    return &info;
+    return info;
 }

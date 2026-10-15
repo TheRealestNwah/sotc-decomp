@@ -1,6 +1,6 @@
-extern unsigned char D_00179914[1];
+extern unsigned char D_00179914[];
 
 void *getSnapShotRotation(void)
 {
-    return &D_00179914;
+    return D_00179914;
 }

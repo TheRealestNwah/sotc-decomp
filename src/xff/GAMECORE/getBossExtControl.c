@@ -1,6 +1,6 @@
-extern unsigned char D_0017A920[1];
+extern unsigned char D_0017A920[];
 
 void *getBossExtControl(void)
 {
-    return &D_0017A920;
+    return D_0017A920;
 }

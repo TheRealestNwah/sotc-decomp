@@ -1,6 +1,6 @@
-extern unsigned char D_00136180[1];
+extern unsigned char D_00136180[];
 
 void *getSolarFlareSw(void)
 {
-    return &D_00136180;
+    return D_00136180;
 }

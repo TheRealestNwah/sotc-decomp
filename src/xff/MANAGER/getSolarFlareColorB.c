@@ -1,6 +1,6 @@
-extern unsigned char D_001361A0[1];
+extern unsigned char D_001361A0[];
 
 void *getSolarFlareColorB(void)
 {
-    return &D_001361A0;
+    return D_001361A0;
 }

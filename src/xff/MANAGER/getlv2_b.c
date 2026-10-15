@@ -1,6 +1,6 @@
-extern unsigned char D_00135B88[1];
+extern unsigned char D_00135B88[];
 
 void *getlv2_b(void)
 {
-    return &D_00135B88;
+    return D_00135B88;
 }

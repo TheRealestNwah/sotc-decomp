@@ -1,7 +1,7 @@
 extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_0007DBA0[1];
+extern unsigned char D_0007DBA0[];
 
 void SCRWeaponSword(void *character)
 {
-    RequestCharacterMotionShiftFunc(character, &D_0007DBA0);
+    RequestCharacterMotionShiftFunc(character, D_0007DBA0);
 }

@@ -1,6 +1,6 @@
-extern unsigned char B_00148708[1];
+extern unsigned char B_00148708[];
 
 void *getlc2_b(void)
 {
-    return &B_00148708;
+    return B_00148708;
 }

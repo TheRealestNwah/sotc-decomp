@@ -1,6 +1,6 @@
-extern unsigned char B_001884D0[1];
+extern unsigned char B_001884D0[];
 
 void *gStatGetOmakeStatAdrs(void)
 {
-    return &B_001884D0;
+    return B_001884D0;
 }

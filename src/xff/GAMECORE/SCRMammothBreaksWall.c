@@ -1,7 +1,7 @@
 extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_000361D0[1];
+extern unsigned char D_000361D0[];
 
 void SCRMammothBreaksWall(void *character)
 {
-    RequestCharacterMotionShiftFunc(character, &D_000361D0);
+    RequestCharacterMotionShiftFunc(character, D_000361D0);
 }

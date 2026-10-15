@@ -1,6 +1,6 @@
-extern unsigned char motdebugprint[1];
+extern unsigned char motdebugprint[];
 
 void *getMotionDebugPrintMode(void)
 {
-    return &motdebugprint;
+    return motdebugprint;
 }

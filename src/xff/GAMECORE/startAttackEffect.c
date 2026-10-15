@@ -7,7 +7,7 @@ typedef struct {
 } AttackEffect;
 
 extern AttackEffect B_0019CD28;
-extern unsigned char gcGlobalVar[1];
+extern unsigned char gcGlobalVar[];
 
 void startAttackEffect(float power)
 {

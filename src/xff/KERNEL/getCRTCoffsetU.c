@@ -1,6 +1,6 @@
-extern unsigned char D_00040B98[1];
+extern unsigned char D_00040B98[];
 
 void *getCRTCoffsetU(void)
 {
-    return &D_00040B98;
+    return D_00040B98;
 }

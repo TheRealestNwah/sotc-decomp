@@ -1,6 +1,6 @@
-extern unsigned char D_0017990C[1];
+extern unsigned char D_0017990C[];
 
 void *getSnapShotFormat(void)
 {
-    return &D_0017990C;
+    return D_0017990C;
 }

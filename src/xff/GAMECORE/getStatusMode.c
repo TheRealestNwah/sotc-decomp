@@ -1,6 +1,6 @@
-extern unsigned char D_001798B8[1];
+extern unsigned char D_001798B8[];
 
 void *getStatusMode(void)
 {
-    return &D_001798B8;
+    return D_001798B8;
 }

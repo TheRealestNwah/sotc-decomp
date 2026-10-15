@@ -1,6 +1,6 @@
-extern unsigned char D_0017991C[1];
+extern unsigned char D_0017991C[];
 
 void *getDebugSnapShotSizeX(void)
 {
-    return &D_0017991C;
+    return D_0017991C;
 }

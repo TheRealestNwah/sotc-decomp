@@ -1,6 +1,6 @@
-extern unsigned char D_00130390[1];
+extern unsigned char D_00130390[];
 
 void *getBossEffectBlurLevel(void)
 {
-    return &D_00130390;
+    return D_00130390;
 }

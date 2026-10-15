@@ -1,6 +1,6 @@
-extern unsigned char D_00135B50[1];
+extern unsigned char D_00135B50[];
 
 void *getSpecularity(void)
 {
-    return &D_00135B50;
+    return D_00135B50;
 }

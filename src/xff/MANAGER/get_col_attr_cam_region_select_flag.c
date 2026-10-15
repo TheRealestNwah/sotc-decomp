@@ -1,6 +1,6 @@
-extern unsigned char D_00139F4C[1];
+extern unsigned char D_00139F4C[];
 
 void *get_col_attr_cam_region_select_flag(void)
 {
-    return &D_00139F4C;
+    return D_00139F4C;
 }

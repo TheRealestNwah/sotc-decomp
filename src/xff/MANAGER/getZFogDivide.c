@@ -1,6 +1,6 @@
-extern unsigned char D_0013655C[1];
+extern unsigned char D_0013655C[];
 
 void *getZFogDivide(void)
 {
-    return &D_0013655C;
+    return D_0013655C;
 }

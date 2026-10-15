@@ -1,6 +1,6 @@
-extern unsigned char D_00135B64[1];
+extern unsigned char D_00135B64[];
 
 void *getlv0_p(void)
 {
-    return &D_00135B64;
+    return D_00135B64;
 }

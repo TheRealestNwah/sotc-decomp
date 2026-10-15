@@ -1,6 +1,6 @@
-extern unsigned char D_0017ABA4[1];
+extern unsigned char D_0017ABA4[];
 
 void *getWeakGlowSpeed(void)
 {
-    return &D_0017ABA4;
+    return D_0017ABA4;
 }

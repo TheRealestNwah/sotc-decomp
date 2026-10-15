@@ -1,6 +1,6 @@
-extern unsigned char B_00148714[1];
+extern unsigned char B_00148714[];
 
 void *getamb_g(void)
 {
-    return &B_00148714;
+    return B_00148714;
 }

@@ -1,6 +1,6 @@
-extern unsigned char D_001798DC[1];
+extern unsigned char D_001798DC[];
 
 void *getGripCalcCancelMode(void)
 {
-    return &D_001798DC;
+    return D_001798DC;
 }

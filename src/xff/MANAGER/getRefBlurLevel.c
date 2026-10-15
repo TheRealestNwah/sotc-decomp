@@ -1,6 +1,6 @@
-extern unsigned char D_001360F0[1];
+extern unsigned char D_001360F0[];
 
 void *getRefBlurLevel(void)
 {
-    return &D_001360F0;
+    return D_001360F0;
 }

@@ -1,6 +1,6 @@
-extern unsigned char D_00136BF4[1];
+extern unsigned char D_00136BF4[];
 
 void *motionBlurTestType(void)
 {
-    return &D_00136BF4;
+    return D_00136BF4;
 }

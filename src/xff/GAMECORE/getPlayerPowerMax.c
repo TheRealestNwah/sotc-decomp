@@ -1,6 +1,6 @@
-extern unsigned char D_001798D8[1];
+extern unsigned char D_001798D8[];
 
 void *getPlayerPowerMax(void)
 {
-    return &D_001798D8;
+    return D_001798D8;
 }

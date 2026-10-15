@@ -1,6 +1,6 @@
-extern unsigned char D_0017A9A0[1];
+extern unsigned char D_0017A9A0[];
 
 void *getBosstatusDispMode(void)
 {
-    return &D_0017A9A0;
+    return D_0017A9A0;
 }

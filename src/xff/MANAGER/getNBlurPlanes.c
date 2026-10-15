@@ -1,6 +1,6 @@
-extern unsigned char D_00130450[1];
+extern unsigned char D_00130450[];
 
 void *getNBlurPlanes(void)
 {
-    return &D_00130450;
+    return D_00130450;
 }

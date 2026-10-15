@@ -1,6 +1,6 @@
-extern unsigned char D_00130460[1];
+extern unsigned char D_00130460[];
 
 void *getBlurMinThreshold(void)
 {
-    return &D_00130460;
+    return D_00130460;
 }

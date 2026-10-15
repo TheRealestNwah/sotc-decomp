@@ -1,6 +1,6 @@
-extern unsigned char D_00135834[1];
+extern unsigned char D_00135834[];
 
 void *getBrightness(void)
 {
-    return &D_00135834;
+    return D_00135834;
 }
