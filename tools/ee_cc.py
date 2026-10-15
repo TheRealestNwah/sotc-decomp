@@ -15,7 +15,12 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from tools.try_compilers import DEFAULT_COMPILERS, assemble, compile_c, find_package_as  # noqa: E402
+from tools.try_compilers import (  # noqa: E402
+    DEFAULT_COMPILERS,
+    assemble,
+    compile_c,
+    find_package_as,
+)
 
 COMPILER = os.environ.get("SOTC_COMPILER", "ee-gcc2.96")
 CFLAGS = ["-O2", "-G0"]
