@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char func_0006AA40[1];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void func_0006AA40(void *character);
 
 void SCRCanossaWallBreakEnd(void *character)
 {

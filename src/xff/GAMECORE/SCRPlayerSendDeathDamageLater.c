@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_0007D900[];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void D_0007D900(void *character);
 
 void SCRPlayerSendDeathDamageLater(void *character)
 {

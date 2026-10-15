@@ -4,7 +4,7 @@ extern int D_0017AEA8;
 extern int D_0017AEAC;
 extern int D_0017AEC0;
 extern int D_0017AEC4;
-extern unsigned char func_00081800[1];
+extern int func_00081800(float *pos, int param, float *prev);
 
 void nico_setPlayerDemoAdditionClothCollisionRightHandY(int arg0)
 {

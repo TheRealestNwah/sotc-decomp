@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char T_0007A038[1];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void T_0007A038(void *character);
 
 void SCRPlayerSowrdHitSoundMiddle(void *character)
 {

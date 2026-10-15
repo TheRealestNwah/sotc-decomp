@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_00035468[];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void D_00035468(void *character);
 
 void SCRBirdStartFlap(void *character)
 {

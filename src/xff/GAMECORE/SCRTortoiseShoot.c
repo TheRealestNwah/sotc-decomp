@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_000CB500[];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void D_000CB500(void *character);
 
 void SCRTortoiseShoot(void *character)
 {

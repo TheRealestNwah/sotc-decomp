@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_0007D5E8[];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void D_0007D5E8(void *character);
 
 void SCRItemTakeEnd(void *character)
 {

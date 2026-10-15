@@ -1,5 +1,5 @@
 extern unsigned char B_0018B740[];
-extern unsigned char func_00080C98[1];
+extern int func_00080C98(float *pos, int param, float *prev);
 extern void *D_0017AEA0;
 extern void *D_0017AEA4;
 extern int D_0017AEA8;
