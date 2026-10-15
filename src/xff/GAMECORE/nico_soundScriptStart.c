@@ -1,10 +1,10 @@
-extern char D_000BC4F0[];
+extern void D_000BC4F0(void *obj, int arg);
 extern int D_0017AFD0, D_0017AFD4;
 extern void *isysGetThisSubThread(void);
 extern void scrInit(void *);
 extern void initSScriptSystem(void *);
 extern void initSmallManager(void);
-extern void SetScriptObjDeleteCallBackFunc(void *, void *, int);
+extern void SetScriptObjDeleteCallBackFunc(void *, void (*func)(void *obj, int arg), int);
 extern void scrRunM(int);
 extern void isysJumpSubThread(void *, int);
 static void func_000BC250(void);
