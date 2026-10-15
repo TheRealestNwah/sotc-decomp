@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,731 after #378), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,762 after #380), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,731 functions** come from matching C: 1,497 GAMECORE, 893 MANAGER and 341 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,762 functions** come from matching C: 1,509 GAMECORE, 904 MANAGER and 349 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #380: 31 more hand matches among the named 20-word functions (12 GAMECORE, 11 MANAGER, 8 KERNEL). Notes: loops that reload two pointer fields every iteration after storing through them store `int` values through `int` fields (`ResetCharacterClassIKNodeInterpInfo`); a byte-triple copied after all three loads is a 3-byte struct assignment (`GetMotionOptionNodeBooleanInfoFloatFrameDirectResource`); kind-check pointers built with `movz` use the positive sense (`p[8] == K ? p + 0x90 : 0`); `vrnext`/`vrinit` random generation is one asm block returning through `mtc1` (`iosGetRandom`); a phase lookup that falls through compare-and-branch pairs is a plain `switch` (`GetReplayNextPhase`). Parked: `ColCont2_IsColStatus`/`ColCont2_IsEventColStatus` (gcc folds the predicate into `sltu`), the camera-place-status checks, `stagemanager_checkstageAlreadyLoadedByStageData` (non-tail final call), `GetFirstSortObj`, `RequestCharacterMotionShiftFunc`, `SpriteMenuGetSelectMenuId` (register choice; its Mode/SubMenuId siblings match), `PushQuaternionWithNoCopy`, `____VolPerBackup`, `iosGetTableSin`, `sndSepStopTypeAll`. Evidence: `build/hand17-check.log`.
 
 Issue #378: 35 more hand matches among the named 19-word functions (12 GAMECORE, 15 MANAGER, 8 KERNEL). Notes: MANAGER jump tables can be written as a plain `switch` once the table entries are read from `rodata.s` (`texNameRes`, `texNameResErrorCheck`); the splice places the table by its original relocation. String arguments in MANAGER rodata are EUC-JP; write them as hex escapes with the Japanese in a comment (`create_particle_effect_lod`). An indirect final call stays a `jalr` (no sibling call through a pointer: `isysLaunchExecModule`). Short globals passed after a mask load with `lh` when first copied to `int` locals (`iosGsChangeMode`). A value loaded before a call into a callee-saved register means the source read it into a local first (`isysWriteLinkerScriptFile`). Parked: `GAMEUTIL_get_first_obj`, `add_camera_mode_common_param_segment`, `GAMEUTIL_get_dist_ratio_by_dist_squ` (EE `sqrt.s`), `graphInitLayer` (an `$at` address add the original kept out of the `jal` delay slot), `pop_camera_context`, `iosLoaderGetFileSize`. Evidence: `build/hand16-check.log`.
 
