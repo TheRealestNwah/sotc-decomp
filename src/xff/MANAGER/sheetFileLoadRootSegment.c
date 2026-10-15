@@ -1,7 +1,7 @@
-extern void sheetFsLoadRootSegment(void *, int);
+extern void sheetFsLoadRootSegment(void (*cb)(int a, int b), int);
 extern int B_0015181C;
 extern int B_00151820;
-extern unsigned char D_000E1EB0[];
+extern void D_000E1EB0(int a, int b);
 
 void sheetFileLoadRootSegment(int arg0, int arg1)
 {
