@@ -1,4 +1,4 @@
-extern char func_000128E0[];
+extern void func_000128E0(int arg);
 extern int stagemanager_createsubthread();
 
 int st_changePlayerInspireLevel(int a, int b, int c, int d)
