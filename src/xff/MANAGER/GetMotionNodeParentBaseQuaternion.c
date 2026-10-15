@@ -1,4 +1,4 @@
-void GetMotionNodeParentBaseQuaternion(float *out, char *m, int q, int i)
+void GetMotionNodeParentBaseQuaternion(float *out, char *m, char *q, int i)
 {
     char *n = *(char **)(m + 8);
     i = *(int *)(n + i * 64 + 0x38);
