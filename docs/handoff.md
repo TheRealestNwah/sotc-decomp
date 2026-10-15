@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,946 after #396), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,975 after #398), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,946 functions** come from matching C: 1,577 GAMECORE, 980 MANAGER and 389 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,975 functions** come from matching C: 1,585 GAMECORE, 988 MANAGER and 402 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #398: 29 more hand matches among the named 25-word functions (8 GAMECORE, 8 MANAGER, 13 KERNEL). Notes: a VU0 float operand the original passes in `$t0` matches when the asm block clobbers `$2`, `$3` and `$7` (`iosCubicInterVectorXYZ`, as in `GetPlaneFittingVector`). Globals read through a fully built address are `volatile` (`D_00040D64` in `addVIntrTime`/`getVIntrDiffTime`). A slot update that recomputes the element address after the call is written without a pointer local (`Sg2SlotSetKeyOffBit` and its three siblings). Zero stores emitted with the last field first follow the usual rotation (`GAMEUTIL_init_col_plane_info_filter`); a call result passed later is stored in a local first (`StaffRollStart`). Parked: `iosWaitGPFinish`/`st_WaitGPFinish` (the original copies the target into `$s0` inside the `if`), `Sg2ExStAdpcmIopReadAdr` (`1 << i` mask test), `setDefaultPlayerControlButton` (last unaligned store kept out of the delay slot), `seStopLoopType`, `getDamageEnableTargetLayoutClass`, `GetPlaneFittingPoint`, `bossStatBootChk`, `calcDownSpeedRatio`, `chooseLangScript`, `existSoundBow`, `nico_minotaur_weaponstart`.
 
 Issue #396: 21 more hand matches among the named 24-word functions (4 GAMECORE, 9 MANAGER, 8 KERNEL). Notes: `sq $zero` (rather than `por` then `sq`) is an inline asm zero store, and its register follows the callee's declared return type (`motrootdyn_startchainhang` needs `int ParentLayoutObj(...)`). A struct-array field whose asm label sits at the field (`B_000C5B1C` for the second word) is declared as an array of the struct starting at that label (`Sg2DspEffectSetFeedBack`). A global stored through a fully built address is `volatile` here too (`Sg2ExStAdpcmInit` is still two registers off). Parked: `getStageChipIDReal` (the original stores the first result before loading the second operand), `st_defaultAI`, `startGaugeMaxAddEffect` (constants kept in saved float registers across a call), `initbar`, `reloadStage`, `act_local_vs_ofst_camera_place_status`, `GetJudgeVolumeClassWorkSize`, `RelocateModifiedManager`, `getBootParent`, `windowSetCursorPos`, `fsEffectDefault`, `MultiMatrixByPlane`, `IsEnvelopeDistantLightType`.
 
