@@ -1,7 +1,7 @@
 extern void *getSCRDataCtrlWork(void *);
-extern int setCreateTempAttain();
+extern void setCreateTempAttain(void *work, int enabled);
 
-int SCRFuncSetCreateTempAttain(int a, int b)
+void SCRFuncSetCreateTempAttain(void *actor, int enabled)
 {
-    return setCreateTempAttain(((int)getSCRDataCtrlWork((void *)a)), b);
+    setCreateTempAttain(getSCRDataCtrlWork(actor), enabled);
 }
