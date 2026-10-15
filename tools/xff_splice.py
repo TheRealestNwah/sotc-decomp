@@ -252,7 +252,7 @@ class Resolver:
         place = self.place(mine)
         if place is None or place.section != theirs.target:
             raise SpliceError(f"{describe(mine)} isn't in the original {theirs.target}")
-        if theirs.addend is not None and place.offset != theirs.addend:
+        if theirs.addend is not None and not same_offset(theirs.type, place.offset, theirs.addend):
             raise SpliceError(f"points at {place}, original at {theirs.target}+{theirs.addend:#x}")
         if mine.section_relative or mine.target not in self.symbols:
             value = self.relative(place)
@@ -273,6 +273,16 @@ class Resolver:
         ):
             return {mine.target}
         return set()
+
+
+def same_offset(reloc_type: int, mine: int, theirs: int) -> bool:
+    """Whether a C target offset agrees with the original's implied addend.
+    Only the low 16 bits of a LO16's addend reach its field, and an original
+    LO16 without a HI16 of its own (one repeated in a branch delay slot) gets
+    its high half from an unrelated HI16, so LO16s compare modulo 0x10000."""
+    if reloc_type == R_MIPS_LO16:
+        return (mine - theirs) & 0xFFFF == 0
+    return mine == theirs
 
 
 def describe(reloc: Reloc | None) -> str:
