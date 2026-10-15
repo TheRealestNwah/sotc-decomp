@@ -1,6 +1,6 @@
-extern unsigned char B_00147370[1];
+extern unsigned char B_00147370[];
 
 void *getFogMode(void)
 {
-    return &B_00147370;
+    return B_00147370;
 }

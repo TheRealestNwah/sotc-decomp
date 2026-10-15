@@ -1,6 +1,6 @@
-extern unsigned char D_00139BC4[1];
+extern unsigned char D_00139BC4[];
 
 void *windowDisplayMode(void)
 {
-    return &D_00139BC4;
+    return D_00139BC4;
 }

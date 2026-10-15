@@ -1,7 +1,7 @@
 extern void isysInitGroup(void *);
-extern unsigned char subThreadGroup[1];
+extern unsigned char subThreadGroup[];
 
 void InitSubThread(void)
 {
-    isysInitGroup(&subThreadGroup);
+    isysInitGroup(subThreadGroup);
 }

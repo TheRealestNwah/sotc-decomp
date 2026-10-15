@@ -1,6 +1,6 @@
 extern void *GetSCRCharaAIWorkPtr(int);
 extern int SCRGetFirstObj(void *);
-extern unsigned char gcGlobalVar[1];
+extern unsigned char gcGlobalVar[];
 
 void SCRFuncSetFallRockTimer(void)
 {
@@ -8,7 +8,7 @@ void SCRFuncSetFallRockTimer(void)
     int temp_v0;
     void *temp_v0_2;
 
-    temp_v0 = SCRGetFirstObj(&gcGlobalVar + 0x2B8);
+    temp_v0 = SCRGetFirstObj(gcGlobalVar + 0x2B8);
     if (temp_v0 != 0) {
         temp_v0_2 = GetSCRCharaAIWorkPtr(temp_v0);
         if ((*(int *)((char *)(temp_v0_2) + 0x41B8)) != 0) {

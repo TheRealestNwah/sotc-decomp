@@ -1,4 +1,4 @@
-extern unsigned char B_001888E8[1];
+extern unsigned char B_001888E8[];
 
 void bgmStopAllAttr(int arg0, int arg1)
 {
@@ -6,7 +6,7 @@ void bgmStopAllAttr(int arg0, int arg1)
     int var_a2;
 
     var_a2 = 2;
-    var_v1 = &B_001888E8;
+    var_v1 = B_001888E8;
     do {
         var_a2 -= 1;
         if (((*(int *)((char *)(var_v1) + 8)) != 0) && ((*(int *)((char *)(var_v1) + 4)) & arg0)) {

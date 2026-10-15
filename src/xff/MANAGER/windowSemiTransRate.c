@@ -1,6 +1,6 @@
-extern unsigned char D_00139BC0[1];
+extern unsigned char D_00139BC0[];
 
 void *windowSemiTransRate(void)
 {
-    return &D_00139BC0;
+    return D_00139BC0;
 }

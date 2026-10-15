@@ -1,6 +1,6 @@
-extern unsigned char D_00135838[1];
+extern unsigned char D_00135838[];
 
 void *getFullScreenEffect(void)
 {
-    return &D_00135838;
+    return D_00135838;
 }

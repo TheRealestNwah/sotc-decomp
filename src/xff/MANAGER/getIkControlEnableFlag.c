@@ -1,6 +1,6 @@
-extern unsigned char D_001365D4[1];
+extern unsigned char D_001365D4[];
 
 void *getIkControlEnableFlag(void)
 {
-    return &D_001365D4;
+    return D_001365D4;
 }

@@ -1,6 +1,6 @@
-extern unsigned char D_0013653C[1];
+extern unsigned char D_0013653C[];
 
 void *getTexTransEnableFlag(void)
 {
-    return &D_0013653C;
+    return D_0013653C;
 }

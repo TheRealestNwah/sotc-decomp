@@ -1,6 +1,6 @@
-extern unsigned char D_0017A314[1];
+extern unsigned char D_0017A314[];
 
 void *getSeamlessStageHighModelDispDist(void)
 {
-    return &D_0017A314;
+    return D_0017A314;
 }

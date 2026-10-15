@@ -1,6 +1,6 @@
-extern unsigned char D_00130444[1];
+extern unsigned char D_00130444[];
 
 void *getCameraBlurSw(void)
 {
-    return &D_00130444;
+    return D_00130444;
 }

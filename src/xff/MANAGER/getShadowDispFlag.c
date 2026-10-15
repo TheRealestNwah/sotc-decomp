@@ -1,6 +1,6 @@
-extern unsigned char D_0013616C[1];
+extern unsigned char D_0013616C[];
 
 void *getShadowDispFlag(void)
 {
-    return &D_0013616C;
+    return D_0013616C;
 }

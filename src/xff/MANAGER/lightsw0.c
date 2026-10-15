@@ -1,6 +1,6 @@
-extern unsigned char B_00148720[1];
+extern unsigned char B_00148720[];
 
 void *lightsw0(void)
 {
-    return &B_00148720;
+    return B_00148720;
 }

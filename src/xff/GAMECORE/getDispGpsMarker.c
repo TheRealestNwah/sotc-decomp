@@ -1,6 +1,6 @@
-extern unsigned char D_00179A58[1];
+extern unsigned char D_00179A58[];
 
 void *getDispGpsMarker(void)
 {
-    return &D_00179A58;
+    return D_00179A58;
 }

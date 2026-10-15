@@ -1,6 +1,6 @@
-extern unsigned char B_0019CF50[1];
+extern unsigned char B_0019CF50[];
 
 void *getSprLogWorkAddress(void)
 {
-    return &B_0019CF50;
+    return B_0019CF50;
 }

@@ -1,6 +1,6 @@
-extern unsigned char B_0014738C[1];
+extern unsigned char B_0014738C[];
 
 void *getFogColorR(void)
 {
-    return &B_0014738C;
+    return B_0014738C;
 }

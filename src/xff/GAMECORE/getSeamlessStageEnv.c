@@ -1,6 +1,6 @@
-extern unsigned char D_0017A340[1];
+extern unsigned char D_0017A340[];
 
 void *getSeamlessStageEnv(void)
 {
-    return &D_0017A340;
+    return D_0017A340;
 }

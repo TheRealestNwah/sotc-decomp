@@ -1,7 +1,7 @@
 extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_0007D630[1];
+extern unsigned char D_0007D630[];
 
 void SCRItemTakeDelete(void *character)
 {
-    RequestCharacterMotionShiftFunc(character, &D_0007D630);
+    RequestCharacterMotionShiftFunc(character, D_0007D630);
 }

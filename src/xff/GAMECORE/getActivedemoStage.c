@@ -1,6 +1,6 @@
-extern unsigned char activedemoInfo[1];
+extern unsigned char activedemoInfo[];
 
 int getActivedemoStage(void)
 {
-    return (*(int *)((char *)(&activedemoInfo) + 8));
+    return (*(int *)((char *)(activedemoInfo) + 8));
 }

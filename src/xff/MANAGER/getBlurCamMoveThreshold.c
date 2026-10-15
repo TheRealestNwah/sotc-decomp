@@ -1,6 +1,6 @@
-extern unsigned char D_00130470[1];
+extern unsigned char D_00130470[];
 
 void *getBlurCamMoveThreshold(void)
 {
-    return &D_00130470;
+    return D_00130470;
 }

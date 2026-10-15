@@ -1,6 +1,6 @@
-extern unsigned char D_00136B04[1];
+extern unsigned char D_00136B04[];
 
 void *getAirResistEnableFlag(void)
 {
-    return &D_00136B04;
+    return D_00136B04;
 }

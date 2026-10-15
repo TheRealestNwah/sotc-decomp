@@ -1,6 +1,6 @@
-extern unsigned char D_00179FE4[1];
+extern unsigned char D_00179FE4[];
 
 void *getDemoEnableFlag(void)
 {
-    return &D_00179FE4;
+    return D_00179FE4;
 }

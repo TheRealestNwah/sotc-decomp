@@ -1,4 +1,4 @@
-extern unsigned char B_000DE370[1];
+extern unsigned char B_000DE370[];
 
 void Sg2SlotSetPoltamentParam(int arg0, int arg1, float fparg0)
 {
@@ -8,7 +8,7 @@ void Sg2SlotSetPoltamentParam(int arg0, int arg1, float fparg0)
     void *temp_v1;
 
     var_f12 = fparg0;
-    temp_v1 = &B_000DE370 + (arg0 * 0xE0);
+    temp_v1 = B_000DE370 + (arg0 * 0xE0);
     temp_v0 = (*(int *)((char *)(temp_v1) + 0));
     if (!(temp_v0 & 0x200)) {
         temp_v0_2 = (*(int *)((char *)(temp_v1) + 0x24));

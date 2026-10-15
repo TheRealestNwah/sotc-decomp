@@ -1,4 +1,4 @@
-extern unsigned char gcGlobalVar[1];
+extern unsigned char gcGlobalVar[];
 
 typedef struct {
     float start;

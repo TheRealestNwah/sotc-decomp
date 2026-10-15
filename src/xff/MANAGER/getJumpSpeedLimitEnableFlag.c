@@ -1,6 +1,6 @@
-extern unsigned char D_00136AE8[1];
+extern unsigned char D_00136AE8[];
 
 void *getJumpSpeedLimitEnableFlag(void)
 {
-    return &D_00136AE8;
+    return D_00136AE8;
 }

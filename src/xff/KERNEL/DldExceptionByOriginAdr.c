@@ -1,7 +1,7 @@
 extern char *func_0000AF78(int);
 extern void iosJumpRecoverPoint(void *, ...);
-extern unsigned char RO_00042DE8[1];
-extern unsigned char RO_00042E90[1];
+extern unsigned char RO_00042DE8[];
+extern unsigned char RO_00042E90[];
 
 void DldExceptionByOriginAdr(int adr)
 {

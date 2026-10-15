@@ -1,4 +1,4 @@
-extern unsigned char B_000C5B08[1];
+extern unsigned char B_000C5B08[];
 
 int Sg2DspInit(void)
 {
@@ -6,7 +6,7 @@ int Sg2DspInit(void)
     int var_v1;
 
     var_v1 = 1;
-    var_v0 = &B_000C5B08;
+    var_v0 = B_000C5B08;
     do {
         var_v1 -= 1;
         (*(int *)((char *)(var_v0) + 0)) = 0;

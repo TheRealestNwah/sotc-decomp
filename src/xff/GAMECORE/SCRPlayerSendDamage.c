@@ -1,7 +1,7 @@
 extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_0007D890[1];
+extern unsigned char D_0007D890[];
 
 void SCRPlayerSendDamage(void *character)
 {
-    RequestCharacterMotionShiftFunc(character, &D_0007D890);
+    RequestCharacterMotionShiftFunc(character, D_0007D890);
 }

@@ -1,6 +1,6 @@
-extern unsigned char D_0017B38C[1];
+extern unsigned char D_0017B38C[];
 
 void *getLogLineColorA(void)
 {
-    return &D_0017B38C;
+    return D_0017B38C;
 }

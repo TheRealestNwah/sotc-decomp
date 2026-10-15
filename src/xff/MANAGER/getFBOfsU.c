@@ -1,6 +1,6 @@
-extern unsigned char FBOfs[1];
+extern unsigned char FBOfs[];
 
 void *getFBOfsU(void)
 {
-    return &FBOfs;
+    return FBOfs;
 }

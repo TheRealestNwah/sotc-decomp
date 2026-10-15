@@ -1,6 +1,6 @@
-extern unsigned char B_00147378[1];
+extern unsigned char B_00147378[];
 
 void *getFogFarDist(void)
 {
-    return &B_00147378;
+    return B_00147378;
 }

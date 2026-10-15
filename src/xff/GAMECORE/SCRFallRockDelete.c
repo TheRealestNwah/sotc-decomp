@@ -1,7 +1,7 @@
 extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_000CB5B8[1];
+extern unsigned char D_000CB5B8[];
 
 void SCRFallRockDelete(void *character)
 {
-    RequestCharacterMotionShiftFunc(character, &D_000CB5B8);
+    RequestCharacterMotionShiftFunc(character, D_000CB5B8);
 }

@@ -1,6 +1,6 @@
-extern unsigned char B_00184794[1];
+extern unsigned char B_00184794[];
 
 void *getGameClearCntAdrs(void)
 {
-    return &B_00184794;
+    return B_00184794;
 }

@@ -1,6 +1,6 @@
-extern unsigned char D_00179ADC[1];
+extern unsigned char D_00179ADC[];
 
 void *getFreeModeRevControlLR(void)
 {
-    return &D_00179ADC;
+    return D_00179ADC;
 }

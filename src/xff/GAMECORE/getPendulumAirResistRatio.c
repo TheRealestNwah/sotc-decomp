@@ -1,6 +1,6 @@
-extern unsigned char D_0017A9BC[1];
+extern unsigned char D_0017A9BC[];
 
 void *getPendulumAirResistRatio(void)
 {
-    return &D_0017A9BC;
+    return D_0017A9BC;
 }

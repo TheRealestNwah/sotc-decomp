@@ -1,6 +1,6 @@
-extern unsigned char D_00136AD4[1];
+extern unsigned char D_00136AD4[];
 
 void *getLocalAccelDispFlag(void)
 {
-    return &D_00136AD4;
+    return D_00136AD4;
 }

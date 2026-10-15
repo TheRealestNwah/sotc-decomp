@@ -1,6 +1,6 @@
-extern unsigned char D_001365EC[1];
+extern unsigned char D_001365EC[];
 
 void *getCollisionDisableAtDirectPlayFlag(void)
 {
-    return &D_001365EC;
+    return D_001365EC;
 }

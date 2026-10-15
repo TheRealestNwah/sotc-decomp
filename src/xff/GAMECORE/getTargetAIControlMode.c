@@ -1,6 +1,6 @@
-extern unsigned char D_0017A924[1];
+extern unsigned char D_0017A924[];
 
 void *getTargetAIControlMode(void)
 {
-    return &D_0017A924;
+    return D_0017A924;
 }

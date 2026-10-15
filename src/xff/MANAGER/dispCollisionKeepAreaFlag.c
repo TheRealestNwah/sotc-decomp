@@ -1,6 +1,6 @@
-extern unsigned char D_001365DC[1];
+extern unsigned char D_001365DC[];
 
 void *dispCollisionKeepAreaFlag(void)
 {
-    return &D_001365DC;
+    return D_001365DC;
 }

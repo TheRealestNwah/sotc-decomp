@@ -1,6 +1,6 @@
-extern unsigned char D_0004064C[1];
+extern unsigned char D_0004064C[];
 
 void *getMemorySafetyLockFlag(void)
 {
-    return &D_0004064C;
+    return D_0004064C;
 }

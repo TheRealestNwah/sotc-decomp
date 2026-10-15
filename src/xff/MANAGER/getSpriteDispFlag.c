@@ -1,6 +1,6 @@
-extern unsigned char D_00136240[1];
+extern unsigned char D_00136240[];
 
 void *getSpriteDispFlag(void)
 {
-    return &D_00136240;
+    return D_00136240;
 }

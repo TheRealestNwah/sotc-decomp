@@ -1,6 +1,6 @@
-extern unsigned char D_00179908[1];
+extern unsigned char D_00179908[];
 
 void *getSnapShotSize(void)
 {
-    return &D_00179908;
+    return D_00179908;
 }

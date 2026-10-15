@@ -1,6 +1,6 @@
-extern unsigned char B_00147388[1];
+extern unsigned char B_00147388[];
 
 void *getFogOffset(void)
 {
-    return &B_00147388;
+    return B_00147388;
 }

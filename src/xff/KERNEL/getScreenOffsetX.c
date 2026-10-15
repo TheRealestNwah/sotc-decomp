@@ -1,6 +1,6 @@
-extern unsigned char B_000655FC[1];
+extern unsigned char B_000655FC[];
 
 void *getScreenOffsetX(void)
 {
-    return &B_000655FC;
+    return B_000655FC;
 }

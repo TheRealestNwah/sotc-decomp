@@ -1,6 +1,6 @@
-extern unsigned char D_00136C14[1];
+extern unsigned char D_00136C14[];
 
 void *getObjInitMessageDebugSw(void)
 {
-    return &D_00136C14;
+    return D_00136C14;
 }

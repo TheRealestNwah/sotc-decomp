@@ -1,6 +1,6 @@
-extern unsigned char D_00179A50[1];
+extern unsigned char D_00179A50[];
 
 void *getFreezeBossFlag(void)
 {
-    return &D_00179A50;
+    return D_00179A50;
 }

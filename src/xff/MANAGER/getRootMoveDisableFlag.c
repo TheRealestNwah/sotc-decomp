@@ -1,6 +1,6 @@
-extern unsigned char D_001365D8[1];
+extern unsigned char D_001365D8[];
 
 void *getRootMoveDisableFlag(void)
 {
-    return &D_001365D8;
+    return D_001365D8;
 }

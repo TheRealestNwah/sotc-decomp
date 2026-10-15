@@ -1,6 +1,6 @@
-extern unsigned char B_0014737C[1];
+extern unsigned char B_0014737C[];
 
 void *getFogNearRate(void)
 {
-    return &B_0014737C;
+    return B_0014737C;
 }

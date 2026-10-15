@@ -1,6 +1,6 @@
-extern unsigned char D_0013045C[1];
+extern unsigned char D_0013045C[];
 
 void *getBlurZBase(void)
 {
-    return &D_0013045C;
+    return D_0013045C;
 }

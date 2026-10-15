@@ -1,7 +1,7 @@
 extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_0007D708[1];
+extern unsigned char D_0007D708[];
 
 void SCRHarpoonLoopEnd(void *character)
 {
-    RequestCharacterMotionShiftFunc(character, &D_0007D708);
+    RequestCharacterMotionShiftFunc(character, D_0007D708);
 }

@@ -1,6 +1,6 @@
-extern unsigned char D_001303CC[1];
+extern unsigned char D_001303CC[];
 
 void *getDepthOfFieldNearZ(void)
 {
-    return &D_001303CC;
+    return D_001303CC;
 }

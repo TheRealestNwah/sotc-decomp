@@ -1,6 +1,6 @@
-extern unsigned char D_00130418[1];
+extern unsigned char D_00130418[];
 
 void *getFogUnderWater(void)
 {
-    return &D_00130418;
+    return D_00130418;
 }

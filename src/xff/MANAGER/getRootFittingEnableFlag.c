@@ -1,6 +1,6 @@
-extern unsigned char D_00136B90[1];
+extern unsigned char D_00136B90[];
 
 void *getRootFittingEnableFlag(void)
 {
-    return &D_00136B90;
+    return D_00136B90;
 }

@@ -1,6 +1,6 @@
-extern unsigned char B_00065550[1];
+extern unsigned char B_00065550[];
 
 int getZBufferAddressTBP(void)
 {
-    return (int) ((*(int *)((char *)(&B_00065550) + 0)) * (*(int *)((char *)(&B_00065550) + 4))) >> 6;
+    return (int) ((*(int *)((char *)(B_00065550) + 0)) * (*(int *)((char *)(B_00065550) + 4))) >> 6;
 }
