@@ -17,7 +17,7 @@ void GetMotionNodeParentBaseQuaternion(float *out, char *m, char *q, int i)
                              "vadd.xyz vf13, vf14, vf15\n"
                              "vadd.xyz vf13, vf13, vf16\n"
                              "sqc2 vf13, 0x0(%0)\n"
-                             : : "r"(out), "r"(i * 16 + q) : "memory");
+                             : : "r"(out), "r"(i * 16 + (int)q) : "memory");
         i = *(int *)(n + i * 64 + 0x38);
     }
 }
