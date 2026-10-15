@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char func_0001EA48[1];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void func_0001EA48(void *character);
 
 void SCRPowerReset(void *character)
 {

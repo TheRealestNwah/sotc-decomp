@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char func_00035408[1];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void func_00035408(void *character);
 
 void SCRBirdStartBreath(void *character)
 {

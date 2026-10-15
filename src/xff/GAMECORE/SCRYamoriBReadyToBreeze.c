@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char func_000D15F8[1];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void func_000D15F8(void *character);
 
 void SCRYamoriBReadyToBreeze(void *character)
 {

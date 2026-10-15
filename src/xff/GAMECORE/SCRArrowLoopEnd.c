@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char T_00079800[1];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void T_00079800(void *character);
 
 void SCRArrowLoopEnd(void *character)
 {

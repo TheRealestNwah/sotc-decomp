@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char func_00044888[1];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void func_00044888(void *character);
 
 void SCRResetCharacterObj4DDynamicsInfo(void *character)
 {

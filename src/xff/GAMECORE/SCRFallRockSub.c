@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char func_000CB608[1];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void func_000CB608(void *character);
 
 void SCRFallRockSub(void *character)
 {

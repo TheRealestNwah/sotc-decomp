@@ -1,5 +1,5 @@
-extern void RequestCharacterMotionShiftFunc(void *, void *);
-extern unsigned char D_00064550[];
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+extern void D_00064550(void *character);
 
 void SCRLeoTorch3_Disp(void *character)
 {
