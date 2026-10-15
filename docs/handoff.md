@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,612 after #370), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,659 after #374), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,612 functions** come from matching C: 1,447 GAMECORE, 856 MANAGER and 309 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,659 functions** come from matching C: 1,471 GAMECORE, 866 MANAGER and 322 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #374: 47 more hand matches: named 17-word functions plus five volatile-global routines unblocked by #372 (`getVIntrCnt`, `getIntrGpCount`, `iosGetTCount`, `iFinish`, `ischedStop`); 24 GAMECORE, 10 MANAGER, 13 KERNEL. Notes: type predicates that wrap another helper (`GAMEUTIL_is_player_obj`, `GAMEUTIL_is_horse_obj`) inline a `static inline` copy of `GAMEUTIL_get_character_type`. Reloads of a header after storing through a key (`AddStrHashKey`) need every field as `int`, so the store aliases them. Calls whose result the caller ignores still need the right callee prototype: dropping an unused second argument (`Sg2ExPcmInputSetPan`) removes a register copy. Parked: `Sg2SlotSetLfo*Tbl` and `vab_get_lfotbl_param` (same double-address pattern as the `Sg2SlotSetTime*` family), `ReparentChildObjects` (final call not a tail call), `InitDL`, `initBgmScript`, `setFadeColor`, `checkScriptControlDef`, the weak-point fade loops, `iosGetScaleMatrixV`, `SetQuaternionByCosineAxisRotateVWithNoRegularize` (EE `sqrt.s` encoding). Evidence: `build/hand14-check.log`.
 
 Issue #370: 53 more hand matches among the named 16-word functions (21 GAMECORE, 20 MANAGER, 12 KERNEL). Notes: a global accessed through a fully built address (`lui`/`addiu`, then `lw`/`sw 0(reg)`) is `volatile`; this also fixes `spritemenudisplaytriggerpad_group` and the alert-counter pair, where a `volatile int *p = &D` alias explains the second address register. Ignored callee results still matter: declaring a looped callee `int` moves the loop test into `$v1`. GNU case ranges (`case 15 ... 28:`) give the branch-per-bound range tests of `IsNonISysObjTypeRes`. `__asm__ __volatile__("break 0")` stands in for the original assert trap. Literal strings can be written in C when the original references them section-relatively (`getEditWorkSize`'s `"edit Work Error!!
 "`). Parked: functions whose final call is a `jal` with nothing after it (`vramFree`, `demoManSkip`, `ptclDisplayListPut`, `stagemanager_unloadstage`, the pitch variant of the difference helper): return types, implicit declarations, inline helpers, dead result variables and `-g` all still produce a tail call. Also parked: `InitDL` and `ischedStop` (an access the original assembler kept out of a delay slot), `Init_Player`, `iosMmColToFvecMvec`, `getDischargeSize`. Evidence: `build/hand13-check.log`.
