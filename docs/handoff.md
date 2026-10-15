@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (3,030 after #402), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (3,080 after #404), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **3,030 functions** come from matching C: 1,604 GAMECORE, 1,002 MANAGER and 424 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **3,080 functions** come from matching C: 1,625 GAMECORE, 1,024 MANAGER and 431 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #404: 50 more hand matches among the named 28-word functions (21 GAMECORE, 22 MANAGER, 7 KERNEL). Notes: `iosCreatePartition` passes its caller's return address through `register void *ra __asm__("$31")` copied into a local (`__builtin_return_address(0)` reads it from the stack instead). `transMicroCode` and `transMicroCodeWithFlush` must be separate files: in one file, ee-as mis-encodes the second `lw $4,MicroCode($3)` macro as `lw` with a HI16 relocation. Their shared DMA tag lives in `transMicroCode.c` as `static const RO_001407C0[4]`; the second file declares it `extern`, since two C copies of the same rodata break the `.rodata` check. A float literal one ulp below pi is `3.1415925f`'s neighbour: ee-gcc 2.96 rounds `3.1415925f` to `0x40490FD9`, so `0x40490FDA` is `3.1415926f` (`SCRFuncUnagiResetSelfColiForPath`). `GetMotionNodeBaseQuaternion` needs its quaternion array as an `int` address (`i * 16 + q`) to get the original `addu` operand order. Parked: `SCRConditionDamagedColType` (`movn` vs branch), `getPathStatus` (switch layout), `ConstructorCollisionDynamics` (original stores the 1.0 floats into the local after copying it), `InitModifiedManager` (last store kept out of the delay slot), `iosDlTrans`, `iosDlLockObj` (increment register swap), `Sg2ExPcmInputOpen` (`$t4` copy of the struct pointer), `sndSepInitTickParam` (loop increment order).
 
 Issue #402: 30 more hand matches among the named 27-word functions (12 GAMECORE, 6 MANAGER, 12 KERNEL). Notes: sheet-manager wait loops are `while ((unsigned int)(st - 0xDEAF) >= 2) scrRun();` (`gameflowSheetMgrAllReqWait`, `gameflowSheetMgrSplFsEnd`, `languageMenuLoad`). `iosRotMatrixX/Y/Z` copy `UnitMatrix` with the same explicit-register `lq`/`sq` asm block as `iosTransMatrix`. Condition checks that return 1 inside an `if` on the first predicate match better than an early `return 0` (`GAMEUTIL_is_swimming_now`, `SCRConditionNextPointEventID`). A product the original computes before the second call is assigned to a variable first (`SCRCharaTurn`). Parked: `CAM_motion_kind_get_interest_dir_reset_attr_target`, `Sg2SlotBlock`, `CallMotShiftCallBackElemEntryFunc`, `CollisionObjectJudgeCallbackExceptDescendOneObj`, `SetAnimationClassLastInfoDirectResource`, `SetCharacterObjCollisionProcFlag`, `glTranslatef`, `GetYRotQuaternionFromDir` (EE `sqrt.s`), `iosApplyM_Mat` (handwritten asm).
 
