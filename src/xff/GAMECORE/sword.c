@@ -84,7 +84,7 @@ extern int SeList_sword_weak_test;
 extern sceVu0FVECTOR B_0019CE70; /* in sword.c's .bss */
 extern sceVu0FVECTOR B_0019CEB0;
 extern sceVu0FVECTOR B_0019CEC0;
-extern void T_000C2620();
+static void T_000C2620();
 extern int SParticleSheetData_S_GLOW_CLEAR;
 extern void GetCollisionDBGroupCallBack(void *group, void (*func)(), void *query);
 extern void SetGeometryPointerGlobalState(void *geom, sceVu0FVECTOR a, sceVu0FVECTOR b);
@@ -95,14 +95,25 @@ typedef unsigned int u_long128 __attribute__((mode(TI)));
 
 /* Collision query for the sword's glow: filled in by T_000C2620. */
 typedef struct {
+    int a;
+    int b;
+} SwordCollisionId;
+
+typedef struct {
     u_long128 pos;
     float dist;
     int hit;
-    char pad18[4];
+    int pad18;
     float power;
-    char pad20[0x10];
+    unsigned long attr;
+    int part;
+    char pad2C[4];
+    /* Passed on as a vector: trigger flag and weak-point index as ints,
+       then the part's two damage values. */
     sceVu0FVECTOR hitPos;
-    char geometry[0x90];
+    char geometry[0x50];
+    SwordCollisionId col;
+    char pad98[0x38];
 } SwordGlowQuery;
 
 typedef struct {
@@ -495,7 +506,6 @@ static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
 }
 
 /* Weak-point query for the boss: aims the beam at the marker and glows on a hit. */
-extern void T_000C1D80();
 extern void sprWeaponGetMarkerPos(sceVu0FVECTOR pos);
 extern float GetAmbientBrightnessOfLayoutObject(GameObj *obj);
 extern void GetCollisionDBSurfBoundary(sceVu0FVECTOR boundary, void *surface);
@@ -514,7 +524,12 @@ typedef struct {
     u_long128 pos;
     float dist;
     int hit;
-    char pad18[0x18];
+    float planeDot;
+    float power;
+    unsigned long attr;
+    int part;
+    char pad2C[4];
+    /* Trigger flag and weak-point index as ints, then two damage values. */
     sceVu0FVECTOR target;
     char geometry[0x50];
     int surface[2];
@@ -525,6 +540,254 @@ typedef struct {
 } SwordBeamQuery;
 
 extern const SwordBeamQuery RO_00180600;
+
+extern int CheckSCRCharaAIWorkPtr(GameObj *obj);
+extern unsigned long *GetCollisionDBAttributeAdr(void *geom);
+extern int getGameHardMode(void);
+extern int SCRGetBossWeakPointIndexFromColAttr(unsigned long attr, GameObj *boss);
+extern void *SCRGetBossWork(GameObj *boss);
+extern float GetBossPartsDamagePerParts(void *work, int part);
+extern int chkBossTrigTurnOff(int trigger);
+extern void iosLocalPrintf(const char *fmt, ...);
+extern float *SCRGetBossPartsDamageFromIndex(GameObj *boss, int part);
+extern void GetGeometryPointerWithCollisionDBDataGlobalPoint(void *dst, void *geom,
+                                                             sceVu0FVECTOR point);
+
+/* Collision attribute bits. */
+#define ATTR_HARD_ONLY (0x8000UL << 41)
+#define ATTR_WEAK_POINT (0xC000UL << 40)
+#define ATTR_TRIGGER (0xF800UL << 20)
+
+/* Distance between the xyz of two vectors. */
+#define VU_DISTANCE(ret, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vsub.xyzw vf07, vf05, vf06\n" \
+                         "vmul.xyz vf07, vf07, vf07\n" \
+                         "vmulax.w ACC, vf00, vf07x\n" \
+                         "vmadday.w ACC, vf00, vf07y\n" \
+                         "vmaddz.w vf07, vf00, vf07z\n" \
+                         "vsqrt Q, vf07w\n" \
+                         "vwaitq\n" \
+                         "cfc2 $2, $vi22\n" \
+                         "mtc1 $2, %0\n" \
+                         : "=f"(ret) : "r"(a), "r"(b) : "$2")
+
+#ifdef NONMATCHING
+/* Parked: both collision callbacks are their original length but allocate the
+   ignore flag from isIgnoredSurface to v0 instead of v1. See issues #52, #54.
+   The helpers' debug strings are the file's first .rodata, so they stay with
+   the callbacks. getWeakIndexWeak is unused, but its string is still emitted. */
+static inline int getWeakIndexWeak(unsigned long weak)
+{
+    if (weak == (0x4000UL << 40)) {
+        return 0;
+    }
+    if (weak == (0x8000UL << 40)) {
+        return 1;
+    }
+    if (weak == (0xC000UL << 40)) {
+        return 2;
+    }
+    iosLocalPrintf("break at function getWeakIndexWeak(basescript/src/sword.c:%d)\n", 666);
+    return -1;
+}
+
+static inline int getWeakIndexTrigger(unsigned long trigger)
+{
+    if (trigger == (0xD800UL << 20)) {
+        return 0;
+    }
+    if (trigger == (0xE000UL << 20)) {
+        return 1;
+    }
+    if (trigger == (0xE800UL << 20)) {
+        return 2;
+    }
+    if (trigger == (0xF000UL << 20)) {
+        return 3;
+    }
+    if (trigger == (0xF800UL << 20)) {
+        return 4;
+    }
+    iosLocalPrintf("break at function getWeakIndexTrigger(basescript/src/sword.c:%d)\n", 684);
+    return -1;
+}
+
+static inline int getWeakIndex(unsigned long attr)
+{
+    int index = -1;
+
+    if (attr & ATTR_WEAK_POINT) {
+        index = ((attr & ATTR_WEAK_POINT) >> 54) - 1;
+    } else if (attr & ATTR_TRIGGER) {
+        index = getWeakIndexTrigger(attr & ATTR_TRIGGER) + 3;
+    } else {
+        iosLocalPrintf("break at function getWeakIndex(basescript/src/sword.c:%d)\n", 702);
+    }
+    return index;
+}
+
+/* Surfaces marked hard-only light up only in hard mode, the rest only outside it. */
+static inline int isIgnoredSurface(unsigned long attr)
+{
+    if (getGameHardMode() ? !(attr & ATTR_HARD_ONLY) : (attr & ATTR_HARD_ONLY) != 0) {
+        return 1;
+    }
+    return 0;
+}
+
+/* Inlined dot product of two vectors' xyz. */
+#define VU_INNER_PRODUCT(ret, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vaddw.x vf07, vf00, vf00w\n" \
+                         "vmul.xyz vf06, vf05, vf06\n" \
+                         "vaddax.x ACC, vf00, vf06x\n" \
+                         "vmadday.x ACC, vf07, vf06y\n" \
+                         "vmaddz.x vf06, vf07, vf06z\n" \
+                         "qmfc2 $2, vf06\n" \
+                         "mtc1 $2, %0\n" \
+                         : "=f"(ret) : "r"(a), "r"(b) : "$2")
+/* Squared length of a vector's xyz. */
+#define VU_SQUARE_LENGTH(ret, v) \
+    __asm__ __volatile__("lqc2 vf07, 0x0(%1)\n" \
+                         "vmul.xyz vf07, vf07, vf07\n" \
+                         "vaddy.x vf07, vf07, vf07y\n" \
+                         "vaddz.x vf07, vf07, vf07z\n" \
+                         "qmfc2 $2, vf07\n" \
+                         "mtc1 $2, %0\n" \
+                         : "=f"(ret) : "r"(v) : "$2")
+#define VU_SCALE_XYZW(dst, src, scale) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "qmtc2 %2, vf06\n" \
+                         "vmulx.xyzw vf05, vf05, vf06x\n" \
+                         "sqc2 vf05, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(src), "r"(scale) : "memory")
+#define VU_ADD_XYZW(dst, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vadd.xyzw vf07, vf05, vf06\n" \
+                         "sqc2 vf07, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(a), "r"(b) : "memory")
+
+extern float SCRGetBossWeakPointAngleFromIndex(GameObj *boss, int part);
+extern float iosGetCosf(float x);
+extern int ClipCollisionDBDoubleSide(void *dst, void *start, void *end, void *geom);
+extern float *GetCollisionDBPlane(void *geom);
+
+/* Collision callback for the boss query: keeps the weak point or trigger
+   surface the beam points at most directly, within its cone. */
+static void T_000C1D80(void *geom, SwordBeamQuery *q)
+{
+    sceVu0FVECTOR boundary;
+    sceVu0FVECTOR toHit;
+    sceVu0FVECTOR dir;
+    char clip[0x50];
+    sceVu0FVECTOR end;
+    GameObj *boss;
+    unsigned long attr;
+    int part;
+    float power;
+    float angle;
+    float dot;
+    float width;
+    float dist;
+    float *plane;
+    float *damage;
+    float hitDist;
+    float planeDot;
+
+    boss = SCRGetFirstObj(gcGlobalVar.playerList + 8);
+    if (!CheckSCRCharaAIWorkPtr(boss)) {
+        return;
+    }
+    attr = *GetCollisionDBAttributeAdr(geom);
+    if (isIgnoredSurface(attr)) {
+        return;
+    }
+    if (attr & ATTR_WEAK_POINT) {
+        part = SCRGetBossWeakPointIndexFromColAttr(attr & ATTR_WEAK_POINT, boss);
+        power = GetBossPartsDamagePerParts(SCRGetBossWork(boss), part);
+        if (power > 0.0f) {
+            power = bossHPRatioBase + (1.0f - bossHPRatioBase) * power;
+        }
+        power = CLAMP01(power);
+        if (power == 0.0f) {
+            return;
+        }
+    } else {
+        int trigger;
+
+        if ((attr & ATTR_TRIGGER) == 0) {
+            return;
+        }
+        trigger = getWeakIndexTrigger(attr & ATTR_TRIGGER);
+        part = SCRGetBossWeakPointIndexFromColAttr(attr & ATTR_TRIGGER, boss);
+        if (chkBossTrigTurnOff(trigger)) {
+            return;
+        }
+        power = 1.0f;
+    }
+    if (part == -1) {
+        return;
+    }
+    angle = SCRGetBossWeakPointAngleFromIndex(boss, part);
+    GetCollisionDBSurfBoundary(boundary, geom);
+    VU_SUB_XYZ(toHit, boundary, &q->pos);
+    VU0_NORMALIZE(dir, toHit);
+    VU_INNER_PRODUCT(dot, dir, q->dir);
+    width = CLAMP01(dot);
+    width = width - swordLineChangeThreshold;
+    width = CLAMP01(width);
+    width = width / (1.0f - swordLineChangeThreshold);
+    width = CLAMP01(width);
+    D_0017B104 = power * swordLineWidthMax * width;
+    if (!(iosGetCosf(angle * 0.5f * 0.017453294f) <= dot)) {
+        return;
+    }
+    if (dot < q->bestDot) {
+        return;
+    }
+    q->bestDot = dot;
+    VU_SCALE_XYZW(end, q->dir, q->dist);
+    VU_ADD_XYZW(end, &q->pos, end);
+    VU_DISTANCE(dist, boundary, &q->pos);
+    if (q->dist < dist) {
+        return;
+    }
+    if (!ClipCollisionDBDoubleSide(clip, q, end, geom)) {
+        return;
+    }
+    plane = GetCollisionDBPlane(geom);
+    VU_SQUARE_LENGTH(hitDist, toHit);
+    VU_INNER_PRODUCT(planeDot, plane, q->dir);
+    q->hit = 1;
+    q->dist = hitDist;
+    q->planeDot = planeDot;
+    q->power = power;
+    q->attr = attr;
+    q->part = part;
+    {
+        int index = getWeakIndex(attr);
+
+        ((int *)q->target)[1] = index;
+        ((int *)q->target)[0] = index >= 3;
+    }
+    damage = SCRGetBossPartsDamageFromIndex(boss, part);
+    q->target[2] = damage[0x34 / 4];
+    q->target[3] = damage[0x38 / 4];
+    CopyGeometryPointer(q->geometry, clip);
+    {
+        int *dst = q->surface;
+
+        dst[0] = ((int *)geom)[0];
+        dst[1] = ((int *)geom)[1];
+    }
+}
+#else
+static void T_000C1D80();
+#endif
 
 static void func_000C2318(GameObj *obj, u_long128 *pos)
 {
@@ -586,6 +849,82 @@ static void func_000C2318(GameObj *obj, u_long128 *pos)
         func_000C1BA8((SwordMatrix *)&query, (angle * dot - lo) / (hi - lo), brightness);
     }
 }
+
+#ifdef NONMATCHING
+/* Collision callback for the glow query: keeps the nearest weak point or
+   trigger surface that can currently light up. */
+static void T_000C2620(void *geom, SwordGlowQuery *q)
+{
+    sceVu0FVECTOR boundary;
+    GameObj *boss;
+    unsigned long attr;
+    int part;
+    float power;
+    float dist;
+    float *damage;
+
+    boss = SCRGetFirstObj(gcGlobalVar.playerList + 8);
+    if (!CheckSCRCharaAIWorkPtr(boss)) {
+        return;
+    }
+    attr = *GetCollisionDBAttributeAdr(geom);
+    if (isIgnoredSurface(attr)) {
+        return;
+    }
+    if (attr & ATTR_WEAK_POINT) {
+        part = SCRGetBossWeakPointIndexFromColAttr(attr & ATTR_WEAK_POINT, boss);
+        power = GetBossPartsDamagePerParts(SCRGetBossWork(boss), part);
+        if (power > 0.0f) {
+            power = bossHPRatioBase + (1.0f - bossHPRatioBase) * power;
+        }
+        power = CLAMP01(power);
+        if (power == 0.0f) {
+            return;
+        }
+    } else {
+        int trigger;
+
+        if ((attr & ATTR_TRIGGER) == 0) {
+            return;
+        }
+        trigger = getWeakIndexTrigger(attr & ATTR_TRIGGER);
+        part = SCRGetBossWeakPointIndexFromColAttr(attr & ATTR_TRIGGER, boss);
+        if (chkBossTrigTurnOff(trigger)) {
+            return;
+        }
+        power = 1.0f;
+    }
+    if (part == -1) {
+        return;
+    }
+    GetCollisionDBSurfBoundary(boundary, geom);
+    boundary[3] = 1.0f;
+    VU_DISTANCE(dist, boundary, &q->pos);
+    if (dist < q->dist) {
+        int index;
+
+        q->hit = 1;
+        q->dist = dist;
+        q->power = power;
+        q->pad18 = 0;
+        q->attr = attr;
+        q->part = part;
+        index = getWeakIndex(attr);
+        ((int *)q->hitPos)[1] = index;
+        ((int *)q->hitPos)[0] = index >= 3;
+        damage = SCRGetBossPartsDamageFromIndex(boss, part);
+        q->hitPos[2] = damage[0x34 / 4];
+        q->hitPos[3] = damage[0x38 / 4];
+        GetGeometryPointerWithCollisionDBDataGlobalPoint(q->geometry, geom, boundary);
+        {
+            SwordCollisionId *dst = &q->col;
+
+            dst->a = ((SwordCollisionId *)geom)->a;
+            dst->b = ((SwordCollisionId *)geom)->b;
+        }
+    }
+}
+#endif
 
 /* Glow strength for a hit at `dist`: 1 at the minimum distance, 0 at the maximum. */
 #define GLOW_POWER(power, dist, scale)                                                 \
