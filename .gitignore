@@ -46,3 +46,10 @@ Thumbs.db
 
 # Local overnight status notes for the maintainer
 OVERNIGHT.md
+
+# Private local agent instructions and takeover notes
+/.agent-local/
+/AGENTS.md
+/CLAUDE.md
+/docs/collaboration.md
+/docs/handoff.md
