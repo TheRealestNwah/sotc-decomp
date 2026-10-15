@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,659 after #374), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,696 after #376), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,659 functions** come from matching C: 1,471 GAMECORE, 866 MANAGER and 322 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,696 functions** come from matching C: 1,485 GAMECORE, 878 MANAGER and 333 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #376: 37 more hand matches among the named 18-word functions (14 GAMECORE, 12 MANAGER, 11 KERNEL). Notes: MMI and VU0 routines that are a single asm block (`iosTransposeMatrix`, `GetCharacterClassControlFrontDirection`) keep the explicit registers in the asm with clobbers, and end in the empty noreorder pair when the original has `jr $ra; nop`. `pref` is inline asm on a volatile field (`iosGetPacketPtrPath1`). A 0x1C-byte struct of ints copies with `ldl`/`ldr` pairs plus a final `lw` (`InitScriptControlButtonCallBack` is two words off with that). Bitfield setters on array elements match when the element pointer is formed first (`MenuItem *e = list + i; e->v = v;`). An inlined helper that returns a predicate followed by `^ 1` gives the `xori` result (`NICO_is_quake_attack_hit_only_boss`). Parked: `glVertex3fv`/`glVertex4fv` (vertex array at +0x200, stride 64, count at +0x41F0), `charrootdyn_getInterpVector` (asm input register), `charrootdyn_setFallDownLandingOffset` (sequential copy order), `forceAddPassageWork`, `getChipNo`, `iosGetTableCos`, `gsReg`, `iosFreeIopHeap`. Evidence: `build/hand15-check.log`.
 
 Issue #374: 47 more hand matches: named 17-word functions plus five volatile-global routines unblocked by #372 (`getVIntrCnt`, `getIntrGpCount`, `iosGetTCount`, `iFinish`, `ischedStop`); 24 GAMECORE, 10 MANAGER, 13 KERNEL. Notes: type predicates that wrap another helper (`GAMEUTIL_is_player_obj`, `GAMEUTIL_is_horse_obj`) inline a `static inline` copy of `GAMEUTIL_get_character_type`. Reloads of a header after storing through a key (`AddStrHashKey`) need every field as `int`, so the store aliases them. Calls whose result the caller ignores still need the right callee prototype: dropping an unused second argument (`Sg2ExPcmInputSetPan`) removes a register copy. Parked: `Sg2SlotSetLfo*Tbl` and `vab_get_lfotbl_param` (same double-address pattern as the `Sg2SlotSetTime*` family), `ReparentChildObjects` (final call not a tail call), `InitDL`, `initBgmScript`, `setFadeColor`, `checkScriptControlDef`, the weak-point fade loops, `iosGetScaleMatrixV`, `SetQuaternionByCosineAxisRotateVWithNoRegularize` (EE `sqrt.s` encoding). Evidence: `build/hand14-check.log`.
 
