@@ -178,7 +178,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - **Branch layout of small range checks:** explicit shared return labels (`goto ok; ... ok: return 1; ng: return 0;`), found by Codex (#209).
 - **Clamped values:** clamp into a new local with a ternary (`float t = (dt < MIN) ? MIN : dt;`), not in place (#224).
 - **A separately strength-reduced offset:** keep an explicit offset induction variable (`offset += 8`) next to the loop counter (Codex, #277).
-- **Load/store order kept strictly sequential:** first try alias-set unions (vector union copied through `.q`; float/int word unions; see #261). A `volatile` view sometimes also reproduces it (`iosDlGetTransBufId`, Codex's `add_element_expression_change`).
+- **Load/store order kept strictly sequential:** first try alias-set unions (vector union copied through `.q`; float/int word unions; see #261). Since #372 a `volatile` access is also an assembler reorder barrier (it never lands in a delay slot), so use `volatile` only for objects the original really treated as volatile; existing users (`iosDlGetTransBufId`, `add_element_expression_change`) still match.
 
 ## Where things stand (2026-10-14)
 

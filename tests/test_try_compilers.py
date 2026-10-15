@@ -1,6 +1,13 @@
 from pathlib import Path
 
-from tools.try_compilers import Function, diff, fix_moves, strip_padding, wsl_path
+from tools.try_compilers import (
+    Function,
+    diff,
+    fix_moves,
+    strip_padding,
+    volatile_barriers,
+    wsl_path,
+)
 
 
 def test_wsl_path_converts_drive_letters():
@@ -31,3 +38,15 @@ def test_fix_moves_uses_daddu(tmp_path):
     asm.write_text("\tmove\t$2,$3\n\tmove\t$4,$0\n", encoding="latin-1")
     fix_moves(asm)
     assert asm.read_text(encoding="latin-1") == "\tdaddu\t$2,$3,$0\n\tdaddu\t$4,$0,$0\n"
+
+
+def test_volatile_barriers_replace_commented_markers(tmp_path):
+    asm = tmp_path / "x.s"
+    asm.write_text(
+        "\t#.set\tvolatile\n\tlw\t$2,0($3)\n\t#.set\tnovolatile\n\tj\t$31\n", encoding="latin-1"
+    )
+    volatile_barriers(asm)
+    barrier = "\t.set\tnoreorder\n\t.set\treorder\n"
+    assert (
+        asm.read_text(encoding="latin-1") == barrier + "\tlw\t$2,0($3)\n" + barrier + "\tj\t$31\n"
+    )
