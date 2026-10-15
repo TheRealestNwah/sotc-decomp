@@ -27,6 +27,18 @@ def test_splice_uses_response_file_for_large_object_lists(tmp_path, monkeypatch)
     assert "build build/src/xff/TEST/a$ $$name.o: eecc" in ninja
 
 
+def test_c_objects_depend_on_compiler_wrappers(tmp_path, monkeypatch):
+    source_dir = tmp_path / "src/xff/TEST"
+    source_dir.mkdir(parents=True)
+    (source_dir / "f.c").touch()
+    monkeypatch.setattr(configure, "ROOT", tmp_path)
+    ninja = generate("test-", [], ["TEST"])
+    edge = next(line for line in ninja.splitlines() if ": eecc " in line)
+    implicit = edge.split(" | ", 1)[1].split()
+    assert "tools/ee_cc.py" in implicit
+    assert "tools/try_compilers.py" in implicit
+
+
 def test_ninja_path_escapes_special_characters():
     assert ninja_path(Path("asm") / "a b.s") == "asm/a$ b.s"
     assert ninja_path("C:/x$y") == "C$:/x$$y"
