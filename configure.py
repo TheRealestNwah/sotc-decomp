@@ -45,6 +45,11 @@ LD_SCRIPTS = [
 ]
 
 
+# ee_cc.py imports its compile and assemble steps from try_compilers.py, so a
+# change to either must rebuild every C object (#388).
+EECC_TOOLS = ("tools/ee_cc.py", "tools/try_compilers.py")
+
+
 def find_cross(requested: str | None) -> str:
     if requested:
         return requested
@@ -179,7 +184,10 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
             c_objects = []
             for c in c_files:
                 obj = f"{BUILD_DIR}/src/xff/{m}/{c.stem}.o"
-                lines.append(f"build {ninja_path(obj)}: eecc {ninja_path(c.relative_to(ROOT))}")
+                lines.append(
+                    f"build {ninja_path(obj)}: eecc {ninja_path(c.relative_to(ROOT))}"
+                    f" | {' '.join(EECC_TOOLS)}"
+                )
                 c_objects.append(obj)
             spliced = f"{BUILD_DIR}/xff/{m}/spliced"
             extra = " ".join(f"{spliced}/{name}" for name in asm_files if name != f"{m}.s")
