@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,925 after #394), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,946 after #396), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,925 functions** come from matching C: 1,573 GAMECORE, 971 MANAGER and 381 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,946 functions** come from matching C: 1,577 GAMECORE, 980 MANAGER and 389 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #396: 21 more hand matches among the named 24-word functions (4 GAMECORE, 9 MANAGER, 8 KERNEL). Notes: `sq $zero` (rather than `por` then `sq`) is an inline asm zero store, and its register follows the callee's declared return type (`motrootdyn_startchainhang` needs `int ParentLayoutObj(...)`). A struct-array field whose asm label sits at the field (`B_000C5B1C` for the second word) is declared as an array of the struct starting at that label (`Sg2DspEffectSetFeedBack`). A global stored through a fully built address is `volatile` here too (`Sg2ExStAdpcmInit` is still two registers off). Parked: `getStageChipIDReal` (the original stores the first result before loading the second operand), `st_defaultAI`, `startGaugeMaxAddEffect` (constants kept in saved float registers across a call), `initbar`, `reloadStage`, `act_local_vs_ofst_camera_place_status`, `GetJudgeVolumeClassWorkSize`, `RelocateModifiedManager`, `getBootParent`, `windowSetCursorPos`, `fsEffectDefault`, `MultiMatrixByPlane`, `IsEnvelopeDistantLightType`.
 
 Issue #394: 19 more hand matches among the named 23-word functions (5 GAMECORE, 10 MANAGER, 4 KERNEL). Notes: a global the original loads before a call without filling the delay slot is `volatile` (the semaphore id in `iosDlTransNow`). A two-instruction constant set up before a smaller argument means that parameter is `unsigned long` (`waterRefractionEnd`'s `gsReg`). Countdown loops that test `!= -1` are `while (--i != -1)` (`initAnimDefSeg`, `initLwsOriDefSeg`). Parked: `AI_CheckDamage_Bow`/`_Impact`, `GAMEUTIL_doit_position_filter`, `is_reset_or_lws_movie_or_cutout_game_camera`, `IsLwsOrientRootNode`/`GetLwsOrientNodeNum` (one `addu` operand order), `SetInertiaRotInterpMode`, `sndSepSetDefaultParam`, `iosCdInit`, `decrement_letter_refcount`, `getTWH`, `iosResetPath`, `isysGetLinkNum`, `isysGroupForNextForce`, `Sg2SlotSetMasPan`.
 
