@@ -84,7 +84,11 @@ extern int SeList_sword_weak_test;
 extern sceVu0FVECTOR B_0019CE70; /* in sword.c's .bss */
 extern sceVu0FVECTOR B_0019CEB0;
 extern sceVu0FVECTOR B_0019CEC0;
+#ifdef NONMATCHING
+static void T_000C2620();
+#else
 extern void T_000C2620();
+#endif
 extern int SParticleSheetData_S_GLOW_CLEAR;
 extern void GetCollisionDBGroupCallBack(void *group, void (*func)(), void *query);
 extern void SetGeometryPointerGlobalState(void *geom, sceVu0FVECTOR a, sceVu0FVECTOR b);
@@ -95,22 +99,36 @@ typedef unsigned int u_long128 __attribute__((mode(TI)));
 
 /* Collision query for the sword's glow: filled in by T_000C2620. */
 typedef struct {
+    int a;
+    int b;
+} SwordCollisionId;
+
+typedef struct {
     u_long128 pos;
     float dist;
     int hit;
-    char pad18[4];
+    int pad18;
     float power;
-    char pad20[0x10];
+    unsigned long attr;
+    int part;
+    char pad2C[4];
+    /* Passed on as a vector: trigger flag and weak-point index as ints,
+       then the part's two damage values. */
     sceVu0FVECTOR hitPos;
-    char geometry[0x90];
+    char geometry[0x50];
+    SwordCollisionId col;
+    char pad98[0x38];
 } SwordGlowQuery;
 
 typedef struct {
     char pad0[0x178];
     float time;
-    char pad17C[0x258 - 0x17C];
+    char pad17C[0x1AC - 0x17C];
+    int pause;
+    char pad1B0[0x258 - 0x1B0];
     char colGroup[0x2B0 - 0x258];
-    char playerList[1];
+    char playerList[0x360 - 0x2B0];
+    u_long128 cameraDir;
 } GcGlobalVar;
 
 extern GcGlobalVar gcGlobalVar;
@@ -495,7 +513,6 @@ static void func_000C1BA8(SwordMatrix *m, float power, float ambient)
 }
 
 /* Weak-point query for the boss: aims the beam at the marker and glows on a hit. */
-extern void T_000C1D80();
 extern void sprWeaponGetMarkerPos(sceVu0FVECTOR pos);
 extern float GetAmbientBrightnessOfLayoutObject(GameObj *obj);
 extern void GetCollisionDBSurfBoundary(sceVu0FVECTOR boundary, void *surface);
@@ -514,7 +531,12 @@ typedef struct {
     u_long128 pos;
     float dist;
     int hit;
-    char pad18[0x18];
+    float planeDot;
+    float power;
+    unsigned long attr;
+    int part;
+    char pad2C[4];
+    /* Trigger flag and weak-point index as ints, then two damage values. */
     sceVu0FVECTOR target;
     char geometry[0x50];
     int surface[2];
@@ -526,7 +548,255 @@ typedef struct {
 
 extern const SwordBeamQuery RO_00180600;
 
-static void func_000C2318(GameObj *obj, u_long128 *pos)
+extern int CheckSCRCharaAIWorkPtr(GameObj *obj);
+extern unsigned long *GetCollisionDBAttributeAdr(void *geom);
+extern int getGameHardMode(void);
+extern int SCRGetBossWeakPointIndexFromColAttr(unsigned long attr, GameObj *boss);
+extern void *SCRGetBossWork(GameObj *boss);
+extern float GetBossPartsDamagePerParts(void *work, int part);
+extern int chkBossTrigTurnOff(int trigger);
+extern void iosLocalPrintf(const char *fmt, ...);
+extern float *SCRGetBossPartsDamageFromIndex(GameObj *boss, int part);
+extern void GetGeometryPointerWithCollisionDBDataGlobalPoint(void *dst, void *geom,
+                                                             sceVu0FVECTOR point);
+
+/* Collision attribute bits. */
+#define ATTR_HARD_ONLY (0x8000UL << 41)
+#define ATTR_WEAK_POINT (0xC000UL << 40)
+#define ATTR_TRIGGER (0xF800UL << 20)
+
+/* Distance between the xyz of two vectors. */
+#define VU_DISTANCE(ret, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vsub.xyzw vf07, vf05, vf06\n" \
+                         "vmul.xyz vf07, vf07, vf07\n" \
+                         "vmulax.w ACC, vf00, vf07x\n" \
+                         "vmadday.w ACC, vf00, vf07y\n" \
+                         "vmaddz.w vf07, vf00, vf07z\n" \
+                         "vsqrt Q, vf07w\n" \
+                         "vwaitq\n" \
+                         "cfc2 $2, $vi22\n" \
+                         "mtc1 $2, %0\n" \
+                         : "=f"(ret) : "r"(a), "r"(b) : "$2")
+
+#ifdef NONMATCHING
+/* Parked: both collision callbacks are their original length but allocate the
+   ignore flag from isIgnoredSurface to v0 instead of v1. See issues #52, #54.
+   The helpers' debug strings are the file's first .rodata, so they stay with
+   the callbacks. getWeakIndexWeak is unused, but its string is still emitted. */
+static inline int getWeakIndexWeak(unsigned long weak)
+{
+    if (weak == (0x4000UL << 40)) {
+        return 0;
+    }
+    if (weak == (0x8000UL << 40)) {
+        return 1;
+    }
+    if (weak == (0xC000UL << 40)) {
+        return 2;
+    }
+    iosLocalPrintf("break at function getWeakIndexWeak(basescript/src/sword.c:%d)\n", 666);
+    return -1;
+}
+
+static inline int getWeakIndexTrigger(unsigned long trigger)
+{
+    if (trigger == (0xD800UL << 20)) {
+        return 0;
+    }
+    if (trigger == (0xE000UL << 20)) {
+        return 1;
+    }
+    if (trigger == (0xE800UL << 20)) {
+        return 2;
+    }
+    if (trigger == (0xF000UL << 20)) {
+        return 3;
+    }
+    if (trigger == (0xF800UL << 20)) {
+        return 4;
+    }
+    iosLocalPrintf("break at function getWeakIndexTrigger(basescript/src/sword.c:%d)\n", 684);
+    return -1;
+}
+
+static inline int getWeakIndex(unsigned long attr)
+{
+    int index = -1;
+
+    if (attr & ATTR_WEAK_POINT) {
+        index = ((attr & ATTR_WEAK_POINT) >> 54) - 1;
+    } else if (attr & ATTR_TRIGGER) {
+        index = getWeakIndexTrigger(attr & ATTR_TRIGGER) + 3;
+    } else {
+        iosLocalPrintf("break at function getWeakIndex(basescript/src/sword.c:%d)\n", 702);
+    }
+    return index;
+}
+
+/* Surfaces marked hard-only light up only in hard mode, the rest only outside it. */
+static inline int isIgnoredSurface(unsigned long attr)
+{
+    if (getGameHardMode() ? !(attr & ATTR_HARD_ONLY) : (attr & ATTR_HARD_ONLY) != 0) {
+        return 1;
+    }
+    return 0;
+}
+
+/* Inlined dot product of two vectors' xyz. */
+#define VU_INNER_PRODUCT(ret, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vaddw.x vf07, vf00, vf00w\n" \
+                         "vmul.xyz vf06, vf05, vf06\n" \
+                         "vaddax.x ACC, vf00, vf06x\n" \
+                         "vmadday.x ACC, vf07, vf06y\n" \
+                         "vmaddz.x vf06, vf07, vf06z\n" \
+                         "qmfc2 $2, vf06\n" \
+                         "mtc1 $2, %0\n" \
+                         : "=f"(ret) : "r"(a), "r"(b) : "$2")
+/* Squared length of a vector's xyz. */
+#define VU_SQUARE_LENGTH(ret, v) \
+    __asm__ __volatile__("lqc2 vf07, 0x0(%1)\n" \
+                         "vmul.xyz vf07, vf07, vf07\n" \
+                         "vaddy.x vf07, vf07, vf07y\n" \
+                         "vaddz.x vf07, vf07, vf07z\n" \
+                         "qmfc2 $2, vf07\n" \
+                         "mtc1 $2, %0\n" \
+                         : "=f"(ret) : "r"(v) : "$2")
+#define VU_SCALE_XYZW(dst, src, scale) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "qmtc2 %2, vf06\n" \
+                         "vmulx.xyzw vf05, vf05, vf06x\n" \
+                         "sqc2 vf05, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(src), "r"(scale) : "memory")
+#define VU_ADD_XYZW(dst, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vadd.xyzw vf07, vf05, vf06\n" \
+                         "sqc2 vf07, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(a), "r"(b) : "memory")
+
+extern float SCRGetBossWeakPointAngleFromIndex(GameObj *boss, int part);
+extern float iosGetCosf(float x);
+extern int ClipCollisionDBDoubleSide(void *dst, void *start, void *end, void *geom);
+extern float *GetCollisionDBPlane(void *geom);
+
+/* Collision callback for the boss query: keeps the weak point or trigger
+   surface the beam points at most directly, within its cone. */
+static void T_000C1D80(void *geom, SwordBeamQuery *q)
+{
+    sceVu0FVECTOR boundary;
+    sceVu0FVECTOR toHit;
+    sceVu0FVECTOR dir;
+    char clip[0x50];
+    sceVu0FVECTOR end;
+    GameObj *boss;
+    unsigned long attr;
+    int part;
+    float power;
+    float angle;
+    float dot;
+    float width;
+    float dist;
+    float *plane;
+    float *damage;
+    float hitDist;
+    float planeDot;
+
+    boss = SCRGetFirstObj(gcGlobalVar.playerList + 8);
+    if (!CheckSCRCharaAIWorkPtr(boss)) {
+        return;
+    }
+    attr = *GetCollisionDBAttributeAdr(geom);
+    if (isIgnoredSurface(attr)) {
+        return;
+    }
+    if (attr & ATTR_WEAK_POINT) {
+        part = SCRGetBossWeakPointIndexFromColAttr(attr & ATTR_WEAK_POINT, boss);
+        power = GetBossPartsDamagePerParts(SCRGetBossWork(boss), part);
+        if (power > 0.0f) {
+            power = bossHPRatioBase + (1.0f - bossHPRatioBase) * power;
+        }
+        power = CLAMP01(power);
+        if (power == 0.0f) {
+            return;
+        }
+    } else {
+        int trigger;
+
+        if ((attr & ATTR_TRIGGER) == 0) {
+            return;
+        }
+        trigger = getWeakIndexTrigger(attr & ATTR_TRIGGER);
+        part = SCRGetBossWeakPointIndexFromColAttr(attr & ATTR_TRIGGER, boss);
+        if (chkBossTrigTurnOff(trigger)) {
+            return;
+        }
+        power = 1.0f;
+    }
+    if (part == -1) {
+        return;
+    }
+    angle = SCRGetBossWeakPointAngleFromIndex(boss, part);
+    GetCollisionDBSurfBoundary(boundary, geom);
+    VU_SUB_XYZ(toHit, boundary, &q->pos);
+    VU0_NORMALIZE(dir, toHit);
+    VU_INNER_PRODUCT(dot, dir, q->dir);
+    width = CLAMP01(dot);
+    width = width - swordLineChangeThreshold;
+    width = CLAMP01(width);
+    width = width / (1.0f - swordLineChangeThreshold);
+    width = CLAMP01(width);
+    D_0017B104 = power * swordLineWidthMax * width;
+    if (!(iosGetCosf(angle * 0.5f * 0.017453294f) <= dot)) {
+        return;
+    }
+    if (dot < q->bestDot) {
+        return;
+    }
+    q->bestDot = dot;
+    VU_SCALE_XYZW(end, q->dir, q->dist);
+    VU_ADD_XYZW(end, &q->pos, end);
+    VU_DISTANCE(dist, boundary, &q->pos);
+    if (q->dist < dist) {
+        return;
+    }
+    if (!ClipCollisionDBDoubleSide(clip, q, end, geom)) {
+        return;
+    }
+    plane = GetCollisionDBPlane(geom);
+    VU_SQUARE_LENGTH(hitDist, toHit);
+    VU_INNER_PRODUCT(planeDot, plane, q->dir);
+    q->hit = 1;
+    q->dist = hitDist;
+    q->planeDot = planeDot;
+    q->power = power;
+    q->attr = attr;
+    q->part = part;
+    {
+        int index = getWeakIndex(attr);
+
+        ((int *)q->target)[1] = index;
+        ((int *)q->target)[0] = index >= 3;
+    }
+    damage = SCRGetBossPartsDamageFromIndex(boss, part);
+    q->target[2] = damage[0x34 / 4];
+    q->target[3] = damage[0x38 / 4];
+    CopyGeometryPointer(q->geometry, clip);
+    {
+        int *dst = q->surface;
+
+        dst[0] = ((int *)geom)[0];
+        dst[1] = ((int *)geom)[1];
+    }
+}
+#else
+extern void T_000C1D80();
+#endif
+
+static void func_000C2318(GameObj *obj, u_long128 *pos, u_long128 *unusedDir)
 {
     SwordBeamQuery query = RO_00180600;
     sceVu0FVECTOR marker;
@@ -586,6 +856,82 @@ static void func_000C2318(GameObj *obj, u_long128 *pos)
         func_000C1BA8((SwordMatrix *)&query, (angle * dot - lo) / (hi - lo), brightness);
     }
 }
+
+#ifdef NONMATCHING
+/* Collision callback for the glow query: keeps the nearest weak point or
+   trigger surface that can currently light up. */
+static void T_000C2620(void *geom, SwordGlowQuery *q)
+{
+    sceVu0FVECTOR boundary;
+    GameObj *boss;
+    unsigned long attr;
+    int part;
+    float power;
+    float dist;
+    float *damage;
+
+    boss = SCRGetFirstObj(gcGlobalVar.playerList + 8);
+    if (!CheckSCRCharaAIWorkPtr(boss)) {
+        return;
+    }
+    attr = *GetCollisionDBAttributeAdr(geom);
+    if (isIgnoredSurface(attr)) {
+        return;
+    }
+    if (attr & ATTR_WEAK_POINT) {
+        part = SCRGetBossWeakPointIndexFromColAttr(attr & ATTR_WEAK_POINT, boss);
+        power = GetBossPartsDamagePerParts(SCRGetBossWork(boss), part);
+        if (power > 0.0f) {
+            power = bossHPRatioBase + (1.0f - bossHPRatioBase) * power;
+        }
+        power = CLAMP01(power);
+        if (power == 0.0f) {
+            return;
+        }
+    } else {
+        int trigger;
+
+        if ((attr & ATTR_TRIGGER) == 0) {
+            return;
+        }
+        trigger = getWeakIndexTrigger(attr & ATTR_TRIGGER);
+        part = SCRGetBossWeakPointIndexFromColAttr(attr & ATTR_TRIGGER, boss);
+        if (chkBossTrigTurnOff(trigger)) {
+            return;
+        }
+        power = 1.0f;
+    }
+    if (part == -1) {
+        return;
+    }
+    GetCollisionDBSurfBoundary(boundary, geom);
+    boundary[3] = 1.0f;
+    VU_DISTANCE(dist, boundary, &q->pos);
+    if (dist < q->dist) {
+        int index;
+
+        q->hit = 1;
+        q->dist = dist;
+        q->power = power;
+        q->pad18 = 0;
+        q->attr = attr;
+        q->part = part;
+        index = getWeakIndex(attr);
+        ((int *)q->hitPos)[1] = index;
+        ((int *)q->hitPos)[0] = index >= 3;
+        damage = SCRGetBossPartsDamageFromIndex(boss, part);
+        q->hitPos[2] = damage[0x34 / 4];
+        q->hitPos[3] = damage[0x38 / 4];
+        GetGeometryPointerWithCollisionDBDataGlobalPoint(q->geometry, geom, boundary);
+        {
+            SwordCollisionId *dst = &q->col;
+
+            dst->a = ((SwordCollisionId *)geom)->a;
+            dst->b = ((SwordCollisionId *)geom)->b;
+        }
+    }
+}
+#endif
 
 /* Glow strength for a hit at `dist`: 1 at the minimum distance, 0 at the maximum. */
 #define GLOW_POWER(power, dist, scale)                                                 \
@@ -935,6 +1281,145 @@ static void func_000C3198(GameObj *obj, u_long128 *pos, u_long128 *unusedDir)
 }
 
 
+extern void func_000C3198(GameObj *obj, u_long128 *pos, u_long128 *dir);
+
+/* libvu0's sceVu0ApplyMatrix, inlined: dst = m * v. */
+#define VU_APPLY_MATRIX(dst, m, v) \
+    __asm__ __volatile__("lqc2 vf08, 0x0(%2)\n" \
+                         "lqc2 vf14, 0x0(%1)\n" \
+                         "lqc2 vf15, 0x10(%1)\n" \
+                         "lqc2 vf16, 0x20(%1)\n" \
+                         "lqc2 vf17, 0x30(%1)\n" \
+                         "vmulax.xyzw ACC, vf14, vf08x\n" \
+                         "vmadday.xyzw ACC, vf15, vf08y\n" \
+                         "vmaddaz.xyzw ACC, vf16, vf08z\n" \
+                         "vmaddw.xyzw vf10, vf17, vf08w\n" \
+                         "sqc2 vf10, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(m), "r"(v) : "memory")
+
+typedef union {
+    u_long128 q;
+    struct {
+        float x, y, z, w;
+    } v;
+} SwordVec;
+
+typedef struct {
+    char pad0[0x144];
+    struct {
+        char pad0[0x260];
+        unsigned long flags;
+    } *info;
+} SwordHitLayout;
+
+typedef struct {
+    char pad0[0xC0];
+    char geometry[0x124 - 0xC0];
+    int hasGeometry;
+    char pad128[0x158 - 0x128];
+    sceVu0FVECTOR *matrix;
+} SwordLayout;
+
+extern GameObj *isysGetThisSubThread(void);
+extern SwordLayout *GetLayoutClass(GameObj *obj);
+extern void nico_weaponUpdateGeometry(SwordLayout *layout);
+extern void FlushCollisionWork(GameObj *obj);
+extern int isSeamlessStage(void);
+extern void GetQuaternionFromMatrix(sceVu0FVECTOR q, sceVu0FVECTOR *m);
+extern sceVu0FVECTOR XUnitVector;
+extern sceVu0FVECTOR IdentityQuaternion;
+extern sceVu0FVECTOR ZeroPoint;
+extern void SetGeometryPointerNodePosState(void *geom, GameObj *obj, int node, sceVu0FVECTOR rot,
+                                           sceVu0FVECTOR pos);
+extern float iosGetATan2fExact(float y, float x);
+extern float iosGetCosf(float x);
+extern void iosApplyRotMatrix(sceVu0FVECTOR dst, sceVu0FVECTOR *m, sceVu0FVECTOR src);
+extern int isWeaponTargetMarker(GameObj *obj);
+extern int CheckSCRCharaAIWorkPtr(GameObj *obj);
+extern GameObj *GetGeometryPointerObject(void *geom);
+extern int _omakeSelectFlagChk(int flag);
+extern void SetLayoutObjAccessSwitch(GameObj *obj, int on);
+
+#ifdef NONMATCHING
+/* Parked: 290 words vs the original 288. The rotation addresses (rotX/rotZ)
+   get callee-saved registers instead of the D_0017B150/D_0017B154 high parts
+   and `origin`. See issue #51. */
+/* The sword's script thread: each frame, places the sword's lights and runs
+   the beam update for the current target. */
+void nico_swordstart(void)
+{
+    GameObj *obj = isysGetThisSubThread();
+    SwordLayout *layout = GetLayoutClass(obj);
+    sceVu0FVECTOR pos;
+    sceVu0FVECTOR dir;
+    sceVu0FVECTOR dirLocal = { -1.0f, 0.0f, 0.0f, 1.0f };
+    sceVu0FVECTOR origin = { 0.0f, 0.0f, 0.0f, 1.0f };
+    sceVu0FVECTOR tip = { 0.0f, 0.0f, 0.1f, 1.0f };
+    sceVu0FVECTOR rotX;
+    sceVu0FVECTOR rotZ;
+    SwordVec a;
+    SwordVec b;
+    SwordHitLayout *hit;
+
+    for (;;) {
+        swordFlareHitPlaneAttribute = 0;
+        if (gcGlobalVar.pause == 0) {
+            nico_weaponUpdateGeometry(layout);
+            FlushCollisionWork(obj);
+        }
+        if (isSeamlessStage()) {
+            VU_APPLY_MATRIX(B_0019CEC0, layout->matrix, tip);
+            GetQuaternionFromMatrix(B_0019CEB0, layout->matrix);
+            SetQuaternionByAxisRotateVWithNoRegularize(rotX, -0x8000, XUnitVector);
+            VU_QUAT_MUL(B_0019CEB0, B_0019CEB0, rotX);
+            SetQuaternionByAxisRotateVWithNoRegularize(rotZ, -0x8000, ZUnitVector);
+            VU_QUAT_MUL(B_0019CEB0, B_0019CEB0, rotZ);
+            SetGeometryPointerNodePosState(B_0019CE70, obj, 0, IdentityQuaternion, ZeroPoint);
+            if (D_0017B154 != 0 || D_0017B150 != 0) {
+                float t;
+
+                a.q = *(u_long128 *)dir;
+                b.q = gcGlobalVar.cameraDir;
+                a.v.z += a.v.y;
+                b.v.z += b.v.y;
+                VU0_NORMALIZE(&a, &a);
+                VU0_NORMALIZE(&b, &b);
+                t = iosGetCosf(iosGetATan2fExact(a.v.z, a.v.x) * 8.0f);
+                t += 1.0f;
+                t *= 0.5f;
+                t = (t + (iosGetSinf(iosGetATan2fExact(-b.v.z, b.v.x)) + 1.0f) * 0.5f) * 0.5f;
+                origin[2] = t * 0.55f * D_0017B0EC + -0.55f;
+            }
+            VU_APPLY_MATRIX(pos, layout->matrix, origin);
+            iosApplyRotMatrix(dir, layout->matrix, dirLocal);
+            if (D_0017B154 != 0) {
+                func_000C3198(obj, (u_long128 *)pos, (u_long128 *)dir);
+            } else if (D_0017B150 != 0) {
+                if (isWeaponTargetMarker(SCRGetFirstObj(gcGlobalVar.playerList))) {
+                    func_000C2318(obj, (u_long128 *)pos, (u_long128 *)dir);
+                }
+            } else {
+                D_0017B104 = 0.0f;
+                D_0017B100 = 0.0f;
+            }
+            if (CheckSCRCharaAIWorkPtr(SCRGetFirstObj(gcGlobalVar.playerList + 8))) {
+                func_000C29B0((u_long128 *)pos);
+            } else if (glowClearEmitter.id != 0) {
+                set_npe_blend_ratio_particle_emitter(SParticleSheetData_S_GLOW_CLEAR,
+                                                     glowClearEmitter.id, 1.0f);
+            }
+            hit = layout->hasGeometry ? (SwordHitLayout *)GetLayoutClass(GetGeometryPointerObject(layout->geometry)) : 0;
+            if ((hit != 0 && (hit->info->flags & 0x30)) || _omakeSelectFlagChk(7)) {
+                SetLayoutObjAccessSwitch(obj, 0);
+            } else {
+                SetLayoutObjAccessSwitch(obj, 1);
+            }
+        }
+        scrRun();
+    }
+}
+#endif
+
 /* Written out in each function: a static helper isn't inlined at -O2. */
 #define STOP_SWORD_SE()            \
     do {                           \
@@ -1042,6 +1527,350 @@ static void func_000C3CF8(void)
     gsReg(8, 5);
     gsRegEnd();
 }
+
+#ifdef NONMATCHING
+/* Parked: DispWithSwordBlur and DispWithTorchBlur (identical but for the blade
+   tip offset) compile to 616 of the original 629 words. The structure matches;
+   loop-invariant hoisting and constant sharing differ (the original keeps 1.0f
+   shared between quat[3] and the alpha clamps, and doesn't hoist the 0.5f
+   colour or the stack addresses used before the loop). See issue #55. */
+typedef sceVu0FVECTOR sceVu0FMATRIX[4];
+
+/* Inverse of a rigid transform: transposed rotation, rotated negated translation. */
+#define VU_INVERSE_MATRIX(dst, src) \
+    __asm__ __volatile__("lqc2 vf24, 0x30(%1)\n" \
+                         "vsubw.x vf25, vf00, vf00w\n" \
+                         "vmulx.xyz vf28, vf24, vf25x\n" \
+                         "vsub.w vf28, vf28, vf28\n" \
+                         "lq $8, 0x0(%1)\n" \
+                         "lq $9, 0x10(%1)\n" \
+                         "lq $10, 0x20(%1)\n" \
+                         "qmfc2 $11, vf00\n" \
+                         "pextlw $12, $9, $8\n" \
+                         "pextuw $13, $9, $8\n" \
+                         "pextlw $14, $11, $10\n" \
+                         "pextuw $15, $11, $10\n" \
+                         "pcpyld $8, $14, $12\n" \
+                         "pcpyud $9, $12, $14\n" \
+                         "pcpyld $10, $15, $13\n" \
+                         "pcpyud $11, $13, $15\n" \
+                         "qmtc2 $8, vf24\n" \
+                         "qmtc2 $9, vf25\n" \
+                         "qmtc2 $10, vf26\n" \
+                         "vmulax.xyzw ACC, vf24, vf28x\n" \
+                         "vmadday.xyzw ACC, vf25, vf28y\n" \
+                         "vmaddaz.xyzw ACC, vf26, vf28z\n" \
+                         "vmaddw.xyzw vf29, vf00, vf28w\n" \
+                         "vsub.w vf29, vf29, vf29\n" \
+                         "vadd.w vf29, vf29, vf00\n" \
+                         "sqc2 vf24, 0x0(%0)\n" \
+                         "sqc2 vf25, 0x10(%0)\n" \
+                         "sqc2 vf26, 0x20(%0)\n" \
+                         "sqc2 vf29, 0x30(%0)\n" \
+                         : : "r"(dst), "r"(src) \
+                         : "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15", "memory")
+/* dst = a * b */
+#define VU_MUL_MATRIX(dst, a, b) \
+    __asm__ __volatile__("lqc2 vf14, 0x0(%1)\n" \
+                         "lqc2 vf15, 0x10(%1)\n" \
+                         "lqc2 vf16, 0x20(%1)\n" \
+                         "lqc2 vf17, 0x30(%1)\n" \
+                         "lqc2 vf24, 0x0(%2)\n" \
+                         "lqc2 vf25, 0x10(%2)\n" \
+                         "lqc2 vf26, 0x20(%2)\n" \
+                         "lqc2 vf27, 0x30(%2)\n" \
+                         "vmulax.xyzw ACC, vf14, vf24x\n" \
+                         "vmadday.xyzw ACC, vf15, vf24y\n" \
+                         "vmaddaz.xyzw ACC, vf16, vf24z\n" \
+                         "vmaddw.xyzw vf24, vf17, vf24w\n" \
+                         "vmulax.xyzw ACC, vf14, vf25x\n" \
+                         "vmadday.xyzw ACC, vf15, vf25y\n" \
+                         "vmaddaz.xyzw ACC, vf16, vf25z\n" \
+                         "vmaddw.xyzw vf25, vf17, vf25w\n" \
+                         "vmulax.xyzw ACC, vf14, vf26x\n" \
+                         "vmadday.xyzw ACC, vf15, vf26y\n" \
+                         "vmaddaz.xyzw ACC, vf16, vf26z\n" \
+                         "vmaddw.xyzw vf26, vf17, vf26w\n" \
+                         "vmulax.xyzw ACC, vf14, vf27x\n" \
+                         "vmadday.xyzw ACC, vf15, vf27y\n" \
+                         "vmaddaz.xyzw ACC, vf16, vf27z\n" \
+                         "vmaddw.xyzw vf27, vf17, vf27w\n" \
+                         "sqc2 vf24, 0x0(%0)\n" \
+                         "sqc2 vf25, 0x10(%0)\n" \
+                         "sqc2 vf26, 0x20(%0)\n" \
+                         "sqc2 vf27, 0x30(%0)\n" \
+                         : : "r"(dst), "r"(a), "r"(b) : "memory")
+/* libvu0's sceVu0ApplyMatrix, inlined: dst = m * v. */
+#define VU_APPLY_MATRIX(dst, m, v) \
+    __asm__ __volatile__("lqc2 vf08, 0x0(%2)\n" \
+                         "lqc2 vf14, 0x0(%1)\n" \
+                         "lqc2 vf15, 0x10(%1)\n" \
+                         "lqc2 vf16, 0x20(%1)\n" \
+                         "lqc2 vf17, 0x30(%1)\n" \
+                         "vmulax.xyzw ACC, vf14, vf08x\n" \
+                         "vmadday.xyzw ACC, vf15, vf08y\n" \
+                         "vmaddaz.xyzw ACC, vf16, vf08z\n" \
+                         "vmaddw.xyzw vf10, vf17, vf08w\n" \
+                         "sqc2 vf10, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(m), "r"(v) : "memory")
+/* Inlined dot product of two vectors' xyz. */
+#define VU_INNER_PRODUCT(ret, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vaddw.x vf07, vf00, vf00w\n" \
+                         "vmul.xyz vf06, vf05, vf06\n" \
+                         "vaddax.x ACC, vf00, vf06x\n" \
+                         "vmadday.x ACC, vf07, vf06y\n" \
+                         "vmaddz.x vf06, vf07, vf06z\n" \
+                         "qmfc2 $2, vf06\n" \
+                         "mtc1 $2, %0\n" \
+                         : "=f"(ret) : "r"(a), "r"(b) : "$2")
+/* dst = a x b (xyz), w cleared. */
+#define VU_OUTER_PRODUCT(dst, a, b) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vopmula.xyz ACC, vf05, vf06\n" \
+                         "vopmsub.xyz vf07, vf06, vf05\n" \
+                         "vsub.w vf07, vf07, vf07\n" \
+                         "sqc2 vf07, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(a), "r"(b) : "memory")
+/* dst = a * t + b * (1 - t) (xyz). */
+#define VU_INTER_VECTOR(dst, a, b, t) \
+    __asm__ __volatile__("mfc1 $8, %3\n" \
+                         "qmtc2 $8, vf07\n" \
+                         "lqc2 vf05, 0x0(%1)\n" \
+                         "lqc2 vf06, 0x0(%2)\n" \
+                         "vsubx.w vf08, vf00, vf07x\n" \
+                         "vmulax.xyz ACC, vf05, vf07x\n" \
+                         "vmaddw.xyz vf05, vf06, vf08w\n" \
+                         "sqc2 vf05, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(a), "r"(b), "f"(t) : "$8", "memory")
+/* dst = rotation of quaternion q applied to v, plus the translation t. */
+#define VU_QUAT_ROT_TRANS(dst, q, v, t) \
+    __asm__ __volatile__("lqc2 vf08, 0x0(%2)\n" \
+                         "lqc2 vf18, 0x0(%3)\n" \
+                         "vmove.w vf18, vf00\n" \
+                         "vaddw.xyz vf12, vf00, vf00w\n" \
+                         "lqc2 vf11, 0x0(%1)\n" \
+                         "vmr32.w vf14, vf00\n" \
+                         "vmr32.w vf15, vf00\n" \
+                         "vmr32.w vf16, vf00\n" \
+                         "vopmula.xyz ACC, vf11, vf12\n" \
+                         "vmadd.xyz vf11, vf00, vf00\n" \
+                         "vmadd.xyz vf10, vf11, vf12\n" \
+                         "vmul.xyz vf13, vf11, vf10\n" \
+                         "vopmula.xyz ACC, vf11, vf10\n" \
+                         "vmaddw.xyz vf15, vf10, vf11w\n" \
+                         "vmsubw.xyz vf16, vf10, vf11w\n" \
+                         "vopmula.xyz ACC, vf13, vf12\n" \
+                         "vmadd.xyz vf17, vf13, vf12\n" \
+                         "vopmula.xyz ACC, vf15, vf12\n" \
+                         "vmadd.xyz vf15, vf00, vf00\n" \
+                         "vsub.xyz vf14, vf12, vf17\n" \
+                         "vmove.yz vf17, vf14\n" \
+                         "vmove.y vf14, vf16\n" \
+                         "vmove.y vf16, vf15\n" \
+                         "vmove.y vf15, vf17\n" \
+                         "vmove.z vf14, vf15\n" \
+                         "vmove.z vf15, vf16\n" \
+                         "vmove.z vf16, vf17\n" \
+                         "vmulax.xyzw ACC, vf14, vf08x\n" \
+                         "vmadday.xyzw ACC, vf15, vf08y\n" \
+                         "vmaddaz.xyzw ACC, vf16, vf08z\n" \
+                         "vmaddw.xyzw vf10, vf18, vf08w\n" \
+                         "sqc2 vf10, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(q), "r"(v), "r"(t) : "memory")
+#define VU_SCALE_XYZW(dst, src, scale) \
+    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n" \
+                         "qmtc2 %2, vf06\n" \
+                         "vmulx.xyzw vf05, vf05, vf06x\n" \
+                         "sqc2 vf05, 0x0(%0)\n" \
+                         : : "r"(dst), "r"(src), "r"(scale) : "memory")
+
+typedef struct {
+    char pad0[0x90];
+    sceVu0FVECTOR scale;
+    char padA0[0x15C - 0xA0];
+    sceVu0FVECTOR *blurMatrix;
+    char pad160[0x168 - 0x160];
+    sceVu0FVECTOR *matrix;
+    sceVu0FVECTOR *worldMatrix;
+} WeaponLayout;
+
+extern void DispLayoutObjModel(void);
+extern WeaponLayout *GetLayoutClass(GameObj *obj);
+extern int GetResetCameraFlagForDisplay(void);
+extern void glEnable(int cap);
+extern void glDisable(int cap);
+extern void glLoadMatrixf(void *m);
+extern sceVu0FMATRIX UnitMatrix;
+extern void iosScaleMatrixV(sceVu0FMATRIX dst, sceVu0FMATRIX src, sceVu0FVECTOR scale);
+extern void iosDlPushLayer(int layer);
+extern void iosDlPopLayer(void);
+extern void glZOffset(float offset);
+extern float iosGetACosfExact(float x);
+extern void CompletePlaneD(sceVu0FVECTOR plane, sceVu0FVECTOR point);
+extern float GetPointDistanceFromPlane(sceVu0FVECTOR plane, sceVu0FVECTOR point);
+extern void SetQuaternionByAxisRotateV(sceVu0FVECTOR q, short angle, sceVu0FVECTOR axis);
+extern void iosgluGetViewCoordPosition(float *dst, sceVu0FVECTOR pos);
+extern void glBegin(int mode);
+extern void glEnd(void);
+extern void glColor4f(float r, float g, float b, float a);
+extern void glTexCoord2f(float s, float t);
+extern void glVertex3fv(float *v);
+
+/* Draws the blur trail of a weapon swing: a fan of quads swept from the
+   blade's previous to its current position, textured with the frame buffer. */
+#define DISP_WEAPON_BLUR(holder, weapon, tipOffset)                                         \
+    {                                                                                     \
+        sceVu0FMATRIX m;                                                                  \
+        sceVu0FVECTOR p0;                                                                 \
+        sceVu0FVECTOR p1;                                                                 \
+        sceVu0FVECTOR p2;                                                                 \
+        sceVu0FVECTOR p3;                                                                 \
+        sceVu0FVECTOR base;                                                               \
+        sceVu0FVECTOR tip;                                                                \
+        sceVu0FVECTOR axis;                                                               \
+        sceVu0FVECTOR d0;                                                                 \
+        sceVu0FVECTOR d1;                                                                 \
+        sceVu0FVECTOR mid0;                                                               \
+        sceVu0FVECTOR mid1;                                                               \
+        sceVu0FVECTOR plane;                                                              \
+        sceVu0FVECTOR tmp;                                                                \
+        sceVu0FVECTOR center;                                                             \
+        sceVu0FVECTOR quat;                                                               \
+        sceVu0FVECTOR rot;                                                                \
+        sceVu0FVECTOR prev0;                                                              \
+        sceVu0FVECTOR prev1;                                                              \
+        float uv0[4];                                                                     \
+        float uv1[4];                                                                     \
+        sceVu0FVECTOR rel0;                                                               \
+        sceVu0FVECTOR rel1;                                                               \
+        sceVu0FVECTOR cur0;                                                               \
+        sceVu0FVECTOR cur1;                                                               \
+        WeaponLayout *h;                                                                  \
+        WeaponLayout *w;                                                                  \
+        float angle;                                                                      \
+        float d;                                                                          \
+        int i;                                                                            \
+                                                                                          \
+        DispLayoutObjModel();                                                             \
+        h = GetLayoutClass(holder);                                                       \
+        w = GetLayoutClass(weapon);                                                       \
+        if (GetResetCameraFlagForDisplay() == 0) {                                        \
+            float z0 = 0.05f;                                                             \
+            float z1 = (tipOffset);                                                       \
+                                                                                          \
+            glEnable(0);                                                                  \
+            glEnable(0x14);                                                               \
+            glDisable(2);                                                                 \
+            glEnable(3);                                                                  \
+            glDisable(8);                                                                 \
+            glLoadMatrixf(UnitMatrix);                                                    \
+            VU_INVERSE_MATRIX(m, h->matrix);                                              \
+            VU_MUL_MATRIX(m, w->worldMatrix, m);                                          \
+            iosScaleMatrixV(m, m, h->scale);                                              \
+            iosDlPushLayer(0x17);                                                         \
+            base[0] = 0.0f;                                                               \
+            base[1] = 0.0f;                                                               \
+            base[2] = z0;                                                                 \
+            base[3] = 1.0f;                                                               \
+            tip[0] = 0.0f;                                                                \
+            tip[1] = 0.0f;                                                                \
+            tip[2] = z1;                                                                  \
+            tip[3] = 1.0f;                                                                \
+            func_000C3CF8();                                                              \
+            glZOffset(1.05f);                                                             \
+            VU_APPLY_MATRIX(p2, h->blurMatrix, base);                                     \
+            VU_APPLY_MATRIX(p3, h->blurMatrix, tip);                                      \
+            VU_APPLY_MATRIX(p0, m, base);                                                 \
+            VU_APPLY_MATRIX(p1, m, tip);                                                  \
+            VU_SUB_XYZ(d0, p3, p2);                                                       \
+            VU0_NORMALIZE(d0, d0);                                                        \
+            VU_SUB_XYZ(d1, p1, p0);                                                       \
+            VU0_NORMALIZE(d1, d1);                                                        \
+            VU_INNER_PRODUCT(d, d0, d1);                                                  \
+            angle = iosGetACosfExact(d);                                                  \
+            VU_OUTER_PRODUCT(axis, d0, d1);                                               \
+            VU_INTER_VECTOR(mid0, p0, p2, 0.5f);                                          \
+            VU_INTER_VECTOR(mid1, p1, p3, 0.5f);                                          \
+            VU_SUB_XYZ(plane, p2, p0);                                                    \
+            VU0_NORMALIZE(plane, plane);                                                  \
+            CompletePlaneD(plane, mid0);                                                  \
+            VU_SUB_XYZ(tmp, p3, p1);                                                      \
+            VU0_NORMALIZE(tmp, tmp);                                                      \
+            VU_OUTER_PRODUCT(tmp, tmp, axis);                                             \
+            VU_INNER_PRODUCT(d, plane, tmp);                                              \
+            if (d < 0.0f ? d < -0.001f : d > 0.001f) {                                    \
+                VU_SCALE_XYZW(tmp, tmp, -GetPointDistanceFromPlane(plane, mid1) / d);     \
+                VU_ADD_XYZ(center, mid1, tmp);                                            \
+                memset(quat, 0, sizeof(quat));                                            \
+                quat[3] = 1.0f;                                                           \
+                SetQuaternionByAxisRotateV(rot, -(int)(angle * 0.1f * 32768.0f / 3.1415926f), \
+                                           axis);                                         \
+                VU_SUB_XYZ(rel0, p2, center);                                             \
+                VU_SUB_XYZ(rel1, p3, center);                                             \
+                iosgluGetViewCoordPosition(uv0, p2);                                      \
+                uv0[0] = (uv0[0] + 256.0f) * 256.0f / getDrawScreenWidth();               \
+                uv0[1] = (uv0[1] + 224.0f) * 256.0f / getDrawScreenHeight();              \
+                iosgluGetViewCoordPosition(uv1, p3);                                      \
+                uv1[0] = (uv1[0] + 256.0f) * 256.0f / getDrawScreenWidth();               \
+                uv1[1] = (uv1[1] + 224.0f) * 256.0f / getDrawScreenHeight();              \
+                for (i = 0; i < 10; i++) {                                                \
+                    VU_QUAT_ROT_TRANS(cur0, quat, rel0, center);                          \
+                    VU_QUAT_ROT_TRANS(cur1, quat, rel1, center);                          \
+                    VU_QUAT_MUL(quat, rot, quat);                                         \
+                    if (i > 0) {                                                          \
+                        float a0 = (9 - i) * 0.1f * 1.6f;                                 \
+                        float a1 = (10 - i) * 0.1f * 1.6f;                                \
+                                                                                          \
+                        if (!(a0 <= 1.0f)) {                                              \
+                            a0 = 1.0f;                                                    \
+                        }                                                                 \
+                        a0 *= 0.8f;                                                       \
+                        if (!(a1 <= 1.0f)) {                                              \
+                            a1 = 1.0f;                                                    \
+                        }                                                                 \
+                        a1 *= 0.8f;                                                       \
+                        glBegin(5);                                                       \
+                        glColor4f(0.5f, 0.5f, 0.5f, a0 * 0.3f);                           \
+                        glTexCoord2f(uv1[0], uv1[1]);                                     \
+                        glVertex3fv(cur1);                                                \
+                        glColor4f(0.5f, 0.5f, 0.5f, a0);                                  \
+                        glTexCoord2f(uv0[0], uv0[1]);                                     \
+                        glVertex3fv(cur0);                                                \
+                        glColor4f(0.5f, 0.5f, 0.5f, a1 * 0.3f);                           \
+                        glTexCoord2f(uv1[0], uv1[1]);                                     \
+                        glVertex3fv(prev1);                                               \
+                        glColor4f(0.5f, 0.5f, 0.5f, a1);                                  \
+                        glTexCoord2f(uv0[0], uv0[1]);                                     \
+                        glVertex3fv(prev0);                                               \
+                        glEnd();                                                          \
+                    }                                                                     \
+                    *(u_long128 *)prev0 = *(u_long128 *)cur0;                             \
+                    *(u_long128 *)prev1 = *(u_long128 *)cur1;                             \
+                }                                                                         \
+            }                                                                             \
+            glZOffset(1.0f);                                                              \
+            glDisable(0);                                                                 \
+            glDisable(0x14);                                                              \
+            glEnable(2);                                                                  \
+            glEnable(3);                                                                  \
+            glDisable(8);                                                                 \
+            iosDlPopLayer();                                                              \
+        }                                                                                 \
+    }
+
+void DispWithSwordBlur(GameObj *weapon, GameObj *holder)
+{
+    DISP_WEAPON_BLUR(holder, weapon, -0.55f);
+}
+
+void DispWithTorchBlur(GameObj *weapon, GameObj *holder)
+{
+    DISP_WEAPON_BLUR(holder, weapon, -0.8f);
+}
+#endif
 
 int CheckSwordIndicateAimPoint(GameObj *obj)
 {
