@@ -77,7 +77,7 @@ The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
    - Copy the useful change back by hand, then check with try_compilers.
 
 How it builds:
-- `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` (in WSL).
+- `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` (in WSL). Before assembling, gcc's commented `#.set volatile` markers become empty `.set noreorder`/`.set reorder` pairs, so volatile accesses stay out of delay slots as in the original (see `docs/findings.md`).
 - `tools/xff_splice.py` writes `build/xff/<MODULE>/spliced/`, which is the module's asm with each C function replaced by the compiled words. Relocated words become explicit `.reloc` directives.
 - The module is assembled from that copy and checked as usual.
 

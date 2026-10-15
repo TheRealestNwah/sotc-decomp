@@ -92,6 +92,22 @@ def fix_moves(asm: Path) -> None:
     asm.write_text(text, encoding="latin-1")
 
 
+def volatile_barriers(asm: Path) -> None:
+    """gcc brackets each volatile memory access with `.set volatile` /
+    `.set novolatile`, written as comments in GAS mode. The original build
+    never moved a volatile access into a branch delay slot, so turn each
+    marker into an empty `.set noreorder` / `.set reorder` pair: any `.set`
+    stops ee-as from reordering across it (docs/findings.md)."""
+    text = asm.read_text(encoding="latin-1")
+    text = re.sub(
+        r"^(\s*)#\.set\s+(?:no)?volatile\s*$",
+        r"\1.set\tnoreorder\n\1.set\treorder",
+        text,
+        flags=re.M,
+    )
+    asm.write_text(text, encoding="latin-1")
+
+
 def find_package_as(compiler_dir: Path) -> Path | None:
     found = sorted(compiler_dir.rglob("ee-as"))
     return found[0] if found else None
@@ -102,6 +118,7 @@ def assemble(asm: Path, obj: Path, package_as: Path | None = None) -> str | None
     given; otherwise modern binutils, patching the one known expansion
     difference. Macro expansions (`move`, `lw reg, sym(reg)`) differ between
     assembler versions, so the package's assembler is preferred."""
+    volatile_barriers(asm)
     if package_as is not None:
         script = (
             f'L={I386_LIBS}; work=$(mktemp -d); cp "$1" "$work/in.s"; '
