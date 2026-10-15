@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,762 after #380), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (2,803 after #382), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **2,762 functions** come from matching C: 1,509 GAMECORE, 904 MANAGER and 349 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **2,803 functions** come from matching C: 1,524 GAMECORE, 920 MANAGER and 359 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #382: 41 more hand matches (15 GAMECORE, 16 MANAGER, 10 KERNEL): the named 21-word functions plus four previously parked ones. Notes: a final call that stays a `jal` (no tail call) comes from a dead assignment after the call, such as `p = 0;` (`ptclDisplayListPut`, `graphFsEffectReset`, `demoManSkip`, `stagemanager_unloadstage`), or from returning a variable the call conditionally overwrites (`r = YUnitVector; if (db) r = GetCollisionDBPlane(db); return r;` in `GetGeometryPointerSurfacePlane`). Varargs functions use gcc 2.96's EABI `va_start` expansion, `ap = (char *)__builtin_next_arg(last) - (__builtin_args_info(2) < 8 ? (8 - __builtin_args_info(2)) * 8 : 0)` (`iosSPrintf`). A VU0 value that the original routes through `$t0` matches with `$2`, `$3` and `$7` listed as asm clobbers (`GetPlaneFittingVector`). Parked: `GAMEUTIL_get_first_obj` and its player/horse/boss siblings (a permuter run reached 120), `vramFree`, `_SCRSetupLWSSetScriptSetStackSize`, `get_object_local_base_yaw_nico_sight_on`, `IsOppositePlaneLine`, `iosGetExceptAxisVector` (an `mtc1`/`mfc1` round trip with no float operation), `isysGetXffWorkSize`.
 
 Issue #380: 31 more hand matches among the named 20-word functions (12 GAMECORE, 11 MANAGER, 8 KERNEL). Notes: loops that reload two pointer fields every iteration after storing through them store `int` values through `int` fields (`ResetCharacterClassIKNodeInterpInfo`); a byte-triple copied after all three loads is a 3-byte struct assignment (`GetMotionOptionNodeBooleanInfoFloatFrameDirectResource`); kind-check pointers built with `movz` use the positive sense (`p[8] == K ? p + 0x90 : 0`); `vrnext`/`vrinit` random generation is one asm block returning through `mtc1` (`iosGetRandom`); a phase lookup that falls through compare-and-branch pairs is a plain `switch` (`GetReplayNextPhase`). Parked: `ColCont2_IsColStatus`/`ColCont2_IsEventColStatus` (gcc folds the predicate into `sltu`), the camera-place-status checks, `stagemanager_checkstageAlreadyLoadedByStageData` (non-tail final call), `GetFirstSortObj`, `RequestCharacterMotionShiftFunc`, `SpriteMenuGetSelectMenuId` (register choice; its Mode/SubMenuId siblings match), `PushQuaternionWithNoCopy`, `____VolPerBackup`, `iosGetTableSin`, `sndSepStopTypeAll`. Evidence: `build/hand17-check.log`.
 
