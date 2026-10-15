@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (3,080 after #404), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (3,112 after #406), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **3,080 functions** come from matching C: 1,625 GAMECORE, 1,024 MANAGER and 431 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **3,112 functions** come from matching C: 1,642 GAMECORE, 1,032 MANAGER and 438 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #406: 32 more hand matches among the named 29-word functions (17 GAMECORE, 8 MANAGER, 7 KERNEL). Notes: when the original keeps a pointer to a stack vector in a saved register across a call, declare it as a pointer local (`float *p = v;`, `SetQuaternionByAxisRotateWithNoRegularize`); an early `daddu` copy of a stack address before an asm block comes from an inlined helper with pointer parameters (`iosTransMatrixF` inlines the `iosTransMatrix` body). A callee whose return value is ignored still changes register choice when declared non-void (`AddTwoWayLinkNext` returns `int` in `player_setDangerEdgePoint`). `glVertex2fv` rereads the vertex count after each float store only when the count is `volatile`. Packed byte adds (`iosIColAddVecXYZ`) build the colour in a union of a bitfield struct, `int` and `s128`, then use `paddub` like `iosAddMvec`. `SpriteMenuGetMenuIdByPartsId` compares against the bitfield count as `(int)`, giving `slt`. Parked: `NICO_is_hit_except_underwater_or_boss`, `SCRConditionBossDeathLoopMotion` (2 words), `getPlayerPosAfterXSeconds` (`mfc1` placement), `get_merge_yaw_nico_yaw_pitch_cntrl`, `ExecCharaGeometryPostprocess` (the 9/0x16 selection), `GetScreenRadiusParticle`, `InitScriptLwsOrientObj`, `SpriteMenuSetLayer`, `quit_particle_texture_user_by_id`, `iosDeleteThread` (table address in `$v1`), `iosGetCpuRapCountPar1Int`, `iosLoaderFClose`, `sndVabCreate`, `SetQuaternionByCosineAxisRotateV` (`sqrt.s`).
 
 Issue #404: 50 more hand matches among the named 28-word functions (21 GAMECORE, 22 MANAGER, 7 KERNEL). Notes: `iosCreatePartition` passes its caller's return address through `register void *ra __asm__("$31")` copied into a local (`__builtin_return_address(0)` reads it from the stack instead). `transMicroCode` and `transMicroCodeWithFlush` must be separate files: in one file, ee-as mis-encodes the second `lw $4,MicroCode($3)` macro as `lw` with a HI16 relocation. Their shared DMA tag lives in `transMicroCode.c` as `static const RO_001407C0[4]`; the second file declares it `extern`, since two C copies of the same rodata break the `.rodata` check. ee-gcc 2.96 parses `3.1415925f` as `0x40490FD9`; the original's `0x40490FDA` comes from `3.1415926f` (`SCRFuncUnagiResetSelfColiForPath`). `GetMotionNodeBaseQuaternion` needs its quaternion array as an `int` address (`i * 16 + q`) to get the original `addu` operand order. Parked: `SCRConditionDamagedColType` (`movn` vs branch), `getPathStatus` (switch layout), `ConstructorCollisionDynamics` (original stores the 1.0 floats into the local after copying it), `InitModifiedManager` (last store kept out of the delay slot), `iosDlTrans`, `iosDlLockObj` (increment register swap), `Sg2ExPcmInputOpen` (`$t4` copy of the struct pointer), `sndSepInitTickParam` (loop increment order).
 
