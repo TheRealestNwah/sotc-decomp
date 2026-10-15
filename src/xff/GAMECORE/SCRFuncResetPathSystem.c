@@ -1,7 +1,7 @@
 extern void *getSCRDataCtrlWork(void *);
-extern int resetPassageWork();
+extern void resetPassageWork(void *work);
 
-int SCRFuncResetPathSystem(void *actor)
+void SCRFuncResetPathSystem(void *actor)
 {
-    return resetPassageWork(((int)getSCRDataCtrlWork(actor)));
+    resetPassageWork(getSCRDataCtrlWork(actor));
 }
