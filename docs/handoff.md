@@ -8,7 +8,7 @@ Read `CLAUDE.md` (build, matching rules, decompiling workflow) and `docs/finding
 
 This section supersedes older working-state notes below. Verified main is
 `601b1ac0e6496b0f2a0d7a66017d547aa554a645` (PR #359). There were **2,392
-matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (3,112 after #406), and **105
+matching functions: 1,365 GAMECORE / 764 MANAGER / 263 KERNEL** at this checkpoint (3,136 after #408), and **105
 Python tests**. Actor-interface corrections below do not add functions.
 The native PC port has not started; this is still original-PS2 reconstruction,
 with no new playable download or release. Whole-XFF file reproduction remains
@@ -183,7 +183,7 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 ## Where things stand (2026-10-14)
 
 - Loader ELF and all three XFF modules rebuild with matching code, data and relocations; `ninja check` covers all of it.
-- **3,112 functions** come from matching C: 1,642 GAMECORE, 1,032 MANAGER and 438 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
+- **3,136 functions** come from matching C: 1,653 GAMECORE, 1,040 MANAGER and 443 KERNEL. Of these, 60 are in `src/xff/GAMECORE/sword.c` (issue #18).
 - The small-routine batch in issue #63 adds 172 GAMECORE routines with a 40-instruction candidate limit. Every retained object passed code, relocated-reference and data validation, followed by full module checks. Local experiment outputs remain under `build/auto40/GAMECORE/`.
 - Issue #65 adds 49 KERNEL routines with the same candidate limit, excluding recognizable SDK and standard-library entries. All 49 passed code, data and relocation validation; 39 other candidates differed and 339 had no usable draft. Local outputs and validation results remain under `build/auto40/KERNEL/`.
 - Issue #67 adds 91 MANAGER routines, also fully verified against original code, data and relocations. The pass checked 752 candidates: 91 matched, 118 differed and 543 had no usable draft. Local outputs and validation results remain under `build/auto40/MANAGER/`.
@@ -205,6 +205,8 @@ Claude coordinates and merges; Codex claims items through GitHub issues and work
 - Byte-identical `.XFF` rebuild (#8) is still open: it needs the original assembler's relocation and symbol ordering.
 
 ## Current checkpoint (2026-10-14)
+
+Issue #408: 24 more hand matches among the named 30-word functions (11 GAMECORE, 8 MANAGER, 5 KERNEL). Notes: **ee-gcc 2.96 truncates float literals toward zero** instead of rounding, so write the decimal value and let it truncate: `-0.05f` gives the original `0xBD4CCCCC`, `0.3f` gives `0x3E999999` (`SetPlayerStatusDispSw`, `GAMEUTIL_get_object_move_noise`). A constant like `0x3B64A5D6` that looks odd may come from an expression with a rough pi (`0.2f * 3.14f / 180.0f` in `nico_kimurateststart`). Float and integer arguments use separate register sequences, so the order integer arguments are set relative to float ones tells the prototype's parameter order (`DebugDispCollisionDBShine`'s `-1` comes after six floats). A wait loop on a global field whose base stays in a register is a `volatile` struct field (`st_playObjAnim`). An argument comparison done in the registers that become call arguments comes from an inlined helper (`sePlayStageEnv`). `getSObjNode` and `getSObjNodeBySubObj` match but are held back: their original LO16 in a branch delay slot is unpaired, and the splice check reads its addend high half from the wrong HI16 (#409). Parked: `getStageStat`, `get_yaw_pitch_camera_target_lost_angle`, `doit_camera_target_visible_angle_manager`, `shadowModelInit`, `FlushJudgeVolumeClassImmediate`, `GetCollisionDBNextSurfLinkComp`, `Sg2SlotSetPitch` (a dead `/ 12` leaves only its trap).
 
 Issue #406: 32 more hand matches among the named 29-word functions (17 GAMECORE, 8 MANAGER, 7 KERNEL). Notes: when the original keeps a pointer to a stack vector in a saved register across a call, declare it as a pointer local (`float *p = v;`, `SetQuaternionByAxisRotateWithNoRegularize`); an early `daddu` copy of a stack address before an asm block comes from an inlined helper with pointer parameters (`iosTransMatrixF` inlines the `iosTransMatrix` body). A callee whose return value is ignored still changes register choice when declared non-void (`AddTwoWayLinkNext` returns `int` in `player_setDangerEdgePoint`). `glVertex2fv` rereads the vertex count after each float store only when the count is `volatile`. Packed byte adds (`iosIColAddVecXYZ`) build the colour in a union of a bitfield struct, `int` and `s128`, then use `paddub` like `iosAddMvec`. `SpriteMenuGetMenuIdByPartsId` compares against the bitfield count as `(int)`, giving `slt`. Parked: `NICO_is_hit_except_underwater_or_boss`, `SCRConditionBossDeathLoopMotion` (2 words), `getPlayerPosAfterXSeconds` (`mfc1` placement), `get_merge_yaw_nico_yaw_pitch_cntrl`, `ExecCharaGeometryPostprocess` (the 9/0x16 selection), `GetScreenRadiusParticle`, `InitScriptLwsOrientObj`, `SpriteMenuSetLayer`, `quit_particle_texture_user_by_id`, `iosDeleteThread` (table address in `$v1`), `iosGetCpuRapCountPar1Int`, `iosLoaderFClose`, `sndVabCreate`, `SetQuaternionByCosineAxisRotateV` (`sqrt.s`).
 
