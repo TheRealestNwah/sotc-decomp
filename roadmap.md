@@ -3,8 +3,9 @@
 Last reviewed: 2026-10-16.
 
 Planned work before 1.0 lives here. Keep this file current as plans change and
-work lands. Feature requests and discovered bugs still get GitHub issues;
-planned build tasks do not need individual issues. Unchecked items are future
+work lands. Community requests come in as feature-request issues on GitHub
+and stay there; this roadmap can link to them when relevant. Discovered bugs
+also get issues. Planned build tasks do not need individual issues. Unchecked items are future
 work, not a release-date or feature commitment.
 
 ## Completed foundations
