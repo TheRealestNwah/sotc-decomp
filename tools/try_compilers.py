@@ -80,7 +80,18 @@ def compile_c(compiler_dir: Path, source: Path, flags: list[str], out: Path) -> 
                wsl_path(source), wsl_path(out), *flags]  # fmt: skip
     result = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
     if result.returncode != 0 or not out.exists() or out.stat().st_size == 0:
-        return (result.stderr or result.stdout or "no output").strip().splitlines()[-1][:200]
+        diagnostics = result.stderr.strip() or result.stdout.strip() or "no output"
+        lines = diagnostics.splitlines()
+        error = next(
+            (
+                line
+                for line in lines
+                if re.search(r"\berror\b", line, re.I)
+                and not re.search(r"\bwarning:", line, re.I)
+            ),
+            lines[-1],
+        )
+        return error[:200]
     return None
 
 
