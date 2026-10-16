@@ -1,8 +1,11 @@
+import pytest
+
 from tools.xff_split import (
     Fixups,
     Reloc,
     SectionAsm,
     add_twins,
+    global_aliases,
     label_addresses,
     postprocess,
     referenced_address,
@@ -10,6 +13,38 @@ from tools.xff_split import (
 )
 
 BASE = 0x100  # spimdisasm address of the section start
+
+
+def test_missing_vu_exports_bind_to_emitted_section_offsets():
+    sections = [SectionAsm(".vutext", [], size=0x40)]
+    exports = [
+        ("MC_LINE", ".vutext", 0, "STT_NOTYPE"),
+        ("MC_SKIN", ".vutext", 0x20, "STT_NOTYPE"),
+        ("existing", ".vutext", 8, "STT_FUNC"),
+        ("overlay", ".DVP.overlay.test", 0, "STT_NOTYPE"),
+    ]
+    assert global_aliases(exports, sections, {"existing"}) == {
+        "MC_LINE": ['.set "MC_LINE", .Lxff.start.vutext + 0x0'],
+        "MC_SKIN": ['.set "MC_SKIN", .Lxff.start.vutext + 0x20'],
+    }
+
+
+@pytest.mark.parametrize("offset", [-1, 0x41])
+def test_export_outside_emitted_section_is_rejected(offset):
+    with pytest.raises(ValueError, match="outside .vutext"):
+        global_aliases(
+            [("bad", ".vutext", offset, "STT_NOTYPE")],
+            [SectionAsm(".vutext", [], size=0x40)],
+            set(),
+        )
+
+
+def test_missing_function_export_retains_its_type_at_section_end():
+    assert global_aliases(
+        [("end", ".text", 0x40, "STT_FUNC")],
+        [SectionAsm(".text", [], size=0x40)],
+        set(),
+    )["end"] == ['.set "end", .Lxff.start.text + 0x40', '.type "end", @function']
 
 
 def line(offset: int, raw: str, text: str) -> str:
