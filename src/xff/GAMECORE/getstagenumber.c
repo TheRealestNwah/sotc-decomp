@@ -36,7 +36,7 @@ int getstagenumber(int id)
     StageData *p;
 
     if (e != 0) {
-        p = (StageData *)dldResolve(&e[(id << 27) >> 27].h);
+        p = (StageData *)dldResolve(&e[(int)((unsigned int)id << 27) >> 27].h);
         if (p != 0) {
             int *sh = DldSysUndefSymbol != SH_StageDataDEFAULT ? SH_StageDataDEFAULT : 0;
             StageData *base = 0;
