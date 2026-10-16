@@ -70,3 +70,11 @@ def test_generate_adds_xff_module_checks():
     assert "  asflags = $asflags -I asm/xff/TESTMOD" in ninja
     assert "cross = mips64r5900el-ps2-elf-" in ninja
     assert "ld -m elf32lr5900 " in ninja
+    assert "command = $python tools/xff_rebuild.py $in $out" in ninja
+    assert (
+        "build build/xff/TESTMOD.XFF: xffrebuild build/xff/TESTMOD/TESTMOD.o iso/TESTMOD.XFF"
+        " | tools/xff_rebuild.py tools/xff2.py"
+    ) in ninja
+    assert "build check-XFF-TESTMOD: check build/xff/TESTMOD.XFF iso/TESTMOD.XFF" in ninja
+    assert "build check: phony check-elf check-TESTMOD check-XFF-TESTMOD" in ninja
+    assert "default build/SCUS_974.72.rom build/xff/TESTMOD.XFF" in ninja
