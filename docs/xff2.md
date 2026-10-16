@@ -77,7 +77,28 @@ Descriptors for empty tables point at the current A/B positions.
 - **Branches:** branches to global labels, or to addresses spimdisasm never labeled, resolve locally like the original, with no relocation.
 - **Tails:** an unaligned tail at the end of a section is written as `.byte`.
 
-Result: every section's bytes and every relocation match the original for all three modules. The `.XFF` files themselves aren't rebuilt from the assembly yet. The reassembled object's symbol table order differs from the original, so a byte-identical rebuild needs that order recorded.
+Result: every section's bytes and every relocation match the original for all three modules. Global exports omitted by the disassembler, including MANAGER's 13 VU entry points, are bound to their original offsets in emitted sections. Their assembled definitions retain the original section and address.
+
+## Rebuilding the containers
+
+`tools/xff_rebuild.py` combines an assembled object with the original XFF's layout metadata:
+
+```bash
+python tools/xff_rebuild.py build/xff/KERNEL/KERNEL.o iso/KERNEL.XFF build/xff/KERNEL.XFF
+python tools/check.py build/xff/KERNEL.XFF iso/KERNEL.XFF
+```
+
+The default build produces these rebuilt files for every module. `ninja check` retains the section/relocation comparisons and also compares each complete XFF against its disc file, including all headers and tables. All three files match byte-for-byte.
+
+The assembled object supplies each emitted code/data section, including MANAGER's `.vutext`, and verifies BSS sizes. Every original named symbol must be present with the correct binding; definitions must have their original section and offset, and imports must remain undefined. Relocation sites, types and targets must match after remapping symbol indices. Duplicate, missing or extra relocations are rejected. The original relocation order is restored, and saved relocation words are read from the assembled payload.
+
+The original XFF still supplies metadata that the assembly does not reproduce:
+
+- Section ordering, alignment and headers, including the unstored DVP overlay sections; the `.DVP.ovlytab` contents and its relocation tables.
+- Symbol and string-table ordering, symbol type/size/visibility attributes, section-symbol entries and undefined symbols' nonzero values. Assembler-generated labels are omitted from the output table.
+- The entry offset, import list/order, relocation-table ordering and opaque import relocation extra words.
+
+This is a build using an original metadata template, so the user's disc files remain required. Payload bytes are never substituted from that template: changing assembled code changes the output and makes the full-file comparison fail. Tests cover reordered sections/symbols/relocations, changed code and saved words, undefined or moved definitions, invalid relocations and the explicit DVP metadata dependency.
 
 ## Notes
 

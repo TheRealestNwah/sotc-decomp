@@ -138,6 +138,10 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
         "  command = $python tools/xff_split.py --compare $in",
         "  description = CHECK $in",
         "",
+        "rule xffrebuild",
+        "  command = $python tools/xff_rebuild.py $in $out",
+        "  description = REBUILD $out",
+        "",
         "rule eecc",
         "  command = $python tools/ee_cc.py $in $out",
         "  description = EECC $in",
@@ -206,13 +210,17 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
             f"build {rebuilt}: as {asm_dir}/{m}.s | include/xff_macro.inc {deps}",
             f"  asflags = $asflags -I {asm_dir}",
             f"build check-{m}: xffcheck {original} {rebuilt}",
+            f"build {BUILD_DIR}/xff/{m}.XFF: xffrebuild {rebuilt} iso/{m}.XFF"
+            " | tools/xff_rebuild.py tools/xff2.py",
+            f"build check-XFF-{m}: check {BUILD_DIR}/xff/{m}.XFF iso/{m}.XFF",
         ]
         checks.append(f"check-{m}")
+        checks.append(f"check-XFF-{m}")
     lines += [
         "",
         f"build check: phony {' '.join(checks)}",
         "",
-        f"default {rom} {' '.join(f'{BUILD_DIR}/xff/{m}/{m}.o' for m in modules)}".rstrip(),
+        f"default {rom} {' '.join(f'{BUILD_DIR}/xff/{m}.XFF' for m in modules)}".rstrip(),
         "",
     ]
     return "\n".join(lines)

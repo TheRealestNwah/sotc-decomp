@@ -10,12 +10,12 @@ The aim is C source that compiles back to a byte-identical copy of the original 
 - The game code lives in the `.XFF` modules (custom `xff2` format, see [docs/xff2.md](docs/xff2.md)).
   - All three (`KERNEL`, `MANAGER`, `GAMECORE`) split into assembly that reassembles with every section and relocation matching the originals. That's about 70,000 relocations.
   - The modules keep their original symbol names.
+- **All three `.XFF` files rebuild byte-for-byte**, including their headers and tables. Code/data and symbol locations come from the assembled objects; original table-layout and loader metadata are still supplied by the disc files (see [docs/xff2.md](docs/xff2.md)).
 - **Compiler identified:** Sony `ee-gcc` 2.96, `-O2 -G0`.
 - **3,847 functions are compiled from matching C** (2,110 GAMECORE, 1,184 MANAGER, 553 KERNEL), including most small getters and setters and the sword beam,
   weak-point glow and query, collision reaction, sound volume, particle emitter and reaction-thread updates. C in `src/xff/`
   is compiled and spliced into the modules; the full build still matches.
-- Complete byte-identical reconstruction of the `.XFF` files and the native PC
-  port remain future work.
+- The native PC port remains future work.
 
 See [docs/findings.md](docs/findings.md) for what's known about the binaries, the compiler and the linked Sony SDK libraries.
 
@@ -41,7 +41,7 @@ python -m venv .venv
 
 1. ~~Verify the base executable hash~~
 2. ~~Split the loader ELF with splat and rebuild it byte-for-byte~~
-3. ~~Reverse the `xff2` module format and split `KERNEL`/`MANAGER`/`GAMECORE.XFF`~~; next: rebuild the `.XFF` files themselves byte-for-byte
+3. ~~Reverse the `xff2` module format, split the modules and rebuild their `.XFF` files byte-for-byte~~ (original layout metadata retained)
 4. ~~Pin down the original compiler version and get C matching~~
 5. Decompile functions one at a time, using [decomp.me](https://decomp.me) to match them
 6. Once fully matching, build a PC port layer (graphics, audio, input)

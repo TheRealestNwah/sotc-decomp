@@ -1,9 +1,10 @@
-"""Compare the rebuilt flat image against the original, byte for byte.
+"""Compare a rebuilt binary against the original, byte for byte.
 
     python tools/check.py build/SCUS_974.72.rom iso/SCUS_974.72.rom
 
-Both images come from tools/elf2rom.py, so this compares every loaded byte of
-code and data. ELF headers and section tables are not compared.
+For the loader, both flat images come from tools/elf2rom.py: this compares
+loaded code/data rather than ELF headers. XFF inputs are complete files, so
+their comparison also includes the container headers and tables.
 """
 
 from __future__ import annotations
