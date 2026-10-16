@@ -1,6 +1,6 @@
-extern int setFadeColor();
+extern void setFadeColor(int);
 
-int scrSetFadeColorBlack(int a, int b, int c, int d)
+void scrSetFadeColorBlack(int a, int b, int c, int d)
 {
-    return setFadeColor(0, b, c, d);
+    setFadeColor(0);
 }
