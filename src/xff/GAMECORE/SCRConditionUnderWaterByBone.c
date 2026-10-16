@@ -17,27 +17,19 @@ static inline char *dldResolve(unsigned int *h)
 
 static inline void vecScale(float *dst, float *src, float s)
 {
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)
-"
-                         "qmtc2.ni %2, vf6
-"
-                         "vmulx.xyzw vf5, vf5, vf6x
-"
-                         "sqc2 vf5, 0x0(%0)
-"
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                         "qmtc2.ni %2, vf6\n"
+                         "vmulx.xyzw vf5, vf5, vf6x\n"
+                         "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(dst), "r"(src), "r"(s) : "memory");
 }
 
 static inline void vecAddXYZ(float *dst, float *a, float *b)
 {
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)
-"
-                         "lqc2 vf6, 0x0(%2)
-"
-                         "vadd.xyz vf5, vf5, vf6
-"
-                         "sqc2 vf5, 0x0(%0)
-"
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vadd.xyz vf5, vf5, vf6\n"
+                         "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
