@@ -11,7 +11,7 @@ The aim is C source that compiles back to a byte-identical copy of the original 
   - All three (`KERNEL`, `MANAGER`, `GAMECORE`) split into assembly that reassembles with every section and relocation matching the originals. That's about 70,000 relocations.
   - The modules keep their original symbol names.
 - **Compiler identified:** Sony `ee-gcc` 2.96, `-O2 -G0`.
-- **3,416 functions are compiled from matching C** (1,753 GAMECORE, 1,116 MANAGER, 547 KERNEL), including most small getters and setters and the sword beam,
+- **3,567 functions are compiled from matching C** (1,872 GAMECORE, 1,142 MANAGER, 553 KERNEL), including most small getters and setters and the sword beam,
   weak-point glow and query, collision reaction, sound volume, particle emitter and reaction-thread updates. C in `src/xff/`
   is compiled and spliced into the modules; the full build still matches.
 - Complete byte-identical reconstruction of the `.XFF` files and the native PC
