@@ -1,13 +1,69 @@
 from pathlib import Path
+from subprocess import CompletedProcess
 
+import pytest
+
+from tools import try_compilers
 from tools.try_compilers import (
     Function,
+    compile_c,
     diff,
     fix_moves,
     strip_padding,
     volatile_barriers,
     wsl_path,
 )
+
+
+@pytest.mark.parametrize(
+    ("stderr", "stdout", "expected"),
+    [
+        (
+            'in.c:632: parse error before "helper"\nin.c:1257: warning: pointer conversion\n',
+            "",
+            'in.c:632: parse error before "helper"',
+        ),
+        (
+            "in.c:1: warning: error recovery\nin.c:2: error: invalid type\n",
+            "",
+            "in.c:2: error: invalid type",
+        ),
+        (
+            "",
+            "in.c:3: fatal error: missing header\nlater warning\n",
+            "in.c:3: fatal error: missing header",
+        ),
+        (" \n", "compiler failed\n", "compiler failed"),
+        ("", "", "no output"),
+        ("unrecognized option\nlast diagnostic\n", "", "last diagnostic"),
+        (
+            "error.c: In function 'helper':\nerror.c:2: parse error before 'x'\n"
+            "error.c:9: warning: pointer conversion\n",
+            "",
+            "error.c:2: parse error before 'x'",
+        ),
+    ],
+)
+def test_compile_c_reports_error_before_later_warnings(
+    tmp_path, monkeypatch, stderr, stdout, expected
+):
+    monkeypatch.setattr(try_compilers, "find_cc1", lambda _: tmp_path / "cc1.exe")
+    monkeypatch.setattr(
+        try_compilers.subprocess,
+        "run",
+        lambda *args, **kwargs: CompletedProcess(args, 1, stdout, stderr),
+    )
+    assert compile_c(tmp_path, tmp_path / "in.c", ["-O2", "-G0"], tmp_path / "out.s") == expected
+
+
+def test_compile_c_still_rejects_missing_output(tmp_path, monkeypatch):
+    monkeypatch.setattr(try_compilers, "find_cc1", lambda _: tmp_path / "cc1.exe")
+    monkeypatch.setattr(
+        try_compilers.subprocess,
+        "run",
+        lambda *args, **kwargs: CompletedProcess(args, 0, "", ""),
+    )
+    assert compile_c(tmp_path, tmp_path / "in.c", [], tmp_path / "out.s") == "no output"
 
 
 def test_wsl_path_converts_drive_letters():
