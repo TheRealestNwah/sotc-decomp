@@ -1,7 +1,7 @@
 extern void *getSCRDataCtrlWork(void *);
-extern int setSCRAttainRange();
+extern void setSCRAttainRange(void *, unsigned int *);
 
-int SCRFuncSetAttainRange(int a, int b, int c, int d, int e, int f, int g, int h)
+void SCRFuncSetAttainRange(void *a, int b, int c, int d, int e, int f, int g, unsigned int *h)
 {
-    return setSCRAttainRange(((int)getSCRDataCtrlWork((void *)a)), h);
+    setSCRAttainRange(getSCRDataCtrlWork(a), h);
 }
