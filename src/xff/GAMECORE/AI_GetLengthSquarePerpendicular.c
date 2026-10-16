@@ -30,18 +30,12 @@ static inline float vecLen2(float *a)
 {
     float d;
 
-    __asm__ __volatile__("lqc2 vf7, 0x0(%1)
-"
-                         "vmul.xyz vf7, vf7, vf7
-"
-                         "vaddy.x vf7, vf7, vf7y
-"
-                         "vaddz.x vf7, vf7, vf7z
-"
-                         "qmfc2.ni $2, vf7
-"
-                         "mtc1 $2, %0
-"
+    __asm__ __volatile__("lqc2 vf7, 0x0(%1)\n"
+                         "vmul.xyz vf7, vf7, vf7\n"
+                         "vaddy.x vf7, vf7, vf7y\n"
+                         "vaddz.x vf7, vf7, vf7z\n"
+                         "qmfc2.ni $2, vf7\n"
+                         "mtc1 $2, %0\n"
                          : "=f"(d) : "r"(a) : "$2");
     return d;
 }
