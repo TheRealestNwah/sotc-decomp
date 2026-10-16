@@ -86,8 +86,7 @@ def compile_c(compiler_dir: Path, source: Path, flags: list[str], out: Path) -> 
             (
                 line
                 for line in lines
-                if re.search(r"\berror\b", line, re.I)
-                and not re.search(r"\bwarning:", line, re.I)
+                if re.search(r"\berror\b", line, re.I) and not re.search(r"\bwarning:", line, re.I)
             ),
             lines[-1],
         )
