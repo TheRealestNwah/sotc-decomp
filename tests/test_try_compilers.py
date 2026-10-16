@@ -36,6 +36,12 @@ from tools.try_compilers import (
         (" \n", "compiler failed\n", "compiler failed"),
         ("", "", "no output"),
         ("unrecognized option\nlast diagnostic\n", "", "last diagnostic"),
+        (
+            "error.c: In function 'helper':\nerror.c:2: parse error before 'x'\n"
+            "error.c:9: warning: pointer conversion\n",
+            "",
+            "error.c:2: parse error before 'x'",
+        ),
     ],
 )
 def test_compile_c_reports_error_before_later_warnings(
