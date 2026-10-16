@@ -39,12 +39,9 @@ python -m venv .venv
 
 ## Roadmap
 
-1. ~~Verify the base executable hash~~
-2. ~~Split the loader ELF with splat and rebuild it byte-for-byte~~
-3. ~~Reverse the `xff2` module format, split the modules and rebuild their `.XFF` files byte-for-byte~~ (original layout metadata retained)
-4. ~~Pin down the original compiler version and get C matching~~
-5. Decompile functions one at a time, using [decomp.me](https://decomp.me) to match them
-6. Once fully matching, build a PC port layer (graphics, audio, input)
+See [roadmap.md](roadmap.md) for completed milestones, remaining matching work,
+the future native PC port and community proposals. Planned work before 1.0 is
+tracked there; feature requests and discovered bugs still use GitHub issues.
 
 ## Layout
 
