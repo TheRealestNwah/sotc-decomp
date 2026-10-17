@@ -1,6 +1,6 @@
-extern int iosFree();
+extern void iosFree(void *);
 
-int effect_blood_free(int a, int b, int c, int d)
+void effect_blood_free(void *allocation)
 {
-    return iosFree(a, b, c, d);
+    iosFree(allocation);
 }
