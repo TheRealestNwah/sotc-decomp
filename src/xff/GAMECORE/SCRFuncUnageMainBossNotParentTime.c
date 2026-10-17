@@ -2,7 +2,7 @@ extern char gcGlobalVar[];
 extern char *GetSCRCharaAIWorkPtr(void *);
 extern char *getSCRDataCtrlWork(void *);
 extern void *getPlayerColCont2(int);
-extern int ColCont2_IsColStatus(void *, int, int);
+extern int ColCont2_IsColStatus(void *, long, long);
 
 void SCRFuncUnageMainBossNotParentTime(void *a)
 {
