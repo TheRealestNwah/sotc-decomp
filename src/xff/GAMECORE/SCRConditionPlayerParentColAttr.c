@@ -2,7 +2,7 @@ extern int DldSysUndefSymbol;
 extern char *getSCRDataCtrlWork(void *);
 extern void *getPlayerColCont2(int);
 extern int ColCont2_IsParentObj(void *, void *);
-extern int ColCont2_IsColStatus(void *, int, int);
+extern int ColCont2_IsColStatus(void *, long, long);
 
 static inline int *dldTable(int *h)
 {
