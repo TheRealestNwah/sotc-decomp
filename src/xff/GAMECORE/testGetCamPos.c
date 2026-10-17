@@ -1,32 +1,19 @@
 typedef int s128 __attribute__((mode(TI)));
 
-typedef struct {
-    s128 q;
-} Vec4;
-
-typedef struct {
-    char pad0[0x134];
-    Vec4 *pos;
-    char pad138[0x20];
-    void *matrix;
-} LayoutClass;
-
-extern LayoutClass *GetLayoutClass(void *);
 extern void *get_main_cameraman_camera_obj(void);
+extern char *GetLayoutClass(unsigned char *);
 extern void iosCopyMatrix(void *, void *);
-extern Vec4 ZeroVector;
+extern s128 ZeroVector;
 
-void *testGetCamPos(Vec4 *pos, void *matrix)
+void *testGetCamPos(s128 *out, void *matrix)
 {
     void *camera = get_main_cameraman_camera_obj();
-
-    if (camera != 0) {
-        LayoutClass *layout = GetLayoutClass(camera);
-
-        iosCopyMatrix(matrix, layout->matrix);
-        *pos = *layout->pos;
+    if (camera) {
+        char *layout = GetLayoutClass(camera);
+        iosCopyMatrix(matrix, *(void **)(layout + 0x158));
+        *out = **(s128 **)(layout + 0x134);
     } else {
-        *pos = ZeroVector;
+        *out = ZeroVector;
     }
     return camera;
 }
