@@ -1,9 +1,9 @@
 typedef struct {
     int used;
     int current;
-    unsigned char *volatile flags;
+    unsigned char * flags;
     int width;
-    void *volatile data;
+    void * data;
 } ModifiedManager;
 
 void *RelocateModifiedManager(ModifiedManager *manager, int count, char *buffer)
@@ -22,22 +22,4 @@ void *RelocateModifiedManager(ModifiedManager *manager, int count, char *buffer)
         end += (count + 15) & ~15;
     }
     return end;
-}
-
-void InitModifiedManager(ModifiedManager *manager, int count)
-{
-    int width;
-    int i;
-    manager->used = 0;
-    manager->current = 0;
-    if (count != 0) {
-        width = count > 65535 ? 4 : (count >= 256 ? 2 : 1);
-        manager->width = width;
-        for (i = 0; i < count; i++) {
-            manager->flags[i] = 0;
-        }
-    } else {
-        manager->data = 0;
-        manager->flags = 0;
-    }
 }
