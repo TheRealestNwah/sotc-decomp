@@ -1,4 +1,4 @@
-extern float iosCalcFColorToBrightness(int);
+extern float iosCalcFColorToBrightness(float *);
 
 void CalcColorParamAmbientLight(void *arg0)
 {
@@ -6,7 +6,7 @@ void CalcColorParamAmbientLight(void *arg0)
     float temp_f1;
     float var_f0;
 
-    temp_f0 = iosCalcFColorToBrightness(arg0 + 0x100);
+    temp_f0 = iosCalcFColorToBrightness((float *)((char *)arg0 + 0x100));
     temp_f1 = (*(float *)((char *)(arg0) + 0x12C));
     (*(float *)((char *)(arg0) + 0x140)) = temp_f0;
     if (temp_f1 < 0.0f) {
