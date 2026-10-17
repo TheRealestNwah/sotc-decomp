@@ -1,6 +1,6 @@
 typedef struct {
     char pad0[0xC];
-    int ambient;
+    unsigned char *ambient;
     char pad10[0x250];
     long flags;
 } LayoutObj;
@@ -11,7 +11,7 @@ typedef struct {
 } LayoutClass;
 
 extern LayoutClass *GetLayoutClass(void *);
-extern float iosCalcFColorToBrightness(int);
+extern float iosCalcFColorToBrightness(float *);
 
 float GetAmbientBrightnessOfLayoutObject(void *layout)
 {
@@ -19,7 +19,7 @@ float GetAmbientBrightnessOfLayoutObject(void *layout)
 
     if (!(obj->flags & 0x10)) {
         if (obj->flags & 2) {
-            return iosCalcFColorToBrightness(obj->ambient + 0x80);
+            return iosCalcFColorToBrightness((float *)(obj->ambient + 0x80));
         }
     }
     return 0.0f;
