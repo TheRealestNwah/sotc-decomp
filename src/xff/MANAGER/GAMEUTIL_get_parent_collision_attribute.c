@@ -1,6 +1,5 @@
-extern int GetParentCharColAttr();
-
-int GAMEUTIL_get_parent_collision_attribute(int a, int b, int c, int d)
+extern int GetParentCharColAttr(long *, char *);
+int GAMEUTIL_get_parent_collision_attribute(long *out, char *object)
 {
-    return GetParentCharColAttr(a, b, c, d);
+    return GetParentCharColAttr(out, object);
 }

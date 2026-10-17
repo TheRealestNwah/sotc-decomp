@@ -1,4 +1,4 @@
-extern int GAMEUTIL_get_parent_collision_attribute(long *, void *);
+extern int GAMEUTIL_get_parent_collision_attribute(long *, char *);
 
 int NICO_is_quake_attack_hit_except_boss(void *actor)
 {
