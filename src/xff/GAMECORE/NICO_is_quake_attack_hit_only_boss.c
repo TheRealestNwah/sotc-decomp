@@ -1,4 +1,4 @@
-extern int GAMEUTIL_get_parent_collision_attribute(long *, void *);
+extern int GAMEUTIL_get_parent_collision_attribute(long *, char *);
 
 static inline int is_except_boss(void *actor)
 {
