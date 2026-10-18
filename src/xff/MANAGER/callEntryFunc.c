@@ -1,6 +1,6 @@
-extern void CallMotShiftCallBackElemEntryFunc(char *, char *, void *);
+extern int CallMotShiftCallBackElemEntryFunc(int *, int, void *);
 
-void callEntryFunc(char *a, void *b, char *c)
+int callEntryFunc(char *a, void *b, char *c)
 {
     void (**f)(void *) = (void (**)(void *))(c + 0x94);
     int i;
@@ -9,5 +9,5 @@ void callEntryFunc(char *a, void *b, char *c)
         if (*f != 0)
             (*f)(b);
     }
-    CallMotShiftCallBackElemEntryFunc(a + 0x2C8, c, b);
+    return CallMotShiftCallBackElemEntryFunc((int *)(a + 0x2C8), (int)c, b);
 }
