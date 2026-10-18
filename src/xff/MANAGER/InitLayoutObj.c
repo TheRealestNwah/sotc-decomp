@@ -27,7 +27,7 @@ extern int func_000755D0(void *, int *);
 extern void CreateClothChildLayoutObj(void *, int, int);
 extern void *GetLayoutDispObjGroup(void);
 extern void *GetLayoutObjGroup(void);
-extern void isysAddGroupWithLinkParam(void *, void *, int, int);
+extern int isysAddGroupWithLinkParam(void *, void *, int, int);
 
 int InitLayoutObj(unsigned char *o, int *def)
 {

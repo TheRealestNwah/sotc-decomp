@@ -1,4 +1,4 @@
-extern void isysAddGroupWithLinkParam(void *, void *, int, int);
+extern int isysAddGroupWithLinkParam(void *, void *, int, int);
 
 int EntryJudgeVolumeClassObjectGroup(char *p, int i, void *g)
 {

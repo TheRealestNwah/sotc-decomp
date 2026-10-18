@@ -1,6 +1,5 @@
-extern void isysAddGroupWithLinkParam();
-
-void isysAddGroupWithLinkParamNoWait(void)
+extern int isysAddGroupWithLinkParam(void *, void *, int, int);
+void isysAddGroupWithLinkParamNoWait(void *object, void *group, int unused, int data)
 {
-    isysAddGroupWithLinkParam();
+    isysAddGroupWithLinkParam(object, group, unused, data);
 }

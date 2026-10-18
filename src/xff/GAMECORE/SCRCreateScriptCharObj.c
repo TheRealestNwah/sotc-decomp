@@ -3,7 +3,7 @@ extern char rootPtn[];
 extern char st_collisionalias[];
 extern char st_motionsyncanimation[];
 extern void *initScriptCharObj(void *, void *, void *, int, void *, void *, void *, int);
-extern void isysAddGroupWithLinkParam(void *, void *, int, int);
+extern int isysAddGroupWithLinkParam(void *, void *, int, int);
 
 void *SCRCreateScriptCharObj(void *a, char *param)
 {
