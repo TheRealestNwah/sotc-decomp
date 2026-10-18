@@ -1,7 +1,7 @@
-extern int GetSCRCharaAIWorkPtr();
-extern int player_setGripHangPointGeometry();
-
-int nico_setPlayerGripPoint(int a)
+extern void *GetSCRCharaAIWorkPtr(void *);
+extern void player_setGripHangPointGeometry(void *, char *);
+void nico_setPlayerGripPoint(int actor)
 {
-    return player_setGripHangPointGeometry(a, GetSCRCharaAIWorkPtr(a) + 6848);
+    player_setGripHangPointGeometry((void *)actor,
+        (char *)GetSCRCharaAIWorkPtr((void *)actor) + 6848);
 }
