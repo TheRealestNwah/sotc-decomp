@@ -1,5 +1,3 @@
-/* The empty noreorder block stops the assembler from moving the final sqc2
-   into the return delay slot, as in the original. */
 void CAM_get_camera_position_by_look_at(float *pos, float *dir, float *look_at, float dist)
 {
     float t[4] __attribute__((aligned(16)));
@@ -12,7 +10,5 @@ void CAM_get_camera_position_by_look_at(float *pos, float *dir, float *look_at, 
                          "lqc2 vf06, 0(%2)\n"
                          "vadd.xyz vf05, vf05, vf06\n"
                          "sqc2 vf05, 0(%0)\n"
-                         ".set noreorder\n"
-                         ".set reorder\n"
                          : : "r"(pos), "r"(look_at), "r"(t) : "memory");
 }
