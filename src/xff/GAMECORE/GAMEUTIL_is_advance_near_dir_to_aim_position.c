@@ -4,8 +4,6 @@ static inline void vecSubXYZ(float *out, float *a, float *b)
                          "lqc2 vf6, 0x0(%2)\n"
                          "vsub.xyz vf5, vf5, vf6\n"
                          "sqc2 vf5, 0x0(%0)\n"
-                         ".set noreorder\n"
-                         ".set reorder\n"
                          : : "r"(out), "r"(a), "r"(b) : "memory");
 }
 
