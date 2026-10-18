@@ -7,7 +7,7 @@ extern int B_000BF6CC;
 extern int D_00040D5C;
 extern int D_00040D60;
 
-void isysGroupForExit(void *arg0) {
+void isysGroupForExit(void *arg0, int reserved) {
     int temp_v0;
     int temp_v1;
 
