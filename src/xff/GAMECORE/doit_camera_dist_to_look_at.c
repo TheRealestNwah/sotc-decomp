@@ -5,7 +5,7 @@ extern void CAM_get_camera_position_by_look_at(void *, void *, void *, float);
 extern void T_000D7260(void *, void **, int, int, float);
 extern void doit_double_spring_interp_cntrl(signed char *, int, float, float);
 extern float func_000D78F8(signed char *, void **, int, float);
-extern int is_reset_or_lws_movie_or_cutout_game_camera(int);
+extern int is_reset_or_lws_movie_or_cutout_game_camera(void *);
 
 void doit_camera_dist_to_look_at(signed char *arg0, void **arg1, int arg2, int arg3, float fparg0) {
     float temp_f0;
@@ -28,7 +28,7 @@ block_4:
     }
     temp_v0 = *arg1;
     set_param_double_spring_interp_common(arg0, (*(float *)((char *)(temp_v0) + 0x144)), (*(float *)((char *)(temp_v0) + 0x14C)), (*(float *)((char *)(temp_v0) + 0x148)), -1.0f);
-    doit_double_spring_interp_cntrl(arg0, is_reset_or_lws_movie_or_cutout_game_camera(arg2), (*(float *)((char *)(arg0) + 0x20)), fparg0);
+    doit_double_spring_interp_cntrl(arg0, is_reset_or_lws_movie_or_cutout_game_camera((void *)arg2), (*(float *)((char *)(arg0) + 0x20)), fparg0);
     if (GAMEUTIL_is_diff_nearly_equal_zero((*(float *)((char *)(temp_s3) + 0x38)), (*(float *)((char *)(arg0) + 0x1C)), 0.001f) == 0) {
         temp_f0 = (*(float *)((char *)(arg0) + 0x1C));
         (*(float *)((char *)(temp_s3) + 0x38)) = temp_f0;
