@@ -1,4 +1,4 @@
-extern void end_camera_lws_animation_by_paramID(int);
+extern int end_camera_lws_animation_by_paramID(int);
 extern int get_boss_subjective_camera_lws_animation_param();
 
 void end_check_and_boot_boss_subjective_camera_lws_animation(void)
