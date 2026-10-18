@@ -3,7 +3,7 @@ extern int D_0017A87C;
 extern char B_00188730[];
 extern void func_00027EB8();
 extern void *createScriptObj(void *, int, int, int, int, int, int, int);
-extern void isysAddGroupWithLinkParam(void *, void *, int, int);
+extern int isysAddGroupWithLinkParam(void *, void *, int, int);
 
 void stagemanager_changeSegmentVariation(int stage)
 {

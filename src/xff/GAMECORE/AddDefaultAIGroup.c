@@ -1,7 +1,7 @@
 extern char B_0019B868[];
-extern int isysAddGroupWithLinkParam();
+extern int isysAddGroupWithLinkParam(void *, void *, int, int);
 
 int AddDefaultAIGroup(int a, int b, int c, int d)
 {
-    return isysAddGroupWithLinkParam(a, (int)B_0019B868, 0, 0);
+    return isysAddGroupWithLinkParam((void *)a, B_0019B868, 0, 0);
 }

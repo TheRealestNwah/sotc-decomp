@@ -1,5 +1,5 @@
 extern char *GetLightColMan(void *);
-extern void isysAddGroupWithLinkParam(void *, void *, int, int);
+extern int isysAddGroupWithLinkParam(void *, void *, int, int);
 extern void _isysDeleteGroup(void *, void *, int);
 
 void ForceDelGlobalLighObj(unsigned char *o)

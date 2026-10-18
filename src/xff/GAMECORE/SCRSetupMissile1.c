@@ -4,7 +4,7 @@ extern int ScriptLayoutObjDef_MISSILE_TYPE1;
 extern char gcGlobalVar[];
 typedef struct { int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o; } MParam;
 extern void *initScriptLayoutObj(Ptn *, int, MParam *, int, int, void *, int);
-extern void isysAddGroupWithLinkParam(void *, void *, int, int);
+extern int isysAddGroupWithLinkParam(void *, void *, int, int);
 
 void SCRSetupMissile1(void *a, int b, int c, int d)
 {

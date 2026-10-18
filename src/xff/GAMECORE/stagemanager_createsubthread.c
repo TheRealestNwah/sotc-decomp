@@ -1,7 +1,7 @@
 extern char gcGlobalVar[];
 extern char B_00188730[];
 extern void *createScriptObj(void *, void *, int, int, int, int, int, int);
-extern void isysAddGroupWithLinkParam(void *, void *, int, int);
+extern int isysAddGroupWithLinkParam(void *, void *, int, int);
 
 void *stagemanager_createsubthread(void *a, void *b, int link)
 {
