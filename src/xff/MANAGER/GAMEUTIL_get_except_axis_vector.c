@@ -1,6 +1,5 @@
-extern int iosGetExceptAxisVector();
-
-int GAMEUTIL_get_except_axis_vector(int a, int b, int c, int d)
+extern void iosGetExceptAxisVector(float *, float *, float *);
+void GAMEUTIL_get_except_axis_vector(float *out, float *value, float *axis)
 {
-    return iosGetExceptAxisVector(a, b, c, d);
+    iosGetExceptAxisVector(out, value, axis);
 }
