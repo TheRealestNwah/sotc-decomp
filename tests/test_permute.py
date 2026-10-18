@@ -1,7 +1,9 @@
 from base64 import b64decode
+from types import SimpleNamespace
 
 import pytest
 
+from tools import permute
 from tools.permute import (
     PLACEHOLDER,
     normalize_objdump,
@@ -87,3 +89,47 @@ def test_protect_inline_asm_rejects_incomplete_statements():
         protect_inline_asm('__asm__("nop"')
     with pytest.raises(ValueError, match="semicolon"):
         protect_inline_asm('__asm__("nop")')
+
+
+def test_typedef_printer_keeps_mode_and_alignment_attributes(monkeypatch):
+    class Generator:
+        def _generate_type(self, node):
+            return node
+
+        def _generate_attrs(self, attributes):
+            return " __attribute__((" + ", ".join(attributes) + "))" if attributes else ""
+
+    monkeypatch.setitem(
+        permute.sys.modules,
+        "perm_pycparser.c_generator",
+        SimpleNamespace(CGenerator=Generator),
+    )
+    permute.install_typedef_printer()
+    generator = Generator()
+    for attributes in (["mode(TI)"], ["aligned(16)"], []):
+        node = SimpleNamespace(storage=["typedef"], type="int s128", gcc_attributes=attributes)
+        assert generator.visit_Typedef(node) == (
+            "typedef int s128" + generator._generate_attrs(attributes)
+        )
+
+
+@pytest.mark.parametrize("inherited", [False, True])
+def test_permuter_workers_install_typedef_printer(monkeypatch, inherited):
+    import sys
+    from types import ModuleType
+
+    events = []
+
+    def original(*args):
+        events.append(args)
+
+    module = ModuleType("src.main")
+    module.multiprocess_worker = permute.permuter_worker if inherited else original
+    package = ModuleType("src")
+    package.main = module
+    monkeypatch.setitem(sys.modules, "src", package)
+    monkeypatch.setitem(sys.modules, "src.main", module)
+    monkeypatch.setattr(permute, "_original_permuter_worker", original if inherited else None)
+    monkeypatch.setattr(permute, "install_typedef_printer", lambda: events.append("install"))
+    permute.permuter_worker("context", "tasks", "results")
+    assert events == ["install", ("context", "tasks", "results")]
