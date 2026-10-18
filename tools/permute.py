@@ -238,7 +238,37 @@ def objdump(obj: str) -> int:
     return 0
 
 
+def attributed_typedef(generator, node) -> str:
+    """Keep declaration attributes omitted by perm_pycparser's typedef printer."""
+    storage = " ".join(node.storage) + " " if node.storage else ""
+    return (
+        storage
+        + generator._generate_type(node.type)
+        + generator._generate_attrs(node.gcc_attributes)
+    )
+
+
+def install_typedef_printer() -> None:
+    from perm_pycparser.c_generator import CGenerator
+
+    CGenerator.visit_Typedef = attributed_typedef
+
+
+_original_permuter_worker = None
+
+
+def permuter_worker(*args) -> None:
+    # Windows spawns a fresh interpreter, so the parent's generator patch is
+    # absent. Forked workers instead inherit the original worker reference.
+    import src.main as permuter_main
+
+    install_typedef_printer()
+    worker = _original_permuter_worker or permuter_main.multiprocess_worker
+    worker(*args)
+
+
 def run(directory: Path, extra: list[str]) -> int:
+    global _original_permuter_worker
     sys.path.insert(0, str(PERMUTER))
     os.environ["PATH"] = os.pathsep.join([str(GIT_BASH.parent), os.environ["PATH"]])
     if shutil.which("bash") != str(GIT_BASH) and not shutil.which(
@@ -247,6 +277,10 @@ def run(directory: Path, extra: list[str]) -> int:
         raise SystemExit(f"Git bash not found at {GIT_BASH} (set SOTC_BASH)")
 
     import src.main as permuter_main  # type: ignore[import-not-found]
+
+    install_typedef_printer()
+    _original_permuter_worker = permuter_main.multiprocess_worker
+    permuter_main.multiprocess_worker = permuter_worker
 
     def preprocess(filename: str, cpp_args: list[str] | None = None) -> str:
         # ee-gcc 2.96's own cpp0, under WSL like the compiler (see try_compilers.py).
