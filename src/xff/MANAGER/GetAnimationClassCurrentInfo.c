@@ -1,6 +1,7 @@
-extern int GetMotionFrame(int, int, int, float);
-
-void GetAnimationClassCurrentInfo(void *arg0, int arg1, float fparg0)
+extern int GetMotionFrame(float *, float *, int, float, float);
+void GetAnimationClassCurrentInfo(void *object, int resource, float rate, float delta)
 {
-    (*(int *)((char *)(arg0) + 0x20)) = GetMotionFrame(arg0 + 8, arg0 + 0x18, arg1, fparg0 * (*(float *)((char *)(arg0) + 0x1C)) * (*(float *)((char *)(arg0) + 0x28)));
+    char *state = object;
+    *(int *)(state + 0x20) = GetMotionFrame((float *)(state + 8), (float *)(state + 0x18), resource,
+        rate * *(float *)(state + 0x1C) * *(float *)(state + 0x28), delta);
 }
