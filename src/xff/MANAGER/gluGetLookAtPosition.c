@@ -1,6 +1,6 @@
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; int i[4]; } Vec4;
-extern char *get_cur_camera_context(void);
+extern void *get_cur_camera_context(void);
 
 static inline void scale(Vec4 *o, Vec4 *v, float s)
 {
