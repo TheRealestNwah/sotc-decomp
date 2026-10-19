@@ -29,12 +29,15 @@ from __future__ import annotations
 
 import argparse
 import io
+import multiprocessing
 import os
 import re
 import shutil
 import subprocess
 import sys
 from base64 import b64encode
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 from elftools.elf.elffile import ELFFile
@@ -267,6 +270,23 @@ def permuter_worker(*args) -> None:
     worker(*args)
 
 
+@contextmanager
+def search_workers() -> Iterator[None]:
+    """Reap this search's children even when upstream exits before joining them."""
+    previous = set(multiprocessing.active_children())
+    try:
+        yield
+    finally:
+        children = [p for p in multiprocessing.active_children() if p not in previous]
+        for child in children:
+            child.terminate()
+        for child in children:
+            child.join(timeout=2)
+            if child.is_alive():
+                child.kill()
+                child.join(timeout=2)
+
+
 def run(directory: Path, extra: list[str]) -> int:
     global _original_permuter_worker
     sys.path.insert(0, str(PERMUTER))
@@ -301,7 +321,8 @@ def run(directory: Path, extra: list[str]) -> int:
 
     permuter_main.preprocess = preprocess
     sys.argv = ["permuter.py", str(directory), *extra]
-    permuter_main.main()
+    with search_workers():
+        permuter_main.main()
     return 0
 
 
