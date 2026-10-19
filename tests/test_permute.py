@@ -133,3 +133,63 @@ def test_permuter_workers_install_typedef_printer(monkeypatch, inherited):
     monkeypatch.setattr(permute, "install_typedef_printer", lambda: events.append("install"))
     permute.permuter_worker("context", "tasks", "results")
     assert events == ["install", ("context", "tasks", "results")]
+
+
+@pytest.mark.parametrize(
+    "failure", [None, KeyboardInterrupt(), SystemExit(7), RuntimeError("search")]
+)
+@pytest.mark.parametrize("stubborn", [False, True])
+def test_search_workers_reaps_only_new_children(monkeypatch, failure, stubborn):
+    events = []
+
+    class Child:
+        def __init__(self, name):
+            self.name = name
+            self.alive = True
+
+        def terminate(self):
+            events.append((self.name, "terminate"))
+            self.alive = stubborn
+
+        def join(self, timeout):
+            events.append((self.name, "join", timeout))
+
+        def is_alive(self):
+            return self.alive
+
+        def kill(self):
+            events.append((self.name, "kill"))
+            self.alive = False
+
+    existing, first, second = (Child(name) for name in ("existing", "first", "second"))
+    snapshots = iter([[existing], [existing, first, second]])
+    monkeypatch.setattr(permute.multiprocessing, "active_children", lambda: next(snapshots))
+
+    def search():
+        with permute.search_workers():
+            if failure is not None:
+                raise failure
+
+    if failure is None:
+        search()
+    else:
+        with pytest.raises(type(failure)) as raised:
+            search()
+        assert raised.value is failure
+
+    assert events[:2] == [("first", "terminate"), ("second", "terminate")]
+    assert existing.alive and not first.alive and not second.alive
+    assert all(event[0] != "existing" for event in events)
+    assert [event for event in events if event[1] == "join"] == [
+        (name, "join", 2) for name in ("first", "second") for _ in range(2 if stubborn else 1)
+    ]
+    assert [event[0] for event in events if event[1] == "kill"] == (
+        ["first", "second"] if stubborn else []
+    )
+
+
+def test_search_workers_leaves_completed_search_alone(monkeypatch):
+    snapshots = iter([[], []])
+    monkeypatch.setattr(permute.multiprocessing, "active_children", lambda: next(snapshots))
+    with permute.search_workers():
+        pass
