@@ -34,6 +34,13 @@ void *fsEffectCreateSetScriptWithPlayMode(int unused, int priority, FsEffect *ef
         SetScriptObjDeleteCallBackFunc(object, (int)func_0000DFF8, (int)effect);
     return object;
 }
+static void func_0000E058(FsEffect *effect)
+{
+    for (;;) {
+        selectEffect(effect);
+        isysSleepSubThread();
+    }
+}
 static void T_0000E0B0(EffectStart *start)
 {
     EffectStart params = *start;
