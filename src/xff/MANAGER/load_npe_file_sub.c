@@ -1,8 +1,8 @@
-extern char *sheetFileGetDataAdrs(int, int);
-extern int func_000C73B8(int, int);
+extern char *sheetFileGetDataAdrs(void *);
+extern int func_000C73B8(void *, int);
 
-void load_npe_file_sub(int a, int b, int c)
+void load_npe_file_sub(void *a, int b, int c)
 {
-    char *d = sheetFileGetDataAdrs(a, b);
+    char *d = sheetFileGetDataAdrs(a);
     *(int *)(d + 0x1C) = func_000C73B8(a, c);
 }
