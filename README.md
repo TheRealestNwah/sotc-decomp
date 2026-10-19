@@ -12,7 +12,7 @@ The aim is C source that compiles back to a byte-identical copy of the original 
   - The modules keep their original symbol names.
 - **All three `.XFF` files rebuild byte-for-byte**, including their headers and tables. Code/data and symbol locations come from the assembled objects; original table-layout and loader metadata are still supplied by the disc files (see [docs/xff2.md](docs/xff2.md)).
 - **Compiler identified:** Sony `ee-gcc` 2.96, `-O2 -G0`.
-- **3,935 functions are compiled from matching C** (2,146 GAMECORE, 1,263 MANAGER, 526 KERNEL), including most small getters and setters and the sword beam,
+- **3,936 functions are compiled from matching C** (2,146 GAMECORE, 1,263 MANAGER, 527 KERNEL), including most small getters and setters and the sword beam,
   weak-point glow and query, collision reaction, sound volume, particle emitter and reaction-thread updates. C in `src/xff/`
   is compiled and spliced into the modules; the full build still matches.
 - The native PC port remains future work.
