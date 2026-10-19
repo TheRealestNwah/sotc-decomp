@@ -1,18 +1,18 @@
-extern int iosgluGetCameraContext(int, int, int, int);
+extern void *iosgluGetCameraContext(void);
 
 typedef int s128 __attribute__((mode(TI)));
-extern void iosCopyMatrix(void *, int);
+extern void iosCopyMatrix(void *, void *);
 extern unsigned char B_001487C0[];
 extern int D_001360E0;
 extern void *D_001360E4;
 
-void ptclmanFrameInit(int arg0, int arg1, int arg2, int arg3) {
-    int temp_a1;
-    int temp_s1;
+void ptclmanFrameInit(void) {
+    char *temp_a1;
+    char *temp_s1;
     int temp_v1;
     void *temp_v0;
 
-    temp_s1 = iosgluGetCameraContext(arg0, arg1, arg2, arg3);
+    temp_s1 = iosgluGetCameraContext();
     temp_a1 = temp_s1 + 0x1A0;
     temp_v1 = D_001360E0 ^ 1;
     D_001360E0 = temp_v1;

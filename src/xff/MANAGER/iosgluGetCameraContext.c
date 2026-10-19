@@ -1,6 +1,6 @@
-extern int get_cur_camera_context();
+extern void *get_cur_camera_context(void);
 
-int iosgluGetCameraContext(int a, int b, int c, int d)
+void *iosgluGetCameraContext(void)
 {
-    return get_cur_camera_context(a, b, c, d);
+    return get_cur_camera_context();
 }

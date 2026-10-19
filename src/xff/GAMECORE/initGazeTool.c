@@ -1,6 +1,6 @@
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; int i[4]; } Vec4;
-extern char *iosgluGetCameraContext(void);
+extern void *iosgluGetCameraContext(void);
 extern Vec4 B_001A5A50;
 extern char D_0017B840[];
 extern void createParamMenu(char *, int);
