@@ -25,5 +25,3 @@ void fsEffectSetParamSheetSeg(unsigned int *reference)
         effect->priority >= ((FsEffect *)D_001303E0)->priority))
         D_001303E0 = effect;
 }
-
-
