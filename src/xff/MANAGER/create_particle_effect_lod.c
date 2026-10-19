@@ -1,4 +1,4 @@
-extern char *malloc_from_root_partition(int, const char *);
+extern void *malloc_from_root_partition(int, const char *);
 extern void iosUnitMatrix(void *);
 
 void *create_particle_effect_lod(void)
