@@ -2,7 +2,7 @@ typedef struct { int count; int max_count; int init_count; int wait_threads; int
 extern int CreateSema(SemaParam *);
 extern void LoaderSysEntryExternalSemaList(int);
 
-int iosCreateSema(int init, int max)
+int iosCreateSema(int init, int max, int unused)
 {
     SemaParam p;
     int s;
