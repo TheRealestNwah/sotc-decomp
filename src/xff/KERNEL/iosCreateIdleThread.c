@@ -1,10 +1,10 @@
 extern char B_0004E5B0[];
 extern char B_0004E5D0[];
-extern int B_0004F5D0;
+extern int *B_0004F5D0;
 extern void func_00000910();
 extern void iosCreateMsgQueue(void *, int, int);
-extern int iosCreateThread(void *, void *, int, int, int);
-extern int iosStartThread(int, int);
+extern int *iosCreateThread(void *, void *, int, int, int);
+extern int iosStartThread(int *, void *);
 
 int iosCreateIdleThread(void)
 {
