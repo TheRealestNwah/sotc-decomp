@@ -1,6 +1,6 @@
-extern int iosCdStRead();
+extern void iosCdStRead(void *, int);
 
-int sheetFsDataRead(int a, int b, int c, int d)
+void sheetFsDataRead(int unused, void *buffer, int size, int unusedFlags)
 {
-    return iosCdStRead(b, c, c, d);
+    iosCdStRead(buffer, size);
 }
