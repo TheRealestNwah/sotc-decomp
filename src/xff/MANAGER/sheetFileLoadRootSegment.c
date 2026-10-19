@@ -1,11 +1,13 @@
-extern void sheetFsLoadRootSegment(void (*cb)(int a, int b), int);
-extern int B_0015181C;
-extern int B_00151820;
+typedef struct Ptn Ptn;
+typedef void *(*SheetTransform)(void *, int, int);
+extern void sheetFsLoadRootSegment(void (*cb)(int a, int b), Ptn *);
+extern SheetTransform B_0015181C;
+extern Ptn *B_00151820;
 extern void D_000E1EB0(int a, int b);
 
-void sheetFileLoadRootSegment(int arg0, int arg1)
+void sheetFileLoadRootSegment(Ptn *partition, SheetTransform transform)
 {
-    B_0015181C = arg1;
-    B_00151820 = arg0;
-    sheetFsLoadRootSegment(D_000E1EB0, arg0);
+    B_0015181C = transform;
+    B_00151820 = partition;
+    sheetFsLoadRootSegment(D_000E1EB0, partition);
 }

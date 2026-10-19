@@ -1,11 +1,13 @@
-extern int B_0015181C;
-extern int B_00151820;
-extern char D_000E1EC8[];
-extern void sheetFsLoadStageTex(int, void *, int);
+typedef struct Ptn Ptn;
+typedef void *(*SheetTransform)(void *, int, int);
+extern SheetTransform B_0015181C;
+extern Ptn *B_00151820;
+extern void T_000E1EC8(int, int);
+extern void sheetFsLoadStageTex(int, void (*)(int, int), Ptn *);
 
-void sheetFileLoadStageTex(int a, int b, int c)
+void sheetFileLoadStageTex(int stage, Ptn *partition, SheetTransform transform)
 {
-    B_0015181C = c;
-    B_00151820 = b;
-    sheetFsLoadStageTex(a, D_000E1EC8, b);
+    B_0015181C = transform;
+    B_00151820 = partition;
+    sheetFsLoadStageTex(stage, T_000E1EC8, partition);
 }
