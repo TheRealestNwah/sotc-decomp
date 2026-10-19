@@ -1,6 +1,6 @@
 # Roadmap
 
-Last reviewed: 2026-10-16.
+Last reviewed: 2026-10-18.
 
 Planned work before 1.0 lives here. Keep this file current as plans change and
 work lands. Community requests come in as feature-request issues on GitHub
@@ -31,9 +31,7 @@ CI has no disc files or PS2 toolchain, so passing CI alone does not prove matchi
 - [ ] Recover remaining loader code and identify linked Sony SDK routines by
   signature rather than decompiling library code by hand.
 - [ ] Continue small sound-slot, sprite-menu, geometry, motion, ambient, weak-point
-  fade and flag helper batches. A 50-function batch is currently awaiting merge
-  in [PR #521](https://github.com/TheRealestNwah/sotc-decomp/pull/521); it is not
-  included in completed work on `main` yet.
+  fade and flag helper batches.
 - [ ] Finish GAMECORE `sword.c`, including `nico_swordstart`, collision callbacks
   `T_000C1D80` / `T_000C2620`, and `DispWithSwordBlur` / `DispWithTorchBlur`.
 - [ ] Match `GetStageContext` and `createWormCtrlWork` resource initialization.
