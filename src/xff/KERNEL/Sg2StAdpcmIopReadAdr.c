@@ -1,6 +1,6 @@
-extern int Sg2RemoteGetAdpStmAdr();
+extern int Sg2RemoteGetAdpStmAdr(int);
 
-int Sg2StAdpcmIopReadAdr(int a, int b, int c, int d)
+int Sg2StAdpcmIopReadAdr(int channel)
 {
-    return Sg2RemoteGetAdpStmAdr(a, b, c, d);
+    return Sg2RemoteGetAdpStmAdr(channel);
 }
