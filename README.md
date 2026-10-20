@@ -28,7 +28,13 @@ symbol counts, which include SDK routines to be identified rather than
 decompiled, so the percentages are a rough guide.
 <!-- progress:end -->
 
-**Overall:** the XFF modules are about 67% matching C, the loader is 0%, and the native port hasn't started. A playable build needs all three complete. The percentages are a rough guide, since the totals include SDK routines still to be identified.
+Overall, a playable build needs all three bars full. The percentages are a rough guide, since the totals include SDK routines still to be identified.
+
+```
+Matching decompilation  [█████████████░░░░░░░] 67%   (XFF modules)
+Loader as matching C    [░░░░░░░░░░░░░░░░░░░░]  0%
+Native PC port          [░░░░░░░░░░░░░░░░░░░░]  0%
+```
 
 ## You need your own copy of the game
 
