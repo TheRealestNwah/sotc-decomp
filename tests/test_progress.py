@@ -78,3 +78,19 @@ def test_update_readme_replaces_only_the_marked_block():
 def test_update_readme_requires_markers():
     with pytest.raises(ValueError):
         update_readme("no markers here", "table")
+
+
+def test_compiled_functions_includes_address_labels_and_renamed_statics(tmp_path):
+    (tmp_path / "callbacks.c").write_text(
+        "static void recoveredLoop(void) { for (;;) {} }\n"
+        "static int T_00001234(int x) { return x; }\n"
+        "static inline int unusedHelper(int x) { return x; }\n"
+        "int exported(void) { return 1; }\n"
+        "#ifdef NONMATCHING\n"
+        "static int parked(void) { return 0; }\n"
+        "#endif\n",
+        encoding="latin-1",
+    )
+    asm_text = "alabel func_00001000\nalabel T_00001234\nalabel exported\nglabel parked\n"
+
+    assert compiled_functions(tmp_path, asm_text) == {"recoveredLoop", "T_00001234", "exported"}
