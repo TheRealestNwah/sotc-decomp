@@ -73,6 +73,25 @@ useful and want to leave a tip or buy me a coffee, you can do that at
 [ko-fi.com/morrowheat23](https://ko-fi.com/morrowheat23). It's appreciated,
 never expected.
 
+## Overall progress
+
+Rough estimate of how far the project is from a playable native PC build:
+
+| Milestone | Progress |
+| --- | --- |
+| Game functions recovered as matching C (4,000 of about 9,346) | 43% |
+| Native PC port | Not started |
+
+```
+Matching decompilation  [█████████░░░░░░░░░░░] 43%
+Native PC port          [░░░░░░░░░░░░░░░░░░░░]  0%
+```
+
+The denominator counts the function labels in the generated XFF assembly, so
+it's approximate. The loader's 1,038 functions already rebuild byte-for-byte
+but are not yet matching C, so they're not counted. A playable build needs
+both bars full.
+
 ## License
 
 The code and tools in this repo are dedicated to the public domain under [CC0 1.0](LICENSE). This covers only the repo's own contents, never the game or anything derived from your disc.
