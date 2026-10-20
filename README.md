@@ -38,6 +38,21 @@ symbol counts, which include SDK routines to be identified rather than
 decompiled, so the percentages are a rough guide.
 <!-- progress:end -->
 
+## Overall progress
+
+Rough estimate of how far the project is from a playable native PC build:
+
+```
+Matching decompilation  [█████████████░░░░░░░] 67%   (XFF modules)
+Loader as matching C    [░░░░░░░░░░░░░░░░░░░░]  0%
+Native PC port          [░░░░░░░░░░░░░░░░░░░░]  0%
+```
+
+A playable build needs all three bars full. The XFF figure comes from the
+table above, and the loader is counted separately because it isn't matching C
+yet. The percentages are a rough guide, since the totals include SDK routines
+still to be identified.
+
 ## You need your own copy of the game
 
 This repo contains **no original game binaries or assets**. Dump your own disc and copy `SCUS_974.72` into `iso/`. Never commit anything from the disc.
@@ -91,25 +106,6 @@ Everything on my GitHub is free of charge and open source. If you find it
 useful and want to leave a tip or buy me a coffee, you can do that at
 [ko-fi.com/morrowheat23](https://ko-fi.com/morrowheat23). It's appreciated,
 never expected.
-
-## Overall progress
-
-Rough estimate of how far the project is from a playable native PC build:
-
-| Milestone | Progress |
-| --- | --- |
-| Game functions recovered as matching C (4,000 of about 9,346) | 43% |
-| Native PC port | Not started |
-
-```
-Matching decompilation  [█████████░░░░░░░░░░░] 43%
-Native PC port          [░░░░░░░░░░░░░░░░░░░░]  0%
-```
-
-The denominator counts the function labels in the generated XFF assembly, so
-it's approximate. The loader's 1,038 functions already rebuild byte-for-byte
-but are not yet matching C, so they're not counted. A playable build needs
-both bars full.
 
 ## License
 
