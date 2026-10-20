@@ -38,6 +38,21 @@ symbol counts, which include SDK routines to be identified rather than
 decompiled, so the percentages are a rough guide.
 <!-- progress:end -->
 
+## Overall progress
+
+Rough estimate of how far the project is from a playable native PC build:
+
+```
+Matching decompilation  [█████████████░░░░░░░] 67%   (XFF modules)
+Loader as matching C    [░░░░░░░░░░░░░░░░░░░░]  0%
+Native PC port          [░░░░░░░░░░░░░░░░░░░░]  0%
+```
+
+A playable build needs all three bars full. The XFF figure comes from the
+table above, and the loader is counted separately because it isn't matching C
+yet. The percentages are a rough guide, since the totals include SDK routines
+still to be identified.
+
 ## You need your own copy of the game
 
 This repo contains **no original game binaries or assets**. Dump your own disc and copy `SCUS_974.72` into `iso/`. Never commit anything from the disc.
