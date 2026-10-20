@@ -1,6 +1,5 @@
-extern int GetMotionResourceOriginalFrames();
-
-int GetMotionResourceFrames(void)
+extern int GetMotionResourceOriginalFrames(void *);
+int GetMotionResourceFrames(void *resource)
 {
-    return GetMotionResourceOriginalFrames() - 1;
+    return GetMotionResourceOriginalFrames(resource) - 1;
 }
