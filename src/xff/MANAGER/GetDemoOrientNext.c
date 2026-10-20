@@ -43,4 +43,3 @@ DemoEntry *GetDemoOrientNext(DemoManager *manager)
     }
     return 0;
 }
-
