@@ -99,3 +99,31 @@ static void func_000E1890(CameraParameter *output, char *camera,
 {
     *output = *current;
 }
+
+extern float GAMEUTIL_doit_interp_ratio_cntrl(void *, float);
+extern float GAMEUTIL_get_dist_ratio(float, float, float);
+static float func_000E22C0(char *control, void *camera, float delta)
+{
+    if (*(int *)((char *)camera + 0x564) != 0)
+        delta = -delta;
+    return GAMEUTIL_doit_interp_ratio_cntrl(control, delta);
+}
+static float func_000E22E0(char *control, void *camera, float delta)
+{
+    if (*(int *)((char *)camera + 0x1360) != 1)
+        delta = -delta;
+    return GAMEUTIL_doit_interp_ratio_cntrl(control + 0x20, delta);
+}
+static float func_000E2308(char *control, void *camera, float delta)
+{
+    if (*(int *)((char *)camera + 0x3B0) >= 0)
+        delta = -delta;
+    return GAMEUTIL_doit_interp_ratio_cntrl(control + 0x40, delta);
+}
+static float func_000E2330(void *object, void *unused)
+{
+    char *camera = object;
+    char *definition = *(char **)camera;
+    return GAMEUTIL_get_dist_ratio(*(float *)(camera + 0x1A0), 0.0f,
+                                  *(float *)(definition + 0x150));
+}
