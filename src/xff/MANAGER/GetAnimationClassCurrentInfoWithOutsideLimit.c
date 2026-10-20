@@ -1,6 +1,7 @@
-extern int GetMotionFrameWithOutsideLimit(int, int, int, float);
-
-void GetAnimationClassCurrentInfoWithOutsideLimit(void *arg0, int arg1, float fparg0)
+extern int GetMotionFrameWithOutsideLimit(float *, float *, int, float, float);
+void GetAnimationClassCurrentInfoWithOutsideLimit(void *object, int limit, float rate, float delta)
 {
-    (*(int *)((char *)(arg0) + 0x20)) = GetMotionFrameWithOutsideLimit(arg0 + 8, arg0 + 0x18, arg1, fparg0 * (*(float *)((char *)(arg0) + 0x1C)));
+    char *state = object;
+    *(int *)(state + 0x20) = GetMotionFrameWithOutsideLimit((float *)(state + 8),
+        (float *)(state + 0x18), limit, rate * *(float *)(state + 0x1C), delta);
 }
