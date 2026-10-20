@@ -12,7 +12,7 @@ extern int isysAddGroupWithLinkParam(void *, void *, int, int);
 extern void InitSortObj(char *, int);
 extern void isysSetObjImmediateDeleteFunc(void *, int);
 extern void _isysDeleteGroup(void *, void *, int);
-static void func_000724E8(void *);
+static void func_000724E8(void);
 static void func_000724F0(void *);
 static inline char *geoClass(char *object)
 {
@@ -35,7 +35,7 @@ char *CreateGeoDispObj(void *heap, int extra, GeoDef *definition)
     }
     return object;
 }
-static void func_000724E8(void *unused)
+static void func_000724E8(void)
 {
 }
 static void func_000724F0(void *object)
