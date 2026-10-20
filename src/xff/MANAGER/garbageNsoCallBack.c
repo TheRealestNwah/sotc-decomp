@@ -1,5 +1,5 @@
 extern void isysMoveModuleObj(void *);
-extern void isysResolveOneModuleObj(void *);
+extern int isysResolveOneModuleObj(void *);
 extern void shadowModelReInit(void *);
 
 void garbageNsoCallBack(char *o)

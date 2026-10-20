@@ -1,5 +1,5 @@
 extern void isysMoveModuleObj(int *);
-extern void isysResolveOneModuleObj(int *);
+extern int isysResolveOneModuleObj(void *);
 extern void modelReInitialize(int, int);
 void garbageNmoCallBack(int *p)
 {
