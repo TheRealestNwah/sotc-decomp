@@ -1,4 +1,4 @@
-extern int Sg2SepStopSndOff(int);
+extern int Sg2SepStopSndOff(unsigned int);
 
 int Sg2SepAllStopSndOff(void)
 {
