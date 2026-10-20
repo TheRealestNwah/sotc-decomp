@@ -122,3 +122,16 @@ From the `PsIIlib<name><version>` tags and library error strings. The version is
 The ELF also references these IOP modules: `IOPRP300.IMG`, `MCMAN`, `MCSERV`, `NETCNFIF`, `DBCMAN`, `DEV9`, `INET`, `INETCTL`, `LIBNET`, `MSIFRPC`, `AN986`, `DS1O_D`, and others.
 
 These libraries are candidates to identify by signature matching against the SDK 3.0.x libraries, rather than decompiling them by hand. Function-level boundaries haven't been mapped yet.
+## Original sequence-stop interrupt state (#708)
+
+In KERNEL `Sg2SepStop` (text offset `0x25E88`), an in-range sequence ID with
+nonpositive status branches from `0x25EC4` to `0x25F10`. This skips `DIntr`
+and the assignment of its result to `s3`, but still tests `s3` and may call
+`EIntr`. That path depends on the incoming caller-preserved register rather
+than an interrupt state captured by this function. The neighboring
+`Sg2SepStopSndOff` instead exits directly for nonpositive status.
+
+This is an instruction/data-flow finding, without a runtime reproduction.
+Preserve it during matching. [Issue #708](https://github.com/TheRealestNwah/sotc-decomp/issues/708)
+tracks confirming the intended inactive-sequence contract and interrupt
+restoration during future port planning.

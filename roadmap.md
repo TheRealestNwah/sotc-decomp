@@ -54,8 +54,9 @@ original compiler/assembler, full local binary checks and passing PR CI.
   distribute original game binaries or assets.
 - [ ] Investigate original error-path contracts before porting and address
   confirmed defects deliberately, with regression coverage. Current tracked
-  concerns are the [sheet lookup missing-header read (#492)](https://github.com/TheRealestNwah/sotc-decomp/issues/492)
-  and [AI damage checks reading before a null guard (#490)](https://github.com/TheRealestNwah/sotc-decomp/issues/490).
+  concerns include the [sheet lookup missing-header read (#492)](https://github.com/TheRealestNwah/sotc-decomp/issues/492),
+  [AI damage checks reading before a null guard (#490)](https://github.com/TheRealestNwah/sotc-decomp/issues/490),
+  and [sequence stop using uncaptured interrupt state (#708)](https://github.com/TheRealestNwah/sotc-decomp/issues/708).
   Preserve exact original behavior during the matching phase.
 - [ ] Define and validate supported platforms, packaging and runtime acceptance
   criteria before declaring a native 1.0 release ready.
