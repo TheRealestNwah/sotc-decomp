@@ -73,3 +73,29 @@ static void func_000E1788(AimRot *object, int force, float from, float aim)
             object->a = 0;
     }
 }
+
+typedef struct {
+    int words[0x37];
+} CameraParameter;
+extern float CAM_get_motion_kind_interp_ratio_target(char *);
+static void func_000E1890(CameraParameter *, char *, CameraParameter *, CameraParameter *, float);
+static void func_000E1820(char *object)
+{
+    if (*(int *)(object + 0x1E8)) {
+        float ratio = CAM_get_motion_kind_interp_ratio_target(object);
+        if (*(int *)(object + 0x28))
+            func_000E1890((CameraParameter *)(object + 0x10C), object,
+                         (CameraParameter *)(object + 0x2C),
+                         (CameraParameter *)(object + 0x1EC), ratio);
+        else
+            func_000E1890((CameraParameter *)(object + 0x10C), object, 0,
+                         (CameraParameter *)(object + 0x1EC), ratio);
+        *(int *)(object + 0x108) = 1;
+    } else
+        *(int *)(object + 0x108) = 0;
+}
+static void func_000E1890(CameraParameter *output, char *camera,
+                          CameraParameter *previous, CameraParameter *current, float ratio)
+{
+    *output = *current;
+}
