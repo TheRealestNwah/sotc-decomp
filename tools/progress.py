@@ -27,8 +27,12 @@ MODULE_FUNCTIONS = {"KERNEL": 940, "MANAGER": 2277, "GAMECORE": 2755}
 # The loader still exists only as assembly.
 LOADER_MATCHED = 0
 
-GLABEL_RE = re.compile(r"^glabel (\S+)", re.MULTILINE)
+GLABEL_RE = re.compile(r"^(?:glabel|alabel) (\S+)", re.MULTILINE)
 DEFINITION_RE = re.compile(r"^[^\s#/*}][^;{}()]*?\b([A-Za-z_]\w*)\s*\([^;{}]*\)\s*\{", re.MULTILINE)
+STATIC_DEFINITION_RE = re.compile(
+    r"^static\s+(?!inline\b)[^;{}()]*?\b([A-Za-z_]\w*)\s*\([^;{}]*\)\s*\{",
+    re.MULTILINE,
+)
 NONMATCHING_BRANCH = {"nonmatching": "matching", "matching": "nonmatching", "other": "other"}
 
 
@@ -57,10 +61,14 @@ def compiled_functions(src_dir: Path, asm_text: str) -> set[str]:
     """Names of functions defined in matching C that exist in the module's asm."""
     asm_names = set(GLABEL_RE.findall(asm_text))
     defined: set[str] = set()
+    statics: set[str] = set()
     for c_file in src_dir.glob("*.c"):
         source = strip_nonmatching(c_file.read_text(encoding="latin-1"))
         defined.update(DEFINITION_RE.findall(source))
-    return defined & asm_names
+        # Recovered static names can differ from generated address labels.
+        # ee-gcc 2.96 emits non-inline static definitions even when unused.
+        statics.update(STATIC_DEFINITION_RE.findall(source))
+    return (defined & asm_names) | statics
 
 
 def render_table(matched: dict[str, int]) -> str:
