@@ -8,7 +8,7 @@ extern char D_0012AE40[];
 extern void func_0012AE28(void);
 extern int GetScriptObjWorkSize(void *);
 extern void *_isysCreateObj(void *, int, int, int, int, int);
-extern void isysSetObjImmediateDeleteFunc(void *, void (*)(void));
+extern void isysSetObjImmediateDeleteFunc(void *, int);
 extern void initScriptObj(void *, void *, int);
 
 static inline ScriptDesc *setupDesc(int *desc)
@@ -24,7 +24,7 @@ unsigned char *createEventScriptObj(void *parent, int extra, int *desc)
     int w;
 
     o = _isysCreateObj(parent, 0x20, 0xA0, extra + GetScriptObjWorkSize(setupDesc(desc)) + 0x33, (int)D_0012AE40, 4);
-    isysSetObjImmediateDeleteFunc(o, func_0012AE28);
+    isysSetObjImmediateDeleteFunc(o, (int)func_0012AE28);
     w = *(int *)o;
     initScriptObj(o, setupDesc(desc), w);
     c = o[8] == 0x20 ? (char *)o + 0x20 : 0;
