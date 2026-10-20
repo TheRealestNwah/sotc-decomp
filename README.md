@@ -6,20 +6,10 @@ The aim is C source that compiles back to a byte-identical copy of the original 
 
 ## Status
 
-- The loader ELF `SCUS_974.72` splits with [splat](https://github.com/ethteck/splat) (1,038 functions) and **rebuilds byte-for-byte** from assembly (`ninja check` passes).
-- The game code lives in the `.XFF` modules (custom `xff2` format, see [docs/xff2.md](docs/xff2.md)).
-  - All three (`KERNEL`, `MANAGER`, `GAMECORE`) split into assembly that reassembles with every section and relocation matching the originals. That's about 70,000 relocations.
-  - The modules keep their original symbol names.
-- **All three `.XFF` files rebuild byte-for-byte**, including their headers and tables. Code/data and symbol locations come from the assembled objects; original table-layout and loader metadata are still supplied by the disc files (see [docs/xff2.md](docs/xff2.md)).
-- **Compiler identified:** Sony `ee-gcc` 2.96, `-O2 -G0`.
-- **About 4,000 functions are compiled from matching C** (see [Progress](#progress) for the breakdown), including most small getters and setters and the sword beam,
-  weak-point glow and query, collision reaction, sound volume, particle emitter and reaction-thread updates. C in `src/xff/`
-  is compiled and spliced into the modules; the full build still matches.
-- The native PC port remains future work.
-
-See [docs/findings.md](docs/findings.md) for what's known about the binaries, the compiler and the linked Sony SDK libraries.
-
-## Progress
+- The loader ELF `SCUS_974.72` (1,038 functions) splits with [splat](https://github.com/ethteck/splat) and **rebuilds byte-for-byte** from assembly (`ninja check` passes).
+- The game code is in the three `.XFF` modules (`KERNEL`, `MANAGER`, `GAMECORE`; custom `xff2` format, see [docs/xff2.md](docs/xff2.md)). All three rebuild byte-for-byte, including headers and tables. The original table-layout and loader metadata still come from the disc files.
+- Compiler identified: Sony `ee-gcc` 2.96, `-O2 -G0` (see [docs/findings.md](docs/findings.md)).
+- Matching C is in `src/xff/` and is spliced into the modules; the full build still matches. The native PC port hasn't started.
 
 <!-- progress:start -->
 | Stage | Done | Total | Progress |
@@ -38,20 +28,7 @@ symbol counts, which include SDK routines to be identified rather than
 decompiled, so the percentages are a rough guide.
 <!-- progress:end -->
 
-## Overall progress
-
-Rough estimate of how far the project is from a playable native PC build:
-
-```
-Matching decompilation  [█████████████░░░░░░░] 67%   (XFF modules)
-Loader as matching C    [░░░░░░░░░░░░░░░░░░░░]  0%
-Native PC port          [░░░░░░░░░░░░░░░░░░░░]  0%
-```
-
-A playable build needs all three bars full. The XFF figure comes from the
-table above, and the loader is counted separately because it isn't matching C
-yet. The percentages are a rough guide, since the totals include SDK routines
-still to be identified.
+**Overall:** the XFF modules are about 67% matching C, the loader is 0%, and the native port hasn't started. A playable build needs all three complete. The percentages are a rough guide, since the totals include SDK routines still to be identified.
 
 ## You need your own copy of the game
 
