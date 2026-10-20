@@ -1,6 +1,5 @@
-extern int FlushLayoutObj();
-
-static int func_0007E1F0(int a, int b, int c, int d)
+extern int FlushLayoutObj(unsigned char *);
+static int func_0007E1F0(unsigned char *object)
 {
-    return FlushLayoutObj(a, b, c, d);
+    return FlushLayoutObj(object);
 }
