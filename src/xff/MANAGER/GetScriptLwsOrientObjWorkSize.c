@@ -1,10 +1,7 @@
-extern int GetLwsOrientWorkSize();
-extern int GetScriptObjWorkSize(int);
-
-int GetScriptLwsOrientObjWorkSize(int arg0)
+extern int GetLwsOrientWorkSize(void *);
+extern int GetScriptObjWorkSize(int *);
+int GetScriptLwsOrientObjWorkSize(unsigned char *def)
 {
-    int temp_s1;
-
-    temp_s1 = GetLwsOrientWorkSize();
-    return temp_s1 + GetScriptObjWorkSize(arg0 + 0x134);
+    int work = GetLwsOrientWorkSize(def);
+    return work + GetScriptObjWorkSize((int *)(def + 0x134));
 }
