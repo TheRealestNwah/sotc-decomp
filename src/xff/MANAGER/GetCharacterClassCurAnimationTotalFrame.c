@@ -1,4 +1,4 @@
-extern int GetMotionResourceFrames(char *);
+extern int GetMotionResourceFrames(void *);
 
 int GetCharacterClassCurAnimationTotalFrame(char *c)
 {
