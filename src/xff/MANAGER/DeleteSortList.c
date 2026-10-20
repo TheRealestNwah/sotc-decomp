@@ -1,7 +1,7 @@
-extern void iosFree(void *p);
-
-void DeleteSortList(void **list)
+extern void iosFree(int address);
+void DeleteSortList(int address)
 {
+    int *list = (int *)address;
     iosFree(list[0]);
-    iosFree(list);
+    iosFree(address);
 }
