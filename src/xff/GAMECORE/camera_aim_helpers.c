@@ -127,3 +127,18 @@ static float func_000E2330(void *object, void *unused)
     return GAMEUTIL_get_dist_ratio(*(float *)(camera + 0x1A0), 0.0f,
                                   *(float *)(definition + 0x150));
 }
+
+extern float GAMEUTIL_get_hope_value_interp_value_cntrl(void *);
+extern void GAMEUTIL_reset_interp_ratio_cntrl(int *);
+extern void GAMEUTIL_set_param_interp_ratio_cntrl(char *, float, float);
+extern float GAMEUTIL_doit_interp_ratio_cntrl(void *, float);
+extern float GAMEUTIL_doit_interp_value_cntrl(void *, void *, float);
+static float func_000E2358(char *ratio, void *value, float target, float delta)
+{
+    if (GAMEUTIL_get_hope_value_interp_value_cntrl(value) != target) {
+        GAMEUTIL_reset_interp_ratio_cntrl((int *)ratio);
+        GAMEUTIL_set_param_interp_ratio_cntrl(ratio, 0.0f, 1.0f);
+    }
+    GAMEUTIL_doit_interp_ratio_cntrl(ratio, delta);
+    return GAMEUTIL_doit_interp_value_cntrl(value, ratio, target);
+}
