@@ -28,3 +28,32 @@ static void func_000E1650(void *object)
 {
     *(int *)((char *)object + 4) = 0;
 }
+
+extern int CAM_is_inside_of_region_aim_angle_rot(float *, float *, int *, float, float, float);
+extern void func_000E1788(AimRot *, int, float, float);
+extern float GAMEUTIL_get_difference_yaw_and_yaw(float, float);
+extern float GAMEUTIL_get_difference_pitch_and_pitch(float, float);
+static int func_000E1658(AimRot *object, float from, float aim, float high, float low)
+{
+    if (object->a == 0) {
+        if (high - low < 0.034906585f)
+            high = low + 0.034906585f;
+        if (!CAM_is_inside_of_region_aim_angle_rot(0, 0, &object->target, from, aim, high)) {
+            func_000E1788(object, 1, from, aim);
+            return 1;
+        }
+    }
+    return 0;
+}
+static float func_000E16F0(AimRot *object, float a, float b, float center)
+{
+    float da, db;
+    if (object->target == 0) {
+        da = GAMEUTIL_get_difference_yaw_and_yaw(center, a);
+        db = GAMEUTIL_get_difference_yaw_and_yaw(center, b);
+    } else {
+        da = GAMEUTIL_get_difference_pitch_and_pitch(center, a);
+        db = GAMEUTIL_get_difference_pitch_and_pitch(center, b);
+    }
+    return da < db ? a : b;
+}
