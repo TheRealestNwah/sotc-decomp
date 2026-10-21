@@ -42,6 +42,9 @@ extern int _optionWorkChk(int);
 extern void bootprogressivecheck(int);
 extern void scrRunM(int);
 extern void bootscelogoscript(int, int);
+extern int gcCheckStageLoadFinish(void);
+extern void stagemanager_unloadstagecore(int);
+extern int B_00184878[5];
 
 static void func_000186A8(void)
 {
@@ -162,4 +165,13 @@ static void func_00018BC0(int *state)
     bootscelogoscript((int)(state + 4), (int)(state + 3));
     while (state[3] == 0)
         scrRun();
+}
+static void func_00018C98(void)
+{
+    while (!gcCheckStageLoadFinish())
+        scrRun();
+    B_00184878[3] = 0;
+    while (!B_00184878[4])
+        scrRun();
+    stagemanager_unloadstagecore(0x8f);
 }
