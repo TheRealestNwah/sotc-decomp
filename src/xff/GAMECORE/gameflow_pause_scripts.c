@@ -30,6 +30,12 @@ extern void soundSetRevMode(int, int);
 extern char *D_0017A1E4;
 extern char *SeList_in_water_muddy1;
 extern char *DldSysUndefSymbol;
+extern void *SCRGetFirstObj(void *);
+extern void SetGeometryPointerNodePosState(void *, int, int, void *, void *);
+extern int sePlay3D(int, void *, int, int);
+extern int SeList_hp_alert, SeList_grip_alert, SeList_grip_alert_vo;
+extern int D_0017A05C, D_0017A064, D_0017A068;
+extern char B_001847F0[], gcGlobalVar[], IdentityQuaternion[], ZeroPoint[];
 
 static void func_000186A8(void)
 {
@@ -123,4 +129,15 @@ static void func_00018A58(void)
         soundSetRevMode(0, 2);
     else
         soundSetRevMode(1, 2);
+}
+static void func_00018B08(void)
+{
+    D_0017A05C = sePlaySystemSound(SeList_hp_alert);
+}
+static void func_00018B38(void)
+{
+    D_0017A064 = sePlaySystemSound(SeList_grip_alert);
+    SetGeometryPointerNodePosState(B_001847F0, (int)SCRGetFirstObj(gcGlobalVar + 0x2b0),
+        0, IdentityQuaternion, ZeroPoint);
+    D_0017A068 = sePlay3D(SeList_grip_alert_vo, B_001847F0, 0, 0);
 }
