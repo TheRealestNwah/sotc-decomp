@@ -36,6 +36,12 @@ extern int sePlay3D(int, void *, int, int);
 extern int SeList_hp_alert, SeList_grip_alert, SeList_grip_alert_vo;
 extern int D_0017A05C, D_0017A064, D_0017A068;
 extern char B_001847F0[], gcGlobalVar[], IdentityQuaternion[], ZeroPoint[];
+extern void set_nowloadingflag(int);
+extern void bootmccheckscript(int, int);
+extern int _optionWorkChk(int);
+extern void bootprogressivecheck(int);
+extern void scrRunM(int);
+extern void bootscelogoscript(int, int);
 
 static void func_000186A8(void)
 {
@@ -140,4 +146,20 @@ static void func_00018B38(void)
     SetGeometryPointerNodePosState(B_001847F0, (int)SCRGetFirstObj(gcGlobalVar + 0x2b0),
         0, IdentityQuaternion, ZeroPoint);
     D_0017A068 = sePlay3D(SeList_grip_alert_vo, B_001847F0, 0, 0);
+}
+static void func_00018BC0(int *state)
+{
+    set_nowloadingflag(0);
+    bootmccheckscript((int)state, (int)(state + 1));
+    while (state[0] == 0)
+        scrRun();
+    if (_optionWorkChk(6)) {
+        bootprogressivecheck((int)(state + 2));
+        while (state[2] == 0)
+            scrRun();
+    }
+    scrRunM(30);
+    bootscelogoscript((int)(state + 4), (int)(state + 3));
+    while (state[3] == 0)
+        scrRun();
 }
