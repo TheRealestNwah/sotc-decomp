@@ -131,6 +131,12 @@ Splice limitations:
   The tool checks every relocated line against the original relocation and falls back to raw bytes plus an explicit `.reloc` when they disagree. Don't remove those checks.
 - The originals reference a global defined in the same source file as section+offset, but a global from another file by name. That's a hint at original file boundaries, useful later when splitting into C files.
 
+## Worktrees
+
+- Agent work happens in one worktree per task under `.worktrees/` (gitignored).
+- Once a task's PR has merged (or the task is dropped), remove its worktree with `git worktree remove .worktrees/<name>` and delete its local branch with `git branch -D <branch>` (`-D` because squash merges don't look merged to git). Record anything worth keeping in the handoff first.
+- Before starting a new task, remove any leftover worktrees whose PRs have merged. Leave alone worktrees with uncommitted changes or unmerged work, since another agent may own them.
+
 ## Agent skills
 
 ### Issue tracker
