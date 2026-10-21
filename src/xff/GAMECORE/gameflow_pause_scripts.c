@@ -22,6 +22,7 @@ extern void scrRun(void);
 extern void _SCRStartSpriteMenuAnim(int, int, int, int, int, int);
 extern int ScriptSpriteMenuObjDef_SPRITE_GAME_OVER_LAYOUT;
 extern int D_0017A090;
+extern void bgmStop(void *, int *, float);
 
 static void func_000186A8(void)
 {
@@ -90,4 +91,14 @@ static void func_000188B0(int *done)
         thread, 0, (int)done, 0, (int)&D_0017A090);
     while (*done == 0)
         scrRun();
+}
+static void func_00018970(void)
+{
+    scrInit(isysGetThisSubThread());
+    D_0017A08C = 0;
+    B_00184870 = 3;
+}
+static void func_000189A8(void *bgm)
+{
+    bgmStop(bgm, 0, 1.5f);
 }
