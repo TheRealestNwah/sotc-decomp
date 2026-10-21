@@ -23,6 +23,13 @@ extern void _SCRStartSpriteMenuAnim(int, int, int, int, int, int);
 extern int ScriptSpriteMenuObjDef_SPRITE_GAME_OVER_LAYOUT;
 extern int D_0017A090;
 extern void bgmStop(void *, int *, float);
+extern void *getFogUnderWater(void);
+extern char *sePlay(char *);
+extern int seStop(char *);
+extern void soundSetRevMode(int, int);
+extern char *D_0017A1E4;
+extern char *SeList_in_water_muddy1;
+extern char *DldSysUndefSymbol;
 
 static void func_000186A8(void)
 {
@@ -101,4 +108,19 @@ static void func_00018970(void)
 static void func_000189A8(void *bgm)
 {
     bgmStop(bgm, 0, 1.5f);
+}
+static void func_00018A58(void)
+{
+    int underwater = *(int *)getFogUnderWater();
+    if (D_0017A1E4 == 0) {
+        if (underwater && SeList_in_water_muddy1 != DldSysUndefSymbol)
+            D_0017A1E4 = sePlay(SeList_in_water_muddy1);
+    } else if (!underwater) {
+        seStop(D_0017A1E4);
+        D_0017A1E4 = 0;
+    }
+    if (underwater)
+        soundSetRevMode(0, 2);
+    else
+        soundSetRevMode(1, 2);
 }
