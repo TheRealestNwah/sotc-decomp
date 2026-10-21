@@ -1,6 +1,6 @@
 extern char gcGlobalVar[];
-extern void func_0002D680();
-extern void *createScriptObj(void *, int, int, int, int, int, int, int);
+extern void func_0002D680(int);
+extern void *createScriptObj(void (*)(int), int, int, int, int, int, int, int);
 
 void stagemanager_unloadstage(int s)
 {

@@ -39,8 +39,8 @@ static inline StageData *stageData(int n)
 }
 
 extern char gcGlobalVar[];
-extern void func_0002D680(void);
-extern int createScriptObj(void (*)(void), int, int, int, int, int, int, int);
+extern void func_0002D680(int);
+extern int createScriptObj(void (*)(int), int, int, int, int, int, int, int);
 
 long stagemanager_unloadstageByStrptr(unsigned int *h)
 {
