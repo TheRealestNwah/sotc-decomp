@@ -1,3 +1,6 @@
+extern void func_00027B70(int);
+extern void func_00026CA8(int);
+extern void func_00027418(int);
 extern void func_00027070(int);
 extern void func_00026E38(int);
 extern void func_000272A8(int);
@@ -20,4 +23,14 @@ static void func_0002D480(int handle)
     isysAddGroupWithLinkParam(object, B_00188730, 0, 0);
     func_00026E38(handle);
     func_00027968(handle);
+}
+static void func_0002D4F8(int handle)
+{
+    void *object;
+    func_00027B70(handle);
+    func_00027070(handle);
+    object = createScriptObj(func_00026CA8, handle, *(void **)(gcGlobalVar + 0x308),
+        0x1000, 0, 1, 0, 0);
+    isysAddGroupWithLinkParam(object, B_00188730, 0, 0);
+    func_00027418(handle);
 }
