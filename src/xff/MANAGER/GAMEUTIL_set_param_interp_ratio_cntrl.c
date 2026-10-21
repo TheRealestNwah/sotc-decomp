@@ -22,6 +22,21 @@ void GAMEUTIL_set_param_interp_ratio_cntrl(char *input, float start, float durat
     control->backwardScale = 1.0f;
     func_00009730(control, changed);
 }
+void GAMEUTIL_set_param_extend_interp_ratio_cntrl(void *input, float start, float duration, float reverseDuration)
+{
+    RatioControl *control = input;
+    int changed;
+    if (start < 0.0f)
+        start = 0.0f;
+    changed = func_000096E8(control, start, duration);
+    control->start = start;
+    control->duration = duration;
+    if (duration > 0.0f && reverseDuration > 0.0f)
+        control->backwardScale = duration / reverseDuration;
+    else
+        control->backwardScale = 1.0f;
+    func_00009730(control, changed);
+}
 static int func_000096E8(RatioControl *control, float start, float duration)
 {
     if (control->time > 0.0f &&
