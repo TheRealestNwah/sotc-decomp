@@ -2,6 +2,16 @@ extern int isysGetThisSubThread(void);
 extern void scrInit(int);
 extern int PauseGame(int);
 extern void ReleaseGame(int);
+extern void gameModeSet(unsigned int);
+extern void adpcmGamePause(int);
+extern void sndSepPauseAll(int);
+extern int sePlaySystemSound(int);
+extern void timeAttackInScriptBegin(void);
+extern void ReplayInScriptBegin(void);
+extern int D_0017A08C;
+extern int SeList_pause;
+extern int gameflowStartMenuKaisou;
+extern int B_00184870;
 
 static void func_000186A8(void)
 {
@@ -22,4 +32,25 @@ static void T_00018720(void)
 {
     scrInit(isysGetThisSubThread());
     ReleaseGame(1);
+}
+static void T_00018748(void)
+{
+    scrInit(isysGetThisSubThread());
+    gameModeSet(1);
+    D_0017A08C = 1;
+    adpcmGamePause(1);
+    sndSepPauseAll(1);
+    sePlaySystemSound(SeList_pause);
+    if (gameflowStartMenuKaisou == 0)
+        timeAttackInScriptBegin();
+    else
+        ReplayInScriptBegin();
+}
+static void T_000187B0(void)
+{
+    scrInit(isysGetThisSubThread());
+    adpcmGamePause(0);
+    sndSepPauseAll(0);
+    D_0017A08C = 0;
+    B_00184870 = 9;
 }
