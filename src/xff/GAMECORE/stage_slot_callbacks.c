@@ -1,3 +1,4 @@
+extern void sheetMgrUnloadSegmentIndex(void *, int, int *);
 typedef struct Ptn Ptn;
 typedef struct {
     int v[4];
@@ -75,5 +76,16 @@ static void func_0002D570(int packed)
             scrRun();
         if (st != 0xDEB0)
             initstage(a, n, c, -1, 1, 0);
+    }
+}
+
+static void func_0002D680(int stage)
+{
+    StageData *s = stageData(stage);
+    int status;
+    if (--s->cnt == 0) {
+        sheetMgrUnloadSegmentIndex(SH_StageDataDEFAULT, stage, &status);
+        while ((unsigned int)(status - 0xDEAF) >= 2)
+            scrRun();
     }
 }
