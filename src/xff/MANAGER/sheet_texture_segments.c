@@ -1,6 +1,12 @@
 typedef struct { int count; void *definition; } TexSegment;
 extern TexSegment *B_001517B8;
 extern int B_001517BC;
+int sheetFsAddStageTexSegIndex(int i)
+{
+    int c = B_001517B8[i].count;
+    B_001517B8[i].count = c + 1;
+    return c;
+}
 int sheetFsDecStageTexSegIndex(int i)
 {
     return --B_001517B8[i].count;
