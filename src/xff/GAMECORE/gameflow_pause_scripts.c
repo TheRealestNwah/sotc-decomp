@@ -18,6 +18,10 @@ extern void end_check_and_boot_boss_subjective_camera_lws_animation(void);
 extern void fadeIn(int, int, float);
 extern int vschedGameTimeExec;
 extern int D_0017A078;
+extern void scrRun(void);
+extern void _SCRStartSpriteMenuAnim(int, int, int, int, int, int);
+extern int ScriptSpriteMenuObjDef_SPRITE_GAME_OVER_LAYOUT;
+extern int D_0017A090;
 
 static void func_000186A8(void)
 {
@@ -77,4 +81,13 @@ static void func_000187F8(void)
     }
     if (gameflowStartMenuKaisou != 0)
         fadeIn(0, 0, 0.39999998f);
+}
+static void func_000188B0(int *done)
+{
+    int thread = isysGetThisSubThread();
+    scrInit(thread);
+    _SCRStartSpriteMenuAnim(ScriptSpriteMenuObjDef_SPRITE_GAME_OVER_LAYOUT,
+        thread, 0, (int)done, 0, (int)&D_0017A090);
+    while (*done == 0)
+        scrRun();
 }
