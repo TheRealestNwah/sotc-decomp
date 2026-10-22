@@ -1,4 +1,4 @@
-extern void fruitsFlagSet(int, int);
+extern void fruitsFlagSet(unsigned int, int);
 extern int D_0017A028;
 extern int D_0017A02C;
 
@@ -19,3 +19,4 @@ void resetTreeId(int arg0)
     D_0017A02C = 0;
     D_0017A028 = arg0;
 }
+
