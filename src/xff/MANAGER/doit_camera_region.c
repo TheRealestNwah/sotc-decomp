@@ -34,7 +34,7 @@ extern char *GetCharacterClass(void *);
 extern void DivQuaternion(Vec4 *, Vec4 *, Vec4 *);
 extern int is_parent_obj_boss_camera_region(CameraRegion *);
 
-void doit_camera_region(CameraRegion *r, void *obj)
+void doit_camera_region(CameraRegion *r, void *obj, float t)
 {
     char *layout = GetLayoutClass(r->unk10);
     *(s128 *)&r->unk20 = **(s128 **)(layout + 0x13C);
