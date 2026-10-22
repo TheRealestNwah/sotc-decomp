@@ -94,3 +94,41 @@ def test_compiled_functions_includes_address_labels_and_renamed_statics(tmp_path
     asm_text = "alabel func_00001000\nalabel T_00001234\nalabel exported\nglabel parked\n"
 
     assert compiled_functions(tmp_path, asm_text) == {"recoveredLoop", "T_00001234", "exported"}
+
+
+def test_main_keeps_table_and_bars_in_sync_as_matching_source_changes(tmp_path, monkeypatch):
+    from tools import progress
+
+    source_dir = tmp_path / "src" / "xff" / "TEST"
+    source_dir.mkdir(parents=True)
+    source = source_dir / "functions.c"
+    source.write_text("int first(void) { return 0; }\n", encoding="utf-8")
+    asm_dir = tmp_path / "asm" / "TEST"
+    asm_dir.mkdir(parents=True)
+    (asm_dir / "text.s").write_text("glabel first\nglabel second\n", encoding="utf-8")
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        "before\n<!-- progress:start -->\nstale 68%\n<!-- progress:end -->\nafter\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(progress, "REPO", tmp_path)
+    monkeypatch.setattr(progress, "README", readme)
+    monkeypatch.setattr(progress, "MODULE_FUNCTIONS", {"TEST": 2})
+
+    assert progress.main(["--asm-dir", str(asm_dir.parent)]) == 0
+    half = readme.read_text(encoding="utf-8")
+    assert "| All three `.XFF` modules as matching C | 1 | 2 functions | 50% |" in half
+    assert "[██████████░░░░░░░░░░] 50%" in half
+    assert "68%" not in half
+    assert half.startswith("before\n") and half.endswith("after\n")
+
+    source.write_text(
+        "int first(void) { return 0; }\nint second(void) { return 1; }\n", encoding="utf-8"
+    )
+    assert progress.main(["--asm-dir", str(asm_dir.parent)]) == 0
+    complete = readme.read_text(encoding="utf-8")
+    assert "| All three `.XFF` modules as matching C | 2 | 2 functions | 100% |" in complete
+    assert "[████████████████████] 100%" in complete
+    assert "[██████████░░░░░░░░░░] 50%" not in complete
+    assert progress.main(["--asm-dir", str(asm_dir.parent)]) == 0
+    assert readme.read_text(encoding="utf-8") == complete
