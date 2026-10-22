@@ -45,6 +45,27 @@ extern void glDrawBox(float *, float *, float *);
 static void *D_0012FDF0 = 0;
 static void *D_0012FDF4 = 0;
 
+void DEBUG_disp_sphere_object(float *pos, float *quat, void *color, void *mode, float sx, float sy, float sz);
+void DEBUG_disp_box_object(float *pos, float *quat, float *size, float *color);
+
+void DEBUG_disp_cylinder_object(float *pos, float *quat, void *color, void *mode, float axis, float radius, float height);
+
+/* Defined ahead of DEBUG_disp_cylinder_object, which precedes it in the
+   binary: with the cylinder body visible, gcc fills the type == 2 test's
+   delay slot with bne instead of the original bnel. */
+void DEBUG_disp_region_object(int type, float *pos, float *quat, void *color, void *mode, float x, float y, float z)
+{
+    if (type == 0) {
+        DEBUG_disp_sphere_object(pos, quat, color, mode, x, x, x);
+    } else if (type == 1) {
+        DEBUG_disp_sphere_object(pos, quat, color, mode, x, y, z);
+    } else if (type == 2) {
+        DEBUG_disp_cylinder_object(pos, quat, color, mode, x, y, z);
+    } else if (type == 3) {
+        DEBUG_disp_box_object(pos, quat, color, mode);
+    }
+}
+
 void DEBUG_disp_cylinder_object(float *pos, float *quat, void *color, void *mode, float axis, float radius, float height)
 {
     Vec4 matrix[4];
