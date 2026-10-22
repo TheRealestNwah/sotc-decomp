@@ -1,6 +1,5 @@
-extern void func_000305B8();
-
-void vramAllocByTBPSize(void)
+static void *func_000305B8(void *, int);
+void *vramAllocByTBPSize(void *context, int size)
 {
-    func_000305B8();
+    return func_000305B8(context, size);
 }
