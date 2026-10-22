@@ -7,8 +7,7 @@ void MultiCurrentQuaternion(s128 *q)
 {
     s128 *c = &B_00054800[D_000409B0];
 
-    __asm__ __volatile__(".set noreorder
-"
+    __asm__ __volatile__(".set noreorder\n"
                          "lqc2 vf11, 0(%0)\n"
                          "lqc2 vf12, 0(%1)\n"
                          "vmul.xyzw vf13, vf11, vf12\n"
