@@ -1,10 +1,10 @@
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
-extern void GetQuaternionFromDir(float *, float *, float *);
-void iosRotMatrixFromDirection(float *out, float *from, float *to)
+extern void GetQuaternionFromDir(float *, float *, float *, int);
+void iosRotMatrixFromDirection(float *out, float *from, float *to, int mode)
 {
     Vec4 rotation;
-    GetQuaternionFromDir(rotation.f, from, to);
+    GetQuaternionFromDir(rotation.f, from, to, mode);
     __asm__ __volatile__(".set noreorder\n"
         "vaddw.xyz vf12, vf0, vf0w\n"
         "lqc2 vf11, 0x0(%0)\n"
