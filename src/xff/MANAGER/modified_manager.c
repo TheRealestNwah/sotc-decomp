@@ -6,6 +6,24 @@ typedef struct {
     void * data;
 } ModifiedManager;
 
+int EntryModifiedManager(ModifiedManager *manager, int value)
+{
+    int index = manager->used++;
+    switch (manager->width) {
+    case 1:
+        ((unsigned char *)manager->data)[index] = value;
+        break;
+    case 2:
+        ((unsigned short *)manager->data)[index] = value;
+        break;
+    case 4:
+        ((int *)manager->data)[index] = value;
+        break;
+    }
+    manager->flags[value] = 1;
+    return index;
+}
+
 void *RelocateModifiedManager(ModifiedManager *manager, int count, char *buffer)
 {
     int width;
