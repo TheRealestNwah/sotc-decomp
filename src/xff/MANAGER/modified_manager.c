@@ -6,6 +6,40 @@ typedef struct {
     void * data;
 } ModifiedManager;
 
+extern void iosJumpRecoverPoint(const char *, ...);
+
+void FlushModifiedManager(ModifiedManager *manager)
+{
+    int count = manager->used;
+    int index;
+    if (count != 0) {
+        switch (manager->width) {
+        case 1: {
+            unsigned char *values = manager->data;
+            for (index = 0; index < count; index++)
+                manager->flags[*values++] = 0;
+            break;
+        }
+        case 2: {
+            unsigned short *values = manager->data;
+            for (index = 0; index < count; index++)
+                manager->flags[*values++] = 0;
+            break;
+        }
+        case 4: {
+            int *values = manager->data;
+            for (index = 0; index < count; index++)
+                manager->flags[*values++] = 0;
+            break;
+        }
+        default:
+            iosJumpRecoverPoint("modman:\tclear error:%d\n", manager->width);
+            break;
+        }
+        manager->used = 0;
+    }
+}
+
 int EntryModifiedManager(ModifiedManager *manager, int value)
 {
     int index = manager->used++;
