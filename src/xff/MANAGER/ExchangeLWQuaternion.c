@@ -1,5 +1,5 @@
 extern float YUnitVector[];
-extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, int, float *);
+extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, short, float *);
 
 void ExchangeLWQuaternion(float *out, float *q)
 {
