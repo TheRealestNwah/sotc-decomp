@@ -25,6 +25,19 @@ static inline int resolve_module(char *object)
     iosGetCpuRapCountPar1Int();
     return pending;
 }
+void isysDumpExecutableModules(void)
+{
+    void *object = 0;
+    void **link;
+    for (link = isysGroupForFirst(executableModuleGroup, 0); link != 0;
+         link = isysGroupForNext(link, 0)) {
+        object = *link;
+    }
+    if (object != 0) {
+        isysGroupForExit(object, 0);
+    }
+}
+
 int isysResolveAllModuleObjHasUndefSymbol(void)
 {
     char *object = 0;
@@ -57,3 +70,4 @@ int isysResolveAllProgramModule(void)
     }
     return 1;
 }
+
