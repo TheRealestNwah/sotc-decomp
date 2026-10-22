@@ -11,7 +11,8 @@ typedef struct {
     int linked;
 } GazeCtrlWork;
 
-extern void DeleteTwoWayLink(void *);
+typedef struct Link { struct Link *next; struct Link *prev; } Link;
+extern int DeleteTwoWayLink(Link *);
 extern void InitTwoWayLink(void *, int *);
 
 void initGazeCtrlWork(GazeCtrlWork *w)
@@ -24,7 +25,7 @@ void initGazeCtrlWork(GazeCtrlWork *w)
     w->unk14 = 0;
     if (w->linked != 0) {
         w->linked = 0;
-        DeleteTwoWayLink(w->link);
+        DeleteTwoWayLink((Link *)(w->link));
     }
     w->unk30 = 0;
     w->unkC = 0;

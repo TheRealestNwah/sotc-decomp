@@ -20,7 +20,8 @@ typedef struct {
     int unk410;
 } Attainment;
 
-extern void DeleteTwoWayLink(void *);
+typedef struct Link { struct Link *next; struct Link *prev; } Link;
+extern int DeleteTwoWayLink(Link *);
 extern void AddTwoWayLinkNext(void *, void *);
 extern char *GetLayoutClass(void *);
 
@@ -30,7 +31,7 @@ void setAttainmentObjAndDir(Attainment *a, void *obj, Vec4 *dir)
         a->active = 1;
         if (a->linked != 0) {
             a->linked = 0;
-            DeleteTwoWayLink(a->link);
+            DeleteTwoWayLink((Link *)(a->link));
         }
         a->target = obj;
         if (obj != 0) {

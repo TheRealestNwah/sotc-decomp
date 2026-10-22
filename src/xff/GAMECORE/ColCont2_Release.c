@@ -1,4 +1,5 @@
-extern void DeleteTwoWayLink(int);
+typedef struct Link { struct Link *next; struct Link *prev; } Link;
+extern int DeleteTwoWayLink(Link *);
 
 void ColCont2_Release(void *arg0)
 {
@@ -8,6 +9,6 @@ void ColCont2_Release(void *arg0)
     (*(int *)((char *)(arg0) + 0x24)) = 0;
     if ((*(int *)((char *)(arg0) + 0x20)) != 0) {
         (*(int *)((char *)(arg0) + 0x20)) = 0;
-        DeleteTwoWayLink(arg0 + 0x14);
+        DeleteTwoWayLink((Link *)(arg0 + 0x14));
     }
 }

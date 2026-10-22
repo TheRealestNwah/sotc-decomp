@@ -1,4 +1,5 @@
-extern void DeleteTwoWayLink(void *);
+typedef struct Link { struct Link *next; struct Link *prev; } Link;
+extern int DeleteTwoWayLink(Link *);
 extern void AddTwoWayLinkNext(void *, void *);
 extern char *GetLayoutClass(void *);
 
@@ -9,7 +10,7 @@ void setAttainmentObj(char *w, void *obj)
     *(int *)(w + 0x90) = 1;
     if (*(int *)(w + 0xA4) != 0) {
         *(int *)(w + 0xA4) = 0;
-        DeleteTwoWayLink(w + 0x98);
+        DeleteTwoWayLink((Link *)(w + 0x98));
     }
     *(void **)(w + 0x94) = obj;
     if (obj != 0) {

@@ -29,7 +29,8 @@ extern char IdentityQuaternion[];
 extern char ZeroPoint[];
 extern char *GetLayoutClass(void *);
 extern void SetGeometryPointerGlobalState(void *, void *, void *);
-extern void DeleteTwoWayLink(void *);
+typedef struct Link { struct Link *next; struct Link *prev; } Link;
+extern int DeleteTwoWayLink(Link *);
 extern void ReleaseCollisionWork(void *);
 
 int FlushLayoutObj(unsigned char *o)
@@ -42,7 +43,7 @@ int FlushLayoutObj(unsigned char *o)
         if (*(int *)(c + 0x124) != 0) {
             *(qword *)(c + 0x60) = **(qword **)(c + 0x13C);
             SetGeometryPointerGlobalState(c + 0xC0, IdentityQuaternion, ZeroPoint);
-            DeleteTwoWayLink(c + 0x100);
+            DeleteTwoWayLink((Link *)(c + 0x100));
             *(int *)(c + 0x124) = 0;
         }
         if (*(int *)(l + 0x174) != 0)

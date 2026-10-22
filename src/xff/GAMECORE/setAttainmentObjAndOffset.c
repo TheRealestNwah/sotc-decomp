@@ -21,7 +21,8 @@ typedef struct {
 } Attainment;
 
 extern void AddTwoWayLinkNext(void *, void *);
-extern void DeleteTwoWayLink(void *);
+typedef struct Link { struct Link *next; struct Link *prev; } Link;
+extern int DeleteTwoWayLink(Link *);
 extern char *GetLayoutClass(int);
 
 void setAttainmentObjAndOffset(Attainment *a, int target, Vec4 *offset)
@@ -29,7 +30,7 @@ void setAttainmentObjAndOffset(Attainment *a, int target, Vec4 *offset)
     a->active = 1;
     if (a->linked != 0) {
         a->linked = 0;
-        DeleteTwoWayLink(a->link);
+        DeleteTwoWayLink((Link *)(a->link));
     }
     a->target = target;
     if (target != 0) {
