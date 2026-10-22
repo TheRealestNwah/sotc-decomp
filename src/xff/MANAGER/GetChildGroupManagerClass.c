@@ -1,16 +1,13 @@
-extern int GetScrLwsOriClass();
-extern int GetScriptAnimationClass();
+extern char *GetScriptAnimationClass(unsigned char *);
+extern char *GetScrLwsOriClass(unsigned char *);
 
-int GetChildGroupManagerClass(void *arg0)
+char *GetChildGroupManagerClass(unsigned char *object)
 {
-    unsigned char temp_v1;
-
-    temp_v1 = (*(unsigned char *)((char *)(arg0) + 8));
-    switch (temp_v1) {                              /* irregular */
+    switch (object[8]) {
     case 13:
-        return GetScriptAnimationClass() + 0x320;
+        return GetScriptAnimationClass(object) + 0x320;
     case 22:
-        return GetScrLwsOriClass() + 0x11F0;
+        return GetScrLwsOriClass(object) + 0x11F0;
     default:
         return 0;
     }
