@@ -1,6 +1,6 @@
-extern int fruitsFlagChk(void *, int);
+extern int fruitsFlagChk(unsigned int, int);
 
-int nico_checkTreeAllFruitsAlreadyTaken(void *t)
+int nico_checkTreeAllFruitsAlreadyTaken(unsigned int t)
 {
     int i;
     for (i = 0; i < 32; i++) {
@@ -9,3 +9,4 @@ int nico_checkTreeAllFruitsAlreadyTaken(void *t)
     }
     return 1;
 }
+
