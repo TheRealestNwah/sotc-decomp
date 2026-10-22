@@ -1,4 +1,5 @@
-extern void DeleteTwoWayLink(void *);
+typedef struct Link { struct Link *next; struct Link *prev; } Link;
+extern int DeleteTwoWayLink(Link *);
 
 void FlushCollisionFinder(int *f)
 {
@@ -12,7 +13,7 @@ void FlushCollisionFinder(int *f)
     e = (int *)f[3];
     while (--n != -1) {
         if (*e != 0)
-            DeleteTwoWayLink(l);
+            DeleteTwoWayLink((Link *)(l));
         e += 2;
         l += 12;
     }

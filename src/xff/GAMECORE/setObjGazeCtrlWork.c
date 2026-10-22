@@ -2,12 +2,13 @@ extern int AddTwoWayLinkNext(int *, int *);
 extern void *GetLayoutClass(void *);
 
 #define NULL ((void *)0)
-extern void DeleteTwoWayLink(void *);
+typedef struct Link { struct Link *next; struct Link *prev; } Link;
+extern int DeleteTwoWayLink(Link *);
 
 void setObjGazeCtrlWork(void *arg0, void *arg1) {
     if ((*(int *)((char *)(arg0) + 0x40)) != 0) {
         (*(int *)((char *)(arg0) + 0x40)) = 0;
-        DeleteTwoWayLink(arg0 + 0x34);
+        DeleteTwoWayLink((Link *)(arg0 + 0x34));
     }
     (*(void **)((char *)(arg0) + 0x30)) = arg1;
     if (arg1 != NULL) {

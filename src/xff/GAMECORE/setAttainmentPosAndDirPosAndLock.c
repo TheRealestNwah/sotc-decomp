@@ -22,7 +22,8 @@ typedef struct {
 } Attainment;
 
 extern int memcmp(const void *, const void *, unsigned int);
-extern void DeleteTwoWayLink(void *);
+typedef struct Link { struct Link *next; struct Link *prev; } Link;
+extern int DeleteTwoWayLink(Link *);
 
 void setAttainmentPosAndDirPosAndLock(Attainment *a, Vec4 *pos, Vec4 *target)
 {
@@ -35,7 +36,7 @@ void setAttainmentPosAndDirPosAndLock(Attainment *a, Vec4 *pos, Vec4 *target)
     }
     if (a->linked != 0) {
         a->linked = 0;
-        DeleteTwoWayLink(a->link);
+        DeleteTwoWayLink((Link *)(a->link));
     }
     a->unkA8 = 0;
     a->target = 0;
