@@ -16,8 +16,15 @@ typedef struct {
     char pad8[0x84 - 8];
     InitParamHolder *init;
 } CharacterClass;
+
 int GetCharacterClassInitParamNbNodes(CharacterClass *c)
 {
-    if (!c->init) { return c->nbNodes; }
-    return c->init->param->nbNodes;
+    int n;
+
+    if (c->init) {
+        n = c->init->param->nbNodes;
+    } else {
+        n = c->nbNodes;
+    }
+    return n;
 }
