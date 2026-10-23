@@ -76,6 +76,18 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
 - **Volatile accesses stay out of delay slots (#372):** 2.96 brackets every volatile load and store with `.set volatile` / `.set novolatile`, but in GAS mode it writes them as comments (`#.set volatile`), so our `ee-as` happily moves a volatile `lw`/`sw` into the following branch's delay slot. The original never does: `getVIntrCnt`, `getIntrGpCount`, `iosGetTCount` and `ischedStop` end in `lw`/`sw; jr $ra; nop`. `tools/try_compilers.py` (and so `ee_cc.py`) turns each marker into an empty `.set noreorder` / `.set reorder` pair, which `ee-as` treats as a reorder barrier. With that rule every previously matching function still matches, except two MANAGER setters that had used `volatile` only to force a store order; both now match with plain, natural C. So `volatile` in matching C means a real volatile object (hardware registers, interrupt-shared counters), not an ordering trick.
 - **Inline address getters:** `st_defaultAI` matches with a static inline getter returning the address of `gcGlobalVar`. Direct global access folds the address into the loads and emits 22 words; the inline getter preserves a materialized base and the original call/constant schedule, giving the matching 24-word function. This establishes a usable source shape; the original helper declaration is still unknown. See `src/xff/GAMECORE/st_defaultAI.c`.
 - **`-G0`:** none of the three modules contains a single gp-relative relocation.
+- **Source-specific alias option (#726):** the plain-C `SetDemoMotionOrientInfo`
+  candidate differs by 30 instructions with the base flags, but matches all 76
+  instructions with `-O2 -G0 -fno-strict-aliasing`. The original reloads encoded
+  resource words after storing the manager's pointer fields; strict alias
+  optimization reuses those loads and moves the stores. The adjacent recovered
+  `GetDemoOrientNext` matches with either setting. This establishes a reproducible
+  setting for this source, rather than proving the original command line for
+  every translation unit. `config/ee_cflags.json` records the additional option
+  only for `src/xff/MANAGER/SetDemoMotionOrientInfo.c`; other sources retain the
+  base flags. `ee_cc.py` reads that file, and Ninja tracks it as a compiler input.
+  Standalone comparisons must include the additional option explicitly:
+  `python tools/try_compilers.py src/xff/MANAGER/SetDemoMotionOrientInfo.c --module MANAGER --only ee-gcc2.96 --flags "-O2 -G0 -fno-strict-aliasing"`.
 - **`-O2` over `-O3`:** 41 tiny static functions (6 instructions or fewer) across the modules are still called rather than inlined, which `-O3` would have done.
 - **Float literals:** 2.96 truncates decimal float literals instead of rounding to nearest (`0.15f` gives `0x3E199999`, `0.735f` gives `0x3F3C28F5`). The original data has exactly these values, so plain literals like `0.15f` are right. A value that needs more digits, like π/180 (`0x3C8EFA35`), must be written with enough of them: `0.0174532925f`, not `0.017453292f`.
 
