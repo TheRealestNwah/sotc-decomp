@@ -20,7 +20,7 @@ extern int B_001498F0[];
 extern void iosWaitMalloc(void);
 extern void iosSignalMalloc(void);
 
-int func_00084838(int *used, int *base)
+static int func_00084838(int *used, int *base)
 {
     MemBlock *b;
     int total = 0;
