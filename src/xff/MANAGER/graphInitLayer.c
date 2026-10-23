@@ -1,4 +1,4 @@
-static char D_00135850[0xB0 * 2];
+extern char D_00135850[];
 extern void iosDlPushLayer(int);
 extern int iosDlGetWorkBufId(void);
 extern void iosDlChainTailCurrent(void *);
