@@ -1,0 +1,3 @@
+{
+  "src/xff/MANAGER/SetDemoMotionOrientInfo.c": ["-fno-strict-aliasing"]
+}

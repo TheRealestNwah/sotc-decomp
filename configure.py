@@ -46,8 +46,8 @@ LD_SCRIPTS = [
 
 
 # ee_cc.py imports its compile and assemble steps from try_compilers.py, so a
-# change to either must rebuild every C object (#388).
-EECC_TOOLS = ("tools/ee_cc.py", "tools/try_compilers.py")
+# change to either or the per-source options must rebuild C objects (#388, #726).
+EECC_TOOLS = ("tools/ee_cc.py", "tools/try_compilers.py", "config/ee_cflags.json")
 
 
 def find_cross(requested: str | None) -> str:
