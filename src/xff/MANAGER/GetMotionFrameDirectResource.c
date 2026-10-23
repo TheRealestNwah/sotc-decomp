@@ -1,3 +1,5 @@
+extern int GetMotionResourceFrames(void *);
+
 typedef struct { char unknown00[4]; short frames; } MotionResource;
 
 static inline void wrapFrame(float *frame, int limit)
@@ -34,6 +36,21 @@ int GetMotionFrameDirectResource(float *frame, float *total,
 {
     float delta = scale * step;
     int limit = resource->frames - 1;
+    int result = 0;
+    *frame += delta;
+    *total += delta;
+    if (reachedEnd((float)limit, *frame)) {
+        wrapFrame(frame, limit);
+        result = 1;
+    }
+    return result;
+}
+
+int GetMotionFrame(float *frame, float *total, int resource,
+                   float step, float scale)
+{
+    int limit = GetMotionResourceFrames((void *)resource);
+    float delta = scale * step;
     int result = 0;
     *frame += delta;
     *total += delta;
