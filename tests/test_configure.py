@@ -37,6 +37,7 @@ def test_c_objects_depend_on_compiler_wrappers(tmp_path, monkeypatch):
     implicit = edge.split(" | ", 1)[1].split()
     assert "tools/ee_cc.py" in implicit
     assert "tools/try_compilers.py" in implicit
+    assert "config/ee_cflags.json" in implicit
 
 
 def test_ninja_path_escapes_special_characters():
