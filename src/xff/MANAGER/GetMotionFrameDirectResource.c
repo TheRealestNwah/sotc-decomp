@@ -43,3 +43,17 @@ int GetMotionFrameDirectResource(float *frame, float *total,
     }
     return result;
 }
+
+int GetMotionFrameWithOutsideLimit(float *frame, float *total, int limit,
+                                   float step, float scale)
+{
+    float delta = scale * step;
+    int result = 0;
+    *frame += delta;
+    *total += delta;
+    if (reachedEnd((float)limit, *frame)) {
+        wrapFrame(frame, limit);
+        result = 1;
+    }
+    return result;
+}
