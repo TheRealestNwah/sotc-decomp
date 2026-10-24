@@ -90,6 +90,16 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
   base flags. `ee_cc.py` reads that file, and Ninja tracks it as a compiler input.
   Standalone comparisons must include the additional option explicitly:
   `python tools/try_compilers.py src/xff/MANAGER/SetDemoMotionOrientInfo.c --module MANAGER --only ee-gcc2.96 --flags "-O2 -G0 -fno-strict-aliasing"`.
+- **Object-deletion source alias option (#1248):** the recovered
+  `isysRequestDeleteObj` matches all 68 instructions with
+  `-O2 -G0 -fno-strict-aliasing`. With the base flags, the same source differs
+  by eight instructions: the queue-head load moves before the object header
+  store, and the compiler changes the temporaries used for that update. The
+  source uses the object header layout already recovered in `_isysCreateObj`
+  and the existing recursive-lock/unlock bodies. A pointer-field queue view
+  still differs by 12 instructions with the base flags. The additional option
+  is recorded only for `src/xff/KERNEL/isysRequestDeleteObj.c` in
+  `config/ee_cflags.json`; this does not establish flags for other sources.
 - **`-O2` over `-O3`:** 41 tiny static functions (6 instructions or fewer) across the modules are still called rather than inlined, which `-O3` would have done.
 - **Float literals:** 2.96 truncates decimal float literals instead of rounding to nearest (`0.15f` gives `0x3E199999`, `0.735f` gives `0x3F3C28F5`). The original data has exactly these values, so plain literals like `0.15f` are right. A value that needs more digits, like π/180 (`0x3C8EFA35`), must be written with enough of them: `0.0174532925f`, not `0.017453292f`.
 
