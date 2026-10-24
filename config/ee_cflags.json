@@ -1,0 +1,8 @@
+{
+  "src/xff/MANAGER/SetDemoMotionOrientInfo.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/isysRequestDeleteObj.c": [
+    "-fno-strict-aliasing"
+  ]
+}

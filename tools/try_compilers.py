@@ -119,6 +119,51 @@ def volatile_barriers(asm: Path) -> None:
     asm.write_text(text, encoding="latin-1")
 
 
+def indexed_la_barriers(asm: Path) -> None:
+    """gcc writes an indexed address as the macro `la $r,sym($b)`, which ee-as
+    expands to `lui $at` / `addiu $at` / `addu $r,$at,$b`. Our ee-as moves that
+    final `addu` into a following jump's delay slot; the original build never
+    did (no `addu ...,$at,...` sits in a delay slot in any module), so put an
+    empty `.set noreorder` / `.set reorder` pair after each one
+    (docs/findings.md)."""
+    text = asm.read_text(encoding="latin-1")
+    text = re.sub(
+        r"^(\s*)(la\s+\$\w+,[^\s()]+\(\$\w+\).*)$",
+        r"\1\2\n\1.set\tnoreorder\n\1.set\treorder",
+        text,
+        flags=re.M,
+    )
+    asm.write_text(text, encoding="latin-1")
+
+
+JUMP_RE = re.compile(r"^\s*(?:j|jal|jalr|jr|b|bal|b(?:eq|ne|lt|le|gt|ge)\w*|bc[01][tf]l?)\s")
+
+
+def jump_barriers(asm: Path) -> None:
+    """gcc fills the delay slots it can inside its own `.set noreorder`
+    blocks and leaves every other jump or branch to the assembler. Our
+    ee-as then moves an earlier instruction into the slot; the original
+    assembler never did (docs/findings.md). So put an empty
+    `.set noreorder` / `.set reorder` pair before each jump or branch that
+    gcc emits in reorder mode, which makes ee-as leave the slot as a `nop`.
+    This covers the volatile and indexed-`la` cases above as well."""
+    lines = asm.read_text(encoding="latin-1").split("\n")
+    out = []
+    reorder = True
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith(".set"):
+            if "noreorder" in stripped:
+                reorder = False
+            elif stripped.split()[-1] == "reorder":
+                reorder = True
+        elif reorder and JUMP_RE.match(line):
+            out.append("\t.set\tnoreorder")
+            out.append("\t.set\treorder")
+        out.append(line)
+    asm.write_text("\n".join(out), encoding="latin-1")
+
+
 def find_package_as(compiler_dir: Path) -> Path | None:
     found = sorted(compiler_dir.rglob("ee-as"))
     return found[0] if found else None
@@ -130,6 +175,8 @@ def assemble(asm: Path, obj: Path, package_as: Path | None = None) -> str | None
     difference. Macro expansions (`move`, `lw reg, sym(reg)`) differ between
     assembler versions, so the package's assembler is preferred."""
     volatile_barriers(asm)
+    indexed_la_barriers(asm)
+    jump_barriers(asm)
     if package_as is not None:
         script = (
             f'L={I386_LIBS}; work=$(mktemp -d); cp "$1" "$work/in.s"; '

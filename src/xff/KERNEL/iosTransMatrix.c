@@ -1,0 +1,26 @@
+void iosTransMatrix(float *out, float *m, float *v)
+{
+    __asm__ __volatile__(
+                         "lq $9, 0x30(%1)\n"
+                         "sq $9, 0x30(%0)\n"
+                         "lq $8, 0x20(%1)\n"
+                         "sq $8, 0x20(%0)\n"
+                         "lq $7, 0x10(%1)\n"
+                         "sq $7, 0x10(%0)\n"
+                         "lq $6, 0x0(%1)\n"
+                         "sq $6, 0x0(%0)\n"
+                         "addiu %0, %0, 0x30\n"
+                         "lqc2 vf8, 0x0(%2)\n"
+                         "lqc2 vf14, 0x0(%1)\n"
+                         "lqc2 vf15, 0x10(%1)\n"
+                         "lqc2 vf16, 0x20(%1)\n"
+                         "lqc2 vf17, 0x30(%1)\n"
+                         "vmulax.xyzw ACC, vf14, vf8x\n"
+                         "vmadday.xyzw ACC, vf15, vf8y\n"
+                         "vmaddaz.xyzw ACC, vf16, vf8z\n"
+                         "vmaddw.xyzw vf10, vf17, vf8w\n"
+                         "sqc2 vf10, 0x0(%0)\n"
+                         : "+r"(out)
+                         : "r"(m), "r"(v)
+                         : "$6", "$7", "$8", "$9", "memory");
+}

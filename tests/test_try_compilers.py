@@ -9,6 +9,8 @@ from tools.try_compilers import (
     compile_c,
     diff,
     fix_moves,
+    indexed_la_barriers,
+    jump_barriers,
     strip_padding,
     volatile_barriers,
     wsl_path,
@@ -105,4 +107,36 @@ def test_volatile_barriers_replace_commented_markers(tmp_path):
     barrier = "\t.set\tnoreorder\n\t.set\treorder\n"
     assert (
         asm.read_text(encoding="latin-1") == barrier + "\tlw\t$2,0($3)\n" + barrier + "\tj\t$31\n"
+    )
+
+
+def test_indexed_la_barriers_follow_indexed_la_only(tmp_path):
+    asm = tmp_path / "x.s"
+    asm.write_text(
+        "\tla\t$4,D_1($4)\n\tjal\tf\n\tla\t$2,D_2\n\tlw\t$2,D_3($3)\n", encoding="latin-1"
+    )
+    indexed_la_barriers(asm)
+    assert asm.read_text(encoding="latin-1") == (
+        "\tla\t$4,D_1($4)\n\t.set\tnoreorder\n\t.set\treorder\n"
+        "\tjal\tf\n\tla\t$2,D_2\n\tlw\t$2,D_3($3)\n"
+    )
+
+
+def test_jump_barriers_only_guard_reorder_mode_jumps(tmp_path):
+    asm = tmp_path / "x.s"
+    asm.write_text(
+        "\tdsra\t$2,$2,32\n\tj\t$31\n"
+        "\t.set\tnoreorder\n\tjal\tf\n\tnop\n\t.set\treorder\n"
+        "\tbne\t$2,$0,$L1\n\tjal\tg\n",
+        encoding="latin-1",
+    )
+    jump_barriers(asm)
+    barrier = "\t.set\tnoreorder\n\t.set\treorder\n"
+    assert asm.read_text(encoding="latin-1") == (
+        "\tdsra\t$2,$2,32\n" + barrier + "\tj\t$31\n"
+        "\t.set\tnoreorder\n\tjal\tf\n\tnop\n\t.set\treorder\n"
+        + barrier
+        + "\tbne\t$2,$0,$L1\n"
+        + barrier
+        + "\tjal\tg\n"
     )

@@ -74,8 +74,32 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
 - **Assembler matters:** 2.96 emits macros (`move`, `lw reg, table(reg)`) that the assembler expands. The original expansions (`daddu rd, rs, $zero`; jump-table address via `addu`) match the package's `ee-as`, not modern binutils. All 84 GAMECORE jump tables use `addu`.
 - **Final calls that are not tail calls (#382):** 2.96 turns a call followed by a return into a `j`, so a function whose last call is a plain `jal` needs something between the call and the return in the source, even if it is optimized away later. A dead assignment after the call does it (`p = 0;`), and so does returning a variable that the call only conditionally overwrites. Return types, implicit declarations and inline helpers don't matter.
 - **Volatile accesses stay out of delay slots (#372):** 2.96 brackets every volatile load and store with `.set volatile` / `.set novolatile`, but in GAS mode it writes them as comments (`#.set volatile`), so our `ee-as` happily moves a volatile `lw`/`sw` into the following branch's delay slot. The original never does: `getVIntrCnt`, `getIntrGpCount`, `iosGetTCount` and `ischedStop` end in `lw`/`sw; jr $ra; nop`. `tools/try_compilers.py` (and so `ee_cc.py`) turns each marker into an empty `.set noreorder` / `.set reorder` pair, which `ee-as` treats as a reorder barrier. With that rule every previously matching function still matches, except two MANAGER setters that had used `volatile` only to force a store order; both now match with plain, natural C. So `volatile` in matching C means a real volatile object (hardware registers, interrupt-shared counters), not an ordering trick.
+- **Indexed `la` stays out of delay slots:** 2.96 writes the address of an array element with a constant base as the macro `la $r,sym($b)`, and knowing it is several instructions, leaves the following jump's delay slot to the assembler. `ee-as` expands it to `lui $at` / `addiu $at` / `addu $r,$at,$b` and then moves that last `addu` into the delay slot. The original build never did: across all three modules, every `addu ...,$at,...` directly before a jump or branch (28 sites, e.g. `GetCurrentQuaternion`, `getPathInfo`, `graphInitLayer`) is followed by an unfilled `nop` slot, and none sits in a delay slot. `tools/try_compilers.py` therefore puts an empty `.set noreorder` / `.set reorder` pair after each indexed `la`, the same barrier as for volatile accesses. Every previously matching function still matches with the rule; it is what made `GetCurrentQuaternion`, `GetScriptPriorityGroup`, `getPathInfo`, `_optionWorkPtr`, `isysGetGroupSrhNext` and `graphInitLayer` match. `ee-as -O0`/`-O1` doesn't change the reordering.
+- **The original assembler never filled a delay slot:** the volatile and indexed-`la` rules are two cases of one difference. gcc fills the delay slots it can inside its own `.set noreorder` blocks and writes every other jump or branch in reorder mode, leaving the slot to the assembler. Our `ee-as` then moves an earlier instruction into it; the original assembler left a `nop`. Evidence: `dsra32` occurs 270 times across the modules and never in a delay slot, because gcc emits a sign extension as the two-instruction pair `dsll`/`dsra $r,$r,32`, which it won't put in a slot itself (`iosGetField` ends `dsra32; jr $ra; nop`). `tools/try_compilers.py` therefore puts an empty `.set noreorder` / `.set reorder` pair before every jump or branch gcc emits in reorder mode. With that rule every previously matching function still matches (full `ninja check`), and `iosGetField` matches as well. `ee-as -O0`/`-O1` doesn't change the reordering, so the original build may have used an assembler version without it.
 - **Inline address getters:** `st_defaultAI` matches with a static inline getter returning the address of `gcGlobalVar`. Direct global access folds the address into the loads and emits 22 words; the inline getter preserves a materialized base and the original call/constant schedule, giving the matching 24-word function. This establishes a usable source shape; the original helper declaration is still unknown. See `src/xff/GAMECORE/st_defaultAI.c`.
 - **`-G0`:** none of the three modules contains a single gp-relative relocation.
+- **Source-specific alias option (#726):** the plain-C `SetDemoMotionOrientInfo`
+  candidate differs by 30 instructions with the base flags, but matches all 76
+  instructions with `-O2 -G0 -fno-strict-aliasing`. The original reloads encoded
+  resource words after storing the manager's pointer fields; strict alias
+  optimization reuses those loads and moves the stores. The adjacent recovered
+  `GetDemoOrientNext` matches with either setting. This establishes a reproducible
+  setting for this source, rather than proving the original command line for
+  every translation unit. `config/ee_cflags.json` records the additional option
+  only for `src/xff/MANAGER/SetDemoMotionOrientInfo.c`; other sources retain the
+  base flags. `ee_cc.py` reads that file, and Ninja tracks it as a compiler input.
+  Standalone comparisons must include the additional option explicitly:
+  `python tools/try_compilers.py src/xff/MANAGER/SetDemoMotionOrientInfo.c --module MANAGER --only ee-gcc2.96 --flags "-O2 -G0 -fno-strict-aliasing"`.
+- **Object-deletion source alias option (#1248):** the recovered
+  `isysRequestDeleteObj` matches all 68 instructions with
+  `-O2 -G0 -fno-strict-aliasing`. With the base flags, the same source differs
+  by eight instructions: the queue-head load moves before the object header
+  store, and the compiler changes the temporaries used for that update. The
+  source uses the object header layout already recovered in `_isysCreateObj`
+  and the existing recursive-lock/unlock bodies. A pointer-field queue view
+  still differs by 12 instructions with the base flags. The additional option
+  is recorded only for `src/xff/KERNEL/isysRequestDeleteObj.c` in
+  `config/ee_cflags.json`; this does not establish flags for other sources.
 - **`-O2` over `-O3`:** 41 tiny static functions (6 instructions or fewer) across the modules are still called rather than inlined, which `-O3` would have done.
 - **Float literals:** 2.96 truncates decimal float literals instead of rounding to nearest (`0.15f` gives `0x3E199999`, `0.735f` gives `0x3F3C28F5`). The original data has exactly these values, so plain literals like `0.15f` are right. A value that needs more digits, like π/180 (`0x3C8EFA35`), must be written with enough of them: `0.0174532925f`, not `0.017453292f`.
 

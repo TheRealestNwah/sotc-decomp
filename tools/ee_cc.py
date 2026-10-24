@@ -9,6 +9,7 @@ docs/findings.md. The Linux binaries run under WSL; see tools/try_compilers.py.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import tempfile
@@ -24,6 +25,23 @@ from tools.try_compilers import (  # noqa: E402
 
 COMPILER = os.environ.get("SOTC_COMPILER", "ee-gcc2.96")
 CFLAGS = ["-O2", "-G0"]
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def source_cflags(source: Path, root: Path | None = None) -> list[str]:
+    """Add only the source-specific options supported by matching evidence."""
+    root = (root or ROOT).resolve()
+    try:
+        relative = source.resolve().relative_to(root).as_posix()
+    except ValueError:
+        return CFLAGS.copy()
+    settings = json.loads((root / "config/ee_cflags.json").read_text(encoding="utf-8"))
+    if not isinstance(settings, dict):
+        raise ValueError("config/ee_cflags.json must map source paths to flag lists")
+    extra = settings.get(relative, [])
+    if not isinstance(extra, list) or any(not isinstance(flag, str) for flag in extra):
+        raise ValueError(f"compiler flags for {relative} must be a list of strings")
+    return CFLAGS + extra
 
 
 def build(source: Path, output: Path, compiler_dir: Path) -> str | None:
@@ -33,7 +51,7 @@ def build(source: Path, output: Path, compiler_dir: Path) -> str | None:
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         asm = Path(tmp) / "out.s"
-        error = compile_c(compiler_dir, source, CFLAGS, asm)
+        error = compile_c(compiler_dir, source, source_cflags(source), asm)
         if error:
             return error
         output.unlink(missing_ok=True)
