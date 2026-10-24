@@ -2,7 +2,7 @@ extern void **isysGroupForFirst(void *, int);
 extern void **isysGroupForNext(void *, int);
 extern void isysGroupForExit(void *, int);
 extern void iosResetCpuRapCounter(int);
-extern int iosGetCpuRapCountPar1Int(void);
+extern float iosGetCpuRapCountPar1Int(void);
 extern long iosGetTCount(void);
 static int func_00007E00(void *);
 static void func_00007810(void *, int);
