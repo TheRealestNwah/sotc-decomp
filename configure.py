@@ -48,6 +48,22 @@ LD_SCRIPTS = [
 # ee_cc.py imports its compile and assemble steps from try_compilers.py, so a
 # change to either or the per-source options must rebuild C objects (#388, #726).
 EECC_TOOLS = ("tools/ee_cc.py", "tools/try_compilers.py", "config/ee_cflags.json")
+C_SOURCES_MANIFEST = f"{BUILD_DIR}/c_sources.json"
+
+
+def update_c_sources() -> None:
+    """Notice glob membership changes without invalidating unchanged builds."""
+    sources = {
+        module: sorted(
+            p.relative_to(ROOT).as_posix() for p in (ROOT / "src" / "xff" / module).glob("*.c")
+        )
+        for module in XFF_MODULES
+    }
+    content = json.dumps(sources, indent=2) + "\n"
+    manifest = ROOT / C_SOURCES_MANIFEST
+    if not manifest.exists() or manifest.read_text(encoding="utf-8") != content:
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text(content, encoding="utf-8")
 
 
 def find_cross(requested: str | None) -> str:
@@ -157,7 +173,14 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
         "  command = $python configure.py --cross $cross",
         "  generator = 1",
         "",
-        f"build build.ninja: configure configure.py {SPLAT_CONFIG}",
+        "rule c_sources",
+        "  command = $python configure.py --check-c-sources",
+        "  description = CHECK C source inventory",
+        "  restat = 1",
+        "",
+        "build force-c-sources: phony",
+        f"build {C_SOURCES_MANIFEST}: c_sources | configure.py force-c-sources",
+        f"build build.ninja: configure configure.py {SPLAT_CONFIG} {C_SOURCES_MANIFEST}",
         "",
     ]
     for source, obj in zip(sources, objects, strict=True):
@@ -232,7 +255,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--split", action="store_true", help="re-run splat before generating")
     parser.add_argument("--cross", default=os.environ.get("SOTC_CROSS"), help="binutils prefix")
+    parser.add_argument("--check-c-sources", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+
+    if args.check_c_sources:
+        update_c_sources()
+        return 0
 
     if not (ROOT / BASE_ELF).is_file():
         print(f"Missing {BASE_ELF}. Copy it from your own disc first.", file=sys.stderr)
@@ -246,6 +274,7 @@ def main(argv: list[str] | None = None) -> int:
     if not shutil.which(cross + "as"):
         print(f"warning: {cross}as not found on PATH; `ninja` will fail until it's installed.")
 
+    update_c_sources()
     (ROOT / "build.ninja").write_text(generate(cross, asm_sources(), modules), encoding="utf-8")
     print(f"Wrote build.ninja (cross = {cross})")
     return 0
