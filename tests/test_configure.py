@@ -1,8 +1,58 @@
 import json
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import configure
 from configure import find_cross, generate, ninja_path, object_for
+
+
+def test_ninja_regenerates_for_added_renamed_and_removed_c_sources(tmp_path):
+    # Use the actual generator and Ninja, without disc data or PS2 tools. Only
+    # build the manifest, so no compilation or binary parsing is necessary.
+    shutil.copyfile(Path(configure.__file__), tmp_path / "configure.py")
+    (tmp_path / configure.SPLAT_CONFIG).touch()
+    (tmp_path / "iso").mkdir()
+    (tmp_path / configure.BASE_ELF).touch()
+    (tmp_path / "iso/KERNEL.XFF").touch()
+    (tmp_path / "asm/cod").mkdir(parents=True)
+    assembly = tmp_path / "asm/xff/KERNEL"
+    assembly.mkdir(parents=True)
+    (assembly / "KERNEL.s").touch()
+    sources = tmp_path / "src/xff/KERNEL"
+    sources.mkdir(parents=True)
+
+    def run(*args):
+        subprocess.run(
+            [sys.executable, *args], cwd=tmp_path, check=True, capture_output=True, text=True
+        )
+
+    run("configure.py", "--cross", "test-")
+    build = tmp_path / "build.ninja"
+    initial_mtime = build.stat().st_mtime_ns
+    inventory = tmp_path / configure.C_SOURCES_MANIFEST
+    inventory_mtime = inventory.stat().st_mtime_ns
+    run("-m", "ninja", "build.ninja")
+    assert build.stat().st_mtime_ns == initial_mtime
+    assert inventory.stat().st_mtime_ns == inventory_mtime
+
+    source = sources / "added $name.c"
+    source.write_text("void added(void) {}\n")
+    run("-m", "ninja", "build.ninja")
+    assert "build build/src/xff/KERNEL/added$ $$name.o: eecc" in build.read_text()
+    source = source.rename(sources / "renamed.c")
+    run("-m", "ninja", "build.ninja")
+    assert "build build/src/xff/KERNEL/renamed.o: eecc" in build.read_text()
+    assert "added$ $$name.o" not in build.read_text()
+    source.unlink()
+    run("-m", "ninja", "build.ninja")
+    assert ": eecc " not in build.read_text()
+
+    # Removal of the whole module source directory must work too.
+    sources.rmdir()
+    run("-m", "ninja", "build.ninja")
+    assert ": eecc " not in build.read_text()
 
 
 def test_splice_uses_response_file_for_large_object_lists(tmp_path, monkeypatch):
