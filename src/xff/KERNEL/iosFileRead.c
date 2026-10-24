@@ -87,3 +87,13 @@ int iosFileRead(char *name, void *buf, int max)
     file_close(fd);
     return size;
 }
+
+int iosLoaderGetFileSize(int fd)
+{
+    FileEnt *e = file_find(fd);
+
+    if (e == 0) {
+        return 0;
+    }
+    return e->size;
+}
