@@ -1,10 +1,10 @@
-extern void ForceAcceptMotion();
-extern void InitAnimationClass(int, int);
-extern void ResetCharacterClassAnimeFrameTableInfo(int);
+extern char *ForceAcceptMotion(char *, char *, float);
+extern void InitAnimationClass(void *, char *);
+extern void ResetCharacterClassAnimeFrameTableInfo(char *);
 
-void ResetCharacterClassMotionShiftInfo(int arg0, int arg1)
+void ResetCharacterClassMotionShiftInfo(char *character, char *motion, float frame)
 {
-    ForceAcceptMotion();
-    InitAnimationClass(arg0 + 0x1C0, arg1);
-    ResetCharacterClassAnimeFrameTableInfo(arg0);
+    ForceAcceptMotion(character, motion, frame);
+    InitAnimationClass(character + 0x1C0, motion);
+    ResetCharacterClassAnimeFrameTableInfo(character);
 }

@@ -1,16 +1,16 @@
-extern void FlushLayoutObj();
-extern void *GetScriptLayoutClass(int);
+extern int FlushLayoutObj(unsigned char *);
+extern void *GetScriptLayoutClass(unsigned char *);
 extern void flushScriptObj(int);
 extern void iosFree(int);
 
-void FlushScriptLayoutObj(int arg0)
+void FlushScriptLayoutObj(unsigned char *object)
 {
-    int temp_v1;
+    int allocation;
 
-    FlushLayoutObj();
-    flushScriptObj(arg0);
-    temp_v1 = (*(int *)((char *)(GetScriptLayoutClass(arg0)) + 0x2D4));
-    if (temp_v1 != 0) {
-        iosFree(temp_v1);
+    FlushLayoutObj(object);
+    flushScriptObj((int)object);
+    allocation = *(int *)((char *)GetScriptLayoutClass(object) + 0x2D4);
+    if (allocation != 0) {
+        iosFree(allocation);
     }
 }
