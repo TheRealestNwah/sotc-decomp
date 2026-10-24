@@ -1,6 +1,6 @@
-extern int UnlinkSecureParentInfo();
+extern void UnlinkSecureParentInfo(char *);
 
-int ResetCharacterClassPositionMemoryInfo(int a, int b, int c, int d)
+void ResetCharacterClassPositionMemoryInfo(void *character)
 {
-    return UnlinkSecureParentInfo(a + 4128, b, c, d);
+    UnlinkSecureParentInfo((char *)character + 0x1020);
 }
