@@ -1,6 +1,6 @@
-extern int getAnimObjResource();
+extern int getAnimObjResource(unsigned int *);
 
 int GetLwsOrientInitMotionPtr(char *p, int a)
 {
-    return getAnimObjResource(*(char **)(p + 0x7C) + 0x50, a);
+    return getAnimObjResource((unsigned int *)(*(char **)(p + 0x7C) + 0x50));
 }
