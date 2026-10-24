@@ -1,6 +1,6 @@
-extern int DecreaseDamageLockTime();
+extern void DecreaseDamageLockTime(void *, float);
 
-int ResetCharacterClassMailRelationalTriggerFlags(int a, int b, int c, int d)
+void ResetCharacterClassMailRelationalTriggerFlags(char *character, float dt)
 {
-    return DecreaseDamageLockTime(a + 512, b, c, d);
+    DecreaseDamageLockTime(character + 0x200, dt);
 }
