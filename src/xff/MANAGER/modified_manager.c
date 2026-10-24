@@ -8,6 +8,23 @@ typedef struct {
 
 extern void iosJumpRecoverPoint(const char *, ...);
 
+void InitModifiedManager(ModifiedManager *manager, int count)
+{
+    int index;
+
+    manager->used = 0;
+    manager->current = 0;
+    if (count != 0) {
+        manager->width = count <= 65535 ? (count >= 256 ? 2 : 1) : 4;
+        for (index = 0; index < count; index++) {
+            manager->flags[index] = 0;
+        }
+    } else {
+        manager->flags = 0;
+        manager->data = 0;
+    }
+}
+
 void FlushModifiedManager(ModifiedManager *manager)
 {
     int count = manager->used;
