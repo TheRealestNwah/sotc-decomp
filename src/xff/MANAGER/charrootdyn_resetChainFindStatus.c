@@ -1,6 +1,6 @@
-extern int UnlinkSecureParentInfo();
+extern void UnlinkSecureParentInfo(char *);
 
-int charrootdyn_resetChainFindStatus(int a, int b, int c, int d)
+void charrootdyn_resetChainFindStatus(void *character)
 {
-    return UnlinkSecureParentInfo(a + 3488, b, c, d);
+    UnlinkSecureParentInfo((char *)character + 0xDA0);
 }
