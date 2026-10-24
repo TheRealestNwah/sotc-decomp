@@ -1,6 +1,6 @@
-extern int UnlinkSecureParentInfo();
+extern void UnlinkSecureParentInfo(char *);
 
-int charrootdyn_resetHColFindFlag(int a, int b, int c, int d)
+void charrootdyn_resetHColFindFlag(void *character)
 {
-    return UnlinkSecureParentInfo(a + 3952, b, c, d);
+    UnlinkSecureParentInfo((char *)character + 0xF70);
 }
