@@ -1,8 +1,8 @@
-extern void func_00069B70(int, int, int);
-extern void motrootdyn_startparentpointxzfit();
+extern void func_00069B70(void *, char *, void *);
+extern int motrootdyn_startparentpointxzfit(int, int, int);
 
-void motrootdyn_startpendulum(int arg0, int arg1, int arg2)
+void motrootdyn_startpendulum(void *object, char *character, void *params)
 {
-    motrootdyn_startparentpointxzfit();
-    func_00069B70(arg0, arg1, arg2);
+    motrootdyn_startparentpointxzfit((int)object, (int)character, (int)params);
+    func_00069B70(object, character, params);
 }
