@@ -1,4 +1,3 @@
-void setv3f(void)
+void setv3f(float x, float y, float z, float w)
 {
-
 }
