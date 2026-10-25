@@ -16,7 +16,7 @@ typedef struct TexObject {
     Texture *texture;
 } TexObject;
 
-extern const int RO_00117320[];
+extern const int RO_0013D5C0[];
 
 void texClutReset(TexObject *object)
 {
@@ -28,7 +28,7 @@ void texClutReset(TexObject *object)
     for (i = 0; i < 2; i++) {
         int *dest = work->bank[i];
         int j;
-        for (j = 0; j < RO_00117320[texture->format & 0x3F]; j++)
+        for (j = 0; j < RO_0013D5C0[texture->format & 0x3F]; j++)
             dest[j] = clut[j];
     }
 }
