@@ -66,15 +66,13 @@ static inline void texTransClearHigh(TexTransDma *dma, int i)
     dma->word[i] = 0;
 }
 
-static inline void texTransSetDma(TexTransReq *req, int param)
+static inline void texTransAllocDma(TexTransReq *req)
 {
     req->dma = iosAllocPacketPtrPath1(0x20);
     __asm__ __volatile__("pref 0, 0x40(%0)" : : "r"(req->dma));
     texTransSetTags(req->dma);
     texTransClearHigh(req->dma, 2);
     texTransClearHigh(req->dma, 6);
-    req->param = param;
-    iosDlChainTailCurrent(req->dma);
 }
 
 static inline void texTransAppend(TexTransReq *req)
@@ -102,7 +100,9 @@ void texTransRequest(TexTransObj *obj, int param, int slot)
     req->head.word[1] = 0;
     req->obj[slot] = obj;
     req->obj[slot ? 0 : 1] = 0;
-    texTransSetDma(req, param);
+    texTransAllocDma(req);
+    req->param = param;
+    iosDlChainTailCurrent(req->dma);
     obj->group->counter->s.count++;
     texTransAppend(req);
 }
@@ -122,8 +122,24 @@ void texTransRequestMulti(TexTransObj *obj0, TexTransObj *obj1, int param)
     req->head.word[1] = 0;
     req->obj[0] = obj0;
     req->obj[1] = obj1;
-    texTransSetDma(req, param);
+    texTransAllocDma(req);
+    req->param = param;
+    iosDlChainTailCurrent(req->dma);
     obj0->group->counter->s.count++;
     obj1->group->counter->s.count++;
+    texTransAppend(req);
+}
+
+void texResetVRAMRequest(int arg)
+{
+    TexTransReq *req;
+
+    req = iosAllocPacketPtrPath1(0x20);
+    __asm__ __volatile__("pref 0, 0x40(%0)" : : "r"(req));
+    req->head.word[0] = 1;
+    req->head.word[1] = arg;
+    req->obj[0] = req->obj[1] = 0;
+    texTransAllocDma(req);
+    iosDlChainTailCurrent(req->dma);
     texTransAppend(req);
 }
