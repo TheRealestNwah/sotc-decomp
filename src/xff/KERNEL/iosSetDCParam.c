@@ -1,6 +1,6 @@
 extern void func_000122B8(void *);
 
-void iosSetDCParam(char *dc, int a, int b, short c, short d)
+void iosSetDCParam(char *dc, int a, int b, int c, int d)
 {
     *(int *)(dc + 0x160) = a;
     *(int *)(dc + 0x164) = b;
