@@ -8,11 +8,16 @@ typedef struct BgmScriptWork {
 } BgmScriptWork;
 
 typedef union BgmScriptSlot BgmScriptSlot;
+typedef struct BgmAdpcm {
+    int handle;
+} BgmAdpcm;
 /* Slot control stores may alias the script pointer in the shared work table. */
 union BgmScriptSlot {
     struct {
         int state;
-        char pad4[0x18];
+        int priority;
+        char pad8[0x10];
+        BgmAdpcm *adpcm;
         BgmScriptWork *script;
         char pad20[4];
         float fade;
@@ -24,6 +29,7 @@ union BgmScriptSlot {
 
 extern int D_0017A930;
 extern BgmScriptSlot B_001887D0[3];
+extern void adpcmCloseFadeSetVol(int, float);
 
 static inline void clearScriptFlags(BgmScriptWork *script)
 {
@@ -76,6 +82,42 @@ void bgmPlayerDemoEndTypeAllClose(void)
                     slot->fields.callback(slot);
                 }
             }
+        }
+    }
+}
+
+void bgmMinPriorityForceClose(int priority)
+{
+    BgmScriptSlot *minimum = 0;
+    int i;
+
+    for (i = 0; i < 3; i++) {
+        BgmScriptSlot *slot = &B_001887D0[i];
+
+        if (slot->fields.state == 6) {
+            adpcmCloseFadeSetVol(slot->fields.adpcm->handle, 100.0f);
+            return;
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        BgmScriptSlot *slot = &B_001887D0[i];
+
+        if (slot->fields.state != 0 && slot->fields.priority < priority) {
+            priority = slot->fields.priority;
+            minimum = slot;
+        }
+    }
+    if (minimum != 0) {
+        int state = minimum->fields.state;
+
+        minimum->fields.fade = 0.0f;
+        if (state != 5 && state != 6) {
+            clearScriptFlags(minimum->fields.script);
+            minimum->fields.state = 5;
+            minimum->fields.script->field40 = 0;
+        }
+        if (minimum->fields.callback != 0) {
+            minimum->fields.callback(minimum);
         }
     }
 }
