@@ -1,7 +1,8 @@
-typedef struct { int v[4]; } Q;
-extern Q func_00031210(int, int, int, int, int);
+typedef int s128 __attribute__((mode(TI)));
+extern void func_00031210(void *, void *, void *, void *, int, int);
 
-void GetMotionNodePos(int a, int b, int c, int d)
+void GetMotionNodePos(void *position, void *object, int node, int toolCoordinates)
 {
-    func_00031210(a, 0, b, c, d);
+    s128 quaternion;
+    func_00031210(&quaternion, position, 0, object, node, toolCoordinates);
 }
