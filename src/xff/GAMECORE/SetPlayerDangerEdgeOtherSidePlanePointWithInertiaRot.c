@@ -1,9 +1,9 @@
-extern char *GetSCRCharaAIWorkPtr(int);
-extern void player_setDangerEdgeOtherSidePlanePoint(int, char *);
-extern int SetInertiaRotInterpMode(int);
+extern void *GetSCRCharaAIWorkPtr(void *);
+extern void player_setDangerEdgeOtherSidePlanePoint(void *, char *);
+extern void SetInertiaRotInterpMode(void *);
 
-int SetPlayerDangerEdgeOtherSidePlanePointWithInertiaRot(int a)
+void SetPlayerDangerEdgeOtherSidePlanePointWithInertiaRot(void *obj)
 {
-    player_setDangerEdgeOtherSidePlanePoint(a, GetSCRCharaAIWorkPtr(a) + 0x1BB0);
-    return SetInertiaRotInterpMode(a);
+    player_setDangerEdgeOtherSidePlanePoint(obj, (char *)GetSCRCharaAIWorkPtr(obj) + 0x1BB0);
+    SetInertiaRotInterpMode(obj);
 }
