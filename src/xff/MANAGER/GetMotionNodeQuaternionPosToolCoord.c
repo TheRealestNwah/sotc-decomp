@@ -1,6 +1,7 @@
-extern int func_00031210(void *, void *, int, void *, void *, void *);
+extern void func_00031210(void *, void *, void *, void *, int, int);
 
-int GetMotionNodeQuaternionPosToolCoord(void *a, void *b, void *c, void *d, void *e)
+void GetMotionNodeQuaternionPosToolCoord(void *quaternion, void *position,
+                                       void *object, int node, int toolCoordinates)
 {
-    return func_00031210(a, b, 0, c, d, e);
+    func_00031210(quaternion, position, 0, object, node, toolCoordinates);
 }
