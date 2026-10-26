@@ -1,6 +1,6 @@
-extern int atanf();
+extern float atanf(float);
 
-int iosGetATanfExact(int a, int b, int c, int d)
+float iosGetATanfExact(float value)
 {
-    return atanf(a, b, c, d);
+    return atanf(value);
 }
