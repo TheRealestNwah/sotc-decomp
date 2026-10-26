@@ -1,9 +1,9 @@
-extern int KickParticleGetResourceId(char *);
+extern int KickParticleGetResourceId(unsigned char *object);
 extern int set_generate_particle_flag(int, int, int);
 
-int particleOnOff(char *name, int a, int b)
+int particleOnOff(unsigned char *object, int a, int b)
 {
-    if (name == 0)
+    if (object == 0)
         return 0;
-    return set_generate_particle_flag(a, KickParticleGetResourceId(name), b);
+    return set_generate_particle_flag(a, KickParticleGetResourceId(object), b);
 }

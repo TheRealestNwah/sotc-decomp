@@ -1,6 +1,6 @@
-extern void *GetSubLinkClass();
+extern char *GetSubLinkClass(unsigned char *object);
 
-int KickParticleGetResourceId(void)
+int KickParticleGetResourceId(unsigned char *object)
 {
-    return *(*(int **)((char *)(GetSubLinkClass()) + 0x10));
+    return **(int **)(GetSubLinkClass(object) + 0x10);
 }
