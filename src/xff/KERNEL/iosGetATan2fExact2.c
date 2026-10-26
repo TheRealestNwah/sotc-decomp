@@ -1,6 +1,6 @@
-extern int atan2f();
+extern float atan2f(float, float);
 
-int iosGetATan2fExact2(int a, int b, int c, int d)
+float iosGetATan2fExact2(float y, float x)
 {
-    return atan2f(a, b, c, d);
+    return atan2f(y, x);
 }
