@@ -1,6 +1,6 @@
 typedef struct { int on; int a; int mod; char pad[0x74]; } Smfp;
 extern Smfp B_000E0DC0[];
-extern void Sg2SmfpStopSndOff(int);
+extern int Sg2SmfpStopSndOff(int);
 extern void Sg2ModClose(int);
 
 int Sg2SmfpClose(int i)
