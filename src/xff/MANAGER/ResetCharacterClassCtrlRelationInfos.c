@@ -1,6 +1,6 @@
-extern int isysDeleteGroupAllObj();
+extern int isysDeleteGroupAllObj(void *group);
 
-int ResetCharacterClassCtrlRelationInfos(int a, int b, int c, int d)
+int ResetCharacterClassCtrlRelationInfos(char *character)
 {
-    return isysDeleteGroupAllObj(a + 4324, b, c, d);
+    return isysDeleteGroupAllObj(character + 0x10E4);
 }
