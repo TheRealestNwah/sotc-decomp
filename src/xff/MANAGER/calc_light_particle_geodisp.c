@@ -13,7 +13,7 @@ typedef struct {
 
 extern char *GetGeoDispClass(unsigned char *obj);
 extern int func_000C59F0(void *particle);
-extern void SetGeoDispClassLightColMan(void *geo);
+extern int SetGeoDispClassLightColMan(void *geo);
 
 static inline char **getParticleList(unsigned char *obj)
 {
