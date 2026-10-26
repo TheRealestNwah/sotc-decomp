@@ -1,6 +1,6 @@
-extern int fmodf();
+extern float fmodf(float, float);
 
-int iosFmodf(int a, int b, int c, int d)
+float iosFmodf(float dividend, float divisor)
 {
-    return fmodf(a, b, c, d);
+    return fmodf(dividend, divisor);
 }
