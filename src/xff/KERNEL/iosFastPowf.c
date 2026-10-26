@@ -1,6 +1,6 @@
-extern int powf();
+extern float powf(float, float);
 
-int iosFastPowf(int a, int b, int c, int d)
+float iosFastPowf(float base, float exponent)
 {
-    return powf(a, b, c, d);
+    return powf(base, exponent);
 }
