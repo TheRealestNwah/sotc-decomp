@@ -1,7 +1,7 @@
-extern int isysGetThisSubThread();
-extern int func_00095428();
+extern int isysGetThisSubThread(void);
+extern void func_00095428(void *thread);
 
-int scrRun(void)
+void scrRun(void)
 {
-    return func_00095428(isysGetThisSubThread());
+    func_00095428((void *)isysGetThisSubThread());
 }
