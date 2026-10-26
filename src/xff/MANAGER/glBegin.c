@@ -1,4 +1,4 @@
-extern void glBeginWithDlLayerNo(int, int);
+extern int glBeginWithDlLayerNo(int, int);
 extern int iosDlGetLayer();
 
 void glBegin(int arg0)
