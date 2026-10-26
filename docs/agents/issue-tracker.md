@@ -1,6 +1,8 @@
 # Issue tracker: GitHub
 
-Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+Use GitHub Issues for bugs, including discovered bugs, and feature requests explicitly requested by the project owner. Track routine development directly through focused PRs; matching, maintenance, refactoring and documentation do not require issues. This project-specific policy replaces the general issue-before-every-work-item preference.
+
+Outside contributors must open an issue to discuss their proposed change before opening a PR. Use the `gh` CLI for issue operations. Keep one PR per work item and all normal verification and CI gates.
 
 ## Conventions
 

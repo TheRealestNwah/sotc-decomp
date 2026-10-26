@@ -143,6 +143,11 @@ Splice limitations:
 
 Issues live in this repo's GitHub Issues, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
+- Open and label issues for bugs, including bugs discovered during development, and feature requests explicitly requested by the project owner.
+- Track routine development, matching decompilation, maintenance, refactoring and documentation directly through focused PRs. These work items do not need issues.
+- Outside contributors must open an issue to discuss their proposed change before opening a PR.
+- This project-specific policy replaces the general requirement to file an issue before every work item. Keep one PR per work item and retain the normal verification and CI gates.
+
 ### Triage labels
 
 Default five-role vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
