@@ -58,6 +58,23 @@ static inline void stopCameraAnimation(CameraAnimation *entry)
     resetCameraAnimation(entry);
 }
 
+static void *func_000E7758(int);
+
+void *get_main_type_camera_lws_animation(void)
+{
+    return func_000E7758(0);
+}
+
+void *get_interest_type_camera_lws_animation(void)
+{
+    return func_000E7758(2);
+}
+
+void *get_fixed_point_type_camera_lws_animation(void)
+{
+    return func_000E7758(3);
+}
+
 int end_camera_lws_animation(unsigned int index)
 {
     if (index < 10) {
@@ -87,7 +104,7 @@ void init_camera_lws_animation_manager(void)
         resetCameraAnimation(&B_0015DBD0[i]);
 }
 
-void *func_000E7758(int mode)
+static void *func_000E7758(int mode)
 {
     CameraAnimation *entry = B_0015DBD0;
     int i;
@@ -97,7 +114,7 @@ void *func_000E7758(int mode)
     }
     return 0;
 }
-int func_000E77A8(void)
+static int func_000E77A8(void)
 {
     int count = 0;
     int i;
