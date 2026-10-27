@@ -1,10 +1,11 @@
-extern void *B_0004F5F0[];
+typedef void (*ResetCallback)(void);
+extern ResetCallback B_0004F5F0[];
 extern char RO_00041FE0[];
-extern void loaderSetResetCallback(void *);
+extern void loaderSetResetCallback(ResetCallback);
 extern void iosJumpRecoverPoint(void *, ...);
 static void func_00000F28(void);
 
-void iosLoaderResetEntry(void *fn)
+void iosLoaderResetEntry(ResetCallback fn)
 {
     int i;
 
