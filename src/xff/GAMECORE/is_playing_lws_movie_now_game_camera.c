@@ -1,5 +1,5 @@
 extern int get_game_camera(int);
-extern int get_main_type_camera_lws_animation(void);
+extern void *get_main_type_camera_lws_animation(void);
 
 int is_playing_lws_movie_now_game_camera(int manager)
 {
