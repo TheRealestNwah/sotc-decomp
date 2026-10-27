@@ -1320,7 +1320,7 @@ typedef struct {
     sceVu0FVECTOR *matrix;
 } SwordLayout;
 
-extern GameObj *isysGetThisSubThread(void);
+extern void *isysGetThisSubThread(void);
 extern SwordLayout *GetLayoutClass(GameObj *obj);
 extern void nico_weaponUpdateGeometry(SwordLayout *layout);
 extern void FlushCollisionWork(GameObj *obj);

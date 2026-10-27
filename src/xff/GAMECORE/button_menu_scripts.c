@@ -1,4 +1,4 @@
-extern int isysGetThisSubThread(void);
+extern void *isysGetThisSubThread(void);
 extern void scrInit(int);
 extern void bgmStop(void *, int *, float);
 extern void bgmPlay(void *, float);
@@ -16,7 +16,7 @@ static void func_0001D928(void)
 }
 static void T_0001D950(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     if (buttonBgm != 0) {
         bgmPlay(buttonBgm, 100.0f);
         buttonBgmPlay = buttonBgm;
@@ -27,12 +27,12 @@ static void T_0001D950(void)
 }
 static void func_0001D9C8(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     B_001885F0 = 2;
 }
 static void func_0001D9F8(void)
 {
-    int thread = isysGetThisSubThread();
+    int thread = (int)isysGetThisSubThread();
     scrInit(thread);
     scriptIntrEntryJump(ScrIntrDef_GAME_NEWSTART, thread, D_0017A2E8);
     scriptIntrEntryJump(ScrIntrDef_GAME_LOADSTART, thread, D_0017A2F0);

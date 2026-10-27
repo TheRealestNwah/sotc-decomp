@@ -1,4 +1,4 @@
-extern int isysGetThisSubThread(void);
+extern void *isysGetThisSubThread(void);
 extern char *GetLayoutClass(unsigned char *);
 extern void scrRun(void);
 extern unsigned char gcGlobalVar[];
@@ -10,7 +10,7 @@ static inline unsigned char *getGlobals(void)
 
 void st_defaultAI(void)
 {
-    int self = isysGetThisSubThread();
+    int self = (int)isysGetThisSubThread();
     float last = 0.0f;
     GetLayoutClass((unsigned char *)self);
     for (;;) {

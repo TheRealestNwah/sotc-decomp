@@ -1,6 +1,6 @@
-extern int D_00040FA0;
+extern void *D_00040FA0;
 
-int isysGetThisSubThread(void)
+void *isysGetThisSubThread(void)
 {
     return D_00040FA0;
 }

@@ -1,4 +1,4 @@
-extern int isysGetThisSubThread(void);
+extern void *isysGetThisSubThread(void);
 extern void scrInit(int);
 extern int PauseGame(int);
 extern void ReleaseGame(int);
@@ -48,27 +48,27 @@ extern int B_00184878[5];
 
 static void func_000186A8(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     PauseGame(1);
 }
 static void T_000186D0(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     ReleaseGame(1);
 }
 static void T_000186F8(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     PauseGame(1);
 }
 static void T_00018720(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     ReleaseGame(1);
 }
 static void T_00018748(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     gameModeSet(1);
     D_0017A08C = 1;
     adpcmGamePause(1);
@@ -81,7 +81,7 @@ static void T_00018748(void)
 }
 static void T_000187B0(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     adpcmGamePause(0);
     sndSepPauseAll(0);
     D_0017A08C = 0;
@@ -89,7 +89,7 @@ static void T_000187B0(void)
 }
 static void func_000187F8(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     ReleaseGame(1);
     vschedGameTimeExec = 1;
     adpcmGamePause(0);
@@ -107,7 +107,7 @@ static void func_000187F8(void)
 }
 static void func_000188B0(int *done)
 {
-    int thread = isysGetThisSubThread();
+    int thread = (int)isysGetThisSubThread();
     scrInit(thread);
     _SCRStartSpriteMenuAnim(ScriptSpriteMenuObjDef_SPRITE_GAME_OVER_LAYOUT,
         thread, 0, (int)done, 0, (int)&D_0017A090);
@@ -116,7 +116,7 @@ static void func_000188B0(int *done)
 }
 static void func_00018970(void)
 {
-    scrInit(isysGetThisSubThread());
+    scrInit((int)isysGetThisSubThread());
     D_0017A08C = 0;
     B_00184870 = 3;
 }

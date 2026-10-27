@@ -1,4 +1,4 @@
-extern int isysGetThisSubThread();
+extern void *isysGetThisSubThread(void);
 extern void scrInit(int);
 extern void scrRun();
 extern void scriptIntrAllDeleteJump(int);
@@ -10,7 +10,7 @@ void st_boss_status(void)
 {
     int temp_v0;
 
-    temp_v0 = isysGetThisSubThread();
+    temp_v0 = (int)isysGetThisSubThread();
     scrInit(temp_v0);
     scriptIntrAllDeleteJump(temp_v0);
     scriptIntrEntryJump(ScrIntrDef_DEAD_BOSS, temp_v0, D_0017AF80);

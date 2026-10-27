@@ -15,13 +15,13 @@ extern void FlushCollisionWork(int);
 extern LayoutClass *GetLayoutClass(int);
 extern void UpdateAliasLayoutObjClothGeometry(int);
 extern void getClothGeometry(int, int, float, float);
-extern int isysGetThisSubThread(void);
+extern void *isysGetThisSubThread(void);
 extern void scrRun(void);
 extern GlobalVar gcGlobalVar;
 
 void st_collisionalias(void)
 {
-    int thread = isysGetThisSubThread();
+    int thread = (int)isysGetThisSubThread();
 
     for (;;) {
         LayoutClass *layout;
