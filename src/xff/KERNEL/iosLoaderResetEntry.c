@@ -21,3 +21,14 @@ void iosLoaderResetEntry(ResetCallback fn)
 found:
     B_0004F5F0[i] = fn;
 }
+
+static void func_00000F28(void)
+{
+    ResetCallback *next = B_0004F5F0;
+    int remaining;
+    for (remaining = 1; remaining >= 0; remaining--) {
+        ResetCallback callback = *next++;
+        if (callback != 0)
+            callback();
+    }
+}
