@@ -4,6 +4,12 @@ Private, machine-specific notes (agent workflow, handoffs) live in `CLAUDE.local
 
 Matching decompilation of Shadow of the Colossus (PS2, NTSC-U `SCUS-97472`), with a native PC port as the long-term goal.
 
+## Autonomous work
+
+Unless the owner specifies a task or another stopping condition, a request to work autonomously means to continue through the backlog until usage is exhausted. Follow any requested issue order, record phase or evidence blockers before advancing, and continue to the next actionable item after each investigation or merge. An arbitrary batch boundary is not a stopping condition.
+
+At usage exhaustion, save a resumable handoff. Resume automatically when the five-hour usage window resets, provided no successor agent is active; do not track or self-limit against weekly usage totals.
+
 ## Goals
 
 1. Rebuild the original binaries byte-for-byte from source in this repo.
