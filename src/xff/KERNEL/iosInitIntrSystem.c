@@ -30,3 +30,12 @@ void iosInitIntrSystem(void)
     B_0004F5E8 = -1;
     B_0004F5EC = 0;
 }
+
+extern volatile long B_0004F5E0;
+static int func_00000EF0(int cause)
+{
+    B_0004F5E0 += 0x10000;
+    *(volatile unsigned int *)0x10000010 = 0xA80;
+    __asm__ __volatile__("sync\n" "ei\n" : : : "memory");
+    return 0;
+}
