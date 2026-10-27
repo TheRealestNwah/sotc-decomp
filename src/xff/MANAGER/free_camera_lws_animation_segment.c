@@ -8,7 +8,7 @@ typedef struct {
     CameraLwsAnimation *animations;
 } CameraLwsSegment;
 
-extern void end_camera_lws_animation_by_paramID(CameraLwsAnimation *anim);
+extern int end_camera_lws_animation_by_paramID(int param_id);
 void free_camera_lws_animation_segment(CameraLwsSegment *seg)
 {
     if (seg != 0) {
@@ -20,7 +20,7 @@ void free_camera_lws_animation_segment(CameraLwsSegment *seg)
             int i = n;
 
             do {
-                end_camera_lws_animation_by_paramID(p);
+                (void)end_camera_lws_animation_by_paramID((int)p);
                 p++;
             } while (--i);
         }
