@@ -1,4 +1,4 @@
-extern int get_main_type_camera_lws_animation();
+extern void *get_main_type_camera_lws_animation(void);
 extern int D_00139F40;
 
 int is_main_type_camera_lws_animation_update(void)

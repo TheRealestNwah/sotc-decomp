@@ -1,6 +1,6 @@
-extern int func_000E7758();
+extern void *func_000E7758(int);
 
-int get_main_type_camera_lws_animation(void)
+void *get_main_type_camera_lws_animation(void)
 {
     return func_000E7758(0);
 }
