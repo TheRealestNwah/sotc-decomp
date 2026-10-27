@@ -1,6 +1,7 @@
-extern void *GetObjectAnimationFloatFrame(void *a, void *b, void *c, float f0, float f1);
+extern int GetObjectAnimationFloatFrame(void *out, void *motion, int index,
+                                       float frame, float previousFrame);
 
-void *GetAnimationClassObjectAnimation(void *obj, float *frame, void *b, void *c)
+int GetAnimationClassObjectAnimation(void *out, float *frame, void *motion, int index)
 {
-    return GetObjectAnimationFloatFrame(obj, b, c, frame[2], frame[3]);
+    return GetObjectAnimationFloatFrame(out, motion, index, frame[2], frame[3]);
 }
