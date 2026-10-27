@@ -1,4 +1,4 @@
-extern float GAMEUTIL_increase_yaw(int, float, float);
+extern float GAMEUTIL_increase_yaw(int *, float, float);
 
 float get_merge_yaw_nico_sight_on(char *p)
 {

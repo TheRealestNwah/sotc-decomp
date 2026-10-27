@@ -1,4 +1,4 @@
-extern float GAMEUTIL_increase_yaw(int, float, float);
+extern float GAMEUTIL_increase_yaw(int *, float, float);
 
 void set_max_min_yaw_parameter_nico_yaw_pitch_cntrl(char *c, int a, int b, int d, float base, float max, float min)
 {

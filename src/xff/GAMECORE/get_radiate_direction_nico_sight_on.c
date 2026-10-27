@@ -1,4 +1,4 @@
-extern float GAMEUTIL_increase_yaw(int, float, float);
+extern float GAMEUTIL_increase_yaw(int *, float, float);
 extern float GAMEUTIL_increase_pitch(int, int, float, float, float, float);
 extern void GAMEUTIL_get_direction_by_yaw_pitch(void *, float, float);
 
