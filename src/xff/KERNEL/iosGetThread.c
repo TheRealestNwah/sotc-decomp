@@ -1,6 +1,10 @@
-extern int B_000516E0[];
+typedef struct Thread {
+    char pad[0x28];
+    struct Thread *next;
+} Thread;
+extern Thread *B_000516E0[];
 extern int GetThreadId(void);
-int iosGetThread(void)
+Thread *iosGetThread(void)
 {
     return B_000516E0[GetThreadId()];
 }
