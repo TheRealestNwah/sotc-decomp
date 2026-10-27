@@ -1,6 +1,8 @@
-extern int GAMEUTIL_increase_yaw_limit_clip_extend();
+extern float GAMEUTIL_increase_yaw_limit_clip_extend(int *moved, int upperEnabled, int lowerEnabled,
+    int option, float yaw, float delta, float upper, float lower);
 
-int GAMEUTIL_increase_yaw_limit_clip(int a, int b, int c, int d)
+float GAMEUTIL_increase_yaw_limit_clip(int *moved, int option, float yaw, float delta,
+                                     float upper, float lower)
 {
-    return GAMEUTIL_increase_yaw_limit_clip_extend(a, 1, 1, b);
+    return GAMEUTIL_increase_yaw_limit_clip_extend(moved, 1, 1, option, yaw, delta, upper, lower);
 }
