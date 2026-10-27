@@ -1,0 +1,75 @@
+typedef struct {
+    char *mot;
+    int a;
+    float b;
+    float c;
+    int pad10;
+    int pad14;
+    int d;
+    float e;
+    int f;
+    int g;
+    float ratio;
+    float inv;
+    char table[1];
+} AnimClass;
+
+typedef int Quadword __attribute__((mode(TI)));
+typedef struct { Quadword q; } Vector;
+typedef struct CameraAnimation {
+    int id;
+    AnimClass animation;
+    char animationReserved[0x40 - sizeof(AnimClass)];
+    int field44, geometryReference, reserved4C;
+    char geometry[0x40];
+    Vector position;
+    int callbackActive;
+    void (*callback)(void *);
+    void *callbackArg;
+    int fieldAC, fieldB0, fieldB4;
+    char reservedB8[8];
+} CameraAnimation;
+extern CameraAnimation B_0015DBD0[10];
+extern unsigned char InitialGeometryPointer[];
+extern Vector ZeroPoint;
+extern void InitAnimationClass(AnimClass *, char *);
+extern void CopyGeometryPointer(void *, void *);
+
+static inline void resetCameraAnimation(CameraAnimation *entry)
+{
+    entry->id = 0;
+    InitAnimationClass(&entry->animation, 0);
+    entry->field44 = 0;
+    entry->geometryReference = 0;
+    CopyGeometryPointer(entry->geometry, InitialGeometryPointer);
+    entry->position = ZeroPoint;
+    entry->callbackActive = 0;
+    entry->callback = 0;
+    entry->callbackArg = 0;
+    entry->fieldAC = 0;
+    entry->fieldB0 = 0;
+    entry->fieldB4 = 0;
+}
+
+static inline void stopCameraAnimation(CameraAnimation *entry)
+{
+    if (entry->callbackActive && entry->callback)
+        entry->callback(entry->callbackArg);
+    resetCameraAnimation(entry);
+}
+
+int end_camera_lws_animation(unsigned int index)
+{
+    if (index < 10) {
+        stopCameraAnimation(&B_0015DBD0[index]);
+        return 1;
+    }
+    return 0;
+}
+
+void init_camera_lws_animation_manager(void)
+{
+    int i;
+    for (i = 0; i < 10; i++)
+        resetCameraAnimation(&B_0015DBD0[i]);
+}
