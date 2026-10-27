@@ -67,6 +67,19 @@ int end_camera_lws_animation(unsigned int index)
     return 0;
 }
 
+int end_camera_lws_animation_by_paramID(int id)
+{
+    int i;
+    for (i = 0; i < 10; i++) {
+        CameraAnimation *entry = &B_0015DBD0[i];
+        if (entry->id == id) {
+            stopCameraAnimation(entry);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void init_camera_lws_animation_manager(void)
 {
     int i;
