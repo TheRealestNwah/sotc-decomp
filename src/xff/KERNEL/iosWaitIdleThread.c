@@ -1,7 +1,26 @@
-extern char B_0004E5B0[];
-extern int iosSendMsg();
+typedef struct Thread {
+    char pad[0x28];
+    struct Thread *next;
+} Thread;
 
-int iosWaitIdleThread(int a, int b, int c, int d)
+typedef struct {
+    int msg;
+    int unk4;
+} MsgEntry;
+
+typedef struct {
+    MsgEntry *buf;
+    int size;
+    int count;
+    int wr;
+    int unk10;
+    int recv;
+    Thread *send;
+} MsgQueue;
+
+extern char B_0004E5B0[];
+extern int iosSendMsg(MsgQueue *, int, int);
+int iosWaitIdleThread(void)
 {
-    return iosSendMsg((int)B_0004E5B0, 0, 1, d);
+    return iosSendMsg((MsgQueue *)B_0004E5B0, 0, 1);
 }
