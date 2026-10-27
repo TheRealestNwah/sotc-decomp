@@ -1,7 +1,7 @@
 extern float GAMEUTIL_get_move_radi_from_yaw1_to_yaw2(float, float);
 extern void GAMEUTIL_get_local_directionZ(float *, void *);
 extern void GAMEUTIL_get_yaw_pitch_by_direction(float *, float *, float *);
-extern float GAMEUTIL_increase_yaw(int, float, float);
+extern float GAMEUTIL_increase_yaw(int *, float, float);
 
 typedef struct {
     int pad;
