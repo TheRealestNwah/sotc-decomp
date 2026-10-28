@@ -1,6 +1,6 @@
-extern int deleteUserPathWork();
+extern void deleteUserPathWork(char *);
 
-int deleteUserPathWorkEx(int a, int b, int c, int d)
+void deleteUserPathWorkEx(char *path)
 {
-    return deleteUserPathWork(a, b, c, d);
+    deleteUserPathWork(path);
 }
