@@ -1,6 +1,6 @@
-extern int B_000C3948;
-
-void addAdpcmTickProcFunc(int arg0)
+typedef void (*SoundTickCallback)(void);
+extern SoundTickCallback B_000C3948;
+void addAdpcmTickProcFunc(SoundTickCallback callback)
 {
-    B_000C3948 = arg0;
+    B_000C3948 = callback;
 }
