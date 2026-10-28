@@ -1,5 +1,5 @@
-extern int dsysFileInit();
-extern int nicosysdInit();
+extern void dsysFileInit(void);
+extern int nicosysdInit(void);
 
 int dsysInit(void)
 {
