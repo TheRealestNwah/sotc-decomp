@@ -8,7 +8,7 @@ extern void set_screen_wide_and_progressive(int, int);
 extern void update_camera_obj(void *);
 
 #define NULL ((void *)0)
-void setAspect(void) {
+void setAspect(int unusedMode) {
     int temp_s0;
     int temp_s0_2;
     int temp_v0;
