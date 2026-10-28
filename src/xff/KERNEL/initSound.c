@@ -13,8 +13,7 @@ extern void Sg2DspSetMasterVolumeMax(void), sndVabInit(void), sndSepInit(void);
 extern int Sg2SlotSetOutputMode(int);
 int initSound(void)
 {
-    sg2NicoReverbMode = 0;
-    B_000C3948 = 0;
+    B_000C3948 = sg2NicoReverbMode = 0;
     Sg2CtrlInit(0);
     Sg2RemoteInit(0);
     Sg2ChipInit(0);
