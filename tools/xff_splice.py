@@ -512,6 +512,9 @@ def byte_lines(data: bytes, offset: int) -> list[str]:
     return out
 
 
+C_DATA_ADDRESS_RE = re.compile(r"^\s*/\* ([0-9A-F]+) from C \([^)]*\.c\) \*/")
+
+
 def replace_data(
     lines: list[str],
     original: OriginalSection,
@@ -527,7 +530,7 @@ def replace_data(
     addressed = [
         (i, int(m.group(1), 16) - original.base)
         for i, line in enumerate(lines)
-        if (m := ADDRESS_RE.match(line))
+        if (m := ADDRESS_RE.match(line) or C_DATA_ADDRESS_RE.match(line))
     ]
     spans = {
         i: (start, addressed[k + 1][1] if k + 1 < len(addressed) else original.size)
