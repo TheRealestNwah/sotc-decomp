@@ -1,6 +1,6 @@
-extern int _gameFWorkChk();
+extern float _gameFWorkChk(int);
 
-int getPlayerMaxGrip(int a, int b, int c, int d)
+float getPlayerMaxGrip(void)
 {
-    return _gameFWorkChk(12, b, c, d);
+    return _gameFWorkChk(12);
 }
