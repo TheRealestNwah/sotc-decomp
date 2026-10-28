@@ -1,8 +1,8 @@
 extern char gcGlobalVar[];
-extern int SCRGetFirstObj();
-extern int nico_resetHorseRidingStatusForHorse();
+extern void *SCRGetFirstObj(void *);
+extern void nico_resetHorseRidingStatusForHorse(int);
 
-int demo_brige_resetHorseBridle(void)
+void demo_brige_resetHorseBridle(void)
 {
-    return nico_resetHorseRidingStatusForHorse(SCRGetFirstObj((int)(gcGlobalVar + 0x2B4)));
+    nico_resetHorseRidingStatusForHorse((int)SCRGetFirstObj(gcGlobalVar + 0x2B4));
 }
