@@ -1,7 +1,6 @@
-extern void sceSifCheckStatRpc(void *);
+extern int sceSifCheckStatRpc(void *);
 extern unsigned char B_000DD440[];
-
-void Sg2RemoteSyncStatus(void)
+int Sg2RemoteSyncStatus(void)
 {
-    sceSifCheckStatRpc(B_000DD440);
+    return sceSifCheckStatRpc(B_000DD440);
 }
