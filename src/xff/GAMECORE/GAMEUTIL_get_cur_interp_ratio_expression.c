@@ -1,6 +1,6 @@
-extern int GAMEUTIL_get_interp_ratio_interp_ratio_cntrl();
+extern float GAMEUTIL_get_interp_ratio_interp_ratio_cntrl(void *);
 
-int GAMEUTIL_get_cur_interp_ratio_expression(int a, int b, int c, int d)
+float GAMEUTIL_get_cur_interp_ratio_expression(char *object)
 {
-    return GAMEUTIL_get_interp_ratio_interp_ratio_cntrl(a + 20, b, c, d);
+    return GAMEUTIL_get_interp_ratio_interp_ratio_cntrl(object + 20);
 }
