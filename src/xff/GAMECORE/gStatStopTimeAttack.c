@@ -1,8 +1,8 @@
 extern int gstatTimeAttackMode;
-extern int SetTimeAttackTimeFlag();
+extern void SetTimeAttackTimeFlag(int);
 
-int gStatStopTimeAttack(void)
+void gStatStopTimeAttack(void)
 {
     gstatTimeAttackMode = 3;
-    return SetTimeAttackTimeFlag(0);
+    SetTimeAttackTimeFlag(0);
 }
