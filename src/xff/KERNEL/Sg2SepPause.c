@@ -1,7 +1,7 @@
 typedef struct { int status, previous; char pad8[8]; int mod; char pad14[60]; } Sep;
 extern Sep B_000DD700[];
 extern int DIntr(void);
-extern void EIntr(void);
+extern int EIntr(void);
 extern int Sg2ModSetParam(int, int, int, int);
 int Sg2SepPause(unsigned int id, int mode)
 {

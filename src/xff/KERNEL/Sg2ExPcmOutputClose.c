@@ -1,7 +1,7 @@
 typedef struct { int a, b, c; void *buf; } PcmOut;
 extern PcmOut B_000E2360;
 extern int DIntr(void);
-extern void EIntr(void);
+extern int EIntr(void);
 extern void Sg2ExPcmOutputCtrl(int);
 extern void free(void *);
 

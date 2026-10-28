@@ -1,7 +1,7 @@
 typedef struct { int a, b, c, busy; int buf; int d; int pos; } PcmOut;
 extern PcmOut B_000E2360;
 extern int DIntr(void);
-extern void EIntr(void);
+extern int EIntr(void);
 static void func_0002E498(PcmOut *, int);
 static void func_0002E5A0(PcmOut *, int);
 

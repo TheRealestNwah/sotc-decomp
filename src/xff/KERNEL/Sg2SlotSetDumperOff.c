@@ -10,7 +10,7 @@ typedef struct {
 extern int B_000DE338[2];
 extern Slot B_000DE370[48];
 extern int DIntr(void);
-extern void EIntr(void);
+extern int EIntr(void);
 
 void Sg2SlotSetDumperOff(int vab, int prog)
 {

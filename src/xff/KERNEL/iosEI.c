@@ -1,4 +1,4 @@
-extern int EIntr();
+extern int EIntr(void);
 extern void iosJumpRecoverPoint(void *);
 extern int D_00040634;
 extern unsigned char RO_00041F98[];

@@ -9,7 +9,7 @@ typedef struct {
 extern int B_000DD468;
 extern RemoteDmaCommand B_000DD480[];
 extern int DIntr(void);
-extern void EIntr(void);
+extern int EIntr(void);
 
 int Sg2RemoteSendDmaCom(int command, int arg1, int arg2, int arg3)
 {

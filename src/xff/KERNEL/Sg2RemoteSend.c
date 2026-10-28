@@ -8,7 +8,7 @@ typedef struct {
 extern int B_000D9240;
 extern RemoteCommand B_000D9280[];
 extern int DIntr(void);
-extern void EIntr(void);
+extern int EIntr(void);
 
 int Sg2RemoteSend(int command, int arg1, int arg2, int arg3)
 {

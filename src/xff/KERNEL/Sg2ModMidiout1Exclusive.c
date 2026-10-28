@@ -6,7 +6,7 @@ typedef struct {
 
 extern MidiOut B_000C5C7C[];
 extern int DIntr(void);
-extern void EIntr(void);
+extern int EIntr(void);
 
 void Sg2ModMidiout1Exclusive(int port, unsigned char *data)
 {
