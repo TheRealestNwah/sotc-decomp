@@ -1,6 +1,7 @@
-extern int GAMEUTIL_destructor_record_info();
+typedef struct { int a; int b; void *buf; int c; } RecordInfo;
+extern void GAMEUTIL_destructor_record_info(RecordInfo *);
 
-int CAM_destructor_target(int a, int b, int c, int d)
+void CAM_destructor_target(char *target)
 {
-    return GAMEUTIL_destructor_record_info(a + 716, b, c, d);
+    GAMEUTIL_destructor_record_info((RecordInfo *)(target + 0x2CC));
 }
