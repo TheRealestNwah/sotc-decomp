@@ -4,7 +4,7 @@ extern void *memset(void *, int, unsigned int);
 extern char B_000E2360[];
 extern char B_000E2518[];
 
-int Sg2ExPcmInit(void)
+int Sg2ExPcmInit(int reserved)
 {
     char *input;
     int i;

@@ -9,7 +9,7 @@ extern void *memset(void *p, int c, unsigned int n);
 extern void Sg2SmfpTickProc(void);
 extern int Sg2CtrlEntryTickProcById(int id, void (*proc)(void));
 
-int Sg2SmfpInit(void)
+int Sg2SmfpInit(int reserved)
 {
     Smfp *s = B_000E0DC0;
     int i;
