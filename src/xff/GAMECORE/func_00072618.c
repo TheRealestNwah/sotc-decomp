@@ -12,7 +12,7 @@ extern OptionSnapshot B_0018B6A8;
 extern int (*D_0017AD70[])(void);
 extern int getZoomKey(void), getInterestKey(void), getBossInterestKey(void);
 extern void *memcpy(void *, const void *, unsigned int);
-void func_00072618(void)
+static void func_00072618(void)
 {
     B_0018B6A8.values[0] = D_0017AD70[0]();
     B_0018B6A8.values[1] = D_0017AD70[1]();
