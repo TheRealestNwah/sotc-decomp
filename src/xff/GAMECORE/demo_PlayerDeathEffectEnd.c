@@ -1,6 +1,6 @@
-extern int endBossDeathEffect();
+extern void endBossDeathEffect(void);
 
-int demo_PlayerDeathEffectEnd(int a, int b, int c, int d)
+void demo_PlayerDeathEffectEnd(void)
 {
-    return endBossDeathEffect(a, b, c, d);
+    endBossDeathEffect();
 }
