@@ -1,6 +1,6 @@
-extern int GAMEUTIL_get_interp_timer_interp_ratio_cntrl();
+extern float GAMEUTIL_get_interp_timer_interp_ratio_cntrl(void *);
 
-int CAM_get_motion_kind_interp_timer_target(int a, int b, int c, int d)
+float CAM_get_motion_kind_interp_timer_target(char *object)
 {
-    return GAMEUTIL_get_interp_timer_interp_ratio_cntrl(a + 8, b, c, d);
+    return GAMEUTIL_get_interp_timer_interp_ratio_cntrl(object + 8);
 }
