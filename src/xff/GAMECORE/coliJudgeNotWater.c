@@ -1,6 +1,6 @@
-extern long *GetCollisionDBAttributeAdr();
+extern long *GetCollisionDBAttributeAdr(void *);
 
-int coliJudgeNotWater(void)
+int coliJudgeNotWater(void *collision)
 {
-    return (*GetCollisionDBAttributeAdr() & 0x7C00) != 0x4400;
+    return (*GetCollisionDBAttributeAdr(collision) & 0x7C00) != 0x4400;
 }
