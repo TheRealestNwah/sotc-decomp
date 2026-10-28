@@ -1,6 +1,6 @@
-extern int _gameFWorkChk();
+extern float _gameFWorkChk(int);
 
-int getPlayerMaxHp(int a, int b, int c, int d)
+float getPlayerMaxHp(void)
 {
-    return _gameFWorkChk(11, b, c, d);
+    return _gameFWorkChk(11);
 }
