@@ -1,6 +1,6 @@
-extern int Sg2RemoteGetPcmStmTransOffset();
+extern int Sg2RemoteGetPcmStmTransOffset(void);
 
-int Sg2StPcmIopTransOffset(int a, int b, int c, int d)
+int Sg2StPcmIopTransOffset(void)
 {
-    return Sg2RemoteGetPcmStmTransOffset(a, b, c, d);
+    return Sg2RemoteGetPcmStmTransOffset();
 }
