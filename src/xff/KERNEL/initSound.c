@@ -1,4 +1,6 @@
-extern int sg2NicoReverbMode, B_000C3948, D_00040FB0;
+typedef void (*SoundTickCallback)(void);
+extern int sg2NicoReverbMode, D_00040FB0;
+extern SoundTickCallback B_000C3948;
 extern int Sg2CtrlInit(int), Sg2RemoteInit(int), Sg2ChipInit(int);
 extern int Sg2CtrlSetTickMode(int);
 extern void Sg2ExStAdpcmInit(void);
@@ -13,7 +15,8 @@ extern void Sg2DspSetMasterVolumeMax(void), sndVabInit(void), sndSepInit(void);
 extern int Sg2SlotSetOutputMode(int);
 int initSound(void)
 {
-    B_000C3948 = sg2NicoReverbMode = 0;
+    B_000C3948 = 0;
+    sg2NicoReverbMode = 0;
     Sg2CtrlInit(0);
     Sg2RemoteInit(0);
     Sg2ChipInit(0);

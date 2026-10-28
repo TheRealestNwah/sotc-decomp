@@ -1,6 +1,6 @@
-extern int B_000C394C;
-
-void setPcmTickProcFunc(int arg0)
+typedef void (*SoundTickCallback)(void);
+extern SoundTickCallback B_000C394C;
+void setPcmTickProcFunc(SoundTickCallback callback)
 {
-    B_000C394C = arg0;
+    B_000C394C = callback;
 }
