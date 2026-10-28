@@ -363,3 +363,36 @@ def test_static_named_after_its_label_is_placed_there():
     static = CompiledFunction("func_00000140", "f", [0], {}, 0, local=True)
     starts = place_functions(CompiledObject("f", [static], {}), {}, {}, text_base=0x40)
     assert starts == {"func_00000140": 0x100}
+
+
+@pytest.mark.parametrize("relocated_first", [False, True])
+def test_adjacent_c_data_replacements_preserve_each_others_boundaries(relocated_first):
+    original = original_rodata(b"abcd\0\0\0\0wxyz", {4: Reloc(2, "x", False, 0)})
+    lines = [
+        ".section .rodata",
+        "dlabel A",
+        "    /* 001000 00001000 61626364 */ .word 0x64636261",
+        "dlabel B",
+        '    .reloc ., R_MIPS_32, "x"',
+        "    /* 001004 00001004 00000000 */ .word x",
+        "dlabel C",
+        "    /* 001008 00001008 7778797A */ .word 0x7A797877",
+    ]
+    replacements = [
+        (0, 4, b"abcd", {}, "plain"),
+        (4, 8, b"\0\0\0\0", {4: ['    .reloc ., R_MIPS_32, "x"', "    .word x"]}, "table"),
+        (8, 12, b"wxyz", {}, "tail"),
+    ]
+    if relocated_first:
+        replacements[0], replacements[1] = replacements[1], replacements[0]
+    for lo, hi, data, relocs, source in replacements:
+        lines = replace_data(lines, original, lo, hi, data, relocs, source)
+    assert lines.count("    .word 0x64636261") == 1
+    assert lines.count("    .word x") == 1
+    assert lines.count('    .reloc ., R_MIPS_32, "x"') == 1
+    assert lines.count("    .word 0x7A797877") == 1
+    assert [line for line in lines if line.startswith("dlabel")] == [
+        "dlabel A",
+        "dlabel B",
+        "dlabel C",
+    ]
