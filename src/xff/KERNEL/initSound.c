@@ -1,0 +1,44 @@
+extern int sg2NicoReverbMode, B_000C3948, D_00040FB0;
+extern int Sg2CtrlInit(int), Sg2RemoteInit(int), Sg2ChipInit(int);
+extern int Sg2CtrlSetTickMode(int);
+extern void Sg2ExStAdpcmInit(void);
+extern int Sg2DspInit(int), Sg2ModInit(int), Sg2SepInit(int);
+extern int Sg2SmfpInit(int), Sg2SlotInit(int), Sg2DmaInit(int);
+extern int Sg2VabInit(int), Sg2ExPcmInit(int);
+extern int Sg2ChipSetDigitalOutputMode(int);
+extern int Sg2DspEffectSetEndAdr(int, int), Sg2DspEffectSetType(int, int);
+extern short Sg2DspEffectSetDepth(int, short);
+extern int Sg2DspEffectChange(int);
+extern void Sg2DspSetMasterVolumeMax(void), sndVabInit(void), sndSepInit(void);
+extern int Sg2SlotSetOutputMode(int);
+int initSound(void)
+{
+    sg2NicoReverbMode = 0;
+    B_000C3948 = 0;
+    Sg2CtrlInit(0);
+    Sg2RemoteInit(0);
+    Sg2ChipInit(0);
+    Sg2CtrlSetTickMode(60);
+    Sg2ExStAdpcmInit();
+    Sg2DspInit(0);
+    Sg2ModInit(0);
+    Sg2SepInit(0);
+    Sg2SmfpInit(0);
+    Sg2SlotInit(0);
+    Sg2DmaInit(0);
+    Sg2VabInit(0);
+    Sg2ExPcmInit(0);
+    Sg2ChipSetDigitalOutputMode(0x880);
+    Sg2DspEffectSetEndAdr(0, 0x1FFFFF);
+    Sg2DspEffectSetEndAdr(1, 0x1DFFFF);
+    Sg2DspEffectSetType(0, 0x104);
+    Sg2DspEffectSetType(1, 0x104);
+    Sg2DspEffectSetDepth(0, 60);
+    Sg2DspEffectSetDepth(1, 60);
+    Sg2DspEffectChange(0);
+    Sg2DspEffectChange(1);
+    Sg2DspSetMasterVolumeMax();
+    sndVabInit();
+    sndSepInit();
+    return Sg2SlotSetOutputMode(D_00040FB0);
+}

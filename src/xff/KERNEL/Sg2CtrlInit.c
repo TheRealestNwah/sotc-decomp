@@ -3,7 +3,7 @@ extern Ctrl B_000C5A80[];
 extern void func_0001F6C8();
 extern void Sg2CtrlSetTickTime(int);
 
-int Sg2CtrlInit(void)
+int Sg2CtrlInit(int reserved)
 {
     int i;
     for (i = 0; i < 16; i++) {

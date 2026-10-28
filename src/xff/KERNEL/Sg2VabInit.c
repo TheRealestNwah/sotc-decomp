@@ -1,6 +1,6 @@
 extern int Sg2VabHdClose(int);
 
-int Sg2VabInit(void)
+int Sg2VabInit(int reserved)
 {
     int i;
     for (i = 0; i < 8; i++)

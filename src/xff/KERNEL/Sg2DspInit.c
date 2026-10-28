@@ -1,6 +1,6 @@
 extern unsigned char B_000C5B08[];
 
-int Sg2DspInit(void)
+int Sg2DspInit(int reserved)
 {
     void *var_v0;
     int var_v1;

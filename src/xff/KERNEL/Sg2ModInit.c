@@ -5,7 +5,7 @@ extern void func_00021488(int id);
 extern void Sg2ModTickProc(void);
 extern int Sg2CtrlEntryTickProcById(int id, void (*proc)(void));
 
-int Sg2ModInit(void)
+int Sg2ModInit(int reserved)
 {
     char *p = B_000C5C18;
     int i;
