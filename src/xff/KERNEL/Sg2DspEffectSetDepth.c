@@ -1,5 +1,5 @@
 extern int DIntr();
-extern void EIntr();
+extern int EIntr(void);
 extern unsigned char B_000C5B08[];
 
 short Sg2DspEffectSetDepth(int arg0, short arg1)

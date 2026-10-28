@@ -1,7 +1,7 @@
 typedef struct { int feedback; char pad[0x14]; } DspEffect;
 extern DspEffect B_000C5B1C[];
 extern int DIntr(void);
-extern void EIntr(void);
+extern int EIntr(void);
 
 int Sg2DspEffectSetFeedBack(int i, int v)
 {

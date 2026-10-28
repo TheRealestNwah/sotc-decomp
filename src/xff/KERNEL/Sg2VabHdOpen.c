@@ -7,7 +7,7 @@ typedef struct {
 
 extern Vab B_000E2200[];
 extern int DIntr(void);
-extern void EIntr(void);
+extern int EIntr(void);
 extern int get_vabid(void);
 extern int func_0002D5A8(Vab *v, void *hd);
 

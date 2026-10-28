@@ -1,7 +1,7 @@
 typedef struct { int v; char pad[0x14]; } E;
 extern E B_000C5B08[];
 extern int DIntr();
-extern void EIntr();
+extern int EIntr(void);
 extern void Sg2RemoteSend(int, int, int, int);
 
 void Sg2DspSetMasterVolume(int i, int l, int r)
