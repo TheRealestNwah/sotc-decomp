@@ -25,7 +25,7 @@ extern int D_00040D5C;
 extern int D_00040D60;
 extern SysGroup B_0006D640[];
 
-SysGroup *isysGroupForFirst(GroupHead *head)
+SysGroup *isysGroupForFirst(GroupHead *head, int reserved)
 {
     SysGroup *g;
     int tid = GetThreadId();
