@@ -1,6 +1,6 @@
-extern int _gameFlagChk();
+extern int _gameFlagChk(int);
 
 int SCRConditionGameFlagCheck(int a, int b, int c, int d)
 {
-    return _gameFlagChk(b, b, c, d);
+    return _gameFlagChk(b);
 }
