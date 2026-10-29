@@ -1,6 +1,5 @@
-extern char *GetSCRCharaAIWorkPtr();
-
-void SCRFuncPoseidonMissAttackInit(int a, int b)
+extern void *GetSCRCharaAIWorkPtr(void *);
+void SCRFuncPoseidonMissAttackInit(void *actor, int value)
 {
-    *(int *)(GetSCRCharaAIWorkPtr(a) + 0x41C4) = b;
+    *(int *)((char *)GetSCRCharaAIWorkPtr(actor) + 0x41C4) = value;
 }
