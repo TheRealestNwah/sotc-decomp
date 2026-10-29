@@ -1,7 +1,7 @@
-extern int getSCRDataCtrlWork();
-extern int forceRenewLastPosPerceptionWork();
+extern void *getSCRDataCtrlWork(void *);
+extern void forceRenewLastPosPerceptionWork(void *, void *);
 
-int SCRFuncForceRenewLastPos(int a)
+void SCRFuncForceRenewLastPos(void *actor)
 {
-    return forceRenewLastPosPerceptionWork(a, getSCRDataCtrlWork(a) + 16432);
+    forceRenewLastPosPerceptionWork(actor, (char *)getSCRDataCtrlWork(actor) + 16432);
 }
