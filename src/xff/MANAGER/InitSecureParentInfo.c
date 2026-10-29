@@ -1,7 +1,7 @@
-extern int InitTwoWayLink();
+extern void InitTwoWayLink(char *, int);
 
-int InitSecureParentInfo(char *p)
+void InitSecureParentInfo(char *info)
 {
-    *(int *)(p + 0x4C) = 0;
-    return InitTwoWayLink(p + 0x40, p + 0x4C);
+    *(int *)(info + 0x4C) = 0;
+    InitTwoWayLink(info + 0x40, (int)(info + 0x4C));
 }
