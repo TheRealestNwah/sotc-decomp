@@ -1,6 +1,6 @@
-extern int iosRotMatrixY();
+extern void iosRotMatrixY(float *, float);
 
-int GAMEUTIL_get_yaw_matrix(int a, int b, int c, int d)
+void GAMEUTIL_get_yaw_matrix(float *matrix, float yaw)
 {
-    return iosRotMatrixY(a, b, c, d);
+    iosRotMatrixY(matrix, yaw);
 }
