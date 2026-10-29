@@ -25,7 +25,7 @@ extern int D_0017A090;
 extern void bgmStop(void *, int *, float);
 extern void *getFogUnderWater(void);
 extern char *sePlay(char *);
-extern int seStop(char *);
+extern void seStop(char *);
 extern void soundSetRevMode(int, int);
 extern char *D_0017A1E4;
 extern char *SeList_in_water_muddy1;
