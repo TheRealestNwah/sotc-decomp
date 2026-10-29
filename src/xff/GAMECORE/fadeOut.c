@@ -4,7 +4,7 @@ extern float D_0017A01C;
 extern void setFadeValue(float);
 extern void setFadeColor(int);
 extern void scriptIntrSignal(int);
-extern void PauseGame(int);
+extern int PauseGame(int);
 extern void scrRun(void);
 
 static inline void doFadeOut(int wait, int pause, float t)
