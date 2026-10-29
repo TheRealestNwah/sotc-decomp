@@ -1,8 +1,6 @@
-extern void CharaCtrlSetScriptCtrlStatus();
-
-void SCRRequestMotionDirect(int a, int *b)
+extern void CharaCtrlSetScriptCtrlStatus(void *, int);
+void SCRRequestMotionDirect(void *actor, int *request)
 {
-    if (b != 0) {
-        CharaCtrlSetScriptCtrlStatus(a, b[1]);
-    }
+    if (request != 0)
+        CharaCtrlSetScriptCtrlStatus(actor, request[1]);
 }
