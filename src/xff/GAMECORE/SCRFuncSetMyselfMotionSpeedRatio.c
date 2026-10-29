@@ -1,6 +1,6 @@
-extern int SCRSetCharaMotionPlaySpeedRatio();
+extern void SCRSetCharaMotionPlaySpeedRatio(void *, float);
 
-int SCRFuncSetMyselfMotionSpeedRatio(int a, int b, int c, int d)
+void SCRFuncSetMyselfMotionSpeedRatio(void *actor, float speed)
 {
-    return SCRSetCharaMotionPlaySpeedRatio(a, b, c, d);
+    SCRSetCharaMotionPlaySpeedRatio(actor, speed);
 }
