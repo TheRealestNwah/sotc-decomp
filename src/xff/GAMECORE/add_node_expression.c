@@ -18,7 +18,7 @@ typedef struct {
     ExprNode node[30];
 } ExprWork;
 
-extern void GAMEUTIL_reset_interp_value_cntrl(void *, float);
+extern float GAMEUTIL_reset_interp_value_cntrl(void *, float);
 
 static inline void resetInterp(void *p)
 {
