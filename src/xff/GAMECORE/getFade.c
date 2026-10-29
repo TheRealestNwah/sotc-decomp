@@ -1,7 +1,7 @@
-extern void checkFadeParam(void *);
+extern int checkFadeParam(float *);
 extern unsigned char D_00179F00[];
 
-void getFade(void)
+int getFade(void)
 {
-    checkFadeParam(D_00179F00);
+    return checkFadeParam((float *)D_00179F00);
 }
