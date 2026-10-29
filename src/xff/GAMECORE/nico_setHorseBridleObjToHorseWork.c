@@ -1,6 +1,5 @@
-extern char *GetSCRCharaAIWorkPtr();
-
-void nico_setHorseBridleObjToHorseWork(int a, int b)
+extern void *GetSCRCharaAIWorkPtr(void *);
+void nico_setHorseBridleObjToHorseWork(void *actor, void *bridle)
 {
-    *(int *)(GetSCRCharaAIWorkPtr(a) + 0x4248) = b;
+    *(void **)((char *)GetSCRCharaAIWorkPtr(actor) + 0x4248) = bridle;
 }
