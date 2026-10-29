@@ -1,6 +1,5 @@
-extern char *GetScriptClass();
-
-void setScriptObjArgument(int a, int b)
+extern void *GetScriptClass(unsigned char *);
+void setScriptObjArgument(unsigned char *object, int argument)
 {
-    *(int *)(GetScriptClass(a) + 0x24) = b;
+    *(int *)((char *)GetScriptClass(object) + 0x24) = argument;
 }
