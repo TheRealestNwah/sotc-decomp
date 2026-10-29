@@ -1,6 +1,6 @@
-extern int seSetKeyOnOff();
+extern void seSetKeyOnOff(void *, int);
 
-static int func_00091540(int a, int b, int c, int d)
+static void func_00091540(void *object, int enabled)
 {
-    return seSetKeyOnOff(a, b, c, d);
+    seSetKeyOnOff(object, enabled);
 }
