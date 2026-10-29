@@ -1,7 +1,7 @@
-extern int sndSepStopReq();
+extern void sndSepStopReq(char *);
 
-int seStop(char *p)
+void seStop(char *object)
 {
-    *(int *)(p + 0x40) = 0;
-    return sndSepStopReq(p);
+    *(int *)(object + 0x40) = 0;
+    sndSepStopReq(object);
 }
