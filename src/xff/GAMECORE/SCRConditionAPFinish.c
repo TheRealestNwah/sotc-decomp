@@ -1,7 +1,13 @@
-extern void *getSCRDataCtrlWork(void *);
-extern int getPathExFinish();
+typedef struct {
+    char pad0[0x3CA4];
+    int f3CA4;
+    int f3CA8;
+    int f3CAC;
+} PathEx;
 
+extern void *getSCRDataCtrlWork(void *);
+extern int getPathExFinish(PathEx *, int);
 int SCRConditionAPFinish(void *actor)
 {
-    return getPathExFinish(((int)getSCRDataCtrlWork(actor)), 2);
+    return getPathExFinish(getSCRDataCtrlWork(actor), 2);
 }
