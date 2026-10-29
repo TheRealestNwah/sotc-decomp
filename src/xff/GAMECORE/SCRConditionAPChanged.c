@@ -1,7 +1,7 @@
 extern void *getSCRDataCtrlWork(void *);
-extern int changedAPIndex();
+extern int changedAPIndex(void *, char *);
 
-int SCRConditionAPChanged(int a)
+int SCRConditionAPChanged(void *actor)
 {
-    return changedAPIndex(a, ((int)getSCRDataCtrlWork((void *)a)));
+    return changedAPIndex(actor, getSCRDataCtrlWork(actor));
 }
