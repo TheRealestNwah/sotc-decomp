@@ -1,6 +1,5 @@
-extern char *GetCharacterClass();
-
-void ChangeCharacterObjControlTarget(int a, int b)
+extern void *GetCharacterClass(void *);
+void ChangeCharacterObjControlTarget(void *object, int target)
 {
-    *(int *)(GetCharacterClass(a) + 0x950) = b;
+    *(int *)((char *)GetCharacterClass(object) + 0x950) = target;
 }
