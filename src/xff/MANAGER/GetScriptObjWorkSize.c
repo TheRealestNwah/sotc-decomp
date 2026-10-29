@@ -1,4 +1,4 @@
-extern int isysGetSubThreadWorkSize();
+extern int isysGetSubThreadWorkSize(int);
 
 int GetScriptObjWorkSize(int *p)
 {
