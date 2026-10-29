@@ -1,4 +1,4 @@
-extern int Sg2DspSetMasterVolume(int core, int l, int r);
+extern void Sg2DspSetMasterVolume(int core, int l, int r);
 
 void Sg2DspSetMasterVolumeMax(void)
 {
