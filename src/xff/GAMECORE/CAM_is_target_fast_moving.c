@@ -1,5 +1,5 @@
 extern int GAMEUTIL_is_horse_obj(void *);
-extern void GAMEUTIL_get_horse_move_status(unsigned int *, void *);
+extern int GAMEUTIL_get_horse_move_status(int *, void *);
 
 int CAM_is_target_fast_moving(char *camera)
 {
@@ -10,9 +10,9 @@ int CAM_is_target_fast_moving(char *camera)
     else
         target = *(void **)camera;
     if (GAMEUTIL_is_horse_obj(target) == 1) {
-        unsigned int status = 0;
+        int status = 0;
         GAMEUTIL_get_horse_move_status(&status, target);
-        switch (status) {
+        switch ((unsigned int)status) {
         case 3:
         case 4:
             return 1;
