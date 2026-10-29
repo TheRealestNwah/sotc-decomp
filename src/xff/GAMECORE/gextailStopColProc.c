@@ -1,6 +1,6 @@
-extern int SetCharacterObjCollisionProcFlag();
+extern void SetCharacterObjCollisionProcFlag(void *, int);
 
-int gextailStopColProc(int a, int b, int c, int d)
+void gextailStopColProc(void *actor)
 {
-    return SetCharacterObjCollisionProcFlag(a, 0, c, d);
+    SetCharacterObjCollisionProcFlag(actor, 0);
 }
