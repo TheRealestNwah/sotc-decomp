@@ -1,6 +1,6 @@
-extern int _omakeGetFlagChk();
+extern int _omakeGetFlagChk(int);
 
 int SCRConditionGetOmakeFlag(int a, int b, int c, int d)
 {
-    return _omakeGetFlagChk(b, b, c, d);
+    return _omakeGetFlagChk(b);
 }
