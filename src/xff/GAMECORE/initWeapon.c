@@ -1,6 +1,6 @@
-extern int initWeaponSpriteStatus();
+extern void initWeaponSpriteStatus(void);
 
-int initWeapon(int a, int b, int c, int d)
+void initWeapon(void)
 {
-    return initWeaponSpriteStatus(a, b, c, d);
+    initWeaponSpriteStatus();
 }
