@@ -1,6 +1,5 @@
-extern char *GetSCRCharaAIWorkPtr();
-
-void SCRFuncHorseAdvertisFlag(int a, int b)
+extern void *GetSCRCharaAIWorkPtr(void *);
+void SCRFuncHorseAdvertisFlag(void *actor, int flag)
 {
-    *(int *)(GetSCRCharaAIWorkPtr(a) + 0x4204) = b;
+    *(int *)((char *)GetSCRCharaAIWorkPtr(actor) + 0x4204) = flag;
 }
