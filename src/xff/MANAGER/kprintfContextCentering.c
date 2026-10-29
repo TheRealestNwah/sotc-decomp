@@ -23,12 +23,12 @@ typedef struct {
 
 extern KPrintState D_001359F0;
 extern char B_001482A8[];
-extern int iosGetFontIDWithEUC();
+extern int iosGetFontIDWithEUC(int);
 extern void iosGetFontInfo(FontInfo *, int);
 extern void iosDlPushLayer(int);
 extern void iosDlPopLayer(void);
 extern int vsprintf(char *, const char *, va_list);
-extern void func_00015310(void *, char *, int (*)());
+extern void func_00015310(void *, char *, int (*)(int));
 
 void kprintfContextCentering(KPrintContext *ctx, const char *fmt, ...)
 {
