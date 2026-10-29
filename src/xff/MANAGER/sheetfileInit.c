@@ -1,6 +1,6 @@
-extern int sheetFsInit();
+extern void sheetFsInit(void);
 
-int sheetfileInit(int a, int b, int c, int d)
+void sheetfileInit(void)
 {
-    return sheetFsInit(a, b, c, d);
+    sheetFsInit();
 }
