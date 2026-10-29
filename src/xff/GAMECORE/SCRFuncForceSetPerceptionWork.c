@@ -1,7 +1,7 @@
-extern int getSCRDataCtrlWork();
-extern int forceSetPerceptionWork();
+extern void *getSCRDataCtrlWork(void *);
+extern void forceSetPerceptionWork(void *, void *);
 
-int SCRFuncForceSetPerceptionWork(int a)
+void SCRFuncForceSetPerceptionWork(void *actor)
 {
-    return forceSetPerceptionWork(a, getSCRDataCtrlWork(a) + 16432);
+    forceSetPerceptionWork(actor, (char *)getSCRDataCtrlWork(actor) + 16432);
 }
