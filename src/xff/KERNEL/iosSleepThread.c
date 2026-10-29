@@ -1,6 +1,5 @@
-extern int SleepThread();
-
-int iosSleepThread(int a, int b, int c, int d)
+extern int SleepThread(void);
+int iosSleepThread(void)
 {
-    return SleepThread(a, b, c, d);
+    return SleepThread();
 }
