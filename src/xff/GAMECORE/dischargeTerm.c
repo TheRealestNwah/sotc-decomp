@@ -1,7 +1,9 @@
-extern char *getSpecialEffectObjWork();
-extern int isysRequestDeleteObj();
+typedef struct Object Object;
+extern int getSpecialEffectObjWork(void *);
+extern void isysRequestDeleteObj(Object *);
 
-int dischargeTerm(void)
+void dischargeTerm(void *actor)
 {
-    return isysRequestDeleteObj(*(int *)(getSpecialEffectObjWork() + 0x10));
+    char *work = (char *)getSpecialEffectObjWork(actor);
+    isysRequestDeleteObj(*(Object **)(work + 0x10));
 }
