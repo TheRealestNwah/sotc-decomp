@@ -1,7 +1,19 @@
-extern char D_00179F00[];
-extern int setFadeParam();
+typedef union {
+    struct {
+        float start;
+        float end;
+        float from;
+        float to;
+        float cur;
+        int kind;
+    } s;
+    char alias;
+} FadeParam;
 
-int setFade(int a, int b, int c, int d)
+extern FadeParam D_00179F00;
+extern void setFadeParam(FadeParam *, int, float, float);
+
+void setFade(float to, float time)
 {
-    return setFadeParam((int)D_00179F00, 27, c, d);
+    setFadeParam(&D_00179F00, 27, to, time);
 }
