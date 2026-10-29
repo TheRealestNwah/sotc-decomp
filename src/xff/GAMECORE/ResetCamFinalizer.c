@@ -1,8 +1,8 @@
-extern int get_main_cameraman();
-extern int get_game_camera();
-extern int reset_game_camera_standby_flag();
+extern int get_main_cameraman(void);
+extern int get_game_camera(int);
+extern void reset_game_camera_standby_flag(void *);
 
-int ResetCamFinalizer(void)
+void ResetCamFinalizer(void)
 {
-    return reset_game_camera_standby_flag(get_game_camera(get_main_cameraman()));
+    reset_game_camera_standby_flag((void *)get_game_camera(get_main_cameraman()));
 }
