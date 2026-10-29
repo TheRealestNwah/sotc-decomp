@@ -18,6 +18,13 @@ typedef union {
 
 extern StageInfo D_0017A340;
 
+/* Reuse the byte-aliasing ID view for the position/output boundary. */
+void getStageChipIDReal(float *pos, ChipID *x, ChipID *z)
+{
+    x->i = (-pos[0] - D_0017A340.origin_x) / D_0017A340.chip_w;
+    z->i = (-pos[2] - D_0017A340.origin_z) / D_0017A340.chip_d;
+}
+
 void getStageChipIDWithOffset(float *pos, ChipID *x, ChipID *z, float *ox, float *oz)
 {
     float fx = (-pos[0] - D_0017A340.origin_x) / D_0017A340.chip_w;
