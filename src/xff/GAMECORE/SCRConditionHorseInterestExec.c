@@ -1,7 +1,6 @@
 extern void *GetSCRCharaAIWorkPtr(void *);
-extern int getInterestExec();
-
+extern int getInterestExec(int *);
 int SCRConditionHorseInterestExec(void *actor)
 {
-    return getInterestExec(((char *)GetSCRCharaAIWorkPtr(actor)) + 0x41B0);
+    return getInterestExec((int *)((char *)GetSCRCharaAIWorkPtr(actor) + 0x41B0));
 }
