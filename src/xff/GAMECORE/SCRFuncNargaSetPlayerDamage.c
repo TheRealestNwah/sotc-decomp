@@ -1,6 +1,5 @@
-extern char *GetSCRCharaAIWorkPtr();
-
-void SCRFuncNargaSetPlayerDamage(int a, int b)
+extern void *GetSCRCharaAIWorkPtr(void *);
+void SCRFuncNargaSetPlayerDamage(void *actor, int value)
 {
-    *(int *)(GetSCRCharaAIWorkPtr(a) + 0x5AA4) = b;
+    *(int *)((char *)GetSCRCharaAIWorkPtr(actor) + 0x5AA4) = value;
 }
