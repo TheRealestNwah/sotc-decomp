@@ -1,4 +1,4 @@
-extern void iosSleepThread();
+extern int iosSleepThread(void);
 extern int D_00139F1C;
 
 void sheetWait(void)
