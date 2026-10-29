@@ -1,11 +1,9 @@
-extern char *GetCharacterClass();
-
-int SCRSetCharaRootTurnScaleRatio(int a, float r)
+extern void *GetCharacterClass(void *);
+int SCRSetCharaRootTurnScaleRatio(void *actor, float ratio)
 {
-    char *c = GetCharacterClass(a);
-
-    if (c != 0) {
-        *(float *)(c + 0x574) = r;
+    char *character = GetCharacterClass(actor);
+    if (character != 0) {
+        *(float *)(character + 0x574) = ratio;
         return 1;
     }
     return 0;
