@@ -1,4 +1,4 @@
-extern int Sg2StAdpcmSetPitch();
+extern int Sg2StAdpcmSetPitch(unsigned long, unsigned int);
 
 int Sg2ExStAdpcmCont(int *p)
 {
