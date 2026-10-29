@@ -1,7 +1,7 @@
 extern void *getSCRDataCtrlWork(void *);
-extern int setSearchRadius(int, float);
+extern void setSearchRadius(char *, float);
 
-int SCRFuncSetSearchRadius(void *actor, float r)
+void SCRFuncSetSearchRadius(void *actor, float radius)
 {
-    return setSearchRadius(((int)getSCRDataCtrlWork(actor)), r);
+    setSearchRadius(getSCRDataCtrlWork(actor), radius);
 }
