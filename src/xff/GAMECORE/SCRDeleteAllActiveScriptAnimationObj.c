@@ -1,5 +1,5 @@
-extern int allArrowRelease();
-extern int DeleteAllActiveScriptAnimationObj();
+extern void allArrowRelease(void);
+extern void DeleteAllActiveScriptAnimationObj(void);
 
 int SCRDeleteAllActiveScriptAnimationObj(void)
 {
