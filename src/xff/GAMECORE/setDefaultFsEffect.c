@@ -1,6 +1,6 @@
-extern int fsEffectManagerInit();
+extern void fsEffectManagerInit(void);
 
-int setDefaultFsEffect(int a, int b, int c, int d)
+void setDefaultFsEffect(void)
 {
-    return fsEffectManagerInit(a, b, c, d);
+    fsEffectManagerInit();
 }
