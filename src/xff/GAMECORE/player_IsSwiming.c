@@ -1,6 +1,5 @@
-extern int GAMEUTIL_is_swimming_now();
-
-int player_IsSwiming(int a, int b, int c, int d)
+extern int GAMEUTIL_is_swimming_now(void *);
+int player_IsSwiming(void *actor)
 {
-    return GAMEUTIL_is_swimming_now(a, b, c, d);
+    return GAMEUTIL_is_swimming_now(actor);
 }
