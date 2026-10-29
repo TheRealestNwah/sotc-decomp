@@ -1,8 +1,8 @@
 extern int D_00135C58;
-extern int transMicroCode();
+extern void transMicroCode(int);
 
-int debugLineObjectSetup(void)
+void debugLineObjectSetup(void)
 {
     D_00135C58 = -1;
-    return transMicroCode(11);
+    transMicroCode(11);
 }
