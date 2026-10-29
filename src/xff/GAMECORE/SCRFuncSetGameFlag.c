@@ -1,6 +1,6 @@
-extern int _gameFlagSet();
+extern void _gameFlagSet(int);
 
-int SCRFuncSetGameFlag(int a, int b, int c, int d)
+void SCRFuncSetGameFlag(void *context, int flag)
 {
-    return _gameFlagSet(b, b, c, d);
+    _gameFlagSet(flag);
 }
