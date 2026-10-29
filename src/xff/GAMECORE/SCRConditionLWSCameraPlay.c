@@ -1,5 +1,5 @@
-extern int get_main_cameraman();
-extern int is_playing_lws_movie_now_game_camera();
+extern int get_main_cameraman(void);
+extern int is_playing_lws_movie_now_game_camera(int);
 
 int SCRConditionLWSCameraPlay(void)
 {
