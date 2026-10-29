@@ -1,6 +1,6 @@
-extern int sndSepStopTypeAll();
+extern void sndSepStopTypeAll(int);
 
-int seSopStageTypeAll(int a, int b, int c, int d)
+void seSopStageTypeAll(void)
 {
-    return sndSepStopTypeAll(2, b, c, d);
+    sndSepStopTypeAll(2);
 }
