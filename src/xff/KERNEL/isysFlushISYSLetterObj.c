@@ -1,6 +1,6 @@
-extern int check_free_letter_post();
+extern void check_free_letter_post(int *);
 
-int isysFlushISYSLetterObj(int a, int b, int c, int d)
+void isysFlushISYSLetterObj(char *object)
 {
-    return check_free_letter_post(a + 28, b, c, d);
+    check_free_letter_post((int *)(object + 28));
 }
