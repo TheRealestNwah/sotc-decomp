@@ -1,6 +1,13 @@
-extern int GAMEUTIL_doit_status_manager();
+typedef struct {
+    int cur;
+    int prev;
+    int last_changed;
+    float time;
+} StatusManager;
 
-int update_type_expression(int a, int b, int c, int d)
+extern void GAMEUTIL_doit_status_manager(StatusManager *, int, int, float);
+
+void update_type_expression(char *expression, int state, float delta)
 {
-    return GAMEUTIL_doit_status_manager(a + 4, b, 0, d);
+    GAMEUTIL_doit_status_manager((StatusManager *)(expression + 4), state, 0, delta);
 }
