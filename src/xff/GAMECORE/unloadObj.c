@@ -1,6 +1,6 @@
-extern int isysRequestDeleteObj();
+extern void isysRequestDeleteObj(void *);
 
-int unloadObj(int a, int b, int c, int d)
+void unloadObj(void *object)
 {
-    return isysRequestDeleteObj(a, b, c, d);
+    isysRequestDeleteObj(object);
 }
