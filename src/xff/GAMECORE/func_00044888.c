@@ -1,6 +1,6 @@
-extern int ResetCharacterObj4DDynamicsInfo();
+extern void ResetCharacterObj4DDynamicsInfo(unsigned char *);
 
-static int func_00044888(int a, int b, int c, int d)
+static void func_00044888(unsigned char *object)
 {
-    return ResetCharacterObj4DDynamicsInfo(a, b, c, d);
+    ResetCharacterObj4DDynamicsInfo(object);
 }
