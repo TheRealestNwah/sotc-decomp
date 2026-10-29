@@ -13,13 +13,13 @@ typedef struct {
     SeInfo *info;
 } Se;
 
-extern int sndSepStopReq();
+extern void sndSepStopReq(char *);
 
 void seStopLoopType(Se *se)
 {
     if (se->info->loop == 1) {
         se->state = 0;
-        sndSepStopReq(se);
+        sndSepStopReq((char *)se);
     } else {
         se->playing = 0;
         se->state = 0;
