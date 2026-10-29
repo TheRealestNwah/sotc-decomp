@@ -1,6 +1,5 @@
-extern int Sg2StPcmSetVolume();
-
-int Sg2ExPcmOutputSetVol(int a, int b, int c, int d)
+extern int Sg2StPcmSetVolume(int, int);
+int Sg2ExPcmOutputSetVol(int channel, int volume)
 {
-    return Sg2StPcmSetVolume(a, b, c, d);
+    return Sg2StPcmSetVolume(channel, volume);
 }
