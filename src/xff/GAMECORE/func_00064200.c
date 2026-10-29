@@ -1,8 +1,8 @@
 extern char gcGlobalVar[];
-extern int SCRGetFirstObj();
-extern int torchObjRelease();
+extern void *SCRGetFirstObj(void *);
+extern void torchObjRelease(void *);
 
-static int func_00064200(void)
+static void func_00064200(void)
 {
-    return torchObjRelease(SCRGetFirstObj((int)(gcGlobalVar + 0x2B0)));
+    torchObjRelease(SCRGetFirstObj(gcGlobalVar + 0x2B0));
 }
