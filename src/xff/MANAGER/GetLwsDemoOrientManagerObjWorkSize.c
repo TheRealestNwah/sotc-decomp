@@ -1,6 +1,5 @@
-extern int GetScriptObjWorkSize();
-
-int GetLwsDemoOrientManagerObjWorkSize(int a, int b, int c, int d)
+extern int GetScriptObjWorkSize(int *);
+int GetLwsDemoOrientManagerObjWorkSize(int *definition)
 {
-    return GetScriptObjWorkSize(a, b, c, d);
+    return GetScriptObjWorkSize(definition);
 }
