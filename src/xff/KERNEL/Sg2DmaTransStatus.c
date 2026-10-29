@@ -1,6 +1,5 @@
-extern int Sg2RemoteDmaTransStatus();
-
-int Sg2DmaTransStatus(int a, int b, int c, int d)
+extern int Sg2RemoteDmaTransStatus(int);
+int Sg2DmaTransStatus(int channel)
 {
-    return Sg2RemoteDmaTransStatus(a, b, c, d);
+    return Sg2RemoteDmaTransStatus(channel);
 }
