@@ -1,6 +1,6 @@
-extern int GAMEUTIL_init_col_plane_info_filter(int, float, float);
+extern void GAMEUTIL_init_col_plane_info_filter(char *, float, float);
 
-int GAMEUTIL_constructor_col_plane_info_filter(int a)
+void GAMEUTIL_constructor_col_plane_info_filter(char *filter)
 {
-    return GAMEUTIL_init_col_plane_info_filter(a, 0.0f, 0.0f);
+    GAMEUTIL_init_col_plane_info_filter(filter, 0.0f, 0.0f);
 }

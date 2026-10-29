@@ -1,8 +1,8 @@
 extern void *isysGetThisSubThread(void);
-extern int scrRunM();
+extern void scrRunM(int);
 
-int nico_commonBossAI_home(void)
+void nico_commonBossAI_home(void)
 {
     isysGetThisSubThread();
-    return scrRunM(1);
+    scrRunM(1);
 }

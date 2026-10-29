@@ -1,6 +1,6 @@
-extern int iosFree();
+extern void iosFree(int);
 
-int meshInstanceFree(int a, int b, int c, int d)
+void meshInstanceFree(int object)
 {
-    return iosFree(a, b, c, d);
+    iosFree(object);
 }

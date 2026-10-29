@@ -1,7 +1,7 @@
-extern int GetSCRCharaAIWorkPtr();
-extern int player_setEdgeHangPointGeometry();
+extern void *GetSCRCharaAIWorkPtr(void *);
+extern void player_setEdgeHangPointGeometry(void *, char *);
 
-int nico_setPlayerEdgePoint(int a)
+void nico_setPlayerEdgePoint(void *actor)
 {
-    return player_setEdgeHangPointGeometry(a, GetSCRCharaAIWorkPtr(a) + 6848);
+    player_setEdgeHangPointGeometry(actor, (char *)GetSCRCharaAIWorkPtr(actor) + 6848);
 }

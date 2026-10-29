@@ -1,9 +1,9 @@
 extern int D_0017AD3C;
-extern void gameflowSetPauseEnable();
-extern int isysRequestDeleteObj();
+extern void gameflowSetPauseEnable(int);
+extern void isysRequestDeleteObj(int);
 
-int nico_delOmakeItem(void)
+void nico_delOmakeItem(void)
 {
     gameflowSetPauseEnable(1);
-    return isysRequestDeleteObj(D_0017AD3C);
+    isysRequestDeleteObj(D_0017AD3C);
 }

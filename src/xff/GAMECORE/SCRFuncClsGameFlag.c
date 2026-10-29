@@ -1,6 +1,6 @@
-extern int _gameFlagCls();
+extern void _gameFlagCls(int);
 
-int SCRFuncClsGameFlag(int a, int b, int c, int d)
+void SCRFuncClsGameFlag(void *context, int flag)
 {
-    return _gameFlagCls(b, b, c, d);
+    _gameFlagCls(flag);
 }

@@ -1,7 +1,7 @@
-extern int GetSCRCharaAIWorkPtr();
-extern int initInterestWork();
+extern void *GetSCRCharaAIWorkPtr(void *);
+extern void initInterestWork(int, char *);
 
-int SCRFuncHorseInterestInit(int a)
+void SCRFuncHorseInterestInit(void *actor)
 {
-    return initInterestWork(a, GetSCRCharaAIWorkPtr(a) + 16816);
+    initInterestWork((int)actor, (char *)GetSCRCharaAIWorkPtr(actor) + 0x41B0);
 }

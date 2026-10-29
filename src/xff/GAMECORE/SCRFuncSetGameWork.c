@@ -1,6 +1,6 @@
-extern int _gameWorkSet();
+extern void _gameWorkSet(int, int);
 
-int SCRFuncSetGameWork(int a, int b, int c, int d)
+void SCRFuncSetGameWork(void *context, int index, int value)
 {
-    return _gameWorkSet(b, c, c, d);
+    _gameWorkSet(index, value);
 }

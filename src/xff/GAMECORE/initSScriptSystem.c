@@ -1,6 +1,6 @@
-extern int scrRunM();
+extern void scrRunM(int);
 
-int initSScriptSystem(int a, int b, int c, int d)
+void initSScriptSystem(void)
 {
-    return scrRunM(1, b, c, d);
+    scrRunM(1);
 }

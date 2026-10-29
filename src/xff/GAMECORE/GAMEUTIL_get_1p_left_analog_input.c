@@ -1,6 +1,6 @@
-extern int GAMEUTIL_get_1p_left_analog_input_extend(int, int, int, float);
+extern void GAMEUTIL_get_1p_left_analog_input_extend(float *, float *, int, float);
 
-int GAMEUTIL_get_1p_left_analog_input(int a, int b)
+void GAMEUTIL_get_1p_left_analog_input(float *x, float *z)
 {
-    return GAMEUTIL_get_1p_left_analog_input_extend(a, b, 1, 0.4f);
+    GAMEUTIL_get_1p_left_analog_input_extend(x, z, 1, 0.4f);
 }
