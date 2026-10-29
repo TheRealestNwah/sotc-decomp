@@ -1,6 +1,6 @@
-extern int set_screen_size();
+extern void set_screen_size(void *, int, int);
 
-int set_camera_obj_screen_size(char *p, int a, int b)
+void set_camera_obj_screen_size(char *camera, int width, int height)
 {
-    return set_screen_size(*(int *)(p + 0x250), a, b);
+    set_screen_size(*(void **)(camera + 0x250), width, height);
 }
