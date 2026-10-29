@@ -1,6 +1,6 @@
-extern int iosCdStSkip();
+extern void iosCdStSkip(long);
 
-int sheetFsSkipRead(int a, int b, int c, int d)
+void sheetFsSkipRead(int context, long size)
 {
-    return iosCdStSkip(b, b, c, d);
+    iosCdStSkip(size);
 }
