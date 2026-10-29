@@ -1,7 +1,7 @@
-extern int GetSCRCharaAIWorkPtr();
-extern int player_setDangerEdgePoint();
+extern void *GetSCRCharaAIWorkPtr(void *);
+extern void player_setDangerEdgePoint(void *, char *);
 
-int SetPlayerDangerEdgePoint(int a)
+void SetPlayerDangerEdgePoint(void *actor)
 {
-    return player_setDangerEdgePoint(a, GetSCRCharaAIWorkPtr(a) + 7088);
+    player_setDangerEdgePoint(actor, (char *)GetSCRCharaAIWorkPtr(actor) + 7088);
 }
