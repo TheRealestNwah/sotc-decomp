@@ -1,8 +1,8 @@
 typedef int s128 __attribute__((mode(TI)));
 extern s128 YUnitVector, ZeroPoint;
-extern void GAMEUTIL_set_parameter_col_plane_info_filter(char *);
+extern void GAMEUTIL_set_parameter_col_plane_info_filter(char *, float, float);
 
-void GAMEUTIL_init_col_plane_info_filter(char *f)
+void GAMEUTIL_init_col_plane_info_filter(char *f, float first, float second)
 {
     *(int *)(f + 0) = 0;
     *(int *)(f + 4) = 0;
@@ -16,5 +16,5 @@ void GAMEUTIL_init_col_plane_info_filter(char *f)
     *(int *)(f + 0x64) = 0;
     *(int *)(f + 0x68) = 0;
     *(int *)(f + 0x6C) = 0;
-    GAMEUTIL_set_parameter_col_plane_info_filter(f);
+    GAMEUTIL_set_parameter_col_plane_info_filter(f, first, second);
 }
