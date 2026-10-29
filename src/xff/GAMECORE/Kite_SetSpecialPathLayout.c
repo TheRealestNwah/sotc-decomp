@@ -1,6 +1,7 @@
-extern int AI_SetAnimalLayout();
+typedef int s128 __attribute__((mode(TI)));
+extern void AI_SetAnimalLayout(char *, s128 *, float, float);
 
-int Kite_SetSpecialPathLayout(int a, int b, int c, int d)
+void Kite_SetSpecialPathLayout(char *kite, s128 *position, float first, float second)
 {
-    return AI_SetAnimalLayout(a + 496, b, c, d);
+    AI_SetAnimalLayout(kite + 0x1F0, position, first, second);
 }
