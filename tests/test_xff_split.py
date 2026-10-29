@@ -1,5 +1,8 @@
+import struct
+
 import pytest
 
+from tools.xff2 import Module, Section, write
 from tools.xff_split import (
     Fixups,
     Reloc,
@@ -10,9 +13,49 @@ from tools.xff_split import (
     postprocess,
     referenced_address,
     sext16,
+    split,
 )
 
 BASE = 0x100  # spimdisasm address of the section start
+
+
+def test_unknown_vu_instruction_keeps_function_discoverable(tmp_path):
+    names = ["", ".text", ".symtab", ".strtab", ".shstrtab"]
+    shstrtab = b"\0"
+    offsets = [0]
+    for name in names[1:]:
+        offsets.append(len(shstrtab))
+        shstrtab += name.encode() + b"\0"
+    # A VU instruction rabbitizer cannot decode must not turn the whole
+    # callable function into a data symbol. Retain its exact word instead.
+    text = struct.pack("<4I", 0x4BA703BD, 0x03E00008, 0, 0)
+    symbols = bytes(16) + struct.pack("<IIIBBH", 1, 0, len(text), 0x12, 0, 1)
+    module = Module(
+        sections=[
+            Section(0, 0, 0, 0),
+            Section(offsets[1], 1, len(text), 4, text),
+            Section(offsets[2], 2, len(symbols), 4, symbols),
+            Section(offsets[3], 3, 9, 1, b"\0vu_func\0"),
+            Section(offsets[4], 3, len(shstrtab), 1, shstrtab),
+        ],
+        shstrtab=shstrtab,
+        strtab=b"\0vu_func\0",
+        symbols=symbols,
+        reltables=[],
+        imports=[],
+        entry=0,
+        num_locals=0,
+    )
+    xff = tmp_path / "test.XFF"
+    xff.write_bytes(write(module))
+    output = tmp_path / "asm"
+    _, _, missing = split(xff, output, tmp_path / "obj")
+    asm = (output / "text.s").read_text(encoding="latin-1")
+    assert "glabel vu_func" in asm
+    assert not any(line.startswith("dlabel vu_func") for line in asm.splitlines())
+    assert ".word 0x4BA703BD" in asm
+    assert "jr" in asm
+    assert not missing
 
 
 def test_missing_vu_exports_bind_to_emitted_section_offsets():

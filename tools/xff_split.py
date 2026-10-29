@@ -5,7 +5,8 @@
 
 Steps:
 1. Convert the XFF to an ELF relocatable object (tools/xff2.py).
-2. Disassemble it with spimdisasm's elfObjDisasm.
+2. Disassemble it with spimdisasm's elfObjDisasm, retaining function labels
+   when an instruction is unknown (that instruction remains a raw word).
 3. Post-process the assembly, using the original relocations as ground truth:
    - words spimdisasm turned into symbol references, but that have no
      relocation in the original, go back to plain values;
@@ -338,7 +339,7 @@ def split(xff: Path, out_dir: Path, obj_dir: Path) -> tuple[Path, Fixups, list[s
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(
             [sys.executable, "-m", "spimdisasm", "elfObjDisasm", str(obj), tmp,
-             "--instr-category", "r5900", "--no-string-guesser"],
+             "--instr-category", "r5900", "--no-string-guesser", "--disasm-unknown"],
             check=True, capture_output=True,
         )  # fmt: skip
         sections = []
