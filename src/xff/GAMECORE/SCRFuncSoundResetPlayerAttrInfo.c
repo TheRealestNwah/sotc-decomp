@@ -1,8 +1,8 @@
-extern int *getSScriptWork();
+extern void *getSScriptWork(void);
 extern void *getPlayerColCont2(void *);
-extern int ColCont2_EventAttrReset();
+extern void ColCont2_EventAttrReset(void *);
 
-int SCRFuncSoundResetPlayerAttrInfo(void)
+void SCRFuncSoundResetPlayerAttrInfo(void)
 {
-    return ColCont2_EventAttrReset(getPlayerColCont2((void *)*getSScriptWork()));
+    ColCont2_EventAttrReset(getPlayerColCont2(*(void **)getSScriptWork()));
 }
