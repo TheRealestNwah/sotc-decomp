@@ -1,6 +1,6 @@
-extern int isysRequestDeleteObj();
+extern void isysRequestDeleteObj(void *);
 
-int lineObjectDelete(int a, int b, int c, int d)
+void lineObjectDelete(void *object)
 {
-    return isysRequestDeleteObj(a, b, c, d);
+    isysRequestDeleteObj(object);
 }
