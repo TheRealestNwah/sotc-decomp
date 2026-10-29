@@ -1,6 +1,6 @@
-extern int GAMEUTIL_get_pre_changed_status_status_manager();
+extern int GAMEUTIL_get_pre_changed_status_status_manager(void *);
 
-int get_pre_type_expression(int a, int b, int c, int d)
+int get_pre_type_expression(char *work)
 {
-    return GAMEUTIL_get_pre_changed_status_status_manager(a + 4, b, c, d);
+    return GAMEUTIL_get_pre_changed_status_status_manager((void *)(work + 4));
 }
