@@ -1,6 +1,6 @@
-extern void getPathColiGroupByType(int);
+extern int getPathColiGroupByType(int);
 
-void getPathColiGroup(void *arg0)
+int getPathColiGroup(void *work)
 {
-    getPathColiGroupByType((*(int *)((char *)(arg0) + 0x3C50)));
+    return getPathColiGroupByType(*(int *)((char *)work + 0x3C50));
 }
