@@ -1,6 +1,5 @@
-extern int iosMallocAlign();
-
-int _SCRMallocAlign(int a, int b, int c, int d)
+extern void *iosMallocAlign(int, int, int);
+void *_SCRMallocAlign(int partition, int size, int alignment)
 {
-    return iosMallocAlign(a, b, c, d);
+    return iosMallocAlign(partition, size, alignment);
 }
