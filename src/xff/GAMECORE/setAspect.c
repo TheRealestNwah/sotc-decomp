@@ -3,7 +3,7 @@ extern int getDrawScreenHeight(void);
 extern int getDrawScreenWidth(void);
 extern void * get_camera_obj(void *);
 extern int get_main_cameraman(void);
-extern int set_camera_obj_screen_size(char *, int, int);
+extern void set_camera_obj_screen_size(char *, int, int);
 extern void set_screen_wide_and_progressive(int, int);
 extern void update_camera_obj(void *);
 
