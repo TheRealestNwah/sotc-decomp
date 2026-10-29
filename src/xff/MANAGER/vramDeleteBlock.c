@@ -1,6 +1,6 @@
-extern int iosFree();
+extern void iosFree(int);
 
-int vramDeleteBlock(int a, int b, int c, int d)
+void vramDeleteBlock(int block)
 {
-    return iosFree(a, b, c, d);
+    iosFree(block);
 }
