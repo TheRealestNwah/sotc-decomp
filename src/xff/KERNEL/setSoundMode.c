@@ -1,5 +1,5 @@
 extern int D_00040FB0;
-extern int Sg2SlotSetOutputMode();
+extern int Sg2SlotSetOutputMode(int);
 
 int setSoundMode(int m)
 {
