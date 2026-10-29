@@ -1,4 +1,4 @@
-int get_game_camera(int arg0)
+char *get_game_camera(void *object)
 {
-    return arg0 + 0x20;
+    return (char *)object + 0x20;
 }
