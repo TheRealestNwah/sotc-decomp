@@ -1,5 +1,5 @@
 extern char gcGlobalVar[];
-extern int SCRGetFirstObj();
+extern void *SCRGetFirstObj(void *);
 
 int SRCConditionHorseBossChackAll(void)
 {
