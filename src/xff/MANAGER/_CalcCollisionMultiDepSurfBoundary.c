@@ -1,0 +1,40 @@
+extern void func_0009AE78();
+
+static inline void boundarySub(void *a0, void *a1, void *a2, void *a3, float f0)
+{
+    __asm__ __volatile__(".set noreorder\n"
+        "lqc2 vf4, 0x0(%0)\n"
+        "lqc2 vf5, 0x0(%1)\n"
+        "lqc2 vf6, 0x0(%2)\n"
+        "mfc1 $8, %3\n"
+        "qmtc2.ni $8, vf8\n"
+        "vadd.xyz vf7, vf4, vf5\n"
+        "vadd.xyz vf7, vf7, vf6\n"
+        "vmulx.xyz vf7, vf7, vf8x\n"
+        "vsub.xyz vf4, vf4, vf7\n"
+        "vmul.xyz vf4, vf4, vf4\n"
+        "vaddy.x vf4, vf4, vf4y\n"
+        "vaddz.x vf4, vf4, vf4z\n"
+        "vsub.xyz vf5, vf5, vf7\n"
+        "vmul.xyz vf5, vf5, vf5\n"
+        "vaddy.x vf5, vf5, vf5y\n"
+        "vaddz.x vf5, vf5, vf5z\n"
+        "vmaxx.x vf8, vf4, vf5x\n"
+        "vsub.xyz vf6, vf6, vf7\n"
+        "vmul.xyz vf6, vf6, vf6\n"
+        "vaddy.x vf6, vf6, vf6y\n"
+        "vaddz.x vf6, vf6, vf6z\n"
+        "vmaxx.x vf8, vf8, vf6x\n"
+        "vmulx.w vf7, vf0, vf8x\n"
+        "sqc2 vf7, 0x0(%4)\n"
+        ".set reorder\n"
+        : : "r"(a1), "r"(a2), "r"(a3), "f"(f0), "r"(a0) : "memory", "$8");
+}
+
+void _CalcCollisionMultiDepSurfBoundary(void *out)
+{
+    void *vertices[4];
+
+    func_0009AE78(vertices, 0);
+    boundarySub(out, vertices[0], vertices[1], vertices[2], 1.0f / 3.0f);
+}
