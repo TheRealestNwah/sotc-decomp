@@ -1,6 +1,6 @@
-extern int AI_InitAnimalLayout();
+extern void AI_InitAnimalLayout(void *);
 
-int Kite_InitSpecialPathWork(int a, int b, int c, int d)
+void Kite_InitSpecialPathWork(void *layout)
 {
-    return AI_InitAnimalLayout(a, b, c, d);
+    AI_InitAnimalLayout(layout);
 }
