@@ -1,6 +1,7 @@
-extern int func_0009D8F8();
+typedef struct { int f0; int id; } FinderEntry;
+extern int func_0009D8F8(float *, FinderEntry *, float *, int);
 
-int GetCollisionDBLastPointOnCurrentPlane(int a, int b, int c)
+int GetCollisionDBLastPointOnCurrentPlane(float *out, FinderEntry *entry, float *point)
 {
-    return func_0009D8F8(a, b, c, 1);
+    return func_0009D8F8(out, entry, point, 1);
 }

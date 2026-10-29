@@ -25,7 +25,7 @@ extern int D_00040D5C;
 extern int D_00040D60;
 extern SysGroup B_0006D640[];
 
-SysGroup *isysGroupForNext(SysGroup *group)
+SysGroup *isysGroupForNext(SysGroup *group, int reserved)
 {
     GroupObj *old = group->obj;
     do {
