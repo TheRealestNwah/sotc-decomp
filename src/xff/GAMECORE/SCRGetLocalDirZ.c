@@ -1,6 +1,6 @@
-extern int GAMEUTIL_get_local_directionZ();
+extern void GAMEUTIL_get_local_directionZ(void *, void *);
 
-int SCRGetLocalDirZ(int a, int b, int c, int d)
+void SCRGetLocalDirZ(void *output, void *actor)
 {
-    return GAMEUTIL_get_local_directionZ(a, b, c, d);
+    GAMEUTIL_get_local_directionZ(output, actor);
 }
