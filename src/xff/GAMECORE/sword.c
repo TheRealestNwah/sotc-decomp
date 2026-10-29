@@ -84,11 +84,7 @@ extern int SeList_sword_weak_test;
 extern sceVu0FVECTOR B_0019CE70; /* in sword.c's .bss */
 extern sceVu0FVECTOR B_0019CEB0;
 extern sceVu0FVECTOR B_0019CEC0;
-#ifdef NONMATCHING
 static void T_000C2620();
-#else
-extern void T_000C2620();
-#endif
 extern int SParticleSheetData_S_GLOW_CLEAR;
 extern void GetCollisionDBGroupCallBack(void *group, void (*func)(), void *query);
 extern void SetGeometryPointerGlobalState(void *geom, sceVu0FVECTOR a, sceVu0FVECTOR b);
@@ -546,8 +542,6 @@ typedef struct {
     char padC4[0xC];
 } SwordBeamQuery;
 
-extern const SwordBeamQuery RO_00180600;
-
 extern int CheckSCRCharaAIWorkPtr(GameObj *obj);
 extern unsigned long *GetCollisionDBAttributeAdr(void *geom);
 extern int getGameHardMode(void);
@@ -580,10 +574,7 @@ extern void GetGeometryPointerWithCollisionDBDataGlobalPoint(void *dst, void *ge
                          "mtc1 $2, %0\n" \
                          : "=f"(ret) : "r"(a), "r"(b) : "$2")
 
-#ifdef NONMATCHING
-/* Parked: both collision callbacks are their original length but allocate the
-   ignore flag from isIgnoredSurface to v0 instead of v1. See issues #52, #54.
-   The helpers' debug strings are the file's first .rodata, so they stay with
+/* The helpers' debug strings are the file's first .rodata, so they stay with
    the callbacks. getWeakIndexWeak is unused, but its string is still emitted. */
 static inline int getWeakIndexWeak(unsigned long weak)
 {
@@ -638,8 +629,14 @@ static inline int getWeakIndex(unsigned long attr)
 /* Surfaces marked hard-only light up only in hard mode, the rest only outside it. */
 static inline int isIgnoredSurface(unsigned long attr)
 {
-    if (getGameHardMode() ? !(attr & ATTR_HARD_ONLY) : (attr & ATTR_HARD_ONLY) != 0) {
-        return 1;
+    if (getGameHardMode()) {
+        if (!(attr & ATTR_HARD_ONLY)) {
+            return 1;
+        }
+    } else {
+        if (attr & ATTR_HARD_ONLY) {
+            return 1;
+        }
     }
     return 0;
 }
@@ -792,9 +789,8 @@ static void T_000C1D80(void *geom, SwordBeamQuery *q)
         dst[1] = ((int *)geom)[1];
     }
 }
-#else
-extern void T_000C1D80();
-#endif
+
+static const SwordBeamQuery RO_00180600 = { .bestDot = -1.1f };
 
 static void func_000C2318(GameObj *obj, u_long128 *pos, u_long128 *unusedDir)
 {
@@ -857,7 +853,6 @@ static void func_000C2318(GameObj *obj, u_long128 *pos, u_long128 *unusedDir)
     }
 }
 
-#ifdef NONMATCHING
 /* Collision callback for the glow query: keeps the nearest weak point or
    trigger surface that can currently light up. */
 static void T_000C2620(void *geom, SwordGlowQuery *q)
@@ -931,7 +926,6 @@ static void T_000C2620(void *geom, SwordGlowQuery *q)
         }
     }
 }
-#endif
 
 /* Glow strength for a hit at `dist`: 1 at the minimum distance, 0 at the maximum. */
 #define GLOW_POWER(power, dist, scale)                                                 \
@@ -1076,7 +1070,7 @@ extern long charrootdyn_getCollisionAttribute(void *geometry);
 extern u_long128 *GetGeometryPointerSurfacePlane(void *geometry);
 extern char B_0019CEE0[];
 extern char rootPtn[];
-extern const char RO_001806D0[];
+static const char RO_001806D0[] = "boss_search_collision_effect";
 extern void gcCreateScriptObj(void (*script)(SwordReaction *), SwordReaction *param,
     void *parent, int stackSize, int a4, int priority, const char *name);
 static int T_000C5570(int a, int b);
@@ -1304,6 +1298,13 @@ typedef union {
     } v;
 } SwordVec;
 
+/* Preserve the script's original vector literals while it stays in assembly.
+   When enabled, its local initializers below emit these same read-only bytes. */
+#ifndef NONMATCHING
+static const float RO_001806F0[4] = { -1.0f, 0.0f, 0.0f, 1.0f };
+static const float RO_00180700[4] = { 0.0f, 0.0f, 0.1f, 1.0f };
+#endif
+
 typedef struct {
     char pad0[0x144];
     struct {
@@ -1321,7 +1322,8 @@ typedef struct {
 } SwordLayout;
 
 extern void *isysGetThisSubThread(void);
-extern SwordLayout *GetLayoutClass(GameObj *obj);
+/* The script and display paths use different views of the returned layout. */
+extern void *GetLayoutClass(GameObj *obj);
 extern void nico_weaponUpdateGeometry(SwordLayout *layout);
 extern void FlushCollisionWork(GameObj *obj);
 extern int isSeamlessStage(void);
@@ -1698,7 +1700,6 @@ typedef struct {
 } WeaponLayout;
 
 extern void DispLayoutObjModel(void);
-extern WeaponLayout *GetLayoutClass(GameObj *obj);
 extern int GetResetCameraFlagForDisplay(void);
 extern void glEnable(int cap);
 extern void glDisable(int cap);
