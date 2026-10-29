@@ -1,6 +1,6 @@
-extern int isysRequestDeleteObj();
+extern void isysRequestDeleteObj(void *);
 
-int meshObjectFree(int a, int b, int c, int d)
+void meshObjectFree(void *object)
 {
-    return isysRequestDeleteObj(a, b, c, d);
+    isysRequestDeleteObj(object);
 }
