@@ -1,4 +1,4 @@
-extern int Sg2VabClose();
+extern int Sg2VabClose(int);
 
 int sndVabHDClose(int *p)
 {
