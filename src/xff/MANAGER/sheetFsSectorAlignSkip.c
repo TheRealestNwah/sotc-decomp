@@ -1,6 +1,6 @@
-extern int iosCdStSectorAlignSkip();
+extern void iosCdStSectorAlignSkip(void);
 
-int sheetFsSectorAlignSkip(int a, int b, int c, int d)
+void sheetFsSectorAlignSkip(void)
 {
-    return iosCdStSectorAlignSkip(a, b, c, d);
+    iosCdStSectorAlignSkip();
 }
