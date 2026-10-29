@@ -1,6 +1,6 @@
-extern int flushScriptObj();
+extern void flushScriptObj(int);
 
-int flushEventScriptObj(int a, int b, int c, int d)
+void flushEventScriptObj(int object)
 {
-    return flushScriptObj(a, b, c, d);
+    flushScriptObj(object);
 }
