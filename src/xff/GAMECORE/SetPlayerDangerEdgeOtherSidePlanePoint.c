@@ -1,7 +1,7 @@
-extern int GetSCRCharaAIWorkPtr();
-extern int player_setDangerEdgeOtherSidePlanePoint();
+extern void *GetSCRCharaAIWorkPtr(void *);
+extern void player_setDangerEdgeOtherSidePlanePoint(void *, char *);
 
-int SetPlayerDangerEdgeOtherSidePlanePoint(int a)
+void SetPlayerDangerEdgeOtherSidePlanePoint(void *actor)
 {
-    return player_setDangerEdgeOtherSidePlanePoint(a, GetSCRCharaAIWorkPtr(a) + 7088);
+    player_setDangerEdgeOtherSidePlanePoint(actor, (char *)GetSCRCharaAIWorkPtr(actor) + 7088);
 }
