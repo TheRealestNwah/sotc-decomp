@@ -6,6 +6,7 @@ extern void glLoadMatrixf(int);
 extern void *iosgluGetCameraContext(void);
 extern float GetScreenRadius(void *, void *, float);
 extern void iosgluDrawObject(void *);
+extern void setv3f(float x, float y, float z, float w);
 extern void *B_00148A10[];
 
 static float func_00037088(int primitive, int mode, float radius, float length)
@@ -27,6 +28,19 @@ static float func_00037088(int primitive, int mode, float radius, float length)
     iosScaleMatrixV(matrix, matrix, scale);
     glLoadMatrixf((int)matrix);
     return GetScreenRadius(iosgluGetCameraContext(), matrix + 12, radius);
+}
+
+static int func_0003DA98(int primitive, int mode, float radius, float length)
+{
+    int r = 0;
+    float v = func_00037088(primitive, mode, radius, length);
+
+    if (!(1.0f < v)) {
+        r = 1;
+        setv3f(0.0f, 0.0f, 0.0f, v);
+        setv3f(0.0f, 0.0f, 1.0f, v);
+    }
+    return r;
 }
 
 static int func_0003DB20(int primitive, int mode, float radius, float length)
