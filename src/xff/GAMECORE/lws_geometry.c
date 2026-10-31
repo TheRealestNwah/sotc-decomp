@@ -20,6 +20,10 @@ static inline int setGeometry(void *object, void *parent, Vector *position, Vect
     UpdateLayoutClassSimpleGeometry(layout, 0.0f);
     return 1;
 }
+int SCRSetLWSGeometryWithNoParentChange(void *object, Vector *position, Vector *quaternion)
+{
+    return setGeometry(object, 0, position, quaternion);
+}
 int SCRSetLWSGeometry(void *object, void *parent, Vector *position, Vector *quaternion)
 {
     return setGeometry(object, parent, position, quaternion);
