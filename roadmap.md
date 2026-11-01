@@ -69,6 +69,7 @@ them before retrying a target. New matching work goes straight to a PR.
 - [ ] Match script condition for executing gaze toward player ([#987](https://github.com/TheRealestNwah/sotc-decomp/issues/987))
 - [ ] Match root dynamics slide exception collision callback ([#992](https://github.com/TheRealestNwah/sotc-decomp/issues/992))
 - [ ] Match motion root information sampling ([#1011](https://github.com/TheRealestNwah/sotc-decomp/issues/1011))
+  - 2026-11-01: declaring `func_0003A4A8` as `(float *, void *, int, float, float, int)` (count last) fixes the argument scheduling; the best draft is 7 diffs, only an s1/s2 swap of `obj`/`data` remains.
 - [ ] Match calculation object work size ([#1083](https://github.com/TheRealestNwah/sotc-decomp/issues/1083))
 - [ ] Match extended ADPCM track volume percentages ([#1084](https://github.com/TheRealestNwah/sotc-decomp/issues/1084))
 - [ ] Match MANAGER mcGetInfo ([#1220](https://github.com/TheRealestNwah/sotc-decomp/issues/1220))
