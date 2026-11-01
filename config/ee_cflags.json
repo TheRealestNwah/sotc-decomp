@@ -4,5 +4,20 @@
   ],
   "src/xff/KERNEL/isysRequestDeleteObj.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/atanf.c": [
+    "-fno-builtin"
+  ],
+  "src/xff/KERNEL/__ieee754_atan2f.c": [
+    "-fno-builtin"
+  ],
+  "src/xff/KERNEL/__ieee754_asinf.c": [
+    "-fno-builtin"
+  ],
+  "src/xff/KERNEL/__ieee754_rem_pio2f.c": [
+    "-fno-builtin"
+  ],
+  "src/xff/KERNEL/__ieee754_powf.c": [
+    "-fno-builtin"
   ]
 }
