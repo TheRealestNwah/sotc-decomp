@@ -72,6 +72,7 @@ The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
    For native EE type declarations, use `--ee-context types.c` (repeatable, self-contained declarations without preprocessor directives). Native `long` is 8 bytes; m2c's ordinary `--context` interprets it as 4. The wrapper adapts integer `long` to `long long` in temporary context files. Existing `--context` remains unchanged for declarations already written for m2c. Plain contexts are loaded before adapted contexts. Review the resulting draft's calls, pointer offsets and buffers; context conversion does not prove a match.
 3. Iterate with `python tools/try_compilers.py src/xff/<MODULE>/<name>.c --module <MODULE> --only ee-gcc2.96 --flags "-O2 -G0"` until it says MATCH. `--diff` prints a side-by-side listing of each mismatch.
 4. Run `python configure.py` (picks up new C files), then `ninja check`.
+   Don't run `tools/progress.py` or touch the README progress table in a matching PR: every PR would edit the same lines and conflict with the others. The table is refreshed on main periodically, in its own PR.
 5. If it's close but stuck on register allocation or instruction order, park the attempt in `#ifdef NONMATCHING` (with an `#else` declaring it extern if other C calls it). Then let the permuter search:
    - `python tools/permute.py setup <file.c> <function>`
    - `python tools/permute.py run build/permuter/<function> -j5 --best-only --stop-on-zero`
