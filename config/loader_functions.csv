@@ -99,7 +99,8 @@ address,size,name,class,library,evidence
 0x00104EF8,0x60,padSysVibSetAcrParam,game,loader,Original name (KERNEL.XFF absolute symbol)
 0x00104F58,0x8,LoaderSysSetPowerOffCallBackFunc,game,loader,Original name (KERNEL.XFF absolute symbol)
 0x00104F60,0x8C,PreparePowerOff,game,loader,Original name (KERNEL.XFF absolute symbol)
-0x00104FF0,0xC8,func_00104FF0,game,loader,no Original name; class from its block
+0x00104FF0,0xB0,func_00104FF0,game,loader,no Original name; class from its block
+0x001050A0,0x18,func_001050A0,game,loader,no Original name; class from its block
 0x001050B8,0x1B0,usbSerialSysPutString,game,loader,Original name (KERNEL.XFF absolute symbol)
 0x00105268,0x6C,usbSerialSysPrintf,game,loader,Original name (KERNEL.XFF absolute symbol)
 0x001052D8,0x118,usbSerialSysInit,game,loader,Original name (KERNEL.XFF absolute symbol)

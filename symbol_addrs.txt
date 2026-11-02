@@ -1,3 +1,4 @@
 // Visit https://github.com/ethteck/splat/wiki/Adding-Symbols for documentation about this file
 _start = 0x00100010; // type:func
+func_001050A0 = 0x001050A0; // type:func
 D_20000000 = 0x20000000; // ignore:True size:0x200
