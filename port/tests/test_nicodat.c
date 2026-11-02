@@ -68,9 +68,13 @@ static void build_header(Bytes *b, int with_special)
     put_record(b, 550, 10); /* data type 0, variant 1 */
     put_record(b, 551, 11);
     put_record(b, 552, 12);
-    bytes_put_u32(b, 2); /* tex segs */
-    for (uint32_t i = 0; i < 6; i++)
-        bytes_put_u32(b, 0x100 + i);
+    bytes_put_u32(b, 2); /* tex segs: x, y, seg */
+    bytes_put_u32(b, (uint32_t)-5);
+    bytes_put_u32(b, 4);
+    bytes_put_u32(b, 0x100);
+    bytes_put_u32(b, (uint32_t)-4);
+    bytes_put_u32(b, (uint32_t)-5);
+    bytes_put_u32(b, 0x105);
 
     bytes_put_u32(b, 2); /* ADPCM */
     put_record(b, 600, 0x800);
@@ -86,9 +90,14 @@ static void build_header(Bytes *b, int with_special)
     }
     bytes_put_u32(b, 2);
     put_names(b, special, 2);
-    bytes_put_u32(b, 7);
-    bytes_put_u32(b, 3);
-    bytes_put(b, "abc", 3);
+    /* boot.cfg: two entries, a segment key and a map key */
+    bytes_put_u32(b, 2);
+    bytes_put_u32(b, 32);
+    bytes_put(b, "\0\0\0\0\x12\0\0\0", 8);
+    put_record(b, 900, 0x30);
+    bytes_put(b, "\2\1\0\3\0\0\x34\x12", 8);
+    put_record(b, 901, 0x40);
+    /* font: a count the data doesn't hold */
     bytes_put_u32(b, 9);
     bytes_put_u32(b, 0);
 }
@@ -153,7 +162,10 @@ static void check_archive(const NicoArchive *a, int with_special)
         CHECK_EQ(nico_map_record(m, 3, 0, 0, &r), NICO_ERR_ARGUMENT);
         CHECK_EQ(nico_map_record(m, 0, 2, 0, &r), NICO_ERR_ARGUMENT);
         CHECK_EQ(m->tex_seg_count, 2u);
-        CHECK_EQ(m->tex_segs[1].word[2], 0x105u);
+        CHECK_EQ(m->tex_segs[0].x, -5);
+        CHECK_EQ(m->tex_segs[0].y, 4);
+        CHECK_EQ(m->tex_segs[1].y, -5);
+        CHECK_EQ(m->tex_segs[1].seg, 0x105u);
     }
     CHECK(nico_find_map(a, "worl") == NULL);
 
@@ -169,15 +181,27 @@ static void check_archive(const NicoArchive *a, int with_special)
         CHECK_EQ(a->special_count, 2u);
         CHECK(f != NULL);
         if (f) {
-            CHECK_EQ(f->value, 7u);
-            CHECK_EQ(f->data_size, 3u);
-            CHECK(memcmp(f->data, "abc", 3) == 0);
+            NicoSpecialEntry e;
+            CHECK_EQ(f->entry_count, 2u);
+            CHECK_EQ(f->data_size, 32u);
+            CHECK_EQ(nico_special_entry(f, 0, &e), NICO_OK);
+            CHECK_EQ(e.key[0], NICO_SPECIAL_SEGMENT);
+            CHECK_EQ(e.key[4], 0x12);
+            CHECK_EQ(e.record.sector, 900u);
+            CHECK_EQ(e.record.size, 0x30u);
+            CHECK_EQ(nico_special_entry(f, 1, &e), NICO_OK);
+            CHECK_EQ(e.key[0], NICO_SPECIAL_MAP);
+            CHECK_EQ(e.key[6] | e.key[7] << 8, 0x1234);
+            CHECK_EQ(e.record.sector, 901u);
+            CHECK_EQ(nico_special_entry(f, 2, &e), NICO_ERR_RANGE);
         }
         f = nico_find_special(a, "font");
         CHECK(f != NULL);
         if (f) {
-            CHECK_EQ(f->value, 9u);
+            NicoSpecialEntry e;
+            CHECK_EQ(f->entry_count, 9u);
             CHECK_EQ(f->data_size, 0u);
+            CHECK_EQ(nico_special_entry(f, 0, &e), NICO_ERR_RANGE);
         }
     } else {
         CHECK_EQ(a->special_count, 0u);
