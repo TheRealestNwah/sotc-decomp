@@ -76,3 +76,15 @@ _Avoid_: ROM, ISO (as the term)
 **Render translator**:
 The part of the Native port that runs the game's VU1 microprograms and turns the GS packets the Game code builds into modern GPU draws.
 _Avoid_: GS emulator, renderer (unqualified)
+
+**Platform layer**:
+The Native port's own implementation of the SDK routines and PS2 system services that Game code calls, built on SDL3.
+_Avoid_: HAL, shim, backend
+
+**Sound driver**:
+The game's own program on the PS2's I/O processor, `SG2IOPM1.IRX`, which plays sound and music on commands from the `Sg2*` functions.
+_Avoid_: IOP module (unqualified), SPU driver
+
+**Reference run**:
+A recording of inputs and per-frame game state from the Matching build running in an emulator, which the Native port replays and is compared against.
+_Avoid_: Golden run, TAS, replay (the game has its own replay feature)
