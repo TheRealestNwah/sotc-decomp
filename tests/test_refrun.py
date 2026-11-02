@@ -2,8 +2,8 @@ import json
 import struct
 
 import pytest
+from refrun_helpers import FakePCSX2, load_into, make_module
 
-from tests.refrun_helpers import FakePCSX2, load_into, make_module
 from tools import refrun
 from tools.pine import Pine
 

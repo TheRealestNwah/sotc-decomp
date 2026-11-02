@@ -53,3 +53,9 @@ OVERNIGHT.md
 /CLAUDE.local.md
 /docs/collaboration.md
 /docs/handoff.md
+
+# Disc archives and images (the Native port reads them from the owner's disc)
+*.DAT
+*.dat
+*.cue
+*.chd

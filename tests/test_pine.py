@@ -1,8 +1,8 @@
 import struct
 
 import pytest
+from refrun_helpers import FakePCSX2
 
-from tests.refrun_helpers import FakePCSX2
 from tools.pine import MAX_IPC_RETURN_SIZE, Pine, PineError, chunk_reads, frame, read_command
 
 
