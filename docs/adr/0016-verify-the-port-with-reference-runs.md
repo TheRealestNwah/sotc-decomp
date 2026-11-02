@@ -1,0 +1,3 @@
+# Verify the Native port against Reference runs of the Matching build
+
+The main check on the Native port is a Reference run: inputs and per-frame game state recorded from the Matching build running in PCSX2, replayed in the port with the game state diffed frame by frame. Screenshot comparison is a secondary check for the Render translator. Reference runs need the owner's disc, so they run locally; CI builds Windows and Linux and runs only tests that need no game files (format parsers on synthetic data, the Render translator on hand-made packets). Relying on playtesting alone was rejected because logic drift shows up long after its cause.

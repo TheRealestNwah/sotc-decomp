@@ -1,5 +1,6 @@
 # Game files: NEVER commit anything from the disc
 iso/
+refruns/
 baserom/
 *.iso
 *.ELF
@@ -52,3 +53,14 @@ OVERNIGHT.md
 /CLAUDE.local.md
 /docs/collaboration.md
 /docs/handoff.md
+
+# Disc archives and images (the Native port reads them from the owner's disc)
+*.DAT
+*.dat
+*.cue
+*.chd
+
+# PCSX2 GS dumps hold frames of the game
+*.gs
+*.gs.zst
+*.gs.xz

@@ -29,7 +29,7 @@ Current phase:
 - **C must compile to identical bytes.** A function counts as a Matched function only when the compiled output matches the Original exactly, with no hand-written asm patching around it.
 - **No game files in git.** Everything from the disc (`iso/`), everything splat generates (`asm/`, `*.ld`, `undefined_*_auto.txt`) and all build output stay gitignored.
 - **Compiler: Sony `ee-gcc` 2.96 (`2.96-ee-001003-1`), `-O2 -G0`, assembled with that package's own `ee-as`.** Chosen by evidence (with the user's OK), recorded in `docs/findings.md`. Don't switch compilers or flags without new evidence. Modern binutils expands `move` and jump-table loads differently from the original assembler, so C must go through the package's `ee-as`.
-- SDK routines (from the Sony SDK 3.0.x libraries listed in `docs/findings.md`) get identified by signature, not decompiled by hand.
+- SDK routines (from the Sony SDK 3.0.x libraries listed in `docs/findings.md`) get identified by signature, not decompiled by hand. Record each one in `config/sdk_routines.txt` (names and signatures only, never SDK library files or code); `tools/progress.py` leaves them out of the Game code totals.
 
 ## Toolchain (native Windows)
 
@@ -101,6 +101,9 @@ Splice limitations:
 - `pytest` covers the Python tools in `tools/` and `configure.py`'s helpers
 - `ruff check .` and `ruff format --check .` (fix with `ruff format .`)
 - CI (`.github/workflows/ci.yml`) runs both on every PR. CI has no game files and no PS2 toolchain, so it can't run the matching build.
+- `port/` (Native port) builds with CMake and Clang, and its tests use synthetic data only:
+  `cmake -S port -B build/port -G Ninja -DCMAKE_C_COMPILER=clang -DSOTC_PORT_WERROR=ON`, then `cmake --build build/port` and `ctest --test-dir build/port`.
+  CI also runs them with `-DSOTC_PORT_SANITIZE=ON` (ASan and UBSan).
 
 ## Layout
 
@@ -112,18 +115,33 @@ Splice limitations:
   - `xff2.py`: XFF reader/writer and XFF <-> ELF converter (`info`, `to-elf`, `from-elf`, `roundtrip`)
   - `xff_rebuild.py`: rebuilds complete Game modules from assembled payloads and original layout metadata, verifying symbol locations and relocations
   - `xff_split.py`: disassembles an XFF with spimdisasm, then post-processes the asm so it reassembles exactly (rules in its docstring)
+  - `loader_funcs.py`: sorts the Loader's functions into Game code and SDK routines (`--write` regenerates `config/loader_functions.csv`, `--check` checks it)
   - `xff_tus.py`: infers Source groups from relocations (`--list` prints every group); results summarized in `docs/findings.md`
   - `ee_cc.py`: compiles one C file with the game's toolchain
   - `xff_splice.py`: splices compiled C functions into a Game module's asm, verifying they match
   - `try_compilers.py`: compiles C with candidate compilers/flags and diffs against the original functions
+  - `progress.py`: refreshes the README progress table from each Game module's symbol table, relocations and the matching C (needs `iso/` and `asm/`)
+  - `sdk_routines.py`: checks `config/sdk_routines.txt`, the SDK routines identified in the Game modules by signature, and prints entries for new ones
   - `m2c.py`, `permute.py`: run m2c and decomp-permuter on an XFF function
+  - `refrun.py`: records and diffs Reference runs from PCSX2 (`docs/reference-runs.md`), with `pine.py` (PCSX2 PINE client), `p2m2.py` (Input Recording files) and `disc.py` (reads files from a Disc image)
 - `asm/xff/<MODULE>/`: generated Game module assembly (gitignored like all asm)
 - `include/xff_macro.inc`: label macros for Game module asm. Labels are local by default; `.globl` comes from the original symbol table.
 - `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
 - `src/xff/<MODULE>/`: Matched functions for the Game modules, one file per function for now
 - `experiments/`: C used to identify the compiler (not part of the build)
+- `port/`: the Native port, separate from the matching build (ADRs 0005 and 0010)
+  - `disc/disc_image.c`: reads files from the owner's Disc image (ISO 9660, 2048- or 2352-byte sectors)
+  - `disc/nicodat.c`: parses the `NICO.DAT` header (format in `docs/nicodat.md`)
+  - `tools/nicoinfo.c`: prints a Disc image's `NICO.DAT` table of contents
+  - `render/`: the Render translator prototype (`docs/render-translator.md`): `gsdump.c` reads PCSX2 GS dumps, `gs_vram.c` models GS memory layouts, `gs_translate.c` turns GIF packets into draw batches, `gs_ref.c` is the CPU reference backend
+  - `tools/gsframe.c`: draws one frame of a GS dump to a PNG, next to PCSX2's screenshot
+  - `tests/`: CTest programs on synthetic images and archives
 - `docs/findings.md`: what we know about the binaries, the compiler and the SDK
 - `config/baserom.json`: expected Original Loader path and SHA1
+- `config/refrun/state.toml`: the state map, listing the game state each Reference run frame records
+- `refruns/`: local Reference runs (gitignored: they need the disc)
+- `config/sdk_routines.txt`: SDK routines identified in the Game modules (name, library, size, signature)
+- `config/loader_functions.csv`: every Loader function with its Original or Placeholder name, class (Game code / SDK routine) and library
 
 ## Gotchas
 
