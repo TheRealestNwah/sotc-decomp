@@ -1,17 +1,12 @@
 typedef int s128 __attribute__((mode(TI)));
+typedef union { s128 q; float f[4]; int i[4]; } Vec4;
 
-typedef union {
-    s128 q;
-    float f[4];
-    int i[4];
-} Vec4;
-
-typedef struct {
+typedef struct GlobalVar {
     char pad0[0x194];
     float unk194;
 } GlobalVar;
 
-typedef struct {
+typedef struct BeardWork {
     Vec4 pos;
     Vec4 unk10;
     Vec4 unk20;
@@ -20,12 +15,12 @@ typedef struct {
     int initialized;
 } BeardWork;
 
-typedef struct {
+typedef struct CharacterClass {
     char pad0[0x110C];
     BeardWork *beard;
 } CharacterClass;
 
-typedef struct {
+typedef struct BeardArg {
     int chara;
     Vec4 *unk4;
     char *matrices;
@@ -78,9 +73,5 @@ void nico_BeardTop(BeardArg *arg)
     beard->pos.q = ((Vec4 *)(arg->matrices + arg->index * 0x40 + 0x30))->q;
     beard->unk10.q = arg->unkC[arg->index].q;
     beard->unk20.q = arg->unk4[arg->index].q;
-    {
-        int *p = &D_0017B8BC;
-        D_0017B8C0 = 0;
-        (*p)++;
-    }
+    { int *p = &D_0017B8BC; D_0017B8C0 = 0; (*p)++; }
 }
