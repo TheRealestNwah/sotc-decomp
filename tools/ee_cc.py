@@ -4,6 +4,8 @@
 
 ee-gcc 2.96 (-O2 -G0) and its own ee-as, the combination identified in
 docs/findings.md. The Linux binaries run under WSL; see tools/try_compilers.py.
+The Loader's Game code (src/loader/) reads its globals through $gp, so it's
+built with -G8 instead (see "Loader function map" in docs/findings.md).
 """
 
 from __future__ import annotations
@@ -25,6 +27,7 @@ from tools.try_compilers import (  # noqa: E402
 
 COMPILER = os.environ.get("SOTC_COMPILER", "ee-gcc2.96")
 CFLAGS = ["-O2", "-G0"]
+LOADER_CFLAGS = ["-O2", "-G8"]
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -35,13 +38,20 @@ def source_cflags(source: Path, root: Path | None = None) -> list[str]:
         relative = source.resolve().relative_to(root).as_posix()
     except ValueError:
         return CFLAGS.copy()
+    base = LOADER_CFLAGS if relative.startswith("src/loader/") else CFLAGS
     settings = json.loads((root / "config/ee_cflags.json").read_text(encoding="utf-8"))
     if not isinstance(settings, dict):
         raise ValueError("config/ee_cflags.json must map source paths to flag lists")
     extra = settings.get(relative, [])
     if not isinstance(extra, list) or any(not isinstance(flag, str) for flag in extra):
         raise ValueError(f"compiler flags for {relative} must be a list of strings")
-    return CFLAGS + extra
+    return base + extra
+
+
+def small_data_limit(flags: list[str]) -> int:
+    """The -G value gcc uses (the last one given); the assembler needs the same."""
+    limits = [int(f[2:]) for f in flags if f.startswith("-G") and f[2:].isdigit()]
+    return limits[-1] if limits else 0
 
 
 def build(source: Path, output: Path, compiler_dir: Path) -> str | None:
@@ -51,11 +61,12 @@ def build(source: Path, output: Path, compiler_dir: Path) -> str | None:
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         asm = Path(tmp) / "out.s"
-        error = compile_c(compiler_dir, source, source_cflags(source), asm)
+        flags = source_cflags(source)
+        error = compile_c(compiler_dir, source, flags, asm)
         if error:
             return error
         output.unlink(missing_ok=True)
-        return assemble(asm, output, package_as)
+        return assemble(asm, output, package_as, small_data_limit(flags))
 
 
 def main(argv: list[str] | None = None) -> int:
