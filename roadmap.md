@@ -271,10 +271,16 @@ These don't need cleaned-up source, so they run alongside matching.
   Matching build in PCSX2 (`tools/refrun.py`, see `docs/reference-runs.md`).
 - [ ] Record the first Reference run: power-on through a new game to the first
   colossus, and grow `config/refrun/state.toml` as the port needs more fields.
-- [ ] Render translator prototype fed from PCSX2 GS dumps, starting with
-  hand-translating the roughly 14 VU1 microprogram overlay sets into C and
-  checking them against PCSX2's VU1 output. Unblocked: the full Disc image is
-  in `iso/`, so PCSX2 can boot the game and record GS dumps.
+- [x] Render translator prototype fed from PCSX2 GS dumps: dump parser, GIF
+  translator to API-neutral draw batches, and a CPU reference backend that
+  draws one frame to a PNG (`port/render/`, `gsframe`; see
+  [docs/render-translator.md](docs/render-translator.md)).
+- [ ] Check the Render translator against a real GS dump of the title screen
+  (capture steps in docs/render-translator.md) and fix what differs.
+- [ ] SDL_GPU backend for the Render translator's draw batches, with the
+  reference backend as its test oracle.
+- [ ] Hand-translate the roughly 14 VU1 microprogram overlay sets into C and
+  check their output against the PATH1 packets in GS dumps.
 
 ### Milestones
 
