@@ -1,0 +1,3 @@
+# Replace Sony's SDK routines, not the hardware under them
+
+The Native port provides its own implementation of each SDK routine the Game code calls (`sceCd*`, `scePad2*`, `sceMc2*`, `sceGs*`, `sceSif*` and the rest), so Game code calls the same functions on both builds. Emulating the hardware those routines drive (DMA channels, the IOP, SIF RPC) would bring an emulator's complexity into the port. SDK routines are already the boundary the decomp identifies by signature instead of matching, which makes them the natural seam. Where Game code touches hardware registers directly, it goes behind the build macro from ADR 0005.
