@@ -1,0 +1,95 @@
+#define DEG2RAD(d) ((d) * 3.14159265358979323846 / 180.0f)
+
+typedef struct {
+    char pad0[0x6C];
+    float f6C;
+    float f70;
+    float f74;
+    float f78;
+    float f7C;
+    float max0;
+    float min0;
+    char move0[0xA4 - 0x88];
+    float fA4;
+    float max1;
+    float min1;
+    char move1[0xCC - 0xB0];
+    float fCC;
+    float fD0;
+    float fD4;
+    float fD8;
+    float fDC;
+    float fE0;
+    float fE4;
+    float fE8;
+    float fEC;
+    float fF0;
+    float fF4;
+    float fF8;
+    float fFC;
+    float f100;
+    float f104;
+    float f108;
+    float f10C;
+    float f110;
+    float f114;
+    float f118;
+    float f11C;
+    float f120;
+    float f124;
+    float f128;
+    float f12C;
+    float f130;
+    float f134;
+    float f138;
+    float f13C;
+} YawPitchCntrl;
+
+extern void reset_nico_yaw_pitch_cntrl(YawPitchCntrl *);
+extern void GAMEUTIL_constructor_move_angle(void *);
+
+void constructor_nico_yaw_pitch_cntrl(YawPitchCntrl *c)
+{
+    reset_nico_yaw_pitch_cntrl(c);
+    c->f6C = 0.0f;
+    c->f70 = 1.0f;
+    c->f74 = 0.0f;
+    c->f78 = 1.0f;
+    c->f7C = 0.0f;
+    c->max0 = DEG2RAD(80.0f);
+    c->min0 = -DEG2RAD(80.0f);
+    GAMEUTIL_constructor_move_angle(c->move0);
+    c->fA4 = 0.0f;
+    c->max1 = DEG2RAD(80.0f);
+    c->min1 = -DEG2RAD(80.0f);
+    GAMEUTIL_constructor_move_angle(c->move1);
+    c->fCC = 0.0f;
+    c->fD0 = DEG2RAD(5.0f);
+    c->fD4 = DEG2RAD(10.0f);
+    c->fD8 = DEG2RAD(50.0f);
+    c->fDC = DEG2RAD(40.0f);
+    c->fE0 = DEG2RAD(20.0f);
+    c->fE4 = 0.79999995231628418f;
+    c->fE8 = 0.0f;
+    c->fEC = DEG2RAD(5.0f);
+    c->fF0 = DEG2RAD(10.0f);
+    c->fF4 = DEG2RAD(30.0f);
+    c->fF8 = DEG2RAD(40.0f);
+    c->fFC = DEG2RAD(20.0f);
+    c->f100 = 0.79999995231628418f;
+    c->f10C = 0.0f;
+    c->f108 = 0.0f;
+    c->f104 = 0.0f;
+    c->f110 = 0.0f;
+    c->f114 = 0.0f;
+    c->f118 = 0.0f;
+    c->f11C = 0.0f;
+    c->f120 = DEG2RAD(85.0f);
+    c->f124 = -DEG2RAD(85.0f);
+    c->f128 = DEG2RAD(89.0f);
+    c->f12C = -DEG2RAD(89.0f);
+    c->f134 = 0.0f;
+    c->f130 = 0.0f;
+    c->f13C = 1.0f;
+    c->f138 = 1.0f;
+}
