@@ -1,0 +1,81 @@
+
+typedef struct {
+    float x, y, z, w;
+} __attribute__((aligned(8))) Vec4;
+
+static inline void applyMatrix(float *out, float *m, float *v)
+{
+    __asm__ __volatile__(".set noreorder\n"
+                         "lqc2 vf8, 0(%2)\n"
+                         "lqc2 vf14, 0(%1)\n"
+                         "lqc2 vf15, 16(%1)\n"
+                         "lqc2 vf16, 32(%1)\n"
+                         "lqc2 vf17, 48(%1)\n"
+                         "vmulax.xyzw ACC, vf14, vf8x\n"
+                         "vmadday.xyzw ACC, vf15, vf8y\n"
+                         "vmaddaz.xyzw ACC, vf16, vf8z\n"
+                         "vmaddw.xyzw vf10, vf17, vf8w\n"
+                         "sqc2 vf10, 0(%0)\n"
+                         ".set reorder\n"
+                         : : "r"(out), "r"(m), "r"(v) : "memory");
+}
+
+static inline void scaleVector(float *out, float *a, void *b)
+{
+    __asm__ __volatile__(".set noreorder\n"
+                         "lqc2 vf5, 0(%1)\n"
+                         "lqc2 vf6, 0(%2)\n"
+                         "vmul.xyz vf5, vf5, vf6\n"
+                         "sqc2 vf5, 0(%0)\n"
+                         ".set reorder\n"
+                         : : "r"(out), "r"(a), "r"(b) : "memory");
+}
+
+static inline float squareLength(float *v)
+{
+    float r;
+    __asm__ __volatile__(".set noreorder\n"
+                         "lqc2 vf7, 0(%1)\n"
+                         "vmul.xyz vf7, vf7, vf7\n"
+                         "vaddy.x vf7, vf7, vf7y\n"
+                         "vaddz.x vf7, vf7, vf7z\n"
+                         "qmfc2.ni $2, vf7\n"
+                         "mtc1 $2, %0\n"
+                         ".set reorder\n"
+                         : "=f"(r) : "r"(v) : "$2");
+    return r;
+}
+
+static inline float sqrtF(float x)
+{
+    float r;
+    __asm__ __volatile__("sqrt.s %0, %1" : "=f"(r) : "f"(x));
+    return r;
+}
+
+float GetRateInOutEllipticalSphereVolumeWithInverseMatrix(float *inv, float *point, float *inner, float *radius)
+{
+    float local[4] __attribute__((aligned(16)));
+    Vec4 scale __attribute__((aligned(16)));
+    float len;
+
+    {
+        float one = 1.0f;
+        scale = (Vec4){one / radius[0], one / radius[1], one / radius[2], 0.0f};
+    }
+    applyMatrix(local, inv, point);
+    scaleVector(local, local, &scale);
+    len = sqrtF(squareLength(local));
+    if (len <= 1.0f) {
+        float r = sqrtF(squareLength(radius));
+        float q = sqrtF(squareLength(inner)) / r;
+        if (len <= q) {
+            len = 1.0f;
+        } else {
+            len = ((1.0f - q) - (len - q)) / (1.0f - q);
+        }
+    } else {
+        len = -1.0f;
+    }
+    return len;
+}
