@@ -1,0 +1,3 @@
+# Port the game's own Sound driver instead of rewriting or emulating it
+
+Sound on the PS2 runs on the I/O processor in the game's own Sound driver (`SG2IOPM1.IRX`), which the EE-side `Sg2*` functions command. The Native port gets a working, non-matching C version of that driver, running on the PC and feeding a small SPU2-style voice mixer that outputs through SDL3. Writing a new driver from the EE-side calls alone would guess at behaviour such as envelopes and sequencing; emulating the SPU2 and running the IOP code on an interpreter would mean a second CPU emulator. The driver isn't held to the matching standard, since nothing ships it byte-for-byte.
