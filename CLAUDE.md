@@ -170,6 +170,7 @@ Splice limitations:
 - Agent work happens in one worktree per task under `.worktrees/` (gitignored).
 - Once a task's PR has merged (or the task is dropped), remove its worktree with `git worktree remove .worktrees/<name>` and delete its local branch with `git branch -D <branch>` (`-D` because squash merges don't look merged to git). Record anything worth keeping in the handoff first.
 - Before starting a new task, remove any leftover worktrees whose PRs have merged. Leave alone worktrees with uncommitted changes or unmerged work, since another agent may own them.
+- Delete a merged task branch on GitHub with `git -C D:/Projects/sotc-decomp push origin --delete claude/<branch>`, as its own command (no `cd ... &&`). Nick's PC allows exactly that form without a permission prompt; other forms get blocked by auto mode.
 
 ## Agent skills
 
