@@ -117,6 +117,7 @@ Splice limitations:
   - `xff_splice.py`: splices compiled C functions into a Game module's asm, verifying they match
   - `try_compilers.py`: compiles C with candidate compilers/flags and diffs against the original functions
   - `m2c.py`, `permute.py`: run m2c and decomp-permuter on an XFF function
+  - `refrun.py`: records and diffs Reference runs from PCSX2 (`docs/reference-runs.md`), with `pine.py` (PCSX2 PINE client), `p2m2.py` (Input Recording files) and `disc.py` (reads files from a Disc image)
 - `asm/xff/<MODULE>/`: generated Game module assembly (gitignored like all asm)
 - `include/xff_macro.inc`: label macros for Game module asm. Labels are local by default; `.globl` comes from the original symbol table.
 - `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
@@ -124,6 +125,8 @@ Splice limitations:
 - `experiments/`: C used to identify the compiler (not part of the build)
 - `docs/findings.md`: what we know about the binaries, the compiler and the SDK
 - `config/baserom.json`: expected Original Loader path and SHA1
+- `config/refrun/state.toml`: the state map, listing the game state each Reference run frame records
+- `refruns/`: local Reference runs (gitignored: they need the disc)
 
 ## Gotchas
 

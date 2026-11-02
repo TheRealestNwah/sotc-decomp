@@ -1,5 +1,6 @@
 # Game files: NEVER commit anything from the disc
 iso/
+refruns/
 baserom/
 *.iso
 *.ELF

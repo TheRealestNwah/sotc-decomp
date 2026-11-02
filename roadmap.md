@@ -256,10 +256,12 @@ These don't need cleaned-up source, so they run alongside matching.
 
 - [ ] Owner dumps a full Disc image into `iso/` (needed for `NICO.DAT` and
   `SG2IOPM1.IRX`; `iso/` currently holds only the executables).
-- [ ] Disc image reader and `NICO.DAT` archive parser, with asset-free tests on
+- [ ] Disc image reader (`tools/disc.py` reads ISO 9660 files) and `NICO.DAT` archive parser, with asset-free tests on
   synthetic data.
-- [ ] Reference run recording: capture inputs and per-frame game state from the
-  Matching build in PCSX2.
+- [x] Reference run recording: capture inputs and per-frame game state from the
+  Matching build in PCSX2 (`tools/refrun.py`, see `docs/reference-runs.md`).
+- [ ] Record the first Reference run: power-on through a new game to the first
+  colossus, and grow `config/refrun/state.toml` as the port needs more fields.
 - [ ] Render translator prototype fed from PCSX2 GS dumps, starting with
   hand-translating the roughly 14 VU1 microprogram overlay sets into C and
   checking them against PCSX2's VU1 output.
