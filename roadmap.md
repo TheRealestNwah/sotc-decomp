@@ -256,8 +256,10 @@ These don't need cleaned-up source, so they run alongside matching.
 
 - [ ] Owner dumps a full Disc image into `iso/` (needed for `NICO.DAT` and
   `SG2IOPM1.IRX`; `iso/` currently holds only the executables).
-- [ ] Disc image reader and `NICO.DAT` archive parser, with asset-free tests on
-  synthetic data.
+- [x] Disc image reader and `NICO.DAT` archive parser, with asset-free tests on
+  synthetic data (`port/disc/`, format in [docs/nicodat.md](docs/nicodat.md)).
+- [ ] Check the `NICO.DAT` header layout against the owner's Disc image with
+  `nicoinfo`, and name the fields still marked unknown.
 - [ ] Reference run recording: capture inputs and per-frame game state from the
   Matching build in PCSX2.
 - [ ] Render translator prototype fed from PCSX2 GS dumps, starting with
