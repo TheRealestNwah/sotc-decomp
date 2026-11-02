@@ -18,3 +18,34 @@ static void func_000ED058(char *w, char *cam, char *prm)
         *(float *)(w + 0x8C) = 0.0f;
     }
 }
+
+typedef int s128 __attribute__((mode(TI)));
+
+extern void set_param_double_spring_interp_common(char *, float, float, float, float);
+extern void reset_double_spring_interp_cntrl3D(char *, s128 *);
+extern void doit_double_spring_interp_cntrl3D(char *, s128 *, int, int, float);
+
+#ifdef NONMATCHING
+typedef struct {
+    int state;
+    char pad4[0xC];
+    s128 pos;
+    char spring[1];
+} SpringPos;
+
+static void func_000ED110(SpringPos *w, float *prm, int on, s128 *pos)
+{
+    set_param_double_spring_interp_common(w->spring, prm[0], prm[2], prm[1], -1.0f);
+    if (w->state == 0) {
+        if (on == 1) {
+            w->state = on;
+            w->pos = *pos;
+            reset_double_spring_interp_cntrl3D(w->spring, pos);
+        }
+    } else {
+        if (on == 1)
+            w->pos = *pos;
+        doit_double_spring_interp_cntrl3D(w->spring, &w->pos, 0, 1, D_0017B720);
+    }
+}
+#endif
