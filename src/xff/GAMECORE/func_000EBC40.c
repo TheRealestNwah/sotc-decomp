@@ -39,20 +39,6 @@ extern void get_game_camera_mode_local_parameter(char *, char *);
 extern int func_000E9AA0(void *, void *, void *, int);
 extern int is_main_type_camera_lws_animation_update(void *);
 
-#ifdef NONMATCHING
-static void func_000EBDF8(void *a, char *b, void *c)
-{
-    int buf[4];
-    char *p;
-
-    constructor_game_camera_param_update_data_manager(buf);
-    p = b + 0x50;
-    func_000E5268(buf, a, b, p, c);
-    doit_game_camera_param_manager(p, buf, a, b, D_0017B720);
-    get_game_camera_mode_local_parameter(b + 0x1384, b);
-}
-#endif
-
 static void func_000EBE88(void *a, void *b, void *c)
 {
     func_000E9AA0(a, b, c, 0);
