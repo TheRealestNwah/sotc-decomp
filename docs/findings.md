@@ -13,6 +13,9 @@ Notes on what's on the NTSC-U disc (`SCUS-97472`) and what we know about how it 
 | `KERNEL.XFF` | 415,908 | `1da339dbf97743ff78f5a78550d2ff83d64a237b` | Game module (`xff2`) |
 | `MANAGER.XFF` | 1,650,876 | `5e3cc1cb4338b45e427aa8df45e50db181b1c6a7` | Game module (`xff2`) |
 | `GAMECORE.XFF` | 2,141,864 | `4c65034d52883927250ad8994cb39f5074c05555` | Game module (`xff2`) |
+| `NICO.DAT` | 2,667,340,678 | | Asset archive ([docs/nicodat.md](nicodat.md)) |
+
+The owner's full image (`Shadow of the Colossus (USA).iso`, 1,315,408 sectors of 2048 bytes) has SHA1 `bd5dcb38bc1a08b261accd1b53894ee4e934788f` and MD5 `6d4a7a9d9c139a9d93db37538ba6d984`. All five files above read out of it with the hashes listed.
 
 Almost all game code lives in the `.XFF` modules, a custom relocatable format with the magic `xff2`. The ELF loads them at runtime. A couple of source filenames survive inside them (`effectmanager.c` in MANAGER, `sword.c` in GAMECORE). Reversing the format is tracked separately.
 

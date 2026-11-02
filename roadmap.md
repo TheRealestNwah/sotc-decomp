@@ -258,19 +258,23 @@ of the port.
 
 These don't need cleaned-up source, so they run alongside matching.
 
-- [ ] Owner dumps a full Disc image into `iso/` (needed for `NICO.DAT` and
-  `SG2IOPM1.IRX`; `iso/` currently holds only the executables).
+- [x] Owner dumps a full Disc image into `iso/` (needed for `NICO.DAT` and
+  `SG2IOPM1.IRX`). Its executables match the NTSC-U hashes in
+  [docs/findings.md](docs/findings.md).
 - [x] Disc image reader and `NICO.DAT` archive parser, with asset-free tests on
   synthetic data (`port/disc/`, format in [docs/nicodat.md](docs/nicodat.md)).
-- [ ] Check the `NICO.DAT` header layout against the owner's Disc image with
-  `nicoinfo`, and name the fields still marked unknown.
+- [x] Check the `NICO.DAT` header layout against the owner's Disc image with
+  `nicoinfo`, and name the fields still marked unknown. The layout held; tex
+  segs and special fs entries are now named. Kinds 3 and 4 of special fs key
+  remain open (see the doc).
 - [x] Reference run recording: capture inputs and per-frame game state from the
   Matching build in PCSX2 (`tools/refrun.py`, see `docs/reference-runs.md`).
 - [ ] Record the first Reference run: power-on through a new game to the first
   colossus, and grow `config/refrun/state.toml` as the port needs more fields.
 - [ ] Render translator prototype fed from PCSX2 GS dumps, starting with
   hand-translating the roughly 14 VU1 microprogram overlay sets into C and
-  checking them against PCSX2's VU1 output.
+  checking them against PCSX2's VU1 output. Unblocked: the full Disc image is
+  in `iso/`, so PCSX2 can boot the game and record GS dumps.
 
 ### Milestones
 

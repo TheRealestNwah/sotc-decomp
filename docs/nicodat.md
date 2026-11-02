@@ -5,10 +5,9 @@
 header as the Original reads it. The Native port's parser is
 [`port/disc/nicodat.c`](../port/disc/nicodat.c).
 
-Everything here comes from the Game modules' code, not from a dump of the file:
-no `NICO.DAT` has been examined yet. Field meanings marked "not known" are
-words the code reads and stores without using them in the functions below. Check
-this page against the real file with `nicoinfo` once the owner has a Disc image.
+The layout comes from the Game modules' code and has been checked against the
+owner's US Disc image with `nicoinfo` (`nicoinfo <image> --all` prints every
+table). The [US disc](#the-us-disc) section lists what that check found.
 
 ## Finding it
 
@@ -26,10 +25,11 @@ and reads the header field by field with `iosCdStRead`. The fields are packed
 with no alignment padding. All integers are little-endian.
 
 A *record* below is two `u32`s: a sector, then a size. `sheetFsGetDirectFileSize`
-returns the second word of a direct-file record, so it is a size in bytes at
-least there. `sheetFsLoadAdpcmInt` adds a sector offset to the first word of an
-ADPCM record and reads from there with `sceCdReadIOPm` (through `iosIopRead`); it
-doesn't use the second word, so that table's size unit is not settled.
+returns the second word of a direct-file record as a size in bytes.
+`sheetFsLoadAdpcmInt` adds a sector offset to the first word of an ADPCM record
+and reads from there with `sceCdReadIOPm` (through `iosIopRead`), without using
+the second word. On the US disc every size, ADPCM included, is a byte count that
+fits before the next record's sector.
 
 | Field | Type | Stored in | Used by |
 |---|---|---|---|
@@ -86,13 +86,16 @@ that is runtime state, not part of the file.
 | data type 0, variant 0 | `c0` × record |
 | data type 0, variant 1 | `c0` × record |
 | tex seg count `t` | `u32` |
-| tex segs | `t` × three `u32`s |
+| tex segs | `t` × (`s32` x, `s32` y, `u32` seg) |
 
 `sheetFsLoadMap(name, dataType, variant, index, ...)` takes the table for
 `dataType` (0 to 2) and `variant` (0 or 1) and starts the stream at that table's
-record `index`. The tex seg entries go to a separate 12-byte-per-map table;
-`sheetFsGetStageTexSegIndex` reads the third word of an entry of the first map's
-table. The first two words are not known.
+record `index`. The tex seg entries go to a separate 12-byte-per-map table.
+They are the cells of a 10 × 10 grid of world coordinates: x and y, then the
+cell's texture segment. `sheetFsGetStageTexSegIndex(x, y)` returns the `seg` of
+the first map's entry `(4 - y) * 10 + (x + 5) % 10`, which is the cell at
+(x, y) because the entries are stored row by row, y from 4 down to -5 and x from
+-5 to 4. The game itself never reads the x and y words.
 
 ### Special file
 
@@ -103,13 +106,65 @@ The names block comes first, then one entry per name:
 | names size | `u32` |
 | names | `S` NUL-terminated strings |
 | then for each special file: | |
-| value | `u32`, not known |
-| data size | `u32` |
-| data | that many bytes |
+| entry count `e` | `u32` |
+| data size | `u32`, `e` × 16 on the US disc |
+| data | `e` × special fs entry |
+
+A special file is a *special fs*: a lookup table that redirects loads to copies
+of files. `sheetFsSrhSpecialFs(name)` finds one by name and
+`sheetFsSetSpecialFs` makes it current (`D_00139F04`). While one is current,
+`sheetFsLoadSegmentIndex`, `sheetFsLoadStageTex` and `sheetFsLoadMap` first
+build an 8-byte key and search it with `func_000E1030`; a hit gives the sector to
+read from instead of the header tables.
+
+### Special fs entry
+
+| Bytes | Field |
+|---|---|
+| 0–7 | key |
+| 8–11 | sector |
+| 12–15 | size in bytes |
+
+The key's first byte is its kind. `func_000E1030` compares it first, then
+branches on it through the jump table at `RO_0011B800`:
+
+| Kind | Key | Match | Built by |
+|---|---|---|---|
+| 0 | `s16` index at byte 4 | index | segment loads of type `"stage"` |
+| 1 | `s16` index at byte 4 | index | segment loads of any other type |
+| 2 | data type at byte 1, variant at 2, a fifth `sheetFsLoadMap` argument at 3, `u16` record index at 6 | all 8 bytes (bytes 4 and 5 zeroed) | `sheetFsLoadMap` |
+| 3, 4 | `s16` index at byte 4 | index | none found |
+
+Kinds 0 to 2 return the entry's sector. Kinds 3 and 4 return the word at
+`entry + 8 + sheetFsLanguageCode * 8`, the sector of a per-language slot. The map
+name is not part of a map key, so a special fs only redirects loads of one map.
+
+On the US disc, kind 3 entries point at segment index entries with bit 15 set
+(localized ones), and their size is that of the localized record. No caller in
+MANAGER builds a kind 3 or 4 key, and with language code 1 the read would land
+on the next entry's key, so how (or whether) these entries are reached is still
+open.
+
+## The US disc
+
+Checked against the owner's `Shadow of the Colossus (USA)` image (`SCUS-97472`,
+image SHA1 `bd5dcb38bc1a08b261accd1b53894ee4e934788f`). `NICO.DAT` is at LSN
+2604 and is 2,667,340,678 bytes; its header is 139,746 bytes, and the parser
+reads it with no errors or leftover counts.
+
+- Two segment types: `stage` (1,889 index entries, 1,773 files, 116 localized)
+  and `stagetexseg_def` (112 index entries and files, none localized). Each
+  localized entry has its own start (0 to 115), so this disc has one language
+  and `sheetFsLanguageCode` 1 selects it.
+- One map, `test`, with 3,600 records for data types 0 and 1 (both variants),
+  none for data type 2, and 100 tex segs.
+- 288 ADPCM records (all sizes are whole sectors) and 11 direct files.
+- Six special fs: `common` (3 entries), `boot` (1), `startChara` (5),
+  `op1_stage` (15), `op1` (4) and `newgame` (18). Each entry's size equals the
+  size of the file its key names. Their sectors (1,278,361 onward) start right
+  after the last byte any header table points at, so each special fs keeps
+  copies of its files together, presumably for faster streaming.
 
 ## Not covered
 
-- The sheetFs functions also have a "special fs" path (`D_00139F04`,
-  `func_000E1030`) that looks files up elsewhere when set; it is not part of the
-  header.
 - Asset formats inside the archive.
