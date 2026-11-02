@@ -54,5 +54,25 @@ _Avoid_: Auto name, unnamed
 ### The port
 
 **Native port**:
-The future PC build of the game made from the matched source, which loads its assets from the owner's disc. Extra features such as new input methods or higher frame rates are port features, not part of the port itself.
+The future PC build of the game made from the matched source, which loads its assets from the owner's disc. It aims to behave exactly like the Original; anything beyond that is a Port feature.
 _Avoid_: PC version, remaster, recomp
+
+**Matching build**:
+The PS2 build of the source, checked byte-for-byte against the Original. It stays a checked target after the Native port exists.
+_Avoid_: PS2 port, original build
+
+**Source cleanup**:
+The phase between finished matching and the Native port in which the source is reorganized into Original source files with shared headers while the Matching build keeps matching.
+_Avoid_: Refactor (for this phase), port prep
+
+**Port feature**:
+Something the Native port does that the Original didn't, such as widescreen, higher frame rates or remappable controls. Never part of the faithful port itself.
+_Avoid_: Enhancement, mod
+
+**Disc image**:
+An image of the owner's own disc, which the Native port reads its game files from.
+_Avoid_: ROM, ISO (as the term)
+
+**Render translator**:
+The part of the Native port that runs the game's VU1 microprograms and turns the GS packets the Game code builds into modern GPU draws.
+_Avoid_: GS emulator, renderer (unqualified)
