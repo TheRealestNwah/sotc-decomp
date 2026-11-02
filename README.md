@@ -1,15 +1,15 @@
 # Shadow of the Colossus Decompilation
 
-A work-in-progress decompilation of **Shadow of the Colossus** (PlayStation 2, NTSC-U, `SCUS-97472`), with the long-term goal of a native PC port.
+A work-in-progress matching decompilation of **Shadow of the Colossus** (PlayStation 2, NTSC-U, `SCUS-97472`), with the long-term goal of a Native port to PC.
 
-The aim is C source that compiles back to a byte-identical copy of the original executable. Once that matches, the code can be ported to run natively on PC.
+The aim is C source that compiles back to a byte-identical copy of the Original game files. Once every function in the Game code is a Matched function, the code can be ported to run natively on PC.
 
 ## Status
 
-- The loader ELF `SCUS_974.72` (1,038 functions) splits with [splat](https://github.com/ethteck/splat) and **rebuilds byte-for-byte** from assembly (`ninja check` passes).
-- The game code is in the three `.XFF` modules (`KERNEL`, `MANAGER`, `GAMECORE`; custom `xff2` format, see [docs/xff2.md](docs/xff2.md)). All three rebuild byte-for-byte, including headers and tables. The original table-layout and loader metadata still come from the disc files.
+- The Loader `SCUS_974.72` (1,038 functions) splits with [splat](https://github.com/ethteck/splat) and **rebuilds byte-for-byte** from assembly (`ninja check` passes).
+- Almost all Game code is in the three Game modules (`KERNEL.XFF`, `MANAGER.XFF`, `GAMECORE.XFF`; custom `xff2` format, see [docs/xff2.md](docs/xff2.md)). All three rebuild byte-for-byte, including headers and tables. The original table-layout and loader metadata still come from the Original files.
 - Compiler identified: Sony `ee-gcc` 2.96, `-O2 -G0` (see [docs/findings.md](docs/findings.md)).
-- Matching C is in `src/xff/` and is spliced into the modules; the full build still matches. The native PC port hasn't started.
+- Matched functions are in `src/xff/` and are spliced into the Game modules; the full build still matches. The Native port hasn't started.
 
 <!-- progress:start -->
 | Stage | Done | Total | Progress |
@@ -39,7 +39,7 @@ Native PC port          [░░░░░░░░░░░░░░░░░░�
 
 ## You need your own copy of the game
 
-This repo contains **no original game binaries or assets**. Dump your own disc and copy `SCUS_974.72` into `iso/`. Never commit anything from the disc.
+This repo contains **no original game binaries or assets**. Dump your own disc and copy the Loader `SCUS_974.72` into `iso/`. Never commit anything from the disc.
 
 ## Setup (Windows)
 
@@ -58,18 +58,18 @@ python -m venv .venv
 ## Roadmap
 
 See [roadmap.md](roadmap.md) for completed milestones, remaining matching work,
-the future native PC port and community proposals. Planned work before 1.0 is
+the future Native port and community proposals. Planned work before 1.0 is
 tracked there; feature requests and discovered bugs still use GitHub issues.
 
 ## Layout
 
 | Path | Purpose |
 | --- | --- |
-| `SCUS_974.72.yaml` | splat config for the loader ELF |
+| `SCUS_974.72.yaml` | splat config for the Loader |
 | `configure.py` | Generates `build.ninja` |
-| `config/` | Expected original executable path and hash |
+| `config/` | Expected Original Loader path and hash |
 | `docs/` | Findings about the binaries and toolchain |
-| `src/` | Matching C source for the XFF modules |
+| `src/` | Matched functions for the Game modules |
 | `include/` | Assembler macros and headers |
 | `tools/` | Helper scripts (ELF flattener, match checker) |
 | `tests/` | Tests for the helper scripts |
