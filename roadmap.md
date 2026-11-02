@@ -280,6 +280,10 @@ headers.
   Preserve exact original behavior during the matching phase.
 - [ ] After M3: Linux, then macOS, then Port features.
 
+The port ships as source only until M3. After that, prebuilt binaries may go on
+GitHub Releases, each with the maintainer's explicit permission and never with
+Original game files.
+
 ### Community proposals awaiting scope decisions
 
 [Feature request #498](https://github.com/TheRealestNwah/sotc-decomp/issues/498)
