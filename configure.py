@@ -49,6 +49,9 @@ LD_SCRIPTS = [
 # change to either or the per-source options must rebuild C objects (#388, #726).
 EECC_TOOLS = ("tools/ee_cc.py", "tools/try_compilers.py", "config/ee_cflags.json")
 C_SOURCES_MANIFEST = f"{BUILD_DIR}/c_sources.json"
+# The Loader's decompiled C (src/loader/*.c) replaces functions in this file.
+LOADER_ASM = "asm/cod/000000.s"
+LOADER_SPLICE_INPUTS = ("tools/loader_splice.py", "config/loader_functions.csv", "symbol_addrs.txt")
 
 
 def update_c_sources() -> None:
@@ -59,6 +62,7 @@ def update_c_sources() -> None:
         )
         for module in XFF_MODULES
     }
+    sources["loader"] = sorted(p.relative_to(ROOT).as_posix() for p in loader_c_sources())
     content = json.dumps(sources, indent=2) + "\n"
     manifest = ROOT / C_SOURCES_MANIFEST
     if not manifest.exists() or manifest.read_text(encoding="utf-8") != content:
@@ -73,6 +77,10 @@ def find_cross(requested: str | None) -> str:
         if shutil.which(prefix + "as"):
             return prefix
     return DEFAULT_CROSS
+
+
+def loader_c_sources() -> list[Path]:
+    return sorted((ROOT / "src" / "loader").glob("*.c"))
 
 
 def ninja_path(path: Path | str) -> str:
@@ -169,6 +177,12 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
         "  rspfile_content = $objects_json",
         "  description = SPLICE $module",
         "",
+        "rule loader_splice",
+        "  command = $python tools/loader_splice.py --objects-file $out.rsp --out $out",
+        "  rspfile = $out.rsp",
+        "  rspfile_content = $objects_json",
+        "  description = SPLICE Loader",
+        "",
         "rule configure",
         "  command = $python configure.py --cross $cross",
         "  generator = 1",
@@ -183,8 +197,29 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
         f"build build.ninja: configure configure.py {SPLAT_CONFIG} {C_SOURCES_MANIFEST}",
         "",
     ]
+    # Decompiled Loader C replaces its functions' assembly in a spliced copy.
+    loader_c = loader_c_sources()
+    loader_objects = []
+    for c in loader_c:
+        obj = ninja_path(f"{BUILD_DIR}/src/loader/{c.stem}.o")
+        lines.append(
+            f"build {obj}: eecc {ninja_path(c.relative_to(ROOT))} | {' '.join(EECC_TOOLS)}"
+        )
+        loader_objects.append(obj)
+    loader_objects_json = json.dumps(
+        [f"{BUILD_DIR}/src/loader/{c.stem}.o" for c in loader_c]
+    ).replace("$", "$$")
     for source, obj in zip(sources, objects, strict=True):
-        lines.append(f"build {obj}: as {ninja_path(source)} | include/macro.inc")
+        asm = ninja_path(source)
+        if loader_objects and source.as_posix() == LOADER_ASM:
+            spliced = f"{BUILD_DIR}/loader/{source.name}"
+            lines += [
+                f"build {spliced}: loader_splice {' '.join(loader_objects)}"
+                f" | {asm} {' '.join(LOADER_SPLICE_INPUTS)}",
+                f"  objects_json = {loader_objects_json}",
+            ]
+            asm = spliced
+        lines.append(f"build {obj}: as {asm} | include/macro.inc")
     lines += [
         "",
         f"build {elf}: ld | {' '.join(objects)} {' '.join(LD_SCRIPTS)}",

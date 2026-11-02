@@ -28,7 +28,7 @@ Current phase:
 - **Never edit generated assembly to force a match.** If something doesn't match, fix the split config, the build flags or the C, never the asm by hand.
 - **C must compile to identical bytes.** A function counts as a Matched function only when the compiled output matches the Original exactly, with no hand-written asm patching around it.
 - **No game files in git.** Everything from the disc (`iso/`), everything splat generates (`asm/`, `*.ld`, `undefined_*_auto.txt`) and all build output stay gitignored.
-- **Compiler: Sony `ee-gcc` 2.96 (`2.96-ee-001003-1`), `-O2 -G0`, assembled with that package's own `ee-as`.** Chosen by evidence (with the user's OK), recorded in `docs/findings.md`. Don't switch compilers or flags without new evidence. Modern binutils expands `move` and jump-table loads differently from the original assembler, so C must go through the package's `ee-as`.
+- **Compiler: Sony `ee-gcc` 2.96 (`2.96-ee-001003-1`), `-O2 -G0`, assembled with that package's own `ee-as`.** Chosen by evidence (with the user's OK), recorded in `docs/findings.md`. The Loader's Game code is the exception: it uses `-O2 -G8` (globals through `$gp`, see "Loader function map" in `docs/findings.md`). Don't switch compilers or flags without new evidence. Modern binutils expands `move` and jump-table loads differently from the original assembler, so C must go through the package's `ee-as`.
 - SDK routines (from the Sony SDK 3.0.x libraries listed in `docs/findings.md`) get identified by signature, not decompiled by hand. Record each one in `config/sdk_routines.txt` (names and signatures only, never SDK library files or code); `tools/progress.py` leaves them out of the Game code totals.
 
 ## Toolchain (native Windows)
@@ -96,6 +96,13 @@ C data (string literals, `switch` jump tables, constants and statics in `.rodata
 Splice limitations:
 - Whether a reference is section-relative (same Original source file) or by name is taken from the original relocation at that spot, until the C files mirror the Original source files.
 
+## Matching a function (Loader)
+
+1. Pick a Game code row from `config/loader_functions.csv` (SDK routines are identified, not decompiled) and find it in `asm/cod/000000.s`.
+2. Write it in `src/loader/<name>.c` under its Original name from the list. Reference data by its asm label as an `extern` (`extern int D_00139E04;`); `%gp_rel` operands need a global of 8 bytes or less so gcc uses `$gp` too.
+3. `tools/ee_cc.py` builds `src/loader/` with `-O2 -G8`. Run `python configure.py`, then `ninja check`. `tools/loader_splice.py` refuses a function whose words, relocation types or targets differ from the Original, or whose size differs.
+4. Not supported yet: C data sections (string literals, jump tables, statics). Functions that need them have to wait for that splice support.
+
 ## Tests and lint
 
 - `pytest` covers the Python tools in `tools/` and `configure.py`'s helpers
@@ -119,6 +126,7 @@ Splice limitations:
   - `xff_tus.py`: infers Source groups from relocations (`--list` prints every group); results summarized in `docs/findings.md`
   - `ee_cc.py`: compiles one C file with the game's toolchain
   - `xff_splice.py`: splices compiled C functions into a Game module's asm, verifying they match
+  - `loader_splice.py`: the same for the Loader's asm (`src/loader/`)
   - `try_compilers.py`: compiles C with candidate compilers/flags and diffs against the original functions
   - `progress.py`: refreshes the README progress table from each Game module's symbol table, relocations and the matching C (needs `iso/` and `asm/`)
   - `sdk_routines.py`: checks `config/sdk_routines.txt`, the SDK routines identified in the Game modules by signature, and prints entries for new ones
@@ -127,6 +135,7 @@ Splice limitations:
 - `include/xff_macro.inc`: label macros for Game module asm. Labels are local by default; `.globl` comes from the original symbol table.
 - `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
 - `src/xff/<MODULE>/`: Matched functions for the Game modules, one file per function for now
+- `src/loader/`: Matched functions for the Loader's Game code
 - `experiments/`: C used to identify the compiler (not part of the build)
 - `port/`: the Native port, separate from the matching build (ADRs 0005 and 0010)
   - `disc/disc_image.c`: reads files from the owner's Disc image (ISO 9660, 2048- or 2352-byte sectors)

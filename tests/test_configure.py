@@ -103,7 +103,8 @@ def test_explicit_cross_prefix_wins():
     assert find_cross("my-prefix-") == "my-prefix-"
 
 
-def test_generate_wires_every_source_into_the_link():
+def test_generate_wires_every_source_into_the_link(tmp_path, monkeypatch):
+    monkeypatch.setattr(configure, "ROOT", tmp_path)  # no Loader C
     sources = [Path("asm/cod/000000.s"), Path("asm/data/cod/031C00.data.s")]
     ninja = generate("mips64r5900el-ps2-elf-", sources)
     assert "build build/asm/cod/000000.o: as asm/cod/000000.s" in ninja
@@ -129,3 +130,26 @@ def test_generate_adds_xff_module_checks():
     assert "build check-XFF-TESTMOD: check build/xff/TESTMOD.XFF iso/TESTMOD.XFF" in ninja
     assert "build check: phony check-elf check-TESTMOD check-XFF-TESTMOD" in ninja
     assert "default build/SCUS_974.72.rom build/xff/TESTMOD.XFF" in ninja
+
+
+def test_loader_c_is_spliced_into_the_loader_asm(tmp_path, monkeypatch):
+    (tmp_path / "src/loader").mkdir(parents=True)
+    (tmp_path / "src/loader/a $name.c").touch()
+    monkeypatch.setattr(configure, "ROOT", tmp_path)
+    ninja = generate("test-", [Path("asm/cod/000000.s"), Path("asm/data/cod/031C00.data.s")])
+    assert "build build/src/loader/a$ $$name.o: eecc src/loader/a$ $$name.c" in ninja
+    splice = next(line for line in ninja.splitlines() if ": loader_splice " in line)
+    assert splice.startswith("build build/loader/000000.s: loader_splice build/src/loader/a$ ")
+    implicit = splice.split(" | ", 1)[1].split()
+    assert implicit[0] == "asm/cod/000000.s"
+    assert "config/loader_functions.csv" in implicit
+    assert "  objects_json = " + json.dumps(["build/src/loader/a $$name.o"]) in ninja
+    assert "build build/asm/cod/000000.o: as build/loader/000000.s" in ninja
+    assert "build build/asm/data/cod/031C00.data.o: as asm/data/cod/031C00.data.s" in ninja
+
+
+def test_loader_without_c_assembles_its_split_directly(tmp_path, monkeypatch):
+    monkeypatch.setattr(configure, "ROOT", tmp_path)
+    ninja = generate("test-", [Path("asm/cod/000000.s")])
+    assert "loader_splice build" not in ninja
+    assert "build build/asm/cod/000000.o: as asm/cod/000000.s" in ninja

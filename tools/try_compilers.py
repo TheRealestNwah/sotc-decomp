@@ -169,18 +169,20 @@ def find_package_as(compiler_dir: Path) -> Path | None:
     return found[0] if found else None
 
 
-def assemble(asm: Path, obj: Path, package_as: Path | None = None) -> str | None:
+def assemble(asm: Path, obj: Path, package_as: Path | None = None, gp: int = 0) -> str | None:
     """Assemble with the compiler package's own (era-matching) ee-as when
     given; otherwise modern binutils, patching the one known expansion
     difference. Macro expansions (`move`, `lw reg, sym(reg)`) differ between
-    assembler versions, so the package's assembler is preferred."""
+    assembler versions, so the package's assembler is preferred. `gp` is the
+    small-data limit (-G) the C was compiled with."""
     volatile_barriers(asm)
     indexed_la_barriers(asm)
     jump_barriers(asm)
     if package_as is not None:
         script = (
             f'L={I386_LIBS}; work=$(mktemp -d); cp "$1" "$work/in.s"; '
-            '"$L/ld-linux.so.2" --library-path "$L" "$0" -EL -G 0 -o "$work/out.o" "$work/in.s" '
+            f'"$L/ld-linux.so.2" --library-path "$L" "$0" -EL -G {gp} '
+            '-o "$work/out.o" "$work/in.s" '
             "2>&1 | tail -3; status=${PIPESTATUS[0]}; "
             '[ -f "$work/out.o" ] && cp "$work/out.o" "$2"; rm -rf "$work"; exit $status'
         )
@@ -190,7 +192,8 @@ def assemble(asm: Path, obj: Path, package_as: Path | None = None) -> str | None
         )  # fmt: skip
     else:
         fix_moves(asm)
-        result = subprocess.run([ASSEMBLER, *ASFLAGS, "-o", str(obj), str(asm)],
+        flags = [*ASFLAGS[:-1], str(gp)]
+        result = subprocess.run([ASSEMBLER, *flags, "-o", str(obj), str(asm)],
                                 capture_output=True, text=True)  # fmt: skip
     if result.returncode != 0 or not obj.exists():
         lines = (result.stderr or result.stdout or "assembler failed").strip().splitlines()
