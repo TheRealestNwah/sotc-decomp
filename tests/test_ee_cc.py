@@ -38,3 +38,14 @@ def test_rejects_string_in_place_of_flag_list(tmp_path):
     configure_flags(tmp_path, {"demo.c": "-fno-strict-aliasing"})
     with pytest.raises(ValueError, match="list of strings"):
         ee_cc.source_cflags(tmp_path / "demo.c", tmp_path)
+
+
+def test_loader_sources_use_small_data(tmp_path, monkeypatch):
+    # The Loader's Game code reads its globals through $gp (docs/findings.md).
+    configure_flags(tmp_path, {})
+    monkeypatch.chdir(tmp_path)
+    flags = ee_cc.source_cflags(Path("src/loader/demo.c"), tmp_path)
+    assert flags == ["-O2", "-G8"]
+    assert ee_cc.small_data_limit(flags) == 8
+    assert ee_cc.small_data_limit(["-O2", "-G0", "-G4"]) == 4
+    assert ee_cc.small_data_limit(["-O2"]) == 0

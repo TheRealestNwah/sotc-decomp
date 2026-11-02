@@ -42,8 +42,10 @@ CI has no disc files or PS2 toolchain, so passing CI alone does not prove matchi
   table so it counts only Game code ([#2285](https://github.com/TheRealestNwah/sotc-decomp/issues/2285)).
 - [x] Sort the Loader's functions into SDK routines and Game code
   (`config/loader_functions.csv`, [ADR 0004](docs/adr/0004-finish-line-and-source-cleanup.md)).
-- [ ] Match the Loader's 123 Game code functions. This needs a C build path for
-  the Loader (splat `INCLUDE_ASM`), since `xff_splice.py` covers Game modules only.
+- [x] Add a C build path for the Loader (`tools/loader_splice.py`, `src/loader/`,
+  built with `-G8`).
+- [ ] Match the Loader's 123 Game code functions (2 so far: `SetHeapStartPoint`,
+  `GetHeapCurrentPoint`). C data isn't supported by the Loader splice yet.
 - [ ] Sort MANAGER's and GAMECORE's functions into SDK routines and Game code
   (`config/sdk_routines.txt`; MANAGER's `rand` is a candidate).
 
