@@ -6,6 +6,7 @@ from tools.progress import (
     c_functions,
     count,
     label_addresses,
+    loader_game_functions,
     module_functions,
     read_sdk_routines,
     render_sdk,
@@ -125,10 +126,24 @@ def test_read_sdk_routines_groups_names_by_module(tmp_path):
 
 
 def test_render_table_reports_module_and_total_percentages():
-    table = render_table({"A": Progress(1, 4, 0), "B": Progress(5, 10, 2)})
+    table = render_table({"A": Progress(1, 4, 0), "B": Progress(5, 10, 2)}, loader_total=8)
 
     assert "| `A.XFF` Game code as matching C | 1 | 4 functions | 25% |" in table
     assert "| All three Game modules' Game code as matching C | 6 | 14 functions | 43% |" in table
+    assert "| Loader `SCUS_974.72` Game code as matching C | 0 | 8 functions | 0% |" in table
+
+
+def test_loader_game_functions_counts_game_rows(tmp_path):
+    path = tmp_path / "loader.csv"
+    path.write_text(
+        "address,size,name,class,library,evidence\n"
+        "0x00100000,0x10,func_00100000,game,loader,x\n"
+        "0x00100010,0xB0,_start,sdk,crt0,y\n"
+        "0x001000D0,0x1A4,ResolveRelocation,game,loader,z\n",
+        encoding="utf-8",
+    )
+
+    assert loader_game_functions(path) == 2
 
 
 def test_render_sdk_lists_each_module():
@@ -199,6 +214,9 @@ def test_main_keeps_table_and_bars_in_sync_as_matching_source_changes(tmp_path, 
     monkeypatch.setattr(progress, "REPO", tmp_path)
     monkeypatch.setattr(progress, "README", readme)
     monkeypatch.setattr(progress, "SDK_ROUTINES", sdk)
+    loader_csv = tmp_path / "loader.csv"
+    loader_csv.write_text("address,size,name,class,library,evidence\n", encoding="utf-8")
+    monkeypatch.setattr(progress, "LOADER_FUNCTIONS_CSV", loader_csv)
     monkeypatch.setattr(progress, "MODULES", ("TEST",))
     monkeypatch.setattr(
         progress, "read_module", lambda _: ({"first": 0x0, "sdkRoutine": 0x8}, {0x4})

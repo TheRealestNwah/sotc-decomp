@@ -149,7 +149,16 @@ From the `PsIIlib<name><version>` tags and library error strings. The version is
 
 The ELF also references these IOP modules: `IOPRP300.IMG`, `MCMAN`, `MCSERV`, `NETCNFIF`, `DBCMAN`, `DEV9`, `INET`, `INETCTL`, `LIBNET`, `MSIFRPC`, `AN986`, `DS1O_D`, and others.
 
-These libraries are candidates to identify by signature matching against the SDK 3.0.x libraries, rather than decompiling them by hand. Function-level boundaries haven't been mapped yet.
+These libraries are candidates to identify by signature matching against the SDK 3.0.x libraries, rather than decompiling them by hand.
+
+### Loader function map
+
+`config/loader_functions.csv` (written by `tools/loader_funcs.py`) lists every Loader function with its class: Game code or SDK routine.
+
+- KERNEL.XFF links against the Loader, so its symbol table has 845 absolute (`SHN_ABS`) function symbols naming Loader functions, with Original names and sizes, plus 67 absolute objects (`loaderThreadJumpCode`, `moduleInfo`, `__ps2_klibinfo__`, ...). They come from the Original disc, not from any Sony library file.
+- Five of those names start in the middle of a splat function (`LoaderSysJumpRecoverPointNoStateSetting`, `_kExitTLBHandler`, `_kDebugException`, `sceCdInitEeCB`, `atexit`), and two Original functions end before splat's does with code after them (`func_00101AA0`, `func_0010F8DC`). The list gives each its own row: 1,045 functions against splat's 1,038.
+- The Loader links its game objects first: `0x1000D0`–`0x106BC0` (`ResolveRelocation` through `PutChar`: the xff loader, `LoaderSys*`, `padSys*`, `usbSerialSys*`, the debug font and display) is Game code, 123 functions and 0x69C4 bytes counting the two-word pointer table at `0x100000`. crt0 (`_start`) sits between them.
+- Everything from `RFU000_FullReset` (libkernl syscall stubs) to the end of `.text` is SDK, in contiguous library blocks: libkernl, libpkt, libgraph, libdma, libpad2, libvib, libdbc, libcdvd, libinet, libnet, libmrpc, libmc2, netcnfif, libgcc, newlib libc, then libkernl's cache routines and two libgcc helpers. Unnamed functions take the library of the block they sit in.
 
 ## Counting functions in the Game modules (#2285)
 

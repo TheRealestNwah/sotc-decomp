@@ -101,6 +101,9 @@ Splice limitations:
 - `pytest` covers the Python tools in `tools/` and `configure.py`'s helpers
 - `ruff check .` and `ruff format --check .` (fix with `ruff format .`)
 - CI (`.github/workflows/ci.yml`) runs both on every PR. CI has no game files and no PS2 toolchain, so it can't run the matching build.
+- `port/` (Native port) builds with CMake and Clang, and its tests use synthetic data only:
+  `cmake -S port -B build/port -G Ninja -DCMAKE_C_COMPILER=clang -DSOTC_PORT_WERROR=ON`, then `cmake --build build/port` and `ctest --test-dir build/port`.
+  CI also runs them with `-DSOTC_PORT_SANITIZE=ON` (ASan and UBSan).
 
 ## Layout
 
@@ -112,6 +115,7 @@ Splice limitations:
   - `xff2.py`: XFF reader/writer and XFF <-> ELF converter (`info`, `to-elf`, `from-elf`, `roundtrip`)
   - `xff_rebuild.py`: rebuilds complete Game modules from assembled payloads and original layout metadata, verifying symbol locations and relocations
   - `xff_split.py`: disassembles an XFF with spimdisasm, then post-processes the asm so it reassembles exactly (rules in its docstring)
+  - `loader_funcs.py`: sorts the Loader's functions into Game code and SDK routines (`--write` regenerates `config/loader_functions.csv`, `--check` checks it)
   - `xff_tus.py`: infers Source groups from relocations (`--list` prints every group); results summarized in `docs/findings.md`
   - `ee_cc.py`: compiles one C file with the game's toolchain
   - `xff_splice.py`: splices compiled C functions into a Game module's asm, verifying they match
@@ -124,9 +128,15 @@ Splice limitations:
 - `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
 - `src/xff/<MODULE>/`: Matched functions for the Game modules, one file per function for now
 - `experiments/`: C used to identify the compiler (not part of the build)
+- `port/`: the Native port, separate from the matching build (ADRs 0005 and 0010)
+  - `disc/disc_image.c`: reads files from the owner's Disc image (ISO 9660, 2048- or 2352-byte sectors)
+  - `disc/nicodat.c`: parses the `NICO.DAT` header (format in `docs/nicodat.md`)
+  - `tools/nicoinfo.c`: prints a Disc image's `NICO.DAT` table of contents
+  - `tests/`: CTest programs on synthetic images and archives
 - `docs/findings.md`: what we know about the binaries, the compiler and the SDK
 - `config/baserom.json`: expected Original Loader path and SHA1
 - `config/sdk_routines.txt`: SDK routines identified in the Game modules (name, library, size, signature)
+- `config/loader_functions.csv`: every Loader function with its Original or Placeholder name, class (Game code / SDK routine) and library
 
 ## Gotchas
 

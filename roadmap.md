@@ -40,10 +40,12 @@ CI has no disc files or PS2 toolchain, so passing CI alone does not prove matchi
 - [ ] Resolve register allocation for `nico_optBoneParentScaleUpdateScript`.
 - [x] Identify KERNEL's SDK routines by signature, and fix the README progress
   table so it counts only Game code ([#2285](https://github.com/TheRealestNwah/sotc-decomp/issues/2285)).
+- [x] Sort the Loader's functions into SDK routines and Game code
+  (`config/loader_functions.csv`, [ADR 0004](docs/adr/0004-finish-line-and-source-cleanup.md)).
+- [ ] Match the Loader's 123 Game code functions. This needs a C build path for
+  the Loader (splat `INCLUDE_ASM`), since `xff_splice.py` covers Game modules only.
 - [ ] Sort MANAGER's and GAMECORE's functions into SDK routines and Game code
   (`config/sdk_routines.txt`; MANAGER's `rand` is a candidate).
-- [ ] Sort the Loader's 1,038 functions into SDK routines and Game code, then
-  match only its Game code ([ADR 0004](docs/adr/0004-finish-line-and-source-cleanup.md)).
 
 The remaining matching tasks above preserve the plans formerly tracked in
 closed issues #18, #51, #52, #54, #55, #107, #208, #459, #460, #513 and #520.
@@ -258,8 +260,10 @@ These don't need cleaned-up source, so they run alongside matching.
 
 - [ ] Owner dumps a full Disc image into `iso/` (needed for `NICO.DAT` and
   `SG2IOPM1.IRX`; `iso/` currently holds only the executables).
-- [ ] Disc image reader and `NICO.DAT` archive parser, with asset-free tests on
-  synthetic data.
+- [x] Disc image reader and `NICO.DAT` archive parser, with asset-free tests on
+  synthetic data (`port/disc/`, format in [docs/nicodat.md](docs/nicodat.md)).
+- [ ] Check the `NICO.DAT` header layout against the owner's Disc image with
+  `nicoinfo`, and name the fields still marked unknown.
 - [ ] Reference run recording: capture inputs and per-frame game state from the
   Matching build in PCSX2.
 - [ ] Render translator prototype fed from PCSX2 GS dumps, starting with

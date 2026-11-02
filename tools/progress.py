@@ -29,6 +29,7 @@ Usage: python tools/progress.py
 from __future__ import annotations
 
 import argparse
+import csv
 import io
 import re
 import sys
@@ -44,8 +45,8 @@ START = "<!-- progress:start -->"
 END = "<!-- progress:end -->"
 
 MODULES = ("KERNEL", "MANAGER", "GAMECORE")
-# splat's function count for the Loader ELF, which still exists only as assembly.
-LOADER_FUNCTIONS = 1038
+LOADER_FUNCTIONS_CSV = REPO / "config" / "loader_functions.csv"
+# The Loader still exists only as assembly.
 LOADER_MATCHED = 0
 
 STT_FUNC = 2
@@ -159,6 +160,12 @@ def read_sdk_routines(path: Path) -> dict[str, set[str]]:
     return routines
 
 
+def loader_game_functions(path: Path) -> int:
+    """Game code functions in the Loader, from config/loader_functions.csv."""
+    with path.open(encoding="utf-8", newline="") as f:
+        return sum(1 for row in csv.DictReader(f) if row["class"] == "game")
+
+
 def read_module(xff: Path) -> tuple[dict[str, int], set[int]]:
     """A Game module's named .text functions (name -> offset) and the .text
     offsets its section-relative relocations point at."""
@@ -185,8 +192,8 @@ def read_module(xff: Path) -> tuple[dict[str, int], set[int]]:
     return named, targets
 
 
-def render_table(progress: dict[str, Progress]) -> str:
-    """Markdown progress table of Game code per Game module."""
+def render_table(progress: dict[str, Progress], loader_total: int) -> str:
+    """Markdown progress table of Game code in the Loader and each Game module."""
 
     def row(stage: str, done: str, total: str, percent: int) -> str:
         return f"| {stage} | {done} | {total} | {percent}% |"
@@ -199,10 +206,10 @@ def render_table(progress: dict[str, Progress]) -> str:
         "| --- | ---: | ---: | ---: |",
         row("Rebuild byte-for-byte from assembly", "4", "4 files", 100),
         row(
-            "Loader `SCUS_974.72` as matching C",
+            "Loader `SCUS_974.72` Game code as matching C",
             f"{LOADER_MATCHED:,}",
-            f"{LOADER_FUNCTIONS:,} functions",
-            percent(LOADER_MATCHED, LOADER_FUNCTIONS),
+            f"{loader_total:,} functions",
+            percent(LOADER_MATCHED, loader_total),
         ),
     ]
     for module, p in progress.items():
@@ -234,12 +241,12 @@ def render_sdk(progress: dict[str, Progress]) -> str:
     return f"SDK routines identified by signature and left out of the totals: {parts}."
 
 
-def render_bars(progress: dict[str, Progress]) -> str:
+def render_bars(progress: dict[str, Progress], loader_total: int) -> str:
     """Text progress bars using the same function totals as the status table."""
     done = sum(p.matched for p in progress.values())
     total = sum(p.total for p in progress.values())
     module_percent = round(100 * done / total) if total else 0
-    loader_percent = round(100 * LOADER_MATCHED / LOADER_FUNCTIONS)
+    loader_percent = round(100 * LOADER_MATCHED / loader_total) if loader_total else 0
 
     def row(label: str, percent: int, note: str = "") -> str:
         filled = round(percent * 20 / 100)
@@ -248,8 +255,7 @@ def render_bars(progress: dict[str, Progress]) -> str:
 
     return "\n".join(
         [
-            "Overall, a playable build needs all three bars full. The Loader's total still "
-            "includes SDK routines that haven't been sorted out yet.",
+            "Overall, a playable build needs all three bars full.",
             "",
             "```",
             row("Matching decompilation", module_percent, "   (Game modules)"),
@@ -270,8 +276,9 @@ def block(table: str, bars: str = "", sdk: str = "") -> str:
         "its symbol table, plus the static functions the Original references",
         "that have only Placeholder names. SDK routines listed in",
         "`config/sdk_routines.txt` are identified rather than decompiled, so",
-        "they're left out. Refreshed periodically on main, so it can lag behind",
-        "the latest merges.",
+        "they're left out, and so are the Loader's SDK routines",
+        "(`config/loader_functions.csv`). Refreshed periodically on main, so it",
+        "can lag behind the latest merges.",
     ]
     if sdk:
         parts.extend(["", sdk])
@@ -321,16 +328,18 @@ def main(argv: list[str] | None = None) -> int:
         progress[module] = count(
             module_functions(named, labels, targets), defined, statics, sdk.get(module, set())
         )
+    loader_total = loader_game_functions(LOADER_FUNCTIONS_CSV)
+    table = render_table(progress, loader_total)
     README.write_text(
         update_readme(
             README.read_text(encoding="utf-8"),
-            render_table(progress),
-            render_bars(progress),
+            table,
+            render_bars(progress, loader_total),
             render_sdk(progress),
         ),
         encoding="utf-8",
     )
-    print(render_table(progress))
+    print(table)
     print(render_sdk(progress))
     return 0
 

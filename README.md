@@ -15,7 +15,7 @@ The aim is C source that compiles back to a byte-identical copy of the Original 
 | Stage | Done | Total | Progress |
 | --- | ---: | ---: | ---: |
 | Rebuild byte-for-byte from assembly | 4 | 4 files | 100% |
-| Loader `SCUS_974.72` as matching C | 0 | 1,038 functions | 0% |
+| Loader `SCUS_974.72` Game code as matching C | 0 | 123 functions | 0% |
 | `KERNEL.XFF` Game code as matching C | 804 | 1,069 functions | 75% |
 | `MANAGER.XFF` Game code as matching C | 1,826 | 2,867 functions | 64% |
 | `GAMECORE.XFF` Game code as matching C | 2,795 | 3,916 functions | 71% |
@@ -27,12 +27,13 @@ Matched functions. Totals count each Game module's functions: those in
 its symbol table, plus the static functions the Original references
 that have only Placeholder names. SDK routines listed in
 `config/sdk_routines.txt` are identified rather than decompiled, so
-they're left out. Refreshed periodically on main, so it can lag behind
-the latest merges.
+they're left out, and so are the Loader's SDK routines
+(`config/loader_functions.csv`). Refreshed periodically on main, so it
+can lag behind the latest merges.
 
 SDK routines identified by signature and left out of the totals: KERNEL 39, MANAGER 0, GAMECORE 0.
 
-Overall, a playable build needs all three bars full. The Loader's total still includes SDK routines that haven't been sorted out yet.
+Overall, a playable build needs all three bars full.
 
 ```
 Matching decompilation  [██████████████░░░░░░] 69%   (Game modules)
