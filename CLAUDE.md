@@ -112,6 +112,7 @@ Splice limitations:
   - `xff2.py`: XFF reader/writer and XFF <-> ELF converter (`info`, `to-elf`, `from-elf`, `roundtrip`)
   - `xff_rebuild.py`: rebuilds complete Game modules from assembled payloads and original layout metadata, verifying symbol locations and relocations
   - `xff_split.py`: disassembles an XFF with spimdisasm, then post-processes the asm so it reassembles exactly (rules in its docstring)
+  - `loader_funcs.py`: sorts the Loader's functions into Game code and SDK routines (`--write` regenerates `config/loader_functions.csv`, `--check` checks it)
   - `xff_tus.py`: infers Source groups from relocations (`--list` prints every group); results summarized in `docs/findings.md`
   - `ee_cc.py`: compiles one C file with the game's toolchain
   - `xff_splice.py`: splices compiled C functions into a Game module's asm, verifying they match
@@ -124,6 +125,7 @@ Splice limitations:
 - `experiments/`: C used to identify the compiler (not part of the build)
 - `docs/findings.md`: what we know about the binaries, the compiler and the SDK
 - `config/baserom.json`: expected Original Loader path and SHA1
+- `config/loader_functions.csv`: every Loader function with its Original or Placeholder name, class (Game code / SDK routine) and library
 
 ## Gotchas
 
