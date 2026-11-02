@@ -1,6 +1,6 @@
 # Roadmap
 
-Last reviewed: 2026-10-18.
+Last reviewed: 2026-11-02.
 
 Planned work before 1.0 lives here. Keep this file current as plans change and
 work lands. Community requests come in as feature-request issues on GitHub
@@ -38,7 +38,14 @@ CI has no disc files or PS2 toolchain, so passing CI alone does not prove matchi
 - [ ] Match KERNEL `Sg2SmfpSetParam` and the timed pan/volume setters
   `Sg2SlotSetTimePanParam` / `Sg2SlotSetTimeVolParam`.
 - [ ] Resolve register allocation for `nico_optBoneParentScaleUpdateScript`.
-- [ ] Match all Game code before starting the Native port.
+- [x] Identify KERNEL's SDK routines by signature, and fix the README progress
+  table so it counts only Game code ([#2285](https://github.com/TheRealestNwah/sotc-decomp/issues/2285)).
+- [x] Sort the Loader's functions into SDK routines and Game code
+  (`config/loader_functions.csv`, [ADR 0004](docs/adr/0004-finish-line-and-source-cleanup.md)).
+- [ ] Match the Loader's 123 Game code functions. This needs a C build path for
+  the Loader (splat `INCLUDE_ASM`), since `xff_splice.py` covers Game modules only.
+- [ ] Sort MANAGER's and GAMECORE's functions into SDK routines and Game code
+  (`config/sdk_routines.txt`; MANAGER's `rand` is a candidate).
 
 The remaining matching tasks above preserve the plans formerly tracked in
 closed issues #18, #51, #52, #54, #55, #107, #208, #459, #460, #513 and #520.
@@ -222,27 +229,79 @@ them before retrying a target. New matching work goes straight to a PR.
 - [ ] Match DEBUG_get_cur_using_anb_file_name ([#2104](https://github.com/TheRealestNwah/sotc-decomp/issues/2104))
 - [ ] Match func_000D5CA8 ([#2106](https://github.com/TheRealestNwah/sotc-decomp/issues/2106))
 
-## Future phase: Native port
+## Next phase: Source cleanup
 
-- [ ] Build a native platform layer for graphics, audio and input after the
-  matching decompilation is complete (all Game code is Matched functions).
-- [ ] Support loading the required assets from the owner's own disc; do not
-  distribute Original game binaries or assets.
-- [ ] Investigate original error-path contracts before porting and address
-  confirmed defects deliberately, with regression coverage. Current tracked
-  concerns include the [sheet lookup missing-header read (#492)](https://github.com/TheRealestNwah/sotc-decomp/issues/492),
+Matching is finished when every Game code function in the Loader and the three
+Game modules is a Matched function; SDK routines only need identifying
+([ADR 0004](docs/adr/0004-finish-line-and-source-cleanup.md)). Source cleanup
+then reorganizes the source while the Matching build keeps matching.
+
+- [ ] Shared headers first: one definition of each struct and prototype, used by
+  every file that needs it.
+- [ ] Merge Source groups into Original source files, one Game module per thread.
+- [ ] Replace Placeholder names with descriptive ones as purposes become known
+  (runs alongside the rest).
+
+## Native port
+
+Decisions are recorded in [ADRs 0005 to 0016](docs/adr/). In short: one source
+tree with a build macro, Windows x64 first, SDL3 and SDL_GPU, CMake and Clang,
+SDK routines replaced by a Platform layer, a Render translator for the game's
+GS packets and VU1 microprograms, the game's own Sound driver ported to C, saves
+as memory card folders, EE threads as fibers, a 4 GB arena with 32-bit offset
+pointers, and Reference runs against PCSX2 as the main check. Assets come from
+the owner's own Disc image; no Original game binaries or assets are distributed.
+Scope is NTSC-U only for now, and network and `host0` debug code is compiled out
+of the port.
+
+### Groundwork that can start now
+
+These don't need cleaned-up source, so they run alongside matching.
+
+- [x] Owner dumps a full Disc image into `iso/` (needed for `NICO.DAT` and
+  `SG2IOPM1.IRX`). Its executables match the NTSC-U hashes in
+  [docs/findings.md](docs/findings.md).
+- [x] Disc image reader and `NICO.DAT` archive parser, with asset-free tests on
+  synthetic data (`port/disc/`, format in [docs/nicodat.md](docs/nicodat.md)).
+- [x] Check the `NICO.DAT` header layout against the owner's Disc image with
+  `nicoinfo`, and name the fields still marked unknown. The layout held; tex
+  segs and special fs entries are now named. Kinds 3 and 4 of special fs key
+  remain open (see the doc).
+- [x] Reference run recording: capture inputs and per-frame game state from the
+  Matching build in PCSX2 (`tools/refrun.py`, see `docs/reference-runs.md`).
+- [ ] Record the first Reference run: power-on through a new game to the first
+  colossus, and grow `config/refrun/state.toml` as the port needs more fields.
+- [ ] Render translator prototype fed from PCSX2 GS dumps, starting with
+  hand-translating the roughly 14 VU1 microprogram overlay sets into C and
+  checking them against PCSX2's VU1 output. Unblocked: the full Disc image is
+  in `iso/`, so PCSX2 can boot the game and record GS dumps.
+
+### Milestones
+
+Port code built from the game's source starts once Source cleanup has shared
+headers.
+
+- [ ] M1: boots to the title screen.
+- [ ] M2: the first colossus is playable.
+- [ ] M3: a full playthrough matches its Reference run.
+- [ ] Investigate original error-path contracts and address confirmed defects
+  deliberately, with regression coverage. Current tracked concerns include the
+  [sheet lookup missing-header read (#492)](https://github.com/TheRealestNwah/sotc-decomp/issues/492),
   [AI damage checks reading before a null guard (#490)](https://github.com/TheRealestNwah/sotc-decomp/issues/490),
   and [sequence stop using uncaptured interrupt state (#708)](https://github.com/TheRealestNwah/sotc-decomp/issues/708).
   Preserve exact original behavior during the matching phase.
-- [ ] Define and validate supported platforms, packaging and runtime acceptance
-  criteria before declaring a native 1.0 release ready.
+- [ ] After M3: Linux, then macOS, then Port features.
+
+The port ships as source only until M3. After that, prebuilt binaries may go on
+GitHub Releases, each with the maintainer's explicit permission and never with
+Original game files.
 
 ### Community proposals awaiting scope decisions
 
 [Feature request #498](https://github.com/TheRealestNwah/sotc-decomp/issues/498)
 asks for Xbox-style controls, keyboard/mouse input, improved textures and
 anti-aliasing, FSR, uncapped frame rates, and a launcher section for patches and
-mods. These remain proposed port features to evaluate during port planning; they are not
-accepted 1.0 requirements.
+mods. These are Port features, considered only after M3; they are not accepted 1.0
+requirements.
 
 A release or tag still requires explicit maintainer permission.

@@ -54,5 +54,37 @@ _Avoid_: Auto name, unnamed
 ### The port
 
 **Native port**:
-The future PC build of the game made from the matched source, which loads its assets from the owner's disc. Extra features such as new input methods or higher frame rates are port features, not part of the port itself.
+The future PC build of the game made from the matched source, which loads its assets from the owner's disc. It aims to behave exactly like the Original; anything beyond that is a Port feature.
 _Avoid_: PC version, remaster, recomp
+
+**Matching build**:
+The PS2 build of the source, checked byte-for-byte against the Original. It stays a checked target after the Native port exists.
+_Avoid_: PS2 port, original build
+
+**Source cleanup**:
+The phase between finished matching and the Native port in which the source is reorganized into Original source files with shared headers while the Matching build keeps matching.
+_Avoid_: Refactor (for this phase), port prep
+
+**Port feature**:
+Something the Native port does that the Original didn't, such as widescreen, higher frame rates or remappable controls. Never part of the faithful port itself.
+_Avoid_: Enhancement, mod
+
+**Disc image**:
+An image of the owner's own disc, which the Native port reads its game files from.
+_Avoid_: ROM, ISO (as the term)
+
+**Render translator**:
+The part of the Native port that runs the game's VU1 microprograms and turns the GS packets the Game code builds into modern GPU draws.
+_Avoid_: GS emulator, renderer (unqualified)
+
+**Platform layer**:
+The Native port's own implementation of the SDK routines and PS2 system services that Game code calls, built on SDL3.
+_Avoid_: HAL, shim, backend
+
+**Sound driver**:
+The game's own program on the PS2's I/O processor, `SG2IOPM1.IRX`, which plays sound and music on commands from the `Sg2*` functions.
+_Avoid_: IOP module (unqualified), SPU driver
+
+**Reference run**:
+A recording of inputs and per-frame game state from the Matching build running in an emulator, which the Native port replays and is compared against.
+_Avoid_: Golden run, TAS, replay (the game has its own replay feature)

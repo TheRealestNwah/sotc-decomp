@@ -1,0 +1,58 @@
+# SDK routines identified in the Game modules: code from Sony's SDK libraries
+# or the toolchain's libc/libm (newlib), linked into a Game module. They're
+# identified by signature rather than decompiled (ADR 0004), and
+# tools/progress.py leaves them out of the Game code totals. Evidence for each
+# group is in docs/findings.md ("SDK routines in KERNEL").
+#
+# Columns: Game module, function name, library, size, signature. The signature
+# is the first 16 hex digits of the SHA-1 of the routine's code with every
+# relocated field zeroed (see tools/sdk_routines.py, which checks this list
+# against the Original and prints lines for new entries). Only names and
+# signatures belong here, never SDK library files or code.
+
+# libc (newlib). func_00030460 is mktime.c's static validate_structure.
+KERNEL func_00030460 libc 0x3d0 6755693a003ec66d
+KERNEL mktime libc 0x294 41ba430b1cb91edf
+KERNEL strstr libc 0x84 2eee8517aa772581
+KERNEL div libc 0x84 e842b8d9c9736137
+
+# libm (newlib's float fdlibm)
+KERNEL atanf libm 0x28c fda121362387ca72
+KERNEL cosf libm 0xd4 4fc6accec82e1301
+KERNEL fabsf libm 0x28 a1418a4c0b270438
+KERNEL sinf libm 0xe8 bcc305695fb590f5
+KERNEL sqrt libm 0x14 c0a5a6b6b96e3534
+KERNEL acosf libm 0x14 c0a5a6b6b96e3534
+KERNEL asinf libm 0x14 c0a5a6b6b96e3534
+KERNEL atan2f libm 0x14 c0a5a6b6b96e3534
+KERNEL fmodf libm 0x14 c0a5a6b6b96e3534
+KERNEL powf libm 0x14 c0a5a6b6b96e3534
+KERNEL sqrtf libm 0x14 c0a5a6b6b96e3534
+KERNEL __ieee754_sqrt libm 0x31c 0b81b60aec422400
+KERNEL __ieee754_acosf libm 0x424 0b06fa112ce25faf
+KERNEL __ieee754_asinf libm 0x3a0 96544809784073d7
+KERNEL __ieee754_atan2f libm 0x1e0 1dd056887852dcee
+KERNEL __ieee754_fmodf libm 0x1d0 0284111b7596cc8d
+KERNEL __ieee754_powf libm 0x7e0 668f52760d828e5c
+KERNEL __ieee754_rem_pio2f libm 0x3b0 8a9c745b38cb24d3
+KERNEL __ieee754_sqrtf libm 0xcc e5d5b92a40dfa5da
+KERNEL __kernel_cosf libm 0x150 bfd543ee3a3d6d28
+KERNEL __kernel_rem_pio2f libm 0x864 31a132c619ab2888
+KERNEL __kernel_sinf libm 0x104 3f46ad1ee4308479
+KERNEL floorf libm 0xd8 81a1047a25ec884b
+KERNEL scalbnf libm 0xc8 2926b05b163b7046
+KERNEL copysignf libm 0x3c fc23602bf6c7e6ea
+
+# libgraph
+KERNEL sceGsSetDefLoadImage libgraph 0x1e4 b61d161a8fe32036
+KERNEL sceGsExecLoadImage libgraph 0x17c 9857fc8fb4842071
+KERNEL sceGsPutIMR libgraph 0x3c f2437505e23f9cf2
+KERNEL sceGsGetIMR libgraph 0x1c 7ba17f652620d1a8
+KERNEL isceGsPutIMR libgraph 0x3c f2437505e23f9cf2
+
+# libcdvd
+KERNEL sceCdRead libcdvd 0x1e0 029665df15337930
+KERNEL sceCdReadIOPm libcdvd 0x154 84b39d5f788210bc
+KERNEL sceCdGetError libcdvd 0x98 9803b52b8d87031c
+KERNEL sceCdStatus libcdvd 0xb8 f57a1aa834c8bfc3
+KERNEL sceCdReadClock libcdvd 0xbc a444a34068c1a4cc

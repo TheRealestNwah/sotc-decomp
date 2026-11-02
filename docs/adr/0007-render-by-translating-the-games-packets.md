@@ -1,0 +1,3 @@
+# Render by translating the game's own packets, not by rewriting its draw code
+
+The Native port keeps the Game code that builds DMA, VIF and GIF packets unchanged, and a Render translator runs the VU1 microprograms as C (later shaders where profiling calls for it) and turns the resulting GS primitives into modern GPU draws. Rewriting every draw path against a modern API would touch large parts of the Game code before anything is on screen and lose the ability to compare frames against an emulator; emulating the GS at the hardware level would carry an emulator's cost and complexity into a source port. Individual hot paths may later move to direct modern rendering as Port features.

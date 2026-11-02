@@ -18,3 +18,15 @@ jobs:
         run: ruff check . && ruff format --check .
       - name: Test
         run: pytest
+
+  port:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y clang ninja-build
+      - name: Configure
+        run: cmake -S port -B build/port -G Ninja -DCMAKE_C_COMPILER=clang -DSOTC_PORT_WERROR=ON -DSOTC_PORT_SANITIZE=ON
+      - name: Build
+        run: cmake --build build/port
+      - name: Test
+        run: ctest --test-dir build/port --output-on-failure
