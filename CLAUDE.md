@@ -123,6 +123,7 @@ Splice limitations:
   - `progress.py`: refreshes the README progress table from each Game module's symbol table, relocations and the matching C (needs `iso/` and `asm/`)
   - `sdk_routines.py`: checks `config/sdk_routines.txt`, the SDK routines identified in the Game modules by signature, and prints entries for new ones
   - `m2c.py`, `permute.py`: run m2c and decomp-permuter on an XFF function
+  - `refrun.py`: records and diffs Reference runs from PCSX2 (`docs/reference-runs.md`), with `pine.py` (PCSX2 PINE client), `p2m2.py` (Input Recording files) and `disc.py` (reads files from a Disc image)
 - `asm/xff/<MODULE>/`: generated Game module assembly (gitignored like all asm)
 - `include/xff_macro.inc`: label macros for Game module asm. Labels are local by default; `.globl` comes from the original symbol table.
 - `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
@@ -135,6 +136,8 @@ Splice limitations:
   - `tests/`: CTest programs on synthetic images and archives
 - `docs/findings.md`: what we know about the binaries, the compiler and the SDK
 - `config/baserom.json`: expected Original Loader path and SHA1
+- `config/refrun/state.toml`: the state map, listing the game state each Reference run frame records
+- `refruns/`: local Reference runs (gitignored: they need the disc)
 - `config/sdk_routines.txt`: SDK routines identified in the Game modules (name, library, size, signature)
 - `config/loader_functions.csv`: every Loader function with its Original or Placeholder name, class (Game code / SDK routine) and library
 
