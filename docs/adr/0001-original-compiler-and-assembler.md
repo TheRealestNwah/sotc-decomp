@@ -1,0 +1,3 @@
+# Match with Sony ee-gcc 2.96 and its own assembler
+
+Game code is matched with Sony's `ee-gcc` 2.96 (`2.96-ee-001003-1`) at `-O2 -G0`, assembled with the `ee-as` from the same package, not modern binutils. In compiler tests against hand-written C it matched 9 of 11 functions, ahead of 2.95.x (8), 2.9 (7) and 3.2 (0), and only the package's `ee-as` reproduces the original expansions of `move` and jump-table loads. The cost is a 32-bit Linux toolchain that has to run under WSL. Don't switch compilers, assemblers or base flags without new evidence. Per-file extra flags are allowed only when a specific source proves it needs them. The full evidence is in `docs/findings.md`.

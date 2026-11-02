@@ -1,0 +1,3 @@
+# Rebuild Game modules using the Original's layout metadata
+
+Complete Game modules are rebuilt by combining the assembled code and data with layout metadata read from the owner's Original files: section order and headers, symbol and string-table order and attributes, import order, relocation-table order, and MANAGER's DVP overlay tables. That metadata comes from the original toolchain's linker and isn't reproduced by our assembly, so generating it from source would mean reverse-engineering a linker for no gain in matching. The trade-off is that every full build needs the owner's disc. Code and data bytes are never copied from the Original, so a wrong function still fails the full-file check. Details are in `docs/xff2.md`.
