@@ -1,13 +1,20 @@
-extern unsigned long long *GetCollisionDBAttributeAdr(void);
+extern unsigned long *GetCollisionDBAttributeAdr(void *surface);
 
-int character_ikcolattrfilter(void)
+int character_ikcolattrfilter(void *surface)
 {
-    unsigned long long attr = *GetCollisionDBAttributeAdr();
-    unsigned long long kind = attr & 0x7C000000;
-    unsigned long long material = attr & 0xF80000000ULL;
-    unsigned long long type = attr & 0x3C0000000000ULL;
+    unsigned long attribute;
+    unsigned long kind, mode, flags;
 
-    if (kind == 0x30000000 || kind == 0x04000000 || kind == 0x64000000 || kind == 0x68000000 || kind == 0x6C000000 || kind == 0x24000000 || material == 0x800000000ULL || material == 0x200000000ULL || material == 0xB80000000ULL || material == 0x300000000ULL || material == 0x500000000ULL || material == 0x380000000ULL || material == 0x280000000ULL || type == 0x80000000000ULL)
+    attribute = *GetCollisionDBAttributeAdr(surface);
+    kind = attribute & 0x7C000000;
+    flags = attribute & (0xF800UL << 20);
+    mode = attribute & (0xF000UL << 30);
+    if (kind == 0x30000000 || kind == 0x04000000 || kind == 0x64000000 || kind == 0x68000000 ||
+        kind == 0x6C000000)
+        return 0;
+    if (kind == 0x24000000 || flags == (0x8000UL << 20) || flags == (0x8000UL << 18) ||
+        flags == (0xB800UL << 20) || flags == (0xC000UL << 18) || flags == (0xA000UL << 19) ||
+        flags == (0xE000UL << 18) || flags == (0xA000UL << 18) || mode == (0x8000UL << 28))
         return 0;
     return 1;
 }

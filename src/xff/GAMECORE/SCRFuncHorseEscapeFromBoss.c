@@ -1,16 +1,14 @@
-typedef struct {
-    char pad0[0x2B8];
-    char bossList[1];
-} GlobalVar;
+typedef int s128 __attribute__((mode(TI)));
+typedef union { s128 q; float f[4]; } Vec4;
 
-extern GlobalVar gcGlobalVar;
+extern char gcGlobalVar[];
 extern void *SCRGetFirstObj(void *);
-extern char *getSCRDataCtrlWork(void *);
+extern void *getSCRDataCtrlWork(void *);
 extern char *GetLayoutClass(void *);
 extern void iosGetStabXZVector(float *, float *);
-extern void setAttainmentPos(char *, float *);
+extern void setAttainmentPos(void *, float *);
 
-static inline void vecSub(float *dst, float *a, float *b)
+static inline void vecSubW(float *dst, float *a, float *b)
 {
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
@@ -19,7 +17,7 @@ static inline void vecSub(float *dst, float *a, float *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-static inline void vecScaleXYZ(float *dst, float *src, float s)
+static inline void vecScale(float *dst, float *src, float s)
 {
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "qmtc2.ni %2, vf6\n"
@@ -28,7 +26,7 @@ static inline void vecScaleXYZ(float *dst, float *src, float s)
                          : : "r"(dst), "r"(src), "r"(s) : "memory");
 }
 
-static inline void vecAddXYZ(float *dst, float *a, float *b)
+static inline void vecAdd(float *dst, float *a, float *b)
 {
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
@@ -37,22 +35,21 @@ static inline void vecAddXYZ(float *dst, float *a, float *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-void SCRFuncHorseEscapeFromBoss(void *obj, float distance)
+void SCRFuncHorseEscapeFromBoss(void *obj, float dist)
 {
-    void *boss;
-    char *work;
-    char *layout;
-    float dir[4] __attribute__((aligned(16)));
+    void *boss = SCRGetFirstObj(gcGlobalVar + 0x2B8);
+    Vec4 v;
 
-    boss = SCRGetFirstObj(gcGlobalVar.bossList);
     if (boss != 0) {
-        work = getSCRDataCtrlWork(obj);
-        layout = GetLayoutClass(obj);
-        vecSub(dir, *(float **)(layout + 0x134), *(float **)(GetLayoutClass(boss) + 0x134));
-        iosGetStabXZVector(dir, dir);
-        vecScaleXYZ(dir, dir, distance);
-        vecAddXYZ(dir, dir, *(float **)(GetLayoutClass(obj) + 0x134));
-        dir[3] = 1.0f;
-        setAttainmentPos(work, dir);
+        void *ctrl = getSCRDataCtrlWork(obj);
+        char *lay = GetLayoutClass(obj);
+        char *blay = GetLayoutClass(boss);
+
+        vecSubW(v.f, *(float **)(lay + 0x134), *(float **)(blay + 0x134));
+        iosGetStabXZVector(v.f, v.f);
+        vecScale(v.f, v.f, dist);
+        vecAdd(v.f, v.f, *(float **)(GetLayoutClass(obj) + 0x134));
+        v.f[3] = 1.0f;
+        setAttainmentPos(ctrl, v.f);
     }
 }

@@ -1,15 +1,29 @@
 typedef int s128 __attribute__((mode(TI)));
+typedef union { s128 q; float f[4]; } Vec4;
+
+typedef struct {
+    char pad[0x90];
+    Vec4 scale;
+} CharWork;
+
+typedef struct {
+    char pad[0x90];
+    Vec4 scale;
+    char padA0[0xC0 - 0xA0];
+    char geo[0x124 - 0xC0];
+    int parent;
+} Layout;
 
 extern void *isysGetThisSubThread(void);
-extern char *GetCharacterClass(void *);
-extern char *GetLayoutClass(void *);
+extern CharWork *GetCharacterClass(void *);
+extern Layout *GetLayoutClass(void *);
 extern void *GetGeometryPointerObject(void *);
 extern void SendCharaMotionSyncStartMsg(void *, void *);
 extern void SCRSimpleExecCharaGeometry(void *);
-extern void SetLayoutClassScaleElem(char *, float *, int);
+extern void SetLayoutClassScaleElem(Layout *, float *, int);
 extern void scrRun(void);
 
-static inline void vecMulXYZ(float *dst, float *a, float *b)
+static inline void vecMul(float *dst, float *a, float *b)
 {
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
@@ -20,38 +34,31 @@ static inline void vecMulXYZ(float *dst, float *a, float *b)
 
 void nico_parentAndScaleSync(void)
 {
-    void *thread;
-    char *chara;
-    char *layout;
-    void *parent;
-    s128 v[2];
-    char *parentLayout;
-    float *parentScale;
+    void *th = isysGetThisSubThread();
+    CharWork *ch = GetCharacterClass(th);
+    Layout *lay = GetLayoutClass(th);
+    void *parent = GetGeometryPointerObject(lay->geo);
+    Vec4 base;
+    Vec4 s;
 
-    thread = isysGetThisSubThread();
-    chara = GetCharacterClass(thread);
-    layout = GetLayoutClass(thread);
-    parent = GetGeometryPointerObject(layout + 0xC0);
-    if (parent != 0) {
-        SendCharaMotionSyncStartMsg(thread, parent);
-    }
-    if (*(int *)(layout + 0x124) != 0) {
-        SCRSimpleExecCharaGeometry(thread);
-        SCRSimpleExecCharaGeometry(thread);
-    } else {
+    if (parent != 0)
+        SendCharaMotionSyncStartMsg(th, parent);
+    if (lay->parent != 0) {
+        SCRSimpleExecCharaGeometry(th);
+        SCRSimpleExecCharaGeometry(th);
+    } else
         parent = 0;
-    }
-    v[0] = *(s128 *)(chara + 0x90);
+    base.q = ch->scale.q;
     if (parent != 0) {
-        layout = GetLayoutClass(thread);
-        parentScale = (float *)(GetLayoutClass(parent) + 0x90);
+        Layout *my = GetLayoutClass(th);
+        Layout *pl = GetLayoutClass(parent);
+
         for (;;) {
-            vecMulXYZ((float *)&v[1], (float *)&v[0], parentScale);
-            SetLayoutClassScaleElem(layout, (float *)&v[1], 1);
+            vecMul(s.f, base.f, pl->scale.f);
+            SetLayoutClassScaleElem(my, s.f, 1);
             scrRun();
         }
     }
-    for (;;) {
+    for (;;)
         scrRun();
-    }
 }

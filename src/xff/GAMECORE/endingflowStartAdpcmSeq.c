@@ -1,46 +1,46 @@
-typedef struct AdpcmInfo {
-    int unk0;
-    int unk4;
+typedef struct {
+    int x;
+    int y;
     int id;
-} AdpcmInfo;
+} AdpcmReq;
 
-typedef struct AdpcmSeq {
-    int active;
-    int unk4;
-    int unk8;
-    int handle;
-    AdpcmInfo info;
-} AdpcmSeq;
+typedef struct {
+    int a;
+    int b;
+    int started;
+    int valid;
+    AdpcmReq req;
+} AdpcmEntry;
 
-extern AdpcmSeq B_00183E10[3];
+extern AdpcmReq *D_0017A010;
+extern AdpcmEntry B_00183E10[];
 extern int B_00183E64;
-extern AdpcmInfo *D_0017A010;
-extern void func_00013AF0();
-
-extern int bgmStandby(int, int, void (*)(), void *);
+extern void func_00013AF0(void);
+extern int bgmStandby(int, int, void *, void *);
 extern void scrRun(void);
 
-static inline AdpcmSeq *start_adpcm_seq(AdpcmInfo *info) {
+static inline AdpcmEntry *startEntry(AdpcmReq *req)
+{
+    AdpcmEntry *e;
     int i;
-    AdpcmSeq *seq;
 
     for (i = 0; i < 3; i++) {
-        if (B_00183E10[i].handle == 0)
+        if (B_00183E10[i].valid == 0)
             goto found;
     }
     return 0;
 found:
-    seq = &B_00183E10[i];
-    seq->info = *info;
-    seq->handle = bgmStandby(seq->info.id, 0, func_00013AF0, seq);
-    if (seq->handle)
-        seq->active = 1;
-    return seq;
+    e = &B_00183E10[i];
+    e->req = *req;
+    if ((e->valid = bgmStandby(e->req.id, 0, func_00013AF0, e)) != 0)
+        e->a = 1;
+    return e;
 }
 
-void endingflowStartAdpcmSeq(AdpcmInfo *info) {
-    D_0017A010 = info;
+void endingflowStartAdpcmSeq(AdpcmReq *req)
+{
+    D_0017A010 = req;
     B_00183E64 = -1;
-    while (!start_adpcm_seq(D_0017A010))
+    while (startEntry(D_0017A010) == 0)
         scrRun();
 }
