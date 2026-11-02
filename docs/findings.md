@@ -150,6 +150,29 @@ From the `PsIIlib<name><version>` tags and library error strings. The version is
 The ELF also references these IOP modules: `IOPRP300.IMG`, `MCMAN`, `MCSERV`, `NETCNFIF`, `DBCMAN`, `DEV9`, `INET`, `INETCTL`, `LIBNET`, `MSIFRPC`, `AN986`, `DS1O_D`, and others.
 
 These libraries are candidates to identify by signature matching against the SDK 3.0.x libraries, rather than decompiling them by hand. Function-level boundaries haven't been mapped yet.
+
+## Counting functions in the Game modules (#2285)
+
+A Game module's functions are its `STT_FUNC` symbols in `.text` plus the static functions that have only Placeholder names. `tools/progress.py` counts both from the Original:
+
+- **Named symbols.** KERNEL's symbol table has 1,785 `STT_FUNC` entries, but 845 of them are absolute (`SHN_ABS`) Loader functions it imports, such as `ResolveRelocation` and `sceGsSyncV`. Only the 940 in `.text` are KERNEL's own. MANAGER has 2,277 and GAMECORE 2,755, all in `.text`.
+- **Placeholder statics.** A `func_XXXXXXXX` or `T_XXXXXXXX` label counts when a section-relative relocation in the Original points at it: a `jal`, a function pointer in data or an address load. That gives 166 in KERNEL, 590 in MANAGER and 1,157 in GAMECORE. None falls inside a named symbol's extent. The labels spimdisasm makes where it splits a function at a tail call are never relocation targets, so they're left out. Only a handful of gaps between named functions (2 in KERNEL, 4 in MANAGER, 1 in GAMECORE) contain no counted label.
+- **Statics only the C knows.** A static the matching C defines under another name, or at an address spimdisasm gave no function label (it reached it only by a `j`), counts too.
+
+Before this, the README divided every spliced C function, statics included, by the named counts alone, so GAMECORE showed 2,753 of 2,755 while named functions such as `initbar` and `demo_end` had no C.
+
+## SDK routines in KERNEL
+
+KERNEL's `.text` ends with 39 SDK routines, from `0x30428` (asm label `func_00030460`) to the end of the section at `0x341A4`. The libraries were linked after the game's own objects, and the function just before the block (`Sg2StPcmQuit`) is Game code. They're listed with signatures in `config/sdk_routines.txt` (checked by `tools/sdk_routines.py`) and left out of the Game code totals.
+
+| Library | Routines | Evidence |
+| --- | ---: | --- |
+| libc (newlib) | 4 | `mktime`, `strstr`, `div`, and `mktime.c`'s static `validate_structure` (`func_00030460`, just before `mktime`, called only by it). `mktime`, `strstr` and `div` already match as C written from newlib's source. |
+| libm (newlib's float fdlibm) | 25 | Original names (`__ieee754_powf`, `__kernel_rem_pio2f`, the `sinf`/`cosf`/`floorf` family and the one-jump `acosf`-style wrappers); all match as C written from fdlibm's source. |
+| libgraph | 5 | `sceGsSetDefLoadImage`, `sceGsExecLoadImage`, `sceGsPutIMR`, `sceGsGetIMR`, `isceGsPutIMR`. The first two print libgraph's own messages (`sceGsSetDefLoadImage: too big size`, `sceGsExecLoadImage: DMA Ch.2 does not terminate`); the IMR ones wrap the kernel calls `GsGetIMR`/`GsPutIMR` and `iGsGetIMR`/`iGsPutIMR`. |
+| libcdvd | 5 | `sceCdRead`, `sceCdReadIOPm`, `sceCdGetError`, `sceCdStatus`, `sceCdReadClock`. All reference libcdvd's private state in the Loader (`_sceCd_ncmd_prechk`, `_sceCd_cd_ncmd`, `_sceCd_scmd_semid` and others) and call `sceSifCallRpc`. |
+
+None of these names is also exported by the Loader: KERNEL links the library objects the Loader didn't. 28 of the libc/libm routines (all but `validate_structure`) are already Matched functions; that C stays, but no longer counts as Game code. MANAGER's `rand` may be newlib's too; MANAGER and GAMECORE haven't been sorted yet.
 ## Original sequence-stop interrupt state (#708)
 
 In KERNEL `Sg2SepStop` (text offset `0x25E88`), an in-range sequence ID with

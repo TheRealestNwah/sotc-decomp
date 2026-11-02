@@ -38,8 +38,10 @@ CI has no disc files or PS2 toolchain, so passing CI alone does not prove matchi
 - [ ] Match KERNEL `Sg2SmfpSetParam` and the timed pan/volume setters
   `Sg2SlotSetTimePanParam` / `Sg2SlotSetTimeVolParam`.
 - [ ] Resolve register allocation for `nico_optBoneParentScaleUpdateScript`.
-- [ ] Identify KERNEL's SDK routines by signature, and fix the README progress
+- [x] Identify KERNEL's SDK routines by signature, and fix the README progress
   table so it counts only Game code ([#2285](https://github.com/TheRealestNwah/sotc-decomp/issues/2285)).
+- [ ] Sort MANAGER's and GAMECORE's functions into SDK routines and Game code
+  (`config/sdk_routines.txt`; MANAGER's `rand` is a candidate).
 - [ ] Sort the Loader's 1,038 functions into SDK routines and Game code, then
   match only its Game code ([ADR 0004](docs/adr/0004-finish-line-and-source-cleanup.md)).
 
