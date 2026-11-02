@@ -63,10 +63,13 @@ typedef struct NicoMapTable {
     NicoRecord *variant[2];
 } NicoMapTable;
 
-/* Three words per entry; the third is a texture segment index
- * (sheetFsGetStageTexSegIndex). The first two are not yet known. */
+/* One cell of the map's texture segment grid. On the US disc the first map
+ * has 100 cells, x from -5 to 4 and y from 4 down to -5, stored row by row
+ * in the order sheetFsGetStageTexSegIndex indexes them. */
 typedef struct NicoTexSeg {
-    uint32_t word[3];
+    int32_t x;
+    int32_t y;
+    uint32_t seg; /* the value sheetFsGetStageTexSegIndex returns */
 } NicoTexSeg;
 
 /* A world map (sheetFsLoadMap), with its file tables indexed by the
@@ -78,13 +81,31 @@ typedef struct NicoMap {
     NicoTexSeg *tex_segs;
 } NicoMap;
 
-/* A named block of data stored in the header itself (sheetFsSrhSpecialFs). */
+/* A special fs (sheetFsSrhSpecialFs, sheetFsSetSpecialFs): a lookup table
+ * of `entry_count` 16-byte entries, read with nico_special_entry. */
 typedef struct NicoSpecialFile {
     char *name;
-    uint32_t value; /* meaning not yet known */
+    uint32_t entry_count;
     uint32_t data_size;
     unsigned char *data;
 } NicoSpecialFile;
+
+#define NICO_SPECIAL_ENTRY_SIZE 16u
+
+/* Kinds of special fs key, its first byte (func_000E1030). */
+enum {
+    NICO_SPECIAL_SEGMENT = 0,          /* key[4..5]: s16 index into "stage" */
+    NICO_SPECIAL_OTHER_SEGMENT = 1,    /* key[4..5]: s16 index into another segment type */
+    NICO_SPECIAL_MAP = 2,              /* key[1] data type, key[2] variant, key[3], key[6..7] u16 index */
+    NICO_SPECIAL_LOCALIZED_SEGMENT = 3,
+    NICO_SPECIAL_LOCALIZED_OTHER = 4
+};
+
+/* One special fs entry: an 8-byte key and the record the key maps to. */
+typedef struct NicoSpecialEntry {
+    unsigned char key[8];
+    NicoRecord record;
+} NicoSpecialEntry;
 
 typedef struct NicoArchive {
     NicoRecord boot; /* sheetFsLoadBootData */
@@ -130,6 +151,9 @@ const NicoMap *nico_find_map(const NicoArchive *archive, const char *name);
 NicoStatus nico_map_record(const NicoMap *map, uint32_t data_type, uint32_t variant, uint32_t index, NicoRecord *out);
 
 const NicoSpecialFile *nico_find_special(const NicoArchive *archive, const char *name);
+
+/* Reads entry `index` of a special fs. */
+NicoStatus nico_special_entry(const NicoSpecialFile *file, uint32_t index, NicoSpecialEntry *out);
 
 /* Byte offset of a record within the archive. */
 uint64_t nico_record_offset(const NicoRecord *record);

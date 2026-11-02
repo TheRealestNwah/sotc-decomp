@@ -73,6 +73,9 @@ int main(int argc, char **argv)
     for (uint32_t i = 0; i < a->map_count; i++) {
         const NicoMap *m = &a->maps[i];
         printf("  - %s: %u tex segs\n", m->name, m->tex_seg_count);
+        for (uint32_t j = 0; all && j < m->tex_seg_count; j++)
+            printf("      tex seg [%u] x %d, y %d, seg %u\n", j, m->tex_segs[j].x, m->tex_segs[j].y,
+                m->tex_segs[j].seg);
         for (uint32_t d = 0; d < 3; d++)
             for (uint32_t v = 0; v < 2; v++) {
                 char label[32];
@@ -86,8 +89,17 @@ int main(int argc, char **argv)
     printf("  direct files:\n");
     print_records("entries", a->direct, a->direct_count, all);
     printf("  special files: %u\n", a->special_count);
-    for (uint32_t i = 0; i < a->special_count; i++)
-        printf("  - %s: value %u, %u bytes\n", a->special[i].name, a->special[i].value, a->special[i].data_size);
+    for (uint32_t i = 0; i < a->special_count; i++) {
+        const NicoSpecialFile *f = &a->special[i];
+        NicoSpecialEntry e;
+        printf("  - %s: %u entries, %u bytes\n", f->name, f->entry_count, f->data_size);
+        for (uint32_t j = 0; all && nico_special_entry(f, j, &e) == NICO_OK; j++) {
+            printf("      [%u] key", j);
+            for (size_t k = 0; k < sizeof e.key; k++)
+                printf(" %02x", e.key[k]);
+            printf(", sector %u, size %u\n", e.record.sector, e.record.size);
+        }
+    }
 
     nico_free(a);
     disc_close(disc);

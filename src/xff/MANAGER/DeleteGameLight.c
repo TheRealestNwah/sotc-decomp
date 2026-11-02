@@ -1,50 +1,40 @@
-typedef struct LightColMan {
-    char pad0[0x514];
-    char globalFree[8];
-    char globalUsed[8];
-    char gameFree[4];
-    char gameUsed[4];
-    int flags;
-} LightColMan;
-
-extern LightColMan *GetLightColMan(void);
+extern char *GetLightColMan(void);
 extern void **isysGroupForFirst(void *, int);
 extern void **isysGroupForNext(void **, int);
 extern void isysGroupForExit(void *, int);
 extern void isysAddGroupWithLinkParam(void *, void *, int, int);
 extern void _isysDeleteGroup(void *, void *, int);
 
-static inline unsigned char *GetObjWork(unsigned char *obj, int type)
+static inline unsigned char *lightClass(unsigned char *o)
 {
-    if (obj[8] == type) {
-        return obj + 0x20;
+    switch (o[8]) {
+    case 0x1A:
+        return o + 0x20;
+    default:
+        return 0;
     }
-    return 0;
 }
 
-void DeleteGameLight(void *light)
+void DeleteGameLight(unsigned char *target)
 {
-    LightColMan *man = GetLightColMan();
+    unsigned char *last = 0;
+    char *man = GetLightColMan();
     void **node;
-    unsigned char *obj = 0;
-    unsigned char *work;
 
-    for (node = isysGroupForFirst(man->gameUsed, 0); node != 0; node = isysGroupForNext(node, 0)) {
-        obj = *node;
-        work = GetObjWork(obj, 0x1A);
-        if (work == 0 || work != light) {
-            continue;
+    for (node = isysGroupForFirst(man + 0x528, 0); node != 0 && (last = *node, 1); node = isysGroupForNext(node, 0)) {
+        unsigned char *w = lightClass(last);
+
+        if (w && w == target) {
+            char *m = GetLightColMan();
+
+            *(int *)(w + 0x2C) = 0;
+            isysAddGroupWithLinkParam(last, m + 0x524, 0, 0);
+            _isysDeleteGroup(last, m + 0x528, 0);
+            break;
         }
-        {
-            LightColMan *m = GetLightColMan();
-            *(int *)(work + 0x2C) = 0;
-            isysAddGroupWithLinkParam(obj, m->gameFree, 0, 0);
-            _isysDeleteGroup(obj, m->gameUsed, 0);
-        }
-        break;
     }
-    if (obj != 0) {
-        isysGroupForExit(obj, 0);
+    if (last != 0) {
+        isysGroupForExit(last, 0);
     }
-    man->flags |= 2;
+    *(int *)(man + 0x52C) |= 2;
 }
