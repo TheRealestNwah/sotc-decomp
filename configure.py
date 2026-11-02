@@ -12,6 +12,7 @@ be overridden with --cross or the SOTC_CROSS environment variable.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -88,12 +89,30 @@ def ninja_path(path: Path | str) -> str:
     return str(path).replace("\\", "/").replace("$", "$$").replace(" ", "$ ").replace(":", "$:")
 
 
+SPLIT_INPUTS = (SPLAT_CONFIG, "symbol_addrs.txt")
+SPLIT_STAMP = Path("asm") / "cod" / ".split-inputs"
+
+
+def split_inputs_digest() -> str:
+    """Hash of the files splat reads, so a stale asm/ is re-split."""
+    h = hashlib.sha256()
+    for name in SPLIT_INPUTS:
+        h.update((ROOT / name).read_bytes())
+    return h.hexdigest()
+
+
+def split_is_stale() -> bool:
+    stamp = ROOT / SPLIT_STAMP
+    return not stamp.is_file() or stamp.read_text().strip() != split_inputs_digest()
+
+
 def run_split() -> None:
     if not (ROOT / BASE_ROM).is_file():
         subprocess.run(
             [sys.executable, "tools/elf2rom.py", BASE_ELF, BASE_ROM], cwd=ROOT, check=True
         )
     subprocess.run([sys.executable, "-m", "splat", "split", SPLAT_CONFIG], cwd=ROOT, check=True)
+    (ROOT / SPLIT_STAMP).write_text(split_inputs_digest() + "\n")
 
 
 def asm_sources() -> list[Path]:
@@ -194,7 +213,7 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
         "",
         "build force-c-sources: phony",
         f"build {C_SOURCES_MANIFEST}: c_sources | configure.py force-c-sources",
-        f"build build.ninja: configure configure.py {SPLAT_CONFIG} {C_SOURCES_MANIFEST}",
+        f"build build.ninja: configure configure.py {' '.join(SPLIT_INPUTS)} {C_SOURCES_MANIFEST}",
         "",
     ]
     # Decompiled Loader C replaces its functions' assembly in a spliced copy.
@@ -300,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
     if not (ROOT / BASE_ELF).is_file():
         print(f"Missing {BASE_ELF}. Copy it from your own disc first.", file=sys.stderr)
         return 1
-    if args.split or not (ROOT / "asm" / "cod").is_dir():
+    if args.split or split_is_stale():
         run_split()
     modules = xff_modules()
     run_xff_split([m for m in modules if args.split or not (ROOT / f"asm/xff/{m}/{m}.s").is_file()])

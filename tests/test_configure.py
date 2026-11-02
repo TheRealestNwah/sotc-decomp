@@ -1,3 +1,4 @@
+import hashlib
 import json
 import shutil
 import subprocess
@@ -16,7 +17,10 @@ def test_ninja_regenerates_for_added_renamed_and_removed_c_sources(tmp_path):
     (tmp_path / "iso").mkdir()
     (tmp_path / configure.BASE_ELF).touch()
     (tmp_path / "iso/KERNEL.XFF").touch()
+    (tmp_path / "symbol_addrs.txt").touch()
     (tmp_path / "asm/cod").mkdir(parents=True)
+    # An up-to-date split, so configure doesn't run splat.
+    (tmp_path / configure.SPLIT_STAMP).write_text(hashlib.sha256().hexdigest() + "\n")
     assembly = tmp_path / "asm/xff/KERNEL"
     assembly.mkdir(parents=True)
     (assembly / "KERNEL.s").touch()
@@ -153,3 +157,15 @@ def test_loader_without_c_assembles_its_split_directly(tmp_path, monkeypatch):
     ninja = generate("test-", [Path("asm/cod/000000.s")])
     assert "loader_splice build" not in ninja
     assert "build build/asm/cod/000000.o: as asm/cod/000000.s" in ninja
+
+
+def test_split_is_stale_when_its_inputs_change(tmp_path, monkeypatch):
+    monkeypatch.setattr(configure, "ROOT", tmp_path)
+    for name in configure.SPLIT_INPUTS:
+        (tmp_path / name).write_text("a\n")
+    assert configure.split_is_stale()
+    (tmp_path / "asm/cod").mkdir(parents=True)
+    (tmp_path / configure.SPLIT_STAMP).write_text(configure.split_inputs_digest() + "\n")
+    assert not configure.split_is_stale()
+    (tmp_path / "symbol_addrs.txt").write_text("b\n")
+    assert configure.split_is_stale()
