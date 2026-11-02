@@ -54,12 +54,12 @@ Current phase:
 The Original Loader must be at `iso/SCUS_974.72` (copied from the owner's own disc).
 
 ```
-.venv\Scripts\python configure.py     # splits with splat if asm/ is missing, writes build.ninja
+.venv\Scripts\python configure.py     # splits with splat if asm/ is missing or stale, writes build.ninja
 .venv\Scripts\ninja                   # assemble, link, flatten -> build/SCUS_974.72.rom
 .venv\Scripts\ninja check             # compare build/SCUS_974.72.rom with the Original
 ```
 
-- `configure.py --split` forces a fresh split of the Loader and the Game modules (do this after editing `SCUS_974.72.yaml`, `symbol_addrs.txt` or `tools/xff_split.py`).
+- `configure.py` re-splits the Loader by itself when `SCUS_974.72.yaml` or `symbol_addrs.txt` changed since the last split (hash in `asm/cod/.split-inputs`). `configure.py --split` forces a fresh split of the Loader and the Game modules (do this after editing `tools/xff_split.py`).
 - Game modules: `ninja check` compares assembled sections/relocations, rebuilds complete containers with original metadata, and compares the full Game module files. `python tools/xff_split.py iso/KERNEL.XFF --check` performs only the section/relocation comparison for one module.
 - `check` compares the flattened code and data images (every loaded byte). It doesn't compare ELF headers.
 - `python tools/check_baserom.py` checks that `iso/SCUS_974.72` is the expected Original (SHA1 in `config/baserom.json`).
