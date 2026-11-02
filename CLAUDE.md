@@ -2,7 +2,7 @@
 
 Private, machine-specific notes (agent workflow, handoffs) live in `CLAUDE.local.md`, which is gitignored. If it exists, read it before starting work.
 
-Matching decompilation of Shadow of the Colossus (PS2, NTSC-U `SCUS-97472`), with a native PC port as the long-term goal.
+Matching decompilation of Shadow of the Colossus (PS2, NTSC-U `SCUS-97472`), with a Native port to PC as the long-term goal.
 
 ## Autonomous work
 
@@ -12,24 +12,24 @@ At usage exhaustion, save a resumable handoff. Resume automatically when the fiv
 
 ## Goals
 
-1. Rebuild the original binaries byte-for-byte from source in this repo.
-2. Replace assembly with C, one function at a time, keeping the build matching at every step.
-3. Once fully matching, build a PC port on top of the decompiled code.
+1. Rebuild the Original byte-for-byte from source in this repo.
+2. Replace assembly with C, one Matched function at a time, keeping the build matching at every step.
+3. Once all Game code is Matched functions, build the Native port on top of the matched source.
 
 Current phase:
-- The loader ELF `SCUS_974.72` splits with splat and rebuilds byte-for-byte from assembly.
-- The three game modules (`KERNEL.XFF`, `MANAGER.XFF`, `GAMECORE.XFF`, format in `docs/xff2.md`) split into assembly that reassembles to objects whose sections and relocations match the originals exactly.
+- The Loader `SCUS_974.72` splits with splat and rebuilds byte-for-byte from assembly.
+- The three Game modules (`KERNEL.XFF`, `MANAGER.XFF`, `GAMECORE.XFF`, xff2 format in `docs/xff2.md`) split into assembly that reassembles to objects whose sections and relocations match the Original exactly.
 - `ninja check` covers all of it.
-- The complete XFF files rebuild byte-for-byte through `tools/xff_rebuild.py`, using original table-layout and loader metadata. `ninja check` verifies the complete files as well as sections and relocations; see `docs/xff2.md` for the metadata dependency.
-- The compiler is identified (see Matching rules), and the C build works: `src/xff/<MODULE>/*.c` is compiled and spliced into the module (see "Decompiling a function").
+- The complete Game modules rebuild byte-for-byte through `tools/xff_rebuild.py`, using original table-layout and loader metadata. `ninja check` verifies the complete files as well as sections and relocations; see `docs/xff2.md` for the metadata dependency.
+- The compiler is identified (see Matching rules), and the C build works: `src/xff/<MODULE>/*.c` is compiled and spliced into the Game module (see "Matching a function").
 
 ## Matching rules
 
 - **Never edit generated assembly to force a match.** If something doesn't match, fix the split config, the build flags or the C, never the asm by hand.
-- **C must compile to identical bytes.** A function counts as decompiled only when the compiled output matches the original exactly, with no hand-written asm patching around it.
+- **C must compile to identical bytes.** A function counts as a Matched function only when the compiled output matches the Original exactly, with no hand-written asm patching around it.
 - **No game files in git.** Everything from the disc (`iso/`), everything splat generates (`asm/`, `*.ld`, `undefined_*_auto.txt`) and all build output stay gitignored.
 - **Compiler: Sony `ee-gcc` 2.96 (`2.96-ee-001003-1`), `-O2 -G0`, assembled with that package's own `ee-as`.** Chosen by evidence (with the user's OK), recorded in `docs/findings.md`. Don't switch compilers or flags without new evidence. Modern binutils expands `move` and jump-table loads differently from the original assembler, so C must go through the package's `ee-as`.
-- Sony SDK 3.0.x libraries (listed in `docs/findings.md`) get identified by signature, not decompiled by hand.
+- SDK routines (from the Sony SDK 3.0.x libraries listed in `docs/findings.md`) get identified by signature, not decompiled by hand.
 
 ## Toolchain (native Windows)
 
@@ -51,29 +51,29 @@ Current phase:
 
 ## Build and check
 
-The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
+The Original Loader must be at `iso/SCUS_974.72` (copied from the owner's own disc).
 
 ```
 .venv\Scripts\python configure.py     # splits with splat if asm/ is missing, writes build.ninja
 .venv\Scripts\ninja                   # assemble, link, flatten -> build/SCUS_974.72.rom
-.venv\Scripts\ninja check             # compare build/SCUS_974.72.rom with the original
+.venv\Scripts\ninja check             # compare build/SCUS_974.72.rom with the Original
 ```
 
-- `configure.py --split` forces a fresh split of the ELF and the XFF modules (do this after editing `SCUS_974.72.yaml`, `symbol_addrs.txt` or `tools/xff_split.py`).
-- XFF modules: `ninja check` compares assembled sections/relocations, rebuilds complete containers with original metadata, and compares the full `.XFF` files. `python tools/xff_split.py iso/KERNEL.XFF --check` performs only the section/relocation comparison for one module.
+- `configure.py --split` forces a fresh split of the Loader and the Game modules (do this after editing `SCUS_974.72.yaml`, `symbol_addrs.txt` or `tools/xff_split.py`).
+- Game modules: `ninja check` compares assembled sections/relocations, rebuilds complete containers with original metadata, and compares the full Game module files. `python tools/xff_split.py iso/KERNEL.XFF --check` performs only the section/relocation comparison for one module.
 - `check` compares the flattened code and data images (every loaded byte). It doesn't compare ELF headers.
-- `python tools/check_baserom.py` checks that `iso/SCUS_974.72` is the expected dump (SHA1 in `config/baserom.json`).
+- `python tools/check_baserom.py` checks that `iso/SCUS_974.72` is the expected Original (SHA1 in `config/baserom.json`).
 
-## Decompiling a function (XFF modules)
+## Matching a function (Game modules)
 
-1. Find the function in `asm/xff/<MODULE>/text.s` (`glabel <name>`). Small functions, and functions grouped with known ones by `tools/xff_tus.py`, are good starting points.
-2. Write it in `src/xff/<MODULE>/<name>.c`. When `tools/xff_tus.py` has identified the original source file, use one C file for it (e.g. `src/xff/GAMECORE/sword.c`), with its statics in the original order and functions in original order; otherwise one file per function. Use struct layouts with explicit padding until real headers exist.
+1. Find the function in `asm/xff/<MODULE>/text.s` (`glabel <name>`). Small functions, and functions in a Source group with known ones from `tools/xff_tus.py`, are good starting points.
+2. Write it in `src/xff/<MODULE>/<name>.c`. When `tools/xff_tus.py` has identified the Original source file, use one C file for it (e.g. `src/xff/GAMECORE/sword.c`), with its statics in the original order and functions in original order; otherwise one file per function. Use struct layouts with explicit padding until real headers exist.
    `python tools/m2c.py <function>` prints a first draft from m2c. Add `--through func_XXXXXXXX` when spimdisasm split the function at a tail call. Expect to fix types and structure by hand.
    For native EE type declarations, use `--ee-context types.c` (repeatable, self-contained declarations without preprocessor directives). Native `long` is 8 bytes; m2c's ordinary `--context` interprets it as 4. The wrapper adapts integer `long` to `long long` in temporary context files. Existing `--context` remains unchanged for declarations already written for m2c. Plain contexts are loaded before adapted contexts. Review the resulting draft's calls, pointer offsets and buffers; context conversion does not prove a match.
 3. Iterate with `python tools/try_compilers.py src/xff/<MODULE>/<name>.c --module <MODULE> --only ee-gcc2.96 --flags "-O2 -G0"` until it says MATCH. `--diff` prints a side-by-side listing of each mismatch.
 4. Run `python configure.py` (picks up new C files), then `ninja check`.
    Don't run `tools/progress.py` or touch the README progress table in a matching PR: every PR would edit the same lines and conflict with the others. The table is refreshed on main periodically, in its own PR.
-5. If it's close but stuck on register allocation or instruction order, park the attempt in `#ifdef NONMATCHING` (with an `#else` declaring it extern if other C calls it). Then let the permuter search:
+5. If it's close but stuck on register allocation or instruction order, keep it as a Parked attempt in `#ifdef NONMATCHING` (with an `#else` declaring it extern if other C calls it). Then let the permuter search:
    - `python tools/permute.py setup <file.c> <function>`
    - `python tools/permute.py run build/permuter/<function> -j5 --best-only --stop-on-zero`
    - Improvements land in `build/permuter/<function>/output-<score>-*/`. A score of 0 is a match.
@@ -81,20 +81,20 @@ The original ELF must be at `iso/SCUS_974.72` (copied from the user's own disc).
 
 How it builds:
 - `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` (in WSL). Before assembling, empty `.set noreorder`/`.set reorder` pairs go before every jump or branch gcc leaves to the assembler (and around volatile accesses), because the original assembler never filled a delay slot itself (see `docs/findings.md`).
-- `tools/xff_splice.py` writes `build/xff/<MODULE>/spliced/`, which is the module's asm with each C function replaced by the compiled words. Relocated words become explicit `.reloc` directives.
-- The module is assembled from that copy and checked as usual.
+- `tools/xff_splice.py` writes `build/xff/<MODULE>/spliced/`, which is the Game module's asm with each Matched function replaced by the compiled words. Relocated words become explicit `.reloc` directives.
+- The Game module is assembled from that copy and checked as usual.
 
-The splice step refuses any C function that doesn't match the original exactly, so a wrong function fails the build instead of slipping in.
+The splice step refuses any C function that doesn't match the Original exactly, so a wrong function fails the build instead of slipping in.
 
 C data (string literals, `switch` jump tables, constants and statics in `.rodata`/`.data`/`.bss`):
 - Each C data section is placed where the original references it (the original relocation paired with each C reference, or an original symbol of the same name). All anchors must agree, so a C file's data has to be laid out like the original's.
 - Its bytes and relocations must match there; the matching lines in `rodata.s`/`data.s` are regenerated from the C output.
-- Statics have no names in the original. Name them after their asm label (`func_000C5468`, `T_000C5570`, `D_0017B0EC`) and they're placed at that address; a renamed static function is placed by its callers' references instead. `extern` declarations with such names reference not-yet-decompiled statics, section-relative like the original.
+- Statics have no Original names. Give them their asm label as a Placeholder name (`func_000C5468`, `T_000C5570`, `D_0017B0EC`) and they're placed at that address; a renamed static function is placed by its callers' references instead. `extern` declarations with such names reference statics that aren't Matched functions yet, section-relative like the Original.
 - spimdisasm sometimes ends a function at a tail call and labels the rest `func_XXXXXXXX`. The C function replaces both; try_compilers compares the full length.
 - gcc 2.96 keeps unused statics and emits them in definition order. `= 0` statics go to `.data`, uninitialized ones to `.bss`.
 
 Splice limitations:
-- Whether a reference is section-relative (same original file) or by name is taken from the original relocation at that spot, until the C files mirror the original file layout.
+- Whether a reference is section-relative (same Original source file) or by name is taken from the original relocation at that spot, until the C files mirror the Original source files.
 
 ## Tests and lint
 
@@ -108,22 +108,22 @@ Splice limitations:
 - `symbol_addrs.txt`: named symbols (hand-maintained). `linker_script_extra.ld`: entry point.
 - `configure.py`: generates `build.ninja`
 - `tools/`: helper scripts; `tests/` covers them with synthetic data (CI has no game files)
-  - `elf2rom.py`, `check.py`, `check_baserom.py`: loader ELF
+  - `elf2rom.py`, `check.py`, `check_baserom.py`: Loader
   - `xff2.py`: XFF reader/writer and XFF <-> ELF converter (`info`, `to-elf`, `from-elf`, `roundtrip`)
-  - `xff_rebuild.py`: rebuilds complete XFF containers from assembled payloads and original layout metadata, verifying symbol locations and relocations
+  - `xff_rebuild.py`: rebuilds complete Game modules from assembled payloads and original layout metadata, verifying symbol locations and relocations
   - `xff_split.py`: disassembles an XFF with spimdisasm, then post-processes the asm so it reassembles exactly (rules in its docstring)
-  - `xff_tus.py`: infers the original source-file boundaries from relocations (`--list` prints every group); results summarized in `docs/findings.md`
+  - `xff_tus.py`: infers Source groups from relocations (`--list` prints every group); results summarized in `docs/findings.md`
   - `ee_cc.py`: compiles one C file with the game's toolchain
-  - `xff_splice.py`: splices compiled C functions into a module's asm, verifying they match
+  - `xff_splice.py`: splices compiled C functions into a Game module's asm, verifying they match
   - `try_compilers.py`: compiles C with candidate compilers/flags and diffs against the original functions
   - `m2c.py`, `permute.py`: run m2c and decomp-permuter on an XFF function
-- `asm/xff/<MODULE>/`: generated XFF assembly (gitignored like all asm)
-- `include/xff_macro.inc`: label macros for XFF asm. Labels are local by default; `.globl` comes from the original symbol table.
+- `asm/xff/<MODULE>/`: generated Game module assembly (gitignored like all asm)
+- `include/xff_macro.inc`: label macros for Game module asm. Labels are local by default; `.globl` comes from the original symbol table.
 - `include/`: `macro.inc`, `labels.inc`, `include_asm.h` (splat helpers) and, later, headers
-- `src/xff/<MODULE>/`: decompiled C for the XFF modules, one file per function for now
+- `src/xff/<MODULE>/`: Matched functions for the Game modules, one file per function for now
 - `experiments/`: C used to identify the compiler (not part of the build)
 - `docs/findings.md`: what we know about the binaries, the compiler and the SDK
-- `config/baserom.json`: expected original executable path and SHA1
+- `config/baserom.json`: expected Original Loader path and SHA1
 
 ## Gotchas
 
@@ -136,7 +136,7 @@ Splice limitations:
   - it drops addends on imported symbols;
   - it decodes some code as `.word`.
   The tool checks every relocated line against the original relocation and falls back to raw bytes plus an explicit `.reloc` when they disagree. Don't remove those checks.
-- The originals reference a global defined in the same source file as section+offset, but a global from another file by name. That's a hint at original file boundaries, useful later when splitting into C files.
+- The Game modules reference a global defined in the same Original source file as section+offset, but a global from another file by name. That's a hint at Original source file boundaries, useful later when splitting into C files.
 
 ## Worktrees
 
