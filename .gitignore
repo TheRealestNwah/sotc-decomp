@@ -1,5 +1,6 @@
 # Game files: NEVER commit anything from the disc
 iso/
+refruns/
 baserom/
 *.iso
 *.ELF
@@ -58,3 +59,8 @@ OVERNIGHT.md
 *.dat
 *.cue
 *.chd
+
+# PCSX2 GS dumps hold frames of the game
+*.gs
+*.gs.zst
+*.gs.xz

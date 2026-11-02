@@ -49,12 +49,17 @@ static NicoStatus stream_read(Stream *s, void *out, size_t size)
     return NICO_OK;
 }
 
+static uint32_t get_u32(const unsigned char *b)
+{
+    return (uint32_t)b[0] | ((uint32_t)b[1] << 8) | ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24);
+}
+
 static NicoStatus read_u32(Stream *s, uint32_t *out)
 {
     unsigned char b[4];
     NicoStatus status = stream_read(s, b, sizeof b);
     if (status == NICO_OK)
-        *out = (uint32_t)b[0] | ((uint32_t)b[1] << 8) | ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24);
+        *out = get_u32(b);
     return status;
 }
 
@@ -281,10 +286,11 @@ static NicoStatus parse_maps(Stream *s, NicoArchive *a)
                 m->tex_seg_count = 0;
                 return NICO_ERR_NOMEM;
             }
-            for (uint32_t j = 0; j < m->tex_seg_count * 3u; j++) {
-                const unsigned char *p = raw + (size_t)j * 4;
-                m->tex_segs[j / 3].word[j % 3] =
-                    (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+            for (uint32_t j = 0; j < m->tex_seg_count; j++) {
+                const unsigned char *p = raw + (size_t)j * 12;
+                m->tex_segs[j].x = (int32_t)get_u32(p);
+                m->tex_segs[j].y = (int32_t)get_u32(p + 4);
+                m->tex_segs[j].seg = get_u32(p + 8);
             }
             free(raw);
         }
@@ -307,7 +313,7 @@ static NicoStatus parse_special(Stream *s, NicoArchive *a)
     NicoStatus status = read_u32(s, &a->special_count);
     if (status != NICO_OK || a->special_count == 0)
         return status;
-    /* Each entry needs at least a name byte, a value and a data size. */
+    /* Each entry needs at least a name byte, an entry count and a data size. */
     status = alloc_array(s, a->special_count, sizeof *a->special, 9, (void **)&a->special);
     if (status != NICO_OK) {
         a->special_count = 0;
@@ -318,7 +324,7 @@ static NicoStatus parse_special(Stream *s, NicoArchive *a)
         return status;
     for (uint32_t i = 0; i < a->special_count; i++) {
         NicoSpecialFile *f = &a->special[i];
-        status = read_u32(s, &f->value);
+        status = read_u32(s, &f->entry_count);
         if (status == NICO_OK)
             status = read_u32(s, &f->data_size);
         if (status == NICO_OK)
@@ -521,6 +527,21 @@ const NicoSpecialFile *nico_find_special(const NicoArchive *a, const char *name)
         if (strcmp(a->special[i].name, name) == 0)
             return &a->special[i];
     return NULL;
+}
+
+NicoStatus nico_special_entry(const NicoSpecialFile *f, uint32_t index, NicoSpecialEntry *out)
+{
+    const unsigned char *p;
+    if (!f || !out)
+        return NICO_ERR_ARGUMENT;
+    /* The game trusts entry_count; refuse entries the data doesn't hold. */
+    if (index >= f->entry_count || index >= f->data_size / NICO_SPECIAL_ENTRY_SIZE)
+        return NICO_ERR_RANGE;
+    p = f->data + (size_t)index * NICO_SPECIAL_ENTRY_SIZE;
+    memcpy(out->key, p, sizeof out->key);
+    out->record.sector = get_u32(p + 8);
+    out->record.size = get_u32(p + 12);
+    return NICO_OK;
 }
 
 uint64_t nico_record_offset(const NicoRecord *record)

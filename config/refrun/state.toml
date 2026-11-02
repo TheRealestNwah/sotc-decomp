@@ -1,0 +1,33 @@
+# State map for Reference runs: what tools/refrun.py reads from EE RAM each frame.
+# A location is one of:
+#   module + symbol (+ offset)    a symbol in the module's .symtab
+#   module + section + offset     a section-relative address (data.s labels like D_00040D64)
+#   address (+ offset)            an absolute address, e.g. in the Loader
+# Types: u8 u16 u32 u64 s8 s16 s32 s64 f32, or bytes with a size. count reads an array.
+# Changing this file changes what new runs record; old runs keep their own copy.
+schema = 1
+
+# Frame key: the vsync interrupt count returned by getVIntrCnt
+# (KERNEL .data + 0x7D4, D_00040D64 in asm/xff/KERNEL/data.s).
+[frame]
+name = "vsync_count"
+module = "KERNEL"
+section = ".data"
+offset = 0x7D4
+type = "u32"
+
+# Bumped by the KERNEL main scheduler loop (func_00016F78).
+[[field]]
+name = "main_call_counter"
+module = "KERNEL"
+symbol = "gpMainCallCounter"
+type = "u32"
+
+# Start of MANAGER's pad state, to line the Input Recording up with game frames.
+# Layout not decoded yet.
+[[field]]
+name = "pad_manager_head"
+module = "MANAGER"
+symbol = "padManagerData"
+type = "bytes"
+size = 64
