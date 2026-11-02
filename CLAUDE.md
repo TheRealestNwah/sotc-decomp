@@ -29,7 +29,7 @@ Current phase:
 - **C must compile to identical bytes.** A function counts as a Matched function only when the compiled output matches the Original exactly, with no hand-written asm patching around it.
 - **No game files in git.** Everything from the disc (`iso/`), everything splat generates (`asm/`, `*.ld`, `undefined_*_auto.txt`) and all build output stay gitignored.
 - **Compiler: Sony `ee-gcc` 2.96 (`2.96-ee-001003-1`), `-O2 -G0`, assembled with that package's own `ee-as`.** Chosen by evidence (with the user's OK), recorded in `docs/findings.md`. Don't switch compilers or flags without new evidence. Modern binutils expands `move` and jump-table loads differently from the original assembler, so C must go through the package's `ee-as`.
-- SDK routines (from the Sony SDK 3.0.x libraries listed in `docs/findings.md`) get identified by signature, not decompiled by hand.
+- SDK routines (from the Sony SDK 3.0.x libraries listed in `docs/findings.md`) get identified by signature, not decompiled by hand. Record each one in `config/sdk_routines.txt` (names and signatures only, never SDK library files or code); `tools/progress.py` leaves them out of the Game code totals.
 
 ## Toolchain (native Windows)
 
@@ -120,6 +120,8 @@ Splice limitations:
   - `ee_cc.py`: compiles one C file with the game's toolchain
   - `xff_splice.py`: splices compiled C functions into a Game module's asm, verifying they match
   - `try_compilers.py`: compiles C with candidate compilers/flags and diffs against the original functions
+  - `progress.py`: refreshes the README progress table from each Game module's symbol table, relocations and the matching C (needs `iso/` and `asm/`)
+  - `sdk_routines.py`: checks `config/sdk_routines.txt`, the SDK routines identified in the Game modules by signature, and prints entries for new ones
   - `m2c.py`, `permute.py`: run m2c and decomp-permuter on an XFF function
 - `asm/xff/<MODULE>/`: generated Game module assembly (gitignored like all asm)
 - `include/xff_macro.inc`: label macros for Game module asm. Labels are local by default; `.globl` comes from the original symbol table.
@@ -133,6 +135,7 @@ Splice limitations:
   - `tests/`: CTest programs on synthetic images and archives
 - `docs/findings.md`: what we know about the binaries, the compiler and the SDK
 - `config/baserom.json`: expected Original Loader path and SHA1
+- `config/sdk_routines.txt`: SDK routines identified in the Game modules (name, library, size, signature)
 - `config/loader_functions.csv`: every Loader function with its Original or Placeholder name, class (Game code / SDK routine) and library
 
 ## Gotchas

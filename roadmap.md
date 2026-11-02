@@ -38,12 +38,14 @@ CI has no disc files or PS2 toolchain, so passing CI alone does not prove matchi
 - [ ] Match KERNEL `Sg2SmfpSetParam` and the timed pan/volume setters
   `Sg2SlotSetTimePanParam` / `Sg2SlotSetTimeVolParam`.
 - [ ] Resolve register allocation for `nico_optBoneParentScaleUpdateScript`.
-- [ ] Identify KERNEL's SDK routines by signature, and fix the README progress
+- [x] Identify KERNEL's SDK routines by signature, and fix the README progress
   table so it counts only Game code ([#2285](https://github.com/TheRealestNwah/sotc-decomp/issues/2285)).
 - [x] Sort the Loader's functions into SDK routines and Game code
   (`config/loader_functions.csv`, [ADR 0004](docs/adr/0004-finish-line-and-source-cleanup.md)).
 - [ ] Match the Loader's 123 Game code functions. This needs a C build path for
   the Loader (splat `INCLUDE_ASM`), since `xff_splice.py` covers Game modules only.
+- [ ] Sort MANAGER's and GAMECORE's functions into SDK routines and Game code
+  (`config/sdk_routines.txt`; MANAGER's `rand` is a candidate).
 
 The remaining matching tasks above preserve the plans formerly tracked in
 closed issues #18, #51, #52, #54, #55, #107, #208, #459, #460, #513 and #520.
