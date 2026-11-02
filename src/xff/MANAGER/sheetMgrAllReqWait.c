@@ -47,9 +47,9 @@ static inline void addReq(int idx, int type, int *result)
     Req *r = getSheetMgrReqEmpty();
     ReqList *q;
 
-    r->flags &= ~1;
     q = &B_00155470[idx];
     r->type = type;
+    r->flags &= ~1;
     r->result = result;
     if (result != 0)
         *result = 0xDEAD;
