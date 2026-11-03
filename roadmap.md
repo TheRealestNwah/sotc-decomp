@@ -44,7 +44,7 @@ CI has no disc files or PS2 toolchain, so passing CI alone does not prove matchi
   (`config/loader_functions.csv`, [ADR 0004](docs/adr/0004-finish-line-and-source-cleanup.md)).
 - [x] Add a C build path for the Loader (`tools/loader_splice.py`, `src/loader/`,
   built with `-G8`).
-- [ ] Match the Loader's 124 Game code functions (83 so far, in `src/loader/`).
+- [ ] Match the Loader's 124 Game code functions (87 so far, in `src/loader/`).
   C data isn't supported by the Loader splice yet, and `setCop0Epc` is
   handwritten asm.
 - [ ] Sort MANAGER's and GAMECORE's functions into SDK routines and Game code
