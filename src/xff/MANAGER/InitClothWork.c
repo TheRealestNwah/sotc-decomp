@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 5 diffs: store order of the cloth work header fields; no source order of the five stores matches */
 extern char *GetLayoutClass(void *);
 extern void *iosMallocAlign(void *, int, int);
 static int func_000BD050(char *, void *, short *, void *);
@@ -33,9 +32,9 @@ ClothWork *InitClothWork(void *heap, void *o, int *def)
     w = iosMallocAlign(heap, n * 0x90, 0x10);
     cw->count = n;
     cw->items = w;
-    cw->flag7 = 1;
     cw->flag6 = 0;
     cw->flag8 = 1;
+    cw->flag7 = 1;
     *(ClothWork **)(cls + 0x178) = cw;
     for (i = 0; i < n; i++) {
         cw->flag6 |= func_000BD050(w, heap, d, o);
@@ -49,4 +48,3 @@ ClothWork *InitClothWork(void *heap, void *o, int *def)
     cw->d = def[7];
     return cw;
 }
-#endif

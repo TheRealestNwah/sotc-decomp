@@ -22,5 +22,41 @@
   ],
   "src/xff/MANAGER/getPosPQSAnimIntFrame.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/InitClothWork.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/DebugGetParentCharColAttr.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/InitJudgeVolumeClass.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/InitLwsDemoOrientManagerObj.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/ResetCharacterObjGeoDynamics.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/SpriteMenuSetLayerPriorityAllLayer.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/getBossDBInfo.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/initMcManager.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/get_interest_type_camera_lws_animation_data.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/motrootdyn_startxzfit_common.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/initmanagerPartitionConf.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/iosInitKPrintfContext3D.c": [
+    "-fno-strict-aliasing"
   ]
 }

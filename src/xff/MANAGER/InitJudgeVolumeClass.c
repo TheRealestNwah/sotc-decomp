@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 7 diffs: the groups pointer join lands in v1 instead of v0, so the original duplicates the store into the branch delay slot */
 extern void *DldSysUndefSymbol;
 extern void *iosMallocAlign(void *, int, int);
 extern void isysInitGroup(void *);
@@ -59,4 +58,3 @@ void InitJudgeVolumeClass(JudgeVolumeWork *w, unsigned int *ref, void *heap)
     for (i = 0; i < n; i++)
         isysInitGroup(&w->groups[i]);
 }
-#endif
