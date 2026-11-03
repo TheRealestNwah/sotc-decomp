@@ -18,7 +18,7 @@ static inline char *dldResolve(unsigned int *h)
     return (t != 0 && t != DldSysUndefSymbol) ? (char *)t[4] + ((v >> 18) & 0xFFF) * ((int *)t[2])[3] : 0;
 }
 
-void func_0003BEB8(void *out, char *ik, void *q)
+static void func_0003BEB8(void *out, char *ik, void *q)
 {
     float rot[4];
     Limit *lim = (Limit *)dldResolve((unsigned int *)(ik + 0xC));
