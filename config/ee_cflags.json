@@ -31,5 +31,8 @@
   ],
   "src/xff/GAMECORE/SCRSetLWSGeometry.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/ReplayOverBGScript.c": [
+    "-fno-strict-aliasing"
   ]
 }
