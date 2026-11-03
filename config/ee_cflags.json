@@ -61,5 +61,8 @@
   ],
   "src/xff/GAMECORE/GAMEUTIL_set_col_plane_info.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/begin_nico_sight_on.c": [
+    "-fno-strict-aliasing"
   ]
 }
