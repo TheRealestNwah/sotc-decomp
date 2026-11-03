@@ -1,4 +1,3 @@
-#ifdef NONMATCHING
 /* loop increments land in swapped delay slots (i++ vs p++); otherwise matches. */
 typedef struct Ptn Ptn;
 
@@ -21,15 +20,10 @@ extern Ptn *iosCreatePartition(Ptn *, int);
 void initmanagerPartitionConf(ManagerConf *conf)
 {
     PartitionConf *p = conf->parts;
-    int i = 1;
+    int i;
     D_00130344 = conf;
     p->ptn = &rootPtn;
-    goto test;
-loop:
     p++;
-    i++;
-    p->ptn = iosCreatePartition(&rootPtn, p->size);
-test:
-    if (i < conf->num) goto loop;
+    for (i = 1; i < conf->num; i++, p++)
+        p->ptn = iosCreatePartition(&rootPtn, p->size);
 }
-#endif

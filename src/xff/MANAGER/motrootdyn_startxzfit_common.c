@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 15 diffs: register choice for the quaternion-multiply operands and scheduling of the ZeroVector store */
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } __attribute__((aligned(8))) F4;
 typedef union { s128 q; F4 f; } Vec4;
@@ -63,4 +62,3 @@ void motrootdyn_startxzfit_common(void *motion, char *c)
     UnlinkSecureParentInfo(c + 0xAC0);
     zeroVector(c + 0xB30);
 }
-#endif

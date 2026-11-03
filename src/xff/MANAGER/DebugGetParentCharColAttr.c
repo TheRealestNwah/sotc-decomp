@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* near-miss: register allocation / scheduling differences remain */
 extern int MotRootDyn_XZFIT;
 extern int CheckLegalCollisionGP(void *);
 extern unsigned long *GetCollisionDBAttributeAdr(void *);
@@ -21,4 +20,3 @@ int DebugGetParentCharColAttr(unsigned long *out, unsigned char *obj)
     }
     return 0;
 }
-#endif

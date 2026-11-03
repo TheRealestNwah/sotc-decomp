@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* register allocation and store order in the prologue differ (74 diffs) */
 typedef struct McEntry {
     int file;
     int pad;
@@ -33,11 +32,10 @@ void initMcManager(McEntry *list, int a, int b)
         mcMainNeedCluster += (sheetFsGetDirectFileSize(list++->file) + 0x3FF) / 0x400;
         n++;
     }
-    mcMainNeedCluster += (n + 2) / 2;
     B_0014DB44 = n + 1;
+    mcMainNeedCluster += (n + 2) / 2;
     iosCreateMsgQueue(B_0014DB10, B_0014DB30, 1);
     B_0014CB04 = iosCreateThread(mcManager, B_0014CB10, 0x1000, 0x2F, 0);
     for (i = 1; i >= 0; i--) B_0014DB50[i].state = 0;
     iosStartThread(B_0014CB04, 0);
 }
-#endif

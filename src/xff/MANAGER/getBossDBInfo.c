@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 14 diffs: register allocation inside the inlined collisionAttributeIndex */
 typedef struct { char pad0[0x30]; int attribute; } FullCollisionShape;
 typedef struct { unsigned short attribute; char pad2[0x12]; } PackedCollisionShape;
 typedef struct { char pad0[0x3C]; int attribute; } CollisionPlane;
@@ -59,4 +58,3 @@ void getBossDBInfo(BossDBInfo *out, BossDBSource *in)
         }
     }
 }
-#endif

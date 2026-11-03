@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* near-miss: register allocation / scheduling differences remain */
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { s128 q; } Q;
 typedef struct { Q q; int pad; float *f; } Orient;
@@ -23,4 +22,3 @@ void InitLwsDemoOrientManagerObj(char *obj, int *script)
     isysInitGroup(group);
     func_0007E2D0(group, info, orient, obj, orient->f[1] < -2.0f ? 5 : 4, 0.0f);
 }
-#endif
