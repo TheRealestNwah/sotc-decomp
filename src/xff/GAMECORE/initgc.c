@@ -1,0 +1,75 @@
+typedef struct {
+    unsigned long count;
+    char pad8[0x140];
+    long tick148;
+    char pad150[0x8];
+    long tick158;
+    long tick160;
+    char pad168[0x38];
+    float rate1A0;
+    int zero1A4;
+    float rate1A8;
+    char pad1AC[0x15C];
+    void *ptn;
+} GcGlobalVar;
+
+extern GcGlobalVar gcGlobalVar;
+extern char rootPtn[];
+extern int SH_StageDataDEFAULT[];
+extern char D_00179EC8[];
+extern char D_00179ED8[];
+extern char D_00179EE8[];
+extern float D_00179EA4;
+extern char D_0000C130[];
+extern char D_0000C180[];
+extern char D_0000C1D0[];
+extern char EntryPadHistory[];
+extern void iosInitRandom(float);
+extern void gameModeInit(void);
+extern void initmanager(void);
+extern void sheetMgrCreateStageIndexSkipInfo(int);
+extern void usbdevInit(void);
+extern void InitPadHistory(void);
+extern void initMcManager(void *, void *, void *);
+extern void func_0000BBD8(void);
+extern void func_0000C0E8(void);
+extern void graphInit(void);
+extern void optionFlagInit(void);
+extern void initScriptSystem(void);
+extern void execScript(void);
+extern void iosSetISchedulerSubthreadTask(void *);
+extern void iosSetIStartFunc(void *);
+extern void iosSetIFinishFunc(void *);
+extern void iosSetDlTransFunc(void *);
+extern void iosSetGpFinishFunc(void *);
+extern void iosSetIVSyncMode(int);
+extern void iosPadEntryTickFunc(void *);
+
+void initgc(void)
+{
+    gcGlobalVar.ptn = rootPtn;
+    iosInitRandom(9.4356f);
+    gameModeInit();
+    initmanager();
+    sheetMgrCreateStageIndexSkipInfo(SH_StageDataDEFAULT[3]);
+    usbdevInit();
+    InitPadHistory();
+    initMcManager(D_00179EE8, D_00179EC8, D_00179ED8);
+    func_0000BBD8();
+    gcGlobalVar.rate1A8 = D_00179EA4;
+    gcGlobalVar.zero1A4 = 0;
+    gcGlobalVar.rate1A0 = D_00179EA4;
+    gcGlobalVar.tick160 = gcGlobalVar.tick148 + gcGlobalVar.tick160;
+    gcGlobalVar.tick158 = (((gcGlobalVar.count << 8) >> 8) * (int)(D_00179EA4 * 256.0f)) >> 8;
+    gcGlobalVar.tick148 = 0;
+    graphInit();
+    optionFlagInit();
+    initScriptSystem();
+    iosSetISchedulerSubthreadTask(execScript);
+    iosSetIStartFunc(func_0000C0E8);
+    iosSetIFinishFunc(D_0000C130);
+    iosSetDlTransFunc(D_0000C1D0);
+    iosSetGpFinishFunc(D_0000C180);
+    iosSetIVSyncMode(0);
+    iosPadEntryTickFunc(EntryPadHistory);
+}
