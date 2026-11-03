@@ -58,5 +58,8 @@
   ],
   "src/xff/MANAGER/iosInitKPrintfContext3D.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/charrootdyn_getCollisionDBwithFunc.c": [
+    "-fno-strict-aliasing"
   ]
 }
