@@ -58,5 +58,8 @@
   ],
   "src/xff/MANAGER/iosInitKPrintfContext3D.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/GAMEUTIL_set_col_plane_info.c": [
+    "-fno-strict-aliasing"
   ]
 }
