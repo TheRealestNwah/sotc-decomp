@@ -1,13 +1,23 @@
-char *getPointData(unsigned int *p, int i)
+typedef struct {
+    char data[0x30];
+} PointData;
+
+typedef struct {
+    unsigned int count;
+    char pad[0xC];
+    PointData points[1];
+} PointDataSet;
+
+PointData *getPointData(PointDataSet *set, int index)
 {
-    char *r;
-    if (p == 0)
-        goto no;
-    if (i < 0)
-        goto no;
-    r = (char *)p + i * 48 + 0x10;
-    if ((unsigned int)i < p[0])
-        return r;
-no:
-    return 0;
+    PointData *p = 0;
+
+    if (set != 0 && index >= 0) {
+        p = &set->points[index];
+        if (index < set->count) {
+            return p;
+        }
+        p = 0;
+    }
+    return p;
 }

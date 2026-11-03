@@ -1,8 +1,8 @@
-int GetMotionResourceRotAngle(int kind)
+int GetMotionResourceRotAngle(int type)
 {
     int angle = 0;
 
-    switch (kind) {
+    switch (type) {
     case 0:
         break;
     case 1:
