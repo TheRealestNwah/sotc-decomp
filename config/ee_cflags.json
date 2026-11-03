@@ -25,5 +25,8 @@
   ],
   "src/xff/GAMECORE/SCRSetLWSGeometryWithNoParentChange.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/SCRSetLWSGeometryWithZY.c": [
+    "-fno-strict-aliasing"
   ]
 }
