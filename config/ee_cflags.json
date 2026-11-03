@@ -19,5 +19,8 @@
   ],
   "src/xff/KERNEL/__ieee754_powf.c": [
     "-fno-builtin"
+  ],
+  "src/xff/MANAGER/getPosPQSAnimIntFrame.c": [
+    "-fno-strict-aliasing"
   ]
 }
