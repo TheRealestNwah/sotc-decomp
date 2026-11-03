@@ -22,5 +22,8 @@
   ],
   "src/xff/MANAGER/getPosPQSAnimIntFrame.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/SCRSetLWSGeometryWithNoParentChange.c": [
+    "-fno-strict-aliasing"
   ]
 }
