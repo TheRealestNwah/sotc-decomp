@@ -1,7 +1,10 @@
-#ifdef NONMATCHING /* near-miss: register allocation / scheduling differences remain */
+#ifdef NONMATCHING /* 10 diffs: scheduling of the group-pointer movn and the s0/s1/s4 setup before the inner loop */
 typedef struct FogColMan {
     char pad0[0x90];
     int flags;
+    char pad94[4];
+    char g98[4];
+    char g9C[4];
 } FogColMan;
 
 extern FogColMan B_00148A40;
@@ -11,7 +14,7 @@ extern char B_00148ADC[];
 extern void **isysGroupForFirst(void *, int);
 extern void **isysGroupForNext(void **, int);
 extern void isysGroupForExit(void *, int);
-extern int func_00071AF0(unsigned char *, int, int, int, int, int);
+extern int func_00071AF0(unsigned char *, void *, void *, int, unsigned char *, void *);
 
 static inline unsigned char *GetObjWork(unsigned char *obj, int type)
 {
@@ -21,12 +24,13 @@ static inline unsigned char *GetObjWork(unsigned char *obj, int type)
     return 0;
 }
 
-unsigned char *AddCollMan(int a, int b, int c)
+unsigned char *AddCollMan(void *a, void *b, void *c)
 {
     unsigned char *w = 0;
-    int found = 0;
+    int found;
     int pass;
 
+    found = 0;
     for (pass = 0; pass < 2; pass++) {
         void **node;
         unsigned char *last;
@@ -35,14 +39,14 @@ unsigned char *AddCollMan(int a, int b, int c)
             continue;
         }
         last = 0;
-        for (node = isysGroupForFirst(pass ? B_00148AD8 : B_00148ADC, 0); node != 0;
+        for (node = isysGroupForFirst(pass != 0 ? B_00148AD8 : B_00148ADC, 0); node != 0;
              node = isysGroupForNext(node, 0)) {
             last = *node;
             w = GetObjWork(last, 0x18);
             if (w == 0) {
                 continue;
             }
-            if (func_00071AF0(w, a, b, pass, (int)last, c) != 0) {
+            if (func_00071AF0(w, a, b, pass, last, c) != 0) {
                 found = 1;
                 break;
             }

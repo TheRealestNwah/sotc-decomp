@@ -1,52 +1,47 @@
-#ifdef NONMATCHING /* near-miss: register allocation / scheduling differences remain */
+#ifdef NONMATCHING /* 44 instruction diffs: the original stores state into the struct after the 64-byte block copy and then reloads it; gcc keeps the store ahead of the copy here */
 typedef struct {
-    int motion;
-    int pad4[7];
-    int force;
-    int pad24[7];
-} MotionState;
-
+    int v[16];
+} MotBlk;
 typedef struct {
-    MotionState state;
-    int arg;
+    char pad[0x1C0];
+    MotBlk blk;
+} CharClass;
+typedef struct {
+    MotBlk blk;
+    int state;
     int flag;
-} MotionPredict;
-
+} MotPredict;
 typedef struct {
-    int arg;
+    int state;
     int a;
     int b;
-} PredictResult;
-
-typedef struct {
-    char pad0[0x1C0];
-    MotionState state;
-} CharacterClass;
-
-extern CharacterClass *GetCharacterClass(int);
-extern int func_00053F80(PredictResult *, CharacterClass *, MotionPredict *, int);
-extern void func_00054F18(PredictResult *, CharacterClass *, MotionPredict *, int);
-
-void PredictMotionChangeState(PredictResult *out, int chara, int arg)
+} MotResult;
+extern CharClass *GetCharacterClass(int);
+extern int func_00053F80(MotResult *, CharClass *, MotPredict *, int);
+extern void func_00054F18(MotResult *, CharClass *, MotPredict *, int);
+void PredictMotionChangeState(MotResult *res, int chr, int state)
 {
-    CharacterClass *cls;
-    MotionPredict p;
+    CharClass *cls;
+    MotPredict pr;
     int r;
+    int key;
 
-    cls = GetCharacterClass(chara);
-    p.state = cls->state;
-    p.arg = arg;
-    arg = p.state.motion;
-    p.state.force = 1;
-    out->b = 0;
-    out->arg = p.arg;
-    out->a = 0;
-    p.flag = 0;
-    r = func_00053F80(out, cls, &p, arg);
-    if (r >= 0) {
-        if (r == 0) {
-            func_00054F18(out, cls, &p, arg);
-        }
+    cls = GetCharacterClass(chr);
+    pr.state = state;
+    pr.blk = cls->blk;
+    pr.blk.v[8] = 1;
+    key = pr.blk.v[0];
+    res->b = 0;
+    res->state = pr.state;
+    res->a = 0;
+    pr.flag = 0;
+    r = func_00053F80(res, cls, &pr, key);
+    if (r < 0) {
+        return;
     }
+    if (r != 0) {
+        return;
+    }
+    func_00054F18(res, cls, &pr, key);
 }
 #endif

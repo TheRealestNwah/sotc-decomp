@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* near-miss: register allocation / scheduling differences remain */
+#ifdef NONMATCHING /* 21 instruction diffs: target uses branch-likely for the *rot store and a different v0/v1 allocation for the sandwich vectors */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; int i[4]; } Vec4;
 #define VU_OUTER_PRODUCT(dst, a, b) \
@@ -10,6 +10,8 @@ typedef union { s128 q; float f[4]; int i[4]; } Vec4;
                          "sqc2 vf07, 0x0(%0)\n" \
                          : : "r"(dst), "r"(a), "r"(b) : "memory")
 
+extern int GAMEUTIL_get_rot_dir_for_near_to_aim_yaw_dir(void *, float *, float, float *);
+
 static inline int is_yaw_dir_sandwich(float *a, float *b, float *c)
 {
     Vec4 t1;
@@ -18,26 +20,30 @@ static inline int is_yaw_dir_sandwich(float *a, float *b, float *c)
     int r;
     VU_OUTER_PRODUCT(&t1, b, a);
     VU_OUTER_PRODUCT(&t2, b, c);
+    r = 0;
     if (t1.f[1] * t2.f[1] > 0.0f) {
         VU_OUTER_PRODUCT(&t3, a, c);
         r = t2.f[1] * t3.f[1] > 0.0f;
-    } else r = 0;
+    }
     return r;
 }
 
-extern int GAMEUTIL_get_rot_dir_for_near_to_aim_yaw_dir(float *dir, float *cur, float *aim);
-
-int GAMEUTIL_near_to_aim_yaw_dir(float *dir, int *rot, s128 *cur, float *aim)
+int GAMEUTIL_near_to_aim_yaw_dir(Vec4 *out, int *rot, Vec4 *cur, float speed, Vec4 *aim)
 {
-    Vec4 tmp;
+    Vec4 v;
     int r;
-    tmp.q = *cur;
-    r = GAMEUTIL_get_rot_dir_for_near_to_aim_yaw_dir(dir, tmp.f, aim);
-    if (rot) *rot = r;
-    if (is_yaw_dir_sandwich(aim, tmp.f, dir) == 1) {
-        if (dir) *(s128 *)dir = *(s128 *)aim;
-        return 1;
+
+    v.q = cur->q;
+    r = GAMEUTIL_get_rot_dir_for_near_to_aim_yaw_dir(out, v.f, speed, aim->f);
+    if (rot != 0) {
+        *rot = r;
     }
-    return 0;
+    if (is_yaw_dir_sandwich(aim->f, v.f, out->f) != 1) {
+        return 0;
+    }
+    if (out != 0) {
+        out->q = aim->q;
+    }
+    return 1;
 }
 #endif

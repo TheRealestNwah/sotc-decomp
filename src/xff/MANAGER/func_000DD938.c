@@ -1,55 +1,27 @@
-extern void *DldSysUndefSymbol;
-extern void sndSepSetDefaultParam(void *);
-
-typedef struct {
-    int pad0;
-    unsigned int ref;
-    unsigned int bits;
-    float vol;
-} SeDef;
-
-typedef struct {
-    char pad0[0x10];
-    int data;
-    int a : 16;
-    int b : 16;
-    float vol0;
-    float vol1;
-    char pad20[0x24];
-    SeDef *def;
-} SeReq;
-
-static inline char *resourceData(unsigned int *reference)
+extern int DldSysUndefSymbol;
+typedef struct { char pad0[0xC]; int size; } DldType;
+typedef struct { char pad0[8]; DldType *type; char padC[4]; char *data; } DldTable;
+typedef struct { char pad0[0x1C]; int bank; } SepDef;
+typedef struct { int pad0; unsigned int handle; unsigned int a : 5; unsigned int b : 7; float volume; } SepSource;
+typedef struct { char pad0[0x10]; int bank; union { struct { short a; short b; } s; int i; float f; } p; float vol0; float vol1; char pad20[0x24]; SepSource *source; } SepWork;
+extern void sndSepSetDefaultParam(SepWork *);
+static inline void *dldElement(unsigned int *h)
 {
-    unsigned int encoded = *reference;
-    unsigned int offset = encoded & 0x3FFFF;
-    char *module;
-    if (offset)
-        module = *(char **)((char *)reference - offset);
-    else
-        module = 0;
-    if (module && module != DldSysUndefSymbol) {
-        int index = (encoded >> 18) & 0xFFF;
-        char *definition = *(char **)(module + 8);
-        char *data = *(char **)(module + 0x10);
-        return data + index * *(int *)(definition + 0xC);
-    }
-    return 0;
+    int off = *h & 0x3FFFF;
+    DldTable *t = off != 0 ? *(DldTable **)((char *)h - off) : 0;
+    return (t != 0 && t != (DldTable *)DldSysUndefSymbol) ? t->data + ((*h >> 18) & 0xFFF) * t->type->size : 0;
 }
-
-static int func_000DD938(SeReq *req)
+static int func_000DD938(SepWork *work)
 {
-    SeDef *def = req->def;
-    char *res = resourceData(&def->ref);
-
-    if (res == 0)
+    SepSource *source = work->source;
+    SepDef *def = dldElement(&source->handle);
+    if (def == 0)
         return -1;
-    req->data = *(int *)(res + 0x1C);
-    if (req->data == 0)
+    if ((work->bank = def->bank) == 0)
         return -1;
-    req->a = def->bits % 32;
-    req->b = (def->bits >> 5) & 0x7F;
-    req->vol1 = req->vol0 = def->vol;
-    sndSepSetDefaultParam(req);
+    work->p.s.a = source->a;
+    work->p.s.b = source->b;
+    work->vol1 = work->vol0 = source->volume;
+    sndSepSetDefaultParam(work);
     return 0;
 }

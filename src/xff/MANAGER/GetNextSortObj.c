@@ -1,44 +1,52 @@
-#ifdef NONMATCHING
-/* obj->next lands in v0 instead of v1 (the original copies it to v0 in the return delay slot). */
-typedef struct SortObj {
-    int pad[2];
-    struct SortObj *next;
-} SortObj;
+#ifdef NONMATCHING /* 21 instruction diffs: gcc strength-reduces the first-object loop to a pointer walk; the original indexes arr[i] each pass */
+typedef struct Obj {
+    char pad[8];
+    struct Obj *next;
+} Obj;
 
 typedef struct {
-    int *items;
+    Obj **arr;
     int count;
-    int unused[2];
-    int current;
+    int pad[2];
+    int idx;
 } SortList;
 
-SortObj *GetNextSortObj(SortList *list, SortObj *obj)
+Obj *GetNextSortObj(SortList *l, Obj *cur)
 {
-    SortObj *next;
-    if (obj == 0) {
-        int i = 0;
-        if (i < list->count) {
-            list->current = 0;
-            for (; i < list->count; i++) {
-                list->current = i;
-                if (list->items[i]) {
-                    obj = (SortObj *)list->items[i];
-                    break;
+    int i;
+    int n;
+    Obj *o;
+
+    if (cur == 0) {
+        n = l->count;
+        i = 0;
+        if (i < n) {
+            l->idx = 0;
+            o = l->arr[0];
+            while (o == 0) {
+                i++;
+                if (i >= n) {
+                    return cur;
                 }
+                l->idx = i;
+                o = l->arr[i];
             }
+            cur = o;
         }
-        return obj;
+        return cur;
     }
-    __asm__ __volatile__("pref 0, 0x40(%0)" : : "r"(obj->next));
-    next = obj->next;
-    if (next == 0) {
+    __asm__ __volatile__("pref 0, 0x40(%0)" : : "r"(cur->next));
+    o = cur->next;
+    if (o == 0) {
+        n = l->count;
         do {
-            list->current++;
-            if (list->current == list->count)
+            l->idx++;
+            if (l->idx == n) {
                 return 0;
-            next = (SortObj *)list->items[list->current];
-        } while (next == 0);
+            }
+            o = l->arr[l->idx];
+        } while (o == 0);
     }
-    return next;
+    return o;
 }
 #endif

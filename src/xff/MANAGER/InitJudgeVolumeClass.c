@@ -1,19 +1,32 @@
-#ifdef NONMATCHING /* near-miss: register allocation / scheduling differences remain */
+#ifdef NONMATCHING /* 7 diffs: the groups pointer join lands in v1 instead of v0, so the original duplicates the store into the branch delay slot */
 extern void *DldSysUndefSymbol;
-extern void *iosMallocAlign(void *heap, int size, int align);
-extern void isysInitGroup(void *group);
+extern void *iosMallocAlign(void *, int, int);
+extern void isysInitGroup(void *);
 
 typedef struct {
     int count;
     int *groups;
     void *data;
-} JudgeVolumeClass;
+} JudgeVolumeWork;
 
 static inline char *resourceModule(unsigned int *reference)
 {
     unsigned int offset = *reference & 0x3FFFF;
+    char *module;
+
     if (offset)
-        return *(char **)((char *)reference - offset);
+        module = *(char **)((char *)reference - offset);
+    else
+        module = 0;
+    return module;
+}
+
+static inline int resourceCount(unsigned int *reference)
+{
+    char *module = resourceModule(reference);
+
+    if (module && module != DldSysUndefSymbol)
+        return *(int *)(module + 0xC);
     return 0;
 }
 
@@ -35,20 +48,15 @@ static inline void *resourceData(unsigned int *reference)
     return 0;
 }
 
-void InitJudgeVolumeClass(JudgeVolumeClass *jv, unsigned int *reference, void *heap)
+void InitJudgeVolumeClass(JudgeVolumeWork *w, unsigned int *ref, void *heap)
 {
-    char *module = resourceModule(reference);
-    int count;
+    int n = resourceCount(ref);
     int i;
 
-    if (module && module != DldSysUndefSymbol)
-        count = *(int *)(module + 0xC);
-    else
-        count = 0;
-    jv->count = count;
-    jv->groups = count ? iosMallocAlign(heap, count * 4, 4) : 0;
-    jv->data = resourceData(reference);
-    for (i = 0; i < count; i++)
-        isysInitGroup(&jv->groups[i]);
+    w->count = n;
+    w->groups = n != 0 ? iosMallocAlign(heap, n * 4, 4) : 0;
+    w->data = resourceData(ref);
+    for (i = 0; i < n; i++)
+        isysInitGroup(&w->groups[i]);
 }
 #endif

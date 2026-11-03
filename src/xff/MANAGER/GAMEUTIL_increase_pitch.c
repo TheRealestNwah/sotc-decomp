@@ -1,65 +1,58 @@
-#ifdef NONMATCHING /* near-miss: register allocation / scheduling differences remain */
-static inline int is_nearly_equal_zero(float value, float tolerance)
+#ifdef NONMATCHING /* 30 instruction diffs: the near-zero check and the clamp-to-limit branches come out with inverted branch-likely shapes */
+static inline int is_near_zero(float x, float eps)
 {
-    if (value < 0.0f) {
-        if (-value <= tolerance) {
-            goto nearZero;
-        } else {
-            goto notNearZero;
+    if (x < 0.0f) {
+        if (-x > eps) {
+            return 0;
         }
-    } else {
-        if (value <= tolerance) {
-            goto nearZero;
-        } else {
-            goto notNearZero;
-        }
+        return 1;
     }
-
-nearZero:
+    if (x > eps) {
+        return 0;
+    }
     return 1;
-notNearZero:
-    return 0;
 }
-
-float GAMEUTIL_increase_pitch(int *moved, int option, float pitch, float delta, float upper, float lower)
+float GAMEUTIL_increase_pitch(int *changed, int clamp, float pitch, float add, float max, float min)
 {
-    int flag = 0;
-    float r = pitch;
-
-    if (!is_nearly_equal_zero(delta, 0.0001f)) {
-        if (upper > 1.48352981f)
-            upper = 1.48352981f;
-        else if (lower < -1.48352981f)
-            lower = -1.48352981f;
-        if (upper < pitch) {
-            if (delta < 0.0f) {
-                r = pitch + delta;
-                flag = 1;
-                if (r < upper) {
-                    if (option)
-                        r = upper;
+    int r;
+    float out;
+    r = 0;
+    out = pitch;
+    if (is_near_zero(add, 0.0001f) == 0) {
+        if (max > 1.4835299f) {
+            max = 1.4835299f;
+        } else if (min < -1.4835299f) {
+            min = -1.4835299f;
+        }
+        if (max < pitch) {
+            if (add < 0.0f) {
+                out = pitch + add;
+                r = 1;
+                if (out < max && clamp != 0) {
+                    out = max;
                 }
             }
-        } else if (pitch < lower) {
-            if (0.0f < delta) {
-                r = pitch + delta;
-                flag = 1;
-                if (lower < r) {
-                    if (option)
-                        r = lower;
+        } else if (pitch < min) {
+            if (add > 0.0f) {
+                out = pitch + add;
+                r = 1;
+                if (min < out && clamp != 0) {
+                    out = min;
                 }
             }
         } else {
-            r = pitch + delta;
-            flag = 1;
-            if (upper < r)
-                r = upper;
-            else if (r < lower)
-                r = lower;
+            out = pitch + add;
+            if (max < out) {
+                out = max;
+            } else if (out < min) {
+                out = min;
+            }
+            r = 1;
         }
     }
-    if (moved)
-        *moved = flag;
-    return r;
+    if (changed != 0) {
+        *changed = r;
+    }
+    return out;
 }
 #endif

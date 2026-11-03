@@ -1,68 +1,82 @@
-#ifdef NONMATCHING /* near-miss: register allocation / scheduling differences remain */
+#ifdef NONMATCHING /* 41 diffs: register allocation and scheduling in the list-insert loop */
 typedef struct SortObj {
     int pad;
-    float key;
+    float z;
     struct SortObj *next;
     struct SortObj *prev;
 } SortObj;
 
 typedef struct {
-    SortObj **items;
+    SortObj **arr;
     int count;
     float scale;
     int mode;
+    int j;
 } SortList;
 
-void AddSortObj(SortList *list, SortObj *obj)
+void AddSortObj(SortList *l, SortObj *o)
 {
-    int i;
-    int idx;
-    SortObj *cur;
-    SortObj *link;
+    float z = o->z;
+    int n = l->count;
+    int i = z * l->scale;
+    int k;
+    int mode;
+    int j;
+    SortObj *p;
 
-    i = obj->key * list->scale;
-    if (i < list->count) {
-        idx = 0;
-        if (i >= 0)
-            idx = i;
+    if (i < n) {
+        k = 0;
+        if (i >= 0) {
+            k = i;
+        }
     } else {
-        idx = list->count - 1;
+        k = n - 1;
     }
-    i = idx;
-    if (list->mode == 1)
-        i = list->count - idx - 1;
-    cur = list->items[i];
-    if (cur == 0) {
-        list->items[i] = obj;
-        obj->next = 0;
-        obj->prev = 0;
+    mode = l->mode;
+    j = k;
+    if (mode == 1) {
+        j = n - k - 1;
+    }
+    p = l->arr[j];
+    if (p == 0) {
+        l->arr[j] = o;
+        o->next = 0;
+        o->prev = 0;
         return;
     }
     for (;;) {
-        if ((list->mode == 0 && cur->key < obj->key) || (list->mode == 1 && obj->key < cur->key)) {
-            link = cur->next;
-            if (link == 0) {
-                obj->next = 0;
-                obj->prev = cur;
-                cur->next = obj;
-                return;
+        switch (mode) {
+        case 0:
+            if (p->z < z) {
+                goto next;
             }
-            cur = link;
-        } else {
-            link = cur->prev;
-            if (link == 0) {
-                list->items[i] = obj;
-                obj->prev = 0;
-                obj->next = cur;
-                cur->prev = obj;
-                return;
+            break;
+        case 1:
+            if (z < p->z) {
+                goto next;
             }
-            link->next = obj;
-            obj->next = cur;
-            obj->prev = cur->prev;
-            cur->prev = obj;
+            break;
+        }
+        if (p->prev == 0) {
+            l->arr[j] = o;
+            o->prev = 0;
+            o->next = p;
+            p->prev = o;
             return;
         }
+        p->prev->next = o;
+        o->next = p;
+        o->prev = p->prev;
+        p->prev = o;
+        return;
+    next:
+        if (p->next == 0) {
+            o->next = 0;
+            o->prev = p;
+            p->next = o;
+            return;
+        }
+        p = p->next;
     }
 }
 #endif

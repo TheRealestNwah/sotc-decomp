@@ -1,34 +1,16 @@
-extern void *DldSysUndefSymbol;
-extern int func_00048F90(int, int, int, char **, int, int, int, char *, char *, int, int, int, int);
-
-static inline char *resourceData(unsigned int *reference)
+extern int DldSysUndefSymbol;
+typedef struct { char pad0[0xC]; int size; } DldType;
+typedef struct { char pad0[8]; DldType *type; char padC[4]; char *data; } DldTable;
+typedef struct { char pad0[0x28]; int handle; } Geometry;
+static inline void *dldElement(int *h)
 {
-    unsigned int encoded = *reference;
-    unsigned int offset = encoded & 0x3FFFF;
-    char *module;
-    if (offset)
-        module = *(char **)((char *)reference - offset);
-    else
-        module = 0;
-    if (module && module != DldSysUndefSymbol) {
-        int index = (encoded >> 18) & 0xFFF;
-        char *definition = *(char **)(module + 8);
-        char *data = *(char **)(module + 0x10);
-        return data + index * *(int *)(definition + 0xC);
-    }
-    return 0;
+    int off = *h & 0x3FFFF;
+    DldTable *t = off != 0 ? *(DldTable **)((char *)h - off) : 0;
+    return (t != 0 && t != (DldTable *)DldSysUndefSymbol) ? t->data + (((unsigned int)*h >> 18) & 0xFFF) * t->type->size : 0;
 }
-
-int AddSubGeometry(int a, int b, int c, char **d, int e, int f, int g, int h, int i, int j, int k)
+extern int func_00048F90(void *, void *, void *, Geometry **, void *, void *, void *, Geometry *, void *, void *, void *, void *, void *);
+int AddSubGeometry(void *a, void *b, void *c, Geometry **geometry, void *e, void *f, void *g, void *h, void *i, void *j, void *k)
 {
-    char *p = *d;
-    char *res;
-    char *tmp;
-
-    if (p) {
-        tmp = resourceData((unsigned int *)(p + 0x28));
-        res = tmp;
-    } else
-        res = 0;
-    return func_00048F90(a, b, c, d, e, f, g, p, res, h, i, j, k);
+    Geometry *geom = *geometry;
+    return func_00048F90(a, b, c, geometry, e, f, g, geom, geom != 0 ? dldElement(&geom->handle) : 0, h, i, j, k);
 }
