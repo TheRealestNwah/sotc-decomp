@@ -1,30 +1,32 @@
-#ifdef NONMATCHING /* 38 diffs: register allocation and scheduling; the permuter found nothing better */
-typedef struct { int a; int pad[3]; int b; int pad2[31]; } CollElem;
-typedef struct { int pad; int count; CollElem *elems; int a; int b; } CollDesc;
 extern int GetSizeOfModifiedManagerWork(int);
-int GetCollisionWorkSize(CollDesc *d)
-{
-    int size;
-    int i;
+
+typedef struct {
+    int a;
+    int pad4[3];
+    int b;
+    char pad14[0x90 - 0x14];
+} ModEntry;
+
+typedef struct {
+    int pad0;
+    int n;
+    ModEntry *e;
     int a;
     int b;
-    int n;
-    n = d->count;
-    size = n * 0x60 + 0x90;
+} ModList;
+static inline int sz(int a) { return GetSizeOfModifiedManagerWork(a) + a * 16; }
+int GetCollisionWorkSize(ModList *m)
+{
+    int n = m->n;
+    int size = n * 0x60 + 0x90;
+    int i;
     for (i = 0; i < n; i++) {
-        a = d->elems[i].a;
-        b = d->elems[i].b;
-        size += GetSizeOfModifiedManagerWork(a) + a * 16;
-        size += GetSizeOfModifiedManagerWork(a) + a * 16;
-        size += GetSizeOfModifiedManagerWork(b) + b * 16;
-        size += GetSizeOfModifiedManagerWork(b) + b * 16;
+        int a = m->e[i].a, b = m->e[i].b;
+        size += sz(a); size += sz(a); size += sz(b); size += sz(b);
     }
-    a = d->a;
-    b = d->b;
-    size += GetSizeOfModifiedManagerWork(a) + a * 16;
-    size += GetSizeOfModifiedManagerWork(a) + a * 16;
-    size += GetSizeOfModifiedManagerWork(b) + b * 16;
-    size += GetSizeOfModifiedManagerWork(b) + b * 16;
+    {
+        int a = m->a, b = m->b;
+        size += sz(a); size += sz(a); size += sz(b); size += sz(b);
+    }
     return size + 0x33;
 }
-#endif
