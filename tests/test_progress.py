@@ -7,6 +7,7 @@ from tools.progress import (
     count,
     label_addresses,
     loader_game_functions,
+    loader_progress,
     module_functions,
     read_sdk_routines,
     render_sdk,
@@ -126,11 +127,13 @@ def test_read_sdk_routines_groups_names_by_module(tmp_path):
 
 
 def test_render_table_reports_module_and_total_percentages():
-    table = render_table({"A": Progress(1, 4, 0), "B": Progress(5, 10, 2)}, loader_total=8)
+    table = render_table(
+        {"A": Progress(1, 4, 0), "B": Progress(5, 10, 2)}, loader=Progress(2, 8, 0)
+    )
 
     assert "| `A.XFF` Game code as matching C | 1 | 4 functions | 25% |" in table
     assert "| All three Game modules' Game code as matching C | 6 | 14 functions | 43% |" in table
-    assert "| Loader `SCUS_974.72` Game code as matching C | 0 | 8 functions | 0% |" in table
+    assert "| Loader `SCUS_974.72` Game code as matching C | 2 | 8 functions | 25% |" in table
 
 
 def test_loader_game_functions_counts_game_rows(tmp_path):
@@ -143,7 +146,30 @@ def test_loader_game_functions_counts_game_rows(tmp_path):
         encoding="utf-8",
     )
 
-    assert loader_game_functions(path) == 2
+    assert loader_game_functions(path) == {"func_00100000", "ResolveRelocation"}
+
+
+def test_loader_progress_counts_c_definitions_of_game_code(tmp_path):
+    path = tmp_path / "loader.csv"
+    path.write_text(
+        "address,size,name,class,library,evidence\n"
+        "0x00100000,0x10,func_00100000,game,loader,x\n"
+        "0x00100010,0xB0,_start,sdk,crt0,y\n"
+        "0x001000D0,0x1A4,ResolveRelocation,game,loader,z\n",
+        encoding="utf-8",
+    )
+    src = tmp_path / "loader"
+    src.mkdir()
+    (src / "ResolveRelocation.c").write_text(
+        "static inline int helper(void) { return 1; }\n"
+        "void ResolveRelocation(void) { helper(); }\n",
+        encoding="utf-8",
+    )
+    (src / "func_00100000.c").write_text(
+        "#ifdef NONMATCHING\nvoid func_00100000(void) {}\n#endif\n", encoding="utf-8"
+    )
+
+    assert loader_progress(path, src) == Progress(matched=1, total=2, sdk=0)
 
 
 def test_render_sdk_lists_each_module():
