@@ -1,4 +1,3 @@
-#ifdef NONMATCHING
 typedef struct { int a; int hash; } LayerDef;
 typedef struct { LayerDef *def; char *parts; unsigned int flags; char pad[0x38]; } Layer;
 
@@ -24,4 +23,3 @@ void SpriteMenuSetLayerPriorityAllLayer(unsigned char *o, int priority)
         r->flags = (r->flags & 0xFFFC3FFF) | ((priority & 0xF) << 14);
     }
 }
-#endif

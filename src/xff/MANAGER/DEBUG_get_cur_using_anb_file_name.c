@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 4 diffs: v0/v1 swapped in the _AnimObjDef compare */
 extern int DldSysUndefSymbol;
 extern int _AnimObjDef;
 extern char *GetCharacterClass(void *);
@@ -29,10 +28,10 @@ char *DEBUG_get_cur_using_anb_file_name(void *chr, char *dflt)
             char **pp = (char **)(cls + 0x1C0);
             if (pp == 0) return 0;
             if (*pp == 0) return 0;
-            if ((int *)dldObj((unsigned int *)(*pp + 0x50))[2] != &_AnimObjDef) return dflt;
-            return DEBUG_get_base_name(*(char **)dldElem((unsigned int *)(*pp + 0x50)));
+            if ((int *)dldObj((unsigned int *)(*pp + 0x50))[2] == &_AnimObjDef)
+                return DEBUG_get_base_name(*(char **)dldElem((unsigned int *)(*pp + 0x50)));
+            return dflt;
         }
     }
     return 0;
 }
-#endif

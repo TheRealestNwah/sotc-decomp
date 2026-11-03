@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* the init stores are scheduled in a different order */
 typedef int Quadword __attribute__((mode(TI)));
 typedef struct { Quadword q; } Vector;
 extern int is_sub_type_camera_lws_animation(void *);
@@ -103,11 +102,11 @@ static inline void initAnimeData(CameraLwsAnimeData *out)
     out->unk50 = 0;
     out->unk54 = -1;
     out->target = ZeroPoint;
+    out->target_speed = ZeroPoint;
     out->scale = 1.0f;
     out->unk80 = 0;
-    out->target_speed = ZeroPoint;
-    out->unk88 = 0;
     out->unk84 = 0;
+    out->unk88 = 0;
 }
 int get_interest_type_camera_lws_animation_data(CameraLwsAnimeData *out, int *anim, int param)
 {
@@ -125,4 +124,3 @@ int get_interest_type_camera_lws_animation_data(CameraLwsAnimeData *out, int *an
     }
     return 0;
 }
-#endif
