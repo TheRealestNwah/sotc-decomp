@@ -278,8 +278,10 @@ These don't need cleaned-up source, so they run alongside matching.
   translator to API-neutral draw batches, and a CPU reference backend that
   draws one frame to a PNG (`port/render/`, `gsframe`; see
   [docs/render-translator.md](docs/render-translator.md)).
-- [ ] Check the Render translator against a real GS dump of the title screen
-  (capture steps in docs/render-translator.md) and fix what differs.
+- [x] Check the Render translator against a real GS dump of the title screen:
+  it matches PCSX2's screenshot once the dump is replayed 300 frames (the
+  game's double-buffer copy and temporal sky glow need it; see
+  docs/render-translator.md).
 - [ ] SDL_GPU backend for the Render translator's draw batches, with the
   reference backend as its test oracle.
 - [ ] Hand-translate the roughly 14 VU1 microprogram overlay sets into C and
