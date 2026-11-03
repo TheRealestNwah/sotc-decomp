@@ -21,7 +21,6 @@ void SetObjectGeoAndUnparent(void *obj, void *quat, s128 *pos)
 
     ForceUnparentLayoutObj(obj);
     l = GetLayoutClass(obj);
-    scale = 100.0f;
 
     if (l == 0)
         return;
@@ -29,6 +28,7 @@ void SetObjectGeoAndUnparent(void *obj, void *quat, s128 *pos)
     *(s128 *)(l + 0x40) = *pos;
     *(s128 *)(l + 0x30) = ZeroVector;
     c = GetCharacterClass(obj);
+    scale = 100.0f;
     if (c != 0) {
         UpdateCharacterClassGeometry(c);
         charrootdyn_getRegularColFinderPosition(c + 0x4C0, c, *(void **)(l + 0x13C), *(s128 **)(l + 0x134));
