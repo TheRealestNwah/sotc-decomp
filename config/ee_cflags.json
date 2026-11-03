@@ -85,5 +85,8 @@
   ],
   "src/xff/GAMECORE/EndMessageScript.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/PlayDemoCameraOrient.c": [
+    "-fno-strict-aliasing"
   ]
 }
