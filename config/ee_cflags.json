@@ -59,10 +59,31 @@
   "src/xff/MANAGER/iosInitKPrintfContext3D.c": [
     "-fno-strict-aliasing"
   ],
+  "src/xff/MANAGER/charrootdyn_getCollisionDBwithFunc.c": [
+    "-fno-strict-aliasing"
+  ],
   "src/xff/GAMECORE/GAMEUTIL_set_col_plane_info.c": [
     "-fno-strict-aliasing"
   ],
   "src/xff/GAMECORE/begin_nico_sight_on.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/SCRSetLWSGeometryWithNoParentChange.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/SCRSetLWSGeometryWithZY.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/SCRSetLWSGeometry.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/ReplayOverBGScript.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/timeAttackOverBGScript.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/EndMessageScript.c": [
     "-fno-strict-aliasing"
   ]
 }
