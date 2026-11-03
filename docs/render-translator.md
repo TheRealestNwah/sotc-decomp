@@ -35,8 +35,16 @@ the disc (`*.gs`, `*.gs.zst` and `*.gs.xz` are gitignored; never commit one).
 
    `frame.png` is what the Render translator drew; `shot.png` is the screenshot
    PCSX2 stored in the dump. `--frame N` stops at the Nth vsync instead of the
-   first. The tool also prints counts (GIF tags per path, primitives by type,
-   batches, transfers) and how often an approximation below was hit.
+   first; past the end of the dump the packets replay from the start, as
+   PCSX2's dump player does, so N can exceed the frames recorded (see the
+   title-screen findings below for why SotC needs `--frame 300`). The tool
+   also prints counts (GIF tags per path, primitives by type, batches,
+   transfers) and how often an approximation below was hit.
+
+   For debugging, `--trace` prints every batch (frame and texture addresses,
+   formats, blend, alpha and depth tests, first vertex) and every transfer,
+   and `--targets rt/f_` writes each render target as `rt/f_<FBP>.png`
+   (targets at one base with different widths share a file).
 
 ## Dump format
 
@@ -126,13 +134,43 @@ leans on them.
   which already includes VU1's output, so this prototype does not run any VU1
   microprograms.
 
+## Title-screen findings
+
+A one-frame Shift+F8 dump of the NTSC-U title screen (zstd-compressed by
+default; decompressed with the venv's `zstandard`) renders with no renderer
+changes once it is replayed long enough:
+
+```
+build/port/gsframe title.gs -o frame.png --frame 300
+```
+
+`frame.png` then matches PCSX2's screenshot to within about 6/255 per
+channel on average (most of that is PCSX2 scaling 512x448 to 640x480).
+Two things in the game's frame need the replay:
+
+- **Double buffering through a copy.** The game draws each frame at FBP 0xE0
+  (CT32, width 512) and, before drawing, copies last frame's 0xE0 to FBP 0,
+  which DISPFB1 shows. The dump's state freeze holds GS memory, and PCSX2's
+  hardware renderer keeps 0xE0 in a GPU texture it never wrote back, so the
+  first pass copies stale memory and shows a flat green frame. The second
+  pass shows the real frame.
+- **A temporal sky glow.** After the scene, the game builds a white sky mask
+  in 0x150 (from depth), downsamples it through 0x1C0, 0x1E0 and 0x1E8 at
+  quarter, eighth and sixteenth size, and blends each frame's result into a
+  history buffer at 0x1FE at about 2% (alpha 0x7D keeps 98% of the old
+  value). The blurred history is scaled back up into 0x1C0 and added to 0xE0
+  with vertex colour (0x6E, 0x78, 0x5A), then a flat (0xE6, 0xEB, 0xC8)
+  overlay. That history starts black in the dump, so the glow needs about
+  250 frames to converge; at `--frame 2` the sky is purple-grey and dark.
+
+The SDL_GPU backend will start from the same state, so its tests against
+real dumps should replay the same way.
+
 ## Next steps
 
-1. Capture a title-screen dump and compare `frame.png` with `shot.png`; fix
-   what differs and add a synthetic test for each fix.
-2. An SDL_GPU backend that draws `gs_batch` with real pipelines, using the
+1. An SDL_GPU backend that draws `gs_batch` with real pipelines, using the
    `gs_pipe` key as the pipeline cache key and the reference backend as its
    test oracle. It needs SDL3 and a shader compiler, neither installed yet.
-3. The VU1 side: hand-translate the game's VU1 microprogram overlay sets into C
+2. The VU1 side: hand-translate the game's VU1 microprogram overlay sets into C
    and check their output against the PATH1 packets in a dump, so the port can
    feed the translator from the Game code's own VIF packets instead of a dump.

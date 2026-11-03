@@ -143,15 +143,89 @@ static int write_png(const char *path, const uint8_t *rgba, int width, int heigh
     return ok ? 0 : -1;
 }
 
+/* --trace: prints each batch and transfer before the reference backend draws it. */
+struct trace {
+    struct gs_sink inner;
+    uint64_t batches;
+};
+
+static void trace_draw(void *user, const struct gs_batch *b)
+{
+    struct trace *tr = user;
+    const struct gs_pipe *p = b->pipe;
+    const struct gs_vertex *v = b->vertices;
+    printf("draw %llu: fb %03X/%u psm %u msk %08X, %u prims %u verts", (unsigned long long)tr->batches++,
+        p->fbp, p->fbw, p->fpsm, p->fbmsk, b->primitives, b->count);
+    if (p->tme)
+        printf(", tex %05X/%u psm %u %ux%u tfx %u tcc %u", GS_FIELD(p->tex0, 0, 14), GS_FIELD(p->tex0, 14, 6),
+            GS_FIELD(p->tex0, 20, 6), 1u << GS_FIELD(p->tex0, 26, 4), 1u << GS_FIELD(p->tex0, 30, 4), p->tfx, p->tcc);
+    if (p->blend.enable)
+        printf(", blend %u*%u %u %u c%u fix %02X", p->blend.src, p->blend.dst, p->blend.op, p->blend.exact,
+            p->blend.c_source, p->blend.fix);
+    if (p->atest != GS_CMP_ALWAYS)
+        printf(", atest %u ref %02X fail %u", p->atest, p->aref, p->afail);
+    if (p->ztest != GS_CMP_ALWAYS || p->zwrite)
+        printf(", z %03X test %u write %u", p->zbp, p->ztest, p->zwrite);
+    if (b->count)
+        printf(", v0 (%.1f,%.1f st %.3f,%.3f q %.3f rgba %02X%02X%02X%02X)", v->x, v->y, v->s, v->t, v->q, v->r, v->g,
+            v->b, v->a);
+    printf("\n");
+    tr->inner.draw(tr->inner.user, b);
+}
+
+static void trace_transfer(void *user, const struct gs_transfer *x, const uint8_t *vram)
+{
+    struct trace *tr = user;
+    printf("transfer %s: dbp %05X/%u psm %u at %d,%d %dx%d\n", x->local ? "local" : "host", x->dbp, x->dbw, x->dpsm,
+        x->x, x->y, x->w, x->h);
+    tr->inner.transfer(tr->inner.user, x, vram);
+}
+
+static void trace_vsync(void *user, const struct gs_display *display, const uint8_t *vram)
+{
+    struct trace *tr = user;
+    printf("vsync\n");
+    tr->inner.vsync(tr->inner.user, display, vram);
+}
+
+/* Writes each colour target as <prefix><fbp>.png, with alpha forced opaque. */
+static int write_targets(const struct gs_ref *ref, const char *prefix)
+{
+    int status = 0;
+    for (int i = 0; i < GS_REF_TARGETS; i++) {
+        const struct gs_ref_target *rt = &ref->colour[i];
+        if (!rt->used)
+            continue;
+        size_t n = (size_t)rt->width * rt->height * 4;
+        uint8_t *img = malloc(n);
+        if (!img)
+            return 1;
+        for (size_t j = 0; j < n; j += 4) {
+            memcpy(img + j, rt->rgba + j, 3);
+            img[j + 3] = 255;
+        }
+        char name[1024];
+        snprintf(name, sizeof(name), "%s%03X.png", prefix, (unsigned)rt->base);
+        if (write_png(name, img, rt->width, rt->height) == 0)
+            printf("wrote %s (fbw %u, psm %u, %dx%d)\n", name, (unsigned)rt->fbw, rt->psm, rt->width, rt->height);
+        else
+            status = 1;
+        free(img);
+    }
+    return status;
+}
+
 static void usage(const char *argv0)
 {
-    fprintf(stderr, "usage: %s <dump.gs> [-o frame.png] [--frame N] [--screenshot shot.png]\n", argv0);
+    fprintf(stderr, "usage: %s <dump.gs> [-o frame.png] [--frame N] [--screenshot shot.png]\n"
+                    "       [--targets prefix] [--trace]\n", argv0);
 }
 
 int main(int argc, char **argv)
 {
-    const char *input = NULL, *output = "frame.png", *shot = NULL;
+    const char *input = NULL, *output = "frame.png", *shot = NULL, *targets = NULL;
     long stop_frame = 1;
+    int trace_on = 0;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0 && i + 1 < argc)
             output = argv[++i];
@@ -159,6 +233,10 @@ int main(int argc, char **argv)
             stop_frame = strtol(argv[++i], NULL, 10);
         else if (strcmp(argv[i], "--screenshot") == 0 && i + 1 < argc)
             shot = argv[++i];
+        else if (strcmp(argv[i], "--trace") == 0)
+            trace_on = 1;
+        else if (strcmp(argv[i], "--targets") == 0 && i + 1 < argc)
+            targets = argv[++i];
         else if (!input && argv[i][0] != '-')
             input = argv[i];
         else {
@@ -210,15 +288,31 @@ int main(int argc, char **argv)
     }
     gs_ref_init(&ref, t.vram);
     t.sink = gs_ref_sink(&ref);
+    struct trace trace = { t.sink, 0 };
+    if (trace_on)
+        t.sink = (struct gs_sink){ &trace, trace_draw, trace_transfer, trace_vsync };
     gs_translator_load(&t, &freeze, dump.privregs);
 
     size_t cursor = 0;
     struct gs_dump_packet packet;
-    long frames = 0;
+    long frames = 0, pass_start = 0;
     int r;
-    while ((r = gs_dump_next(&dump, &cursor, &packet)) == 1)
-        if (gs_translator_packet(&t, &packet) && ++frames >= stop_frame)
+    for (;;) {
+        while ((r = gs_dump_next(&dump, &cursor, &packet)) == 1)
+            if (gs_translator_packet(&t, &packet) && ++frames >= stop_frame)
+                break;
+        /*
+         * Past the end, replay the packets from the start, as PCSX2's dump
+         * player does. Games that copy last frame's back buffer to the
+         * display before drawing need this: the dump's state freeze holds
+         * GS memory, not the emulator's render targets, so the first pass
+         * copies whatever memory held there.
+         */
+        if (r != 0 || frames >= stop_frame || frames == pass_start)
             break;
+        pass_start = frames;
+        cursor = 0;
+    }
     if (r < 0)
         fprintf(stderr, "%s: bad packet at offset %zu; stopping there\n", input, cursor);
     if (frames < stop_frame) {
@@ -249,6 +343,16 @@ int main(int argc, char **argv)
         (unsigned long long)ref.stats.rt_overlaps, (unsigned long long)ref.stats.mip_ignored,
         (unsigned long long)ref.stats.bad_textures, (unsigned long long)ref.stats.unsupported_targets);
 
+    uint64_t pmode, dispfb1, display1, dispfb2, display2;
+    memcpy(&pmode, t.privregs + GS_PRIV_PMODE, 8);
+    memcpy(&dispfb1, t.privregs + GS_PRIV_DISPFB1, 8);
+    memcpy(&display1, t.privregs + GS_PRIV_DISPLAY1, 8);
+    memcpy(&dispfb2, t.privregs + GS_PRIV_DISPFB2, 8);
+    memcpy(&display2, t.privregs + GS_PRIV_DISPLAY2, 8);
+    printf("display: PMODE %llX, DISPFB1 %llX, DISPLAY1 %llX, DISPFB2 %llX, DISPLAY2 %llX\n",
+        (unsigned long long)pmode, (unsigned long long)dispfb1, (unsigned long long)display1,
+        (unsigned long long)dispfb2, (unsigned long long)display2);
+
     int status = 0;
     if (ref.frame && write_png(output, ref.frame, ref.frame_width, ref.frame_height) == 0)
         printf("wrote %s (%dx%d, frame %ld)\n", output, ref.frame_width, ref.frame_height, frames);
@@ -256,6 +360,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "%s: cannot write\n", output);
         status = 1;
     }
+    if (targets)
+        status |= write_targets(&ref, targets);
     if (shot) {
         if (dump.screenshot
             && write_png(shot, dump.screenshot, (int)dump.screenshot_width, (int)dump.screenshot_height) == 0)
