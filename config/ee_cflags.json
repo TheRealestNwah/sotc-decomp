@@ -34,5 +34,8 @@
   ],
   "src/xff/GAMECORE/ReplayOverBGScript.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/timeAttackOverBGScript.c": [
+    "-fno-strict-aliasing"
   ]
 }
