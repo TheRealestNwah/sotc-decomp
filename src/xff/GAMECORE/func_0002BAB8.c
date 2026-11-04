@@ -11,7 +11,7 @@ extern void func_0002B838(void);
 extern void scrRun(void);
 extern void sheetMgrAllReqWait(int *);
 
-void func_0002BAB8(int idx, int arg)
+static void func_0002BAB8(int idx, int arg)
 {
     int status;
     char *stages;
@@ -44,8 +44,8 @@ void func_0002BAB8(int idx, int arg)
         }
     }
     D_0017A878 = 0;
-    D_0017A874 = arg;
     D_0017A87C = arg;
+    D_0017A874 = arg;
     D_0017A870 = 1;
     status = 0;
     scrRun();

@@ -65,7 +65,7 @@ static inline int canDash(Chara *c, int check)
     return r;
 }
 
-void func_00106C80(Chara *c, int check)
+static void func_00106C80(Chara *c, int check)
 {
     MoveParam *p = c->param;
 

@@ -27,7 +27,7 @@ typedef struct {
 extern void KiteSpecial_SetNewPathPoint(PathPt *, void *, Kite *, void *);
 extern void func_000ACDF0(PathPt *, void *, Kite *);
 
-PathPt *func_000AD410(Kite *k, int which)
+static PathPt *func_000AD410(Kite *k, int which)
 {
     PathWork *pw = &k->pw;
     PathPt *p;
