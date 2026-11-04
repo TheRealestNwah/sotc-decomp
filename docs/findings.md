@@ -316,3 +316,37 @@ Native-port correction must define a pool-exhaustion result before request
 stores or dispatch, with coverage for two busy slots and the wait-callback
 contract. [Issue #1219](https://github.com/TheRealestNwah/sotc-decomp/issues/1219)
 remains open for reachability and the eventual error-handling change.
+
+## Subthread-status diagnostic class contract (#1240)
+
+Original KERNEL `isysDumpSubThreadStatus` begins at XFF file offset
+`0x1D030` (symbol offset `.text + 0x1CFF8`, size `0xB0`). It reads the
+object's class byte at `object + 8`. Classes 6, 9, 11, 12, 13, 14, 22, 29
+and 33 select the environment at `object + 0x20`; every other class selects
+zero. The supported path establishes an environment location, not a check
+that its saved stack pointer or the object itself is valid.
+
+Both paths allocate two `0x100`-byte name buffers with alignment four.
+At file offset `0x1D0AC`, the function unconditionally reads the selected
+environment's first word as the saved stack pointer, before calling
+`isysSearchModuleFuncNameByAddr`. The unsupported-class path therefore reads
+through zero after those allocations. The function later frees both name
+buffers. It has no unsupported-class diagnostic or early return.
+
+A static reference audit of all 70,894 relocations in the three Original
+Game modules, including their nonstandard relocated sections, found no
+references to this function by name or by its section-relative address.
+The function name also does not occur in their PROGBITS contents; its
+KERNEL symbol is globally bound. This rules out an identified relocated
+call or callback-table entry in those modules, but does not establish
+runtime unreachability: dynamic symbol lookup, computed addresses and
+external diagnostic invocation remain untraced. No caller-side class
+filter has been established.
+
+Preserve the exact matching implementation. Before implementing the Native
+version, establish who may invoke this diagnostic and choose an explicit
+result for unsupported classes before reading the environment. Test that
+result alongside the nine supported classes and their saved-stack-pointer
+contract. This is static binary and relocation evidence, without a runtime
+reproduction. [Issue #1240](https://github.com/TheRealestNwah/sotc-decomp/issues/1240)
+remains open for reachability and the deliberate port-stage behavior change.
