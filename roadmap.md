@@ -1,6 +1,6 @@
 # Roadmap
 
-Last reviewed: 2026-11-02.
+Last reviewed: 2026-11-04.
 
 Planned work before 1.0 lives here. Keep this file current as plans change and
 work lands. Community requests come in as feature-request issues on GitHub
@@ -44,11 +44,11 @@ CI has no disc files or PS2 toolchain, so passing CI alone does not prove matchi
   (`config/loader_functions.csv`, [ADR 0004](docs/adr/0004-finish-line-and-source-cleanup.md)).
 - [x] Add a C build path for the Loader (`tools/loader_splice.py`, `src/loader/`,
   built with `-G8`).
-- [ ] Match the Loader's 124 Game code functions (93 so far, in `src/loader/`).
+- [ ] Match the Loader's 124 Game code functions (99 so far, in `src/loader/`).
   C data isn't supported by the Loader splice yet, and `setCop0Epc` is
   handwritten asm.
 - [ ] Sort MANAGER's and GAMECORE's functions into SDK routines and Game code
-  (`config/sdk_routines.txt`; MANAGER's `rand` is a candidate).
+  (`config/sdk_routines.txt`; MANAGER's `rand` and `srand` are identified).
 
 The remaining matching tasks above preserve the plans formerly tracked in
 closed issues #18, #51, #52, #54, #55, #107, #208, #459, #460, #513 and #520.
