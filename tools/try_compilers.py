@@ -30,6 +30,22 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tools.ee_asm import (  # noqa: E402
+    expand_indexed_loads as expand_indexed_loads,
+)
+from tools.ee_asm import (
+    fix_moves,
+    prepare_asm,
+)
+from tools.ee_asm import (
+    indexed_la_barriers as indexed_la_barriers,
+)
+from tools.ee_asm import (
+    jump_barriers as jump_barriers,
+)
+from tools.ee_asm import (
+    volatile_barriers as volatile_barriers,
+)
 from tools.functions import Function, compare, function, functions, open_module  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -55,6 +71,21 @@ def find_cc1(compiler_dir: Path) -> Path:
     raise FileNotFoundError(f"no cc1 in {compiler_dir}")
 
 
+def diagnostic_message(result: subprocess.CompletedProcess[str]) -> str:
+    diagnostics = result.stderr.strip() or result.stdout.strip() or "no output"
+    lines = diagnostics.splitlines()
+    error = next(
+        (
+            line
+            for line in lines
+            if re.search(r"\berror(?=[:\s]|$)", line, re.I)
+            and not re.search(r"\bwarning:", line, re.I)
+        ),
+        lines[-1],
+    )
+    return error[:200]
+
+
 def compile_c(compiler_dir: Path, source: Path, flags: list[str], out: Path) -> str | None:
     """Returns an error message, or None on success."""
     cc1 = find_cc1(compiler_dir)
@@ -75,114 +106,8 @@ def compile_c(compiler_dir: Path, source: Path, flags: list[str], out: Path) -> 
                wsl_path(source), wsl_path(out), *flags]  # fmt: skip
     result = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
     if result.returncode != 0 or not out.exists() or out.stat().st_size == 0:
-        diagnostics = result.stderr.strip() or result.stdout.strip() or "no output"
-        lines = diagnostics.splitlines()
-        error = next(
-            (
-                line
-                for line in lines
-                if re.search(r"\berror(?=[:\s]|$)", line, re.I)
-                and not re.search(r"\bwarning:", line, re.I)
-            ),
-            lines[-1],
-        )
-        return error[:200]
+        return diagnostic_message(result)
     return None
-
-
-def fix_moves(asm: Path) -> None:
-    """The original assembler expanded `move` to `daddu rd, rs, $zero` (64-bit
-    EABI); modern binutils picks a different encoding."""
-    text = asm.read_text(encoding="latin-1")
-    text = re.sub(r"\bmove\t(\$\w+),(\$\w+)", r"daddu\t\1,\2,$0", text)
-    asm.write_text(text, encoding="latin-1")
-
-
-def volatile_barriers(asm: Path) -> None:
-    """gcc brackets each volatile memory access with `.set volatile` /
-    `.set novolatile`, written as comments in GAS mode. The original build
-    never moved a volatile access into a branch delay slot, so turn each
-    marker into an empty `.set noreorder` / `.set reorder` pair: any `.set`
-    stops ee-as from reordering across it (docs/findings.md)."""
-    text = asm.read_text(encoding="latin-1")
-    text = re.sub(
-        r"^(\s*)#\.set\s+(?:no)?volatile\s*$",
-        r"\1.set\tnoreorder\n\1.set\treorder",
-        text,
-        flags=re.M,
-    )
-    asm.write_text(text, encoding="latin-1")
-
-
-def indexed_la_barriers(asm: Path) -> None:
-    """gcc writes an indexed address as the macro `la $r,sym($b)`, which ee-as
-    expands to `lui $at` / `addiu $at` / `addu $r,$at,$b`. Our ee-as moves that
-    final `addu` into a following jump's delay slot; the original build never
-    did (no `addu ...,$at,...` sits in a delay slot in any module), so put an
-    empty `.set noreorder` / `.set reorder` pair after each one
-    (docs/findings.md)."""
-    text = asm.read_text(encoding="latin-1")
-    text = re.sub(
-        r"^(\s*)(la\s+\$\w+,[^\s()]+\(\$\w+\).*)$",
-        r"\1\2\n\1.set\tnoreorder\n\1.set\treorder",
-        text,
-        flags=re.M,
-    )
-    asm.write_text(text, encoding="latin-1")
-
-
-INDEXED_LOAD_RE = re.compile(
-    r"^(\s*)(lw|lhu)\s+(\$\w+),((?![-+]?\d)[^\s()%]+)\((\$\w+)\)[ \t]*(#.*)?$", flags=re.M
-)
-
-
-def expand_indexed_loads(asm: Path) -> None:
-    """gcc writes an indexed load from a constant-base array as the macro
-    `lw $r,sym($b)` or `lhu $r,sym($b)`. Our ee-as sometimes encodes the
-    `lui` of its expansion with the load opcode (issues #2343 and #2265),
-    so write out the expansion the assembler would make: `lui` / `addu` /
-    load with `%lo`, through $r or through $at when $r is also the base. Only for -G0
-    code, where the assembler never picks a $gp-relative form."""
-    text = asm.read_text(encoding="latin-1")
-
-    def expand(m: re.Match[str]) -> str:
-        indent, opcode, reg, sym, base = m.group(1, 2, 3, 4, 5)
-        tmp = "$at" if reg == base else reg
-        return (
-            f"{indent}lui\t{tmp},%hi({sym})\n"
-            f"{indent}addu\t{tmp},{tmp},{base}\n"
-            f"{indent}{opcode}\t{reg},%lo({sym})({tmp})"
-        )
-
-    asm.write_text(INDEXED_LOAD_RE.sub(expand, text), encoding="latin-1")
-
-
-JUMP_RE = re.compile(r"^\s*(?:j|jal|jalr|jr|b|bal|b(?:eq|ne|lt|le|gt|ge)\w*|bc[01][tf]l?)\s")
-
-
-def jump_barriers(asm: Path) -> None:
-    """gcc fills the delay slots it can inside its own `.set noreorder`
-    blocks and leaves every other jump or branch to the assembler. Our
-    ee-as then moves an earlier instruction into the slot; the original
-    assembler never did (docs/findings.md). So put an empty
-    `.set noreorder` / `.set reorder` pair before each jump or branch that
-    gcc emits in reorder mode, which makes ee-as leave the slot as a `nop`.
-    This covers the volatile and indexed-`la` cases above as well."""
-    lines = asm.read_text(encoding="latin-1").split("\n")
-    out = []
-    reorder = True
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith(".set"):
-            if "noreorder" in stripped:
-                reorder = False
-            elif stripped.split()[-1] == "reorder":
-                reorder = True
-        elif reorder and JUMP_RE.match(line):
-            out.append("\t.set\tnoreorder")
-            out.append("\t.set\treorder")
-        out.append(line)
-    asm.write_text("\n".join(out), encoding="latin-1")
 
 
 def find_package_as(compiler_dir: Path) -> Path | None:
@@ -196,11 +121,7 @@ def assemble(asm: Path, obj: Path, package_as: Path | None = None, gp: int = 0) 
     difference. Macro expansions (`move`, `lw reg, sym(reg)`) differ between
     assembler versions, so the package's assembler is preferred. `gp` is the
     small-data limit (-G) the C was compiled with."""
-    volatile_barriers(asm)
-    indexed_la_barriers(asm)
-    if gp == 0:
-        expand_indexed_loads(asm)
-    jump_barriers(asm)
+    prepare_asm(asm, gp)
     if package_as is not None:
         script = (
             f'L={I386_LIBS}; work=$(mktemp -d); cp "$1" "$work/in.s"; '

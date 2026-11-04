@@ -39,7 +39,7 @@ Current phase:
   - The linker must run with `-m elf32lr5900` (set in `configure.py`). Its default `n32` mode rejects our EABI objects with "ABI is incompatible".
 - No `objcopy` needed: `tools/elf2rom.py` flattens ELFs in Python (`tools/objcopy.cmd` wraps it for `splat create_config --objcopy`).
 - **Original compilers** (from decomp.me's archive, `gh release download compilers --repo decompme/compilers`) are extracted under `D:\Modding\compilers\<name>` (override with `SOTC_COMPILERS`).
-  - The 2.96 (and 2.9/3.2) builds are 32-bit Linux programs: they run under WSL (Ubuntu) with a private 32-bit libc unpacked from Ubuntu's `libc6:i386` package into `~/i386libs/root` (no `sudo`; override with `SOTC_I386_LIBS`).
+  - The 2.96 (and 2.9/3.2) builds are 32-bit Linux programs: they run under WSL (Ubuntu, with `python3`) with a private 32-bit libc unpacked from Ubuntu's `libc6:i386` package into `~/i386libs/root` (no `sudo`; override with `SOTC_I386_LIBS`).
   - Old 32-bit programs can't read files on `/mnt/<drive>` ("Value too large for defined data type"), so always copy inputs into WSL's `/tmp` first. `tools/try_compilers.py` does this.
   - The 2.95.x builds are Windows `cc1.exe` and run natively.
 - `tools/try_compilers.py <file.c> --module GAMECORE`: compiles every function in a C file with each candidate compiler and flag set, and reports differing words against the original functions of the same name, by the same rule as the splice step (`tools/functions.py`). Useful for any matching work, not just compiler ID.
@@ -80,7 +80,7 @@ The Original Loader must be at `iso/SCUS_974.72` (copied from the owner's own di
    - Copy the useful change back by hand, then check with try_compilers.
 
 How it builds:
-- `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` (in WSL). Before assembling, empty `.set noreorder`/`.set reorder` pairs go before every jump or branch gcc leaves to the assembler (and around volatile accesses), because the original assembler never filled a delay slot itself (see `docs/findings.md`). Indexed `lw $r,sym($b)` macros are also written out as `lui`/`addu`/`lw %lo` in -G0 code, since `ee-as` sometimes mis-encodes that `lui` (issue #2343).
+- `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` in one WSL invocation. The standard-library-only `tools/ee_asm.py` applies the same assembly preparation in WSL and in standalone compiler comparisons. Before assembling, empty `.set noreorder`/`.set reorder` pairs go before every jump or branch gcc leaves to the assembler (and around volatile accesses), because the original assembler never filled a delay slot itself (see `docs/findings.md`). Indexed `lw $r,sym($b)` macros are also written out as `lui`/`addu`/`lw %lo` in -G0 code, since `ee-as` sometimes mis-encodes that `lui` (issue #2343).
 - `tools/xff_splice.py` writes `build/xff/<MODULE>/spliced/`, which is the Game module's asm with each Matched function replaced by the compiled words. Relocated words become explicit `.reloc` directives.
 - The Game module is assembled from that copy and checked as usual.
 
@@ -125,6 +125,7 @@ Splice limitations:
   - `loader_funcs.py`: sorts the Loader's functions into Game code and SDK routines (`--write` regenerates `config/loader_functions.csv`, `--check` checks it)
   - `xff_tus.py`: infers Source groups from relocations (`--list` prints every group); results summarized in `docs/findings.md`
   - `ee_cc.py`: compiles one C file with the game's toolchain
+  - `ee_asm.py`: prepares compiler assembly for the Original assembler, on Windows or in WSL
   - `functions.py`: reads a function's words and relocations from an Original Game module or compiled C, and holds the one rule for whether two functions match (`compare`), used by try_compilers, the permuter and xff_splice
   - `xff_splice.py`: splices compiled C functions into a Game module's asm, verifying they match
   - `loader_splice.py`: the same for the Loader's asm (`src/loader/`)
