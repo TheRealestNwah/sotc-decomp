@@ -243,3 +243,39 @@ trace the creation/type invariants of the current subthread and other caller
 objects, then define and test the unsupported-type behavior deliberately.
 [Issue #490](https://github.com/TheRealestNwah/sotc-decomp/issues/490) remains
 open for that reachability and contract investigation.
+
+## Sheet lookup missing-header contract (#492)
+
+Original MANAGER `sheetMgrSearchSheetDataObj` (`0xE39F8`) indexes the header
+pointer table `D_00139F10` using its sheet ID, then searches the selected
+header's linked data objects by hash. A readable, initialized table, a valid
+index and a present header are preconditions for this lookup.
+
+The missing-header diagnostic does not safely handle an absent header:
+`0xE3A1C` branches over it only when the selected header is nonzero. Otherwise
+`0xE3A24` reads the descriptor at header `+0x38`, and the recovery call's delay
+slot at `0xE3A34` reads the descriptor's first word as the diagnostic argument.
+Both reads happen before `iosJumpRecoverPoint` can handle the error. Giving
+that recovery function a nonreturning contract cannot protect argument
+construction that has already dereferenced the absent header.
+
+`sheetIdToName` (`0xE3998`) is not a safe substitute for that argument: its
+loads at `0xE39A8`, `0xE39AC` and `0xE39B4` perform the same table-to-header,
+header-to-descriptor and descriptor-to-name traversal without a missing-header
+check. A future safe diagnostic needs information independent of the absent
+header, such as the requested numeric sheet ID and hash, or a separately
+validated name source.
+
+A missing data entry is a different case. With a valid header, the search
+starts from header `+0x40`, compares each entry's descriptor hash at
+`entry->descriptor + 4`, and follows entry `+0x54`. Exhausting that list returns
+zero through `0xE3A68`, without the missing-header diagnostic.
+
+The two direct calls in `func_000E1270`, at MANAGER `0xE1340` and `0xE1510`,
+pass sheet IDs and hashes read from request records. Those sites alone do not
+establish that every requested header has been installed and remains live.
+Trace request validation and header lifetime before defining a Native-port
+error result. This is static instruction/data-flow evidence, without a
+runtime reproduction. Preserve the original matching implementation;
+[issue #492](https://github.com/TheRealestNwah/sotc-decomp/issues/492) remains
+open for the missing-header contract and reachability investigation.
