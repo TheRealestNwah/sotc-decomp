@@ -189,7 +189,38 @@ KERNEL's `.text` ends with 39 SDK routines, from `0x30428` (asm label `func_0003
 | libgraph | 5 | `sceGsSetDefLoadImage`, `sceGsExecLoadImage`, `sceGsPutIMR`, `sceGsGetIMR`, `isceGsPutIMR`. The first two print libgraph's own messages (`sceGsSetDefLoadImage: too big size`, `sceGsExecLoadImage: DMA Ch.2 does not terminate`); the IMR ones wrap the kernel calls `GsGetIMR`/`GsPutIMR` and `iGsGetIMR`/`iGsPutIMR`. |
 | libcdvd | 5 | `sceCdRead`, `sceCdReadIOPm`, `sceCdGetError`, `sceCdStatus`, `sceCdReadClock`. All reference libcdvd's private state in the Loader (`_sceCd_ncmd_prechk`, `_sceCd_cd_ncmd`, `_sceCd_scmd_semid` and others) and call `sceSifCallRpc`. |
 
-None of these names is also exported by the Loader: KERNEL links the library objects the Loader didn't. 28 of the libc/libm routines (all but `validate_structure`) are already Matched functions; that C stays, but no longer counts as Game code. MANAGER's `rand` may be newlib's too; MANAGER and GAMECORE haven't been sorted yet.
+None of these names is also exported by the Loader: KERNEL links the library objects the Loader didn't. 28 of the libc/libm routines (all but `validate_structure`) are already Matched functions; that C stays, but no longer counts as Game code.
+
+## SDK routines in MANAGER
+
+MANAGER `rand` and `srand` are the newlib implementations: their 100 and 24 bytes,
+respectively, and every relocation type and named target match an unmodified
+rebuild of `newlib/libc/stdlib/rand.c`
+from the [official newlib 1.11.0 source release](https://sourceware.org/ftp/newlib/newlib-1.11.0.tar.gz).
+The reference uses the Sony `ee-gcc` 2.96 driver at `-O2 -G0`, the package's own
+`ee-as`, and the same assembly preparation as the matching build.
+
+The original release's headers supply the `_reent` layout; its random state
+is at offset `0xA8`, accessed through `_impure_ptr`. The multiplication calls
+`__muldi3`. The driver supplies its target ABI and endian predefines. Its
+executable-only archive lacks `stddef.h`, so the reference include tree is
+supplemented with the [GCC 2.95.3 standard header](https://raw.githubusercontent.com/gcc-mirror/gcc/releases/gcc-2.95.3/gcc/ginclude/stddef.h).
+Neither the library source nor its layouts or generated instructions were
+patched to obtain the match.
+
+| Reference input | SHA-256 |
+| --- | --- |
+| `newlib-1.11.0.tar.gz` | `6ff74f1f273dbcf9f8e3eb79cac8ca5e7c98c14a27ac468eede50f1f45a7c4a1` |
+| GCC 2.95.3 `stddef.h` | `23ed59b27cda4de82a312f98e85a258f29d61711beb873a42a1f8404558894ae` |
+
+The normalized signatures are `0676307c435b6afc` for `rand` and
+`d1687ebedd97b3b4` for `srand`, recorded in `config/sdk_routines.txt` and excluded
+from the Game code totals. This establishes the implementation family; the exact
+Sony library patch release remains unproven. Their existing Matched C stays in
+the rebuild, as with KERNEL's identified library code; progress excludes both
+routines from the completed and total Game code
+counts. MANAGER's remaining routines and GAMECORE still need SDK sorting.
+
 ## Original sequence-stop interrupt state (#708)
 
 In KERNEL `Sg2SepStop` (text offset `0x25E88`), an in-range sequence ID with
