@@ -2,7 +2,7 @@
 # or the toolchain's libc/libm (newlib), linked into a Game module. They're
 # identified by signature rather than decompiled (ADR 0004), and
 # tools/progress.py leaves them out of the Game code totals. Evidence for each
-# group is in docs/findings.md ("SDK routines in KERNEL").
+# group is in docs/findings.md (the SDK routine sections).
 #
 # Columns: Game module, function name, library, size, signature. The signature
 # is the first 16 hex digits of the SHA-1 of the routine's code with every
@@ -56,3 +56,7 @@ KERNEL sceCdReadIOPm libcdvd 0x154 84b39d5f788210bc
 KERNEL sceCdGetError libcdvd 0x98 9803b52b8d87031c
 KERNEL sceCdStatus libcdvd 0xb8 f57a1aa834c8bfc3
 KERNEL sceCdReadClock libcdvd 0xbc a444a34068c1a4cc
+
+# libc (newlib). Rebuilt unmodified newlib-1.11.0 rand.c matches every word
+# and relocation target with the Original Sony toolchain.
+MANAGER rand libc 0x64 0676307c435b6afc
