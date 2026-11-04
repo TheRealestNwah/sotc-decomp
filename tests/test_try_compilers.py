@@ -7,6 +7,7 @@ from tools import try_compilers
 from tools.functions import Function, Reloc
 from tools.try_compilers import (
     compile_c,
+    expand_indexed_lw,
     fix_moves,
     indexed_la_barriers,
     jump_barriers,
@@ -131,4 +132,19 @@ def test_jump_barriers_only_guard_reorder_mode_jumps(tmp_path):
         + "\tbne\t$2,$0,$L1\n"
         + barrier
         + "\tjal\tg\n"
+    )
+
+
+def test_expand_indexed_lw_writes_out_symbol_loads_only(tmp_path):
+    asm = tmp_path / "x.s"
+    asm.write_text(
+        "\tlw\t$16,tbl($2)\n\tlw\t$2,tbl+8($2)\n\tlw\t$3,28($18)\n"
+        "\tlw\t$4,-4($sp)\n\tlw\t$5,%lo(tbl)($5)\n\tlw\t$6,tbl\n\tsw\t$7,tbl($2)\n",
+        encoding="latin-1",
+    )
+    expand_indexed_lw(asm)
+    assert asm.read_text(encoding="latin-1") == (
+        "\tlui\t$16,%hi(tbl)\n\taddu\t$16,$16,$2\n\tlw\t$16,%lo(tbl)($16)\n"
+        "\tlui\t$at,%hi(tbl+8)\n\taddu\t$at,$at,$2\n\tlw\t$2,%lo(tbl+8)($at)\n"
+        "\tlw\t$3,28($18)\n\tlw\t$4,-4($sp)\n\tlw\t$5,%lo(tbl)($5)\n\tlw\t$6,tbl\n\tsw\t$7,tbl($2)\n"
     )
