@@ -49,6 +49,7 @@ import re
 import shutil
 import sys
 from dataclasses import dataclass, field
+from itertools import pairwise
 from pathlib import Path
 
 from elftools.elf.elffile import ELFFile
@@ -565,6 +566,14 @@ def replace_data(
     return out
 
 
+@dataclass
+class FunctionReplacement:
+    name: str
+    start: int
+    generated: list[list[str]]
+    source: str
+
+
 def replace_function(
     lines: list[str], name: str, base: int, start: int, generated: list[list[str]], source: str
 ) -> list[str]:
@@ -573,6 +582,22 @@ def replace_function(
     through the next labels until every word is replaced."""
     first = next((i for i, line in enumerate(lines) if label_name(line) == name), None)
     if first is None:
+        raise SpliceError(f"{name}: not found in the module's text.s")
+    out, stop = function_replacement(lines, first, name, base, start, generated, source)
+    return lines[:first] + out + lines[stop:]
+
+
+def function_replacement(
+    lines: list[str],
+    first: int,
+    name: str,
+    base: int,
+    start: int,
+    generated: list[list[str]],
+    source: str,
+) -> tuple[list[str], int]:
+    """Generate the replacement span, retaining the single-function checks."""
+    if not 0 <= first < len(lines) or label_name(lines[first]) != name:
         raise SpliceError(f"{name}: not found in the module's text.s")
     out, used, i = [], 0, first
     while i < len(lines):
@@ -601,7 +626,52 @@ def replace_function(
         used += 1
     if used != len(generated):
         raise SpliceError(f"{name}: replaced {used} of {len(generated)} words")
-    return lines[:first] + out + lines[i:]
+    return out, i
+
+
+def replace_functions(
+    lines: list[str], base: int, replacements: list[FunctionReplacement]
+) -> list[str]:
+    """Index labels once and copy disjoint replacement spans in one pass.
+
+    Overlapping words or metadata retain the original sequential behavior.
+    This includes aliases and functions crossing spimdisasm's false splits.
+    """
+    if not replacements:
+        return lines
+
+    def sequential() -> list[str]:
+        result = lines
+        for r in replacements:
+            result = replace_function(result, r.name, base, r.start, r.generated, r.source)
+        return result
+
+    spans = sorted((r.start, r.start + 4 * len(r.generated)) for r in replacements)
+    if any(a[1] > b[0] for a, b in pairwise(spans)):
+        return sequential()
+    positions: dict[str, int] = {}
+    for i, line in enumerate(lines):
+        name = label_name(line)
+        if name is not None:
+            positions.setdefault(name, i)
+    for r in replacements:
+        if r.name not in positions:
+            raise SpliceError(f"{r.name}: not found in the module's text.s")
+    ordered = sorted(replacements, key=lambda r: positions[r.name])
+    out: list[str] = []
+    cursor = 0
+    for r in ordered:
+        first = positions[r.name]
+        if first < cursor:
+            return sequential()
+        generated, stop = function_replacement(
+            lines, first, r.name, base, r.start, r.generated, r.source
+        )
+        out.extend(lines[cursor:first])
+        out.extend(generated)
+        cursor = stop
+    out.extend(lines[cursor:])
+    return out
 
 
 def add_missing_twins(files: dict[str, list[str]], names: set[str]) -> None:
@@ -669,6 +739,7 @@ def splice(module: str, objects: list[Path], asm_dir: Path, out_dir: Path, elf: 
     names = function_names(files["text.s"], text.base)
     twins: set[str] = set()
     count = 0
+    replacements: list[FunctionReplacement] = []
     for path in objects:
         obj = load_object(path)
         starts = place_functions(obj, symbols, text.relocs, text.base)
@@ -693,9 +764,7 @@ def splice(module: str, objects: list[Path], asm_dir: Path, out_dir: Path, elf: 
             asm_name = names.get(start)
             if asm_name is None:
                 raise SpliceError(f"{fn.name}: no function starts at .text+{start:#x} in text.s")
-            files["text.s"] = replace_function(
-                files["text.s"], asm_name, text.base, start, generated, fn.source
-            )
+            replacements.append(FunctionReplacement(asm_name, start, generated, fn.source))
             twins |= need
             count += 1
         for name, at in resolver.data.items():
@@ -711,6 +780,7 @@ def splice(module: str, objects: list[Path], asm_dir: Path, out_dir: Path, elf: 
                 files[key], target, at.offset, at.offset + sec.size, sec.data, reloc_lines,
                 obj.source,
             )  # fmt: skip
+    files["text.s"] = replace_functions(files["text.s"], text.base, replacements)
     add_missing_twins(files, twins)
 
     if out_dir.exists():
