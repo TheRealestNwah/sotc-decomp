@@ -201,3 +201,45 @@ This is an instruction/data-flow finding, without a runtime reproduction.
 Preserve it during matching. [Issue #708](https://github.com/TheRealestNwah/sotc-decomp/issues/708)
 tracks confirming the intended inactive-sequence contract and interrupt
 restoration during future port planning.
+
+## AI damage-check object precondition (#490)
+
+The Original GAMECORE `AI_CheckDamage_Impact`, `AI_CheckDamage_Sword` and
+`AI_CheckDamage_Reaction` read the first word returned by `GetDamageClass`
+before combining its value with the pointer's nonzero test. The reads are at
+GAMECORE text offsets `0x9B5B8`, `0x9B618` and `0x9B678`, respectively.
+The recovered bitwise expression `(d != 0) & (d[0] == 1)` preserves this
+ordering; the apparent null test does not protect the read.
+
+MANAGER `GetDamageClass` (`0xEB980`) first reads the object's unsigned type
+byte at `object + 8`. Its supported cases resolve as follows, using
+`GetCharacterClass` (`0x457E0`), `GetScriptLayoutClass` (`0x91DC8`) and
+`GetScriptAnimationClass` (`0x8F5A8`):
+
+| Object type | Damage pointer |
+| --- | --- |
+| `0x09` | `GetCharacterClass(object) + 0x200` = `object + 0x290` |
+| `0x0B` | `GetScriptLayoutClass(object) + 0x230` = `object + 0x250` |
+| `0x0D` | `GetScriptAnimationClass(object) + 0x230` = `object + 0x250` |
+| `0x16` | `object + 0x290` directly |
+
+Every other type returns zero. The three checks therefore require a live,
+readable object of one of these types with readable damage storage. A null
+object already fails inside `GetDamageClass`; an unsupported type reaches
+the subsequent null-based damage read.
+
+`AI_CheckDamage_Bow` and `AI_CheckDamage_SoundBow` instead short-circuit their
+damage-pointer checks. Their false result is not evidence of a supported
+object type: an unsupported type also returns false. For example,
+`func_000A2D50` obtains the current subthread object and tries bow, sword,
+sound-bow, then optionally impact. The bow call at GAMECORE `0xA2ED8` falls
+through to the sword call at `0xA2EEC` when false, passing the same object.
+That sequence supplies no type validation before the sword check.
+
+These are static instruction and caller-data-flow findings. They do not
+establish that an unsupported type reaches these checks during gameplay.
+Keep the matching implementation unchanged. Before a Native-port correction,
+trace the creation/type invariants of the current subthread and other caller
+objects, then define and test the unsupported-type behavior deliberately.
+[Issue #490](https://github.com/TheRealestNwah/sotc-decomp/issues/490) remains
+open for that reachability and contract investigation.
