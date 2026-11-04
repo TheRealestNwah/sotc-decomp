@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
+from synthetic_xff import build as synthetic_module
 
 from tools import xff_splice
 from tools.functions import Reloc
@@ -368,3 +369,35 @@ def test_adjacent_c_data_replacements_preserve_each_others_boundaries(relocated_
         "dlabel B",
         "dlabel C",
     ]
+
+
+@pytest.mark.parametrize("word_count", [1, 2, 3])
+def test_splice_enforces_explicit_original_size(tmp_path, monkeypatch, word_count):
+    elf = synthetic_module()
+    text = xff_splice.original_sections(elf)[".text"]
+    asm = tmp_path / "asm"
+    asm.mkdir()
+    (asm / "text.s").write_text(
+        ".section .text\nglabel f0\n"
+        f"    /* {text.base:06X} {text.base:08X} 00000000 */ nop\n"
+        f"    /* {text.base + 4:06X} {text.base + 4:08X} 00000000 */ nop\n"
+        "endlabel f0\n"
+    )
+    # f0 has an authoritative eight-byte size, not an inferred asm boundary.
+    obj = CompiledObject("f0", [CompiledFunction("f0", "f0", [0] * word_count, {})], {})
+    monkeypatch.setattr(xff_splice, "load_object", lambda _: obj)
+    output = tmp_path / "output"
+    if word_count == 2:
+        assert xff_splice.splice("TEST", [tmp_path / "f0.o"], asm, output, elf) == 1
+        result = (output / "text.s").read_text()
+        assert result.count("from C") == 2
+        assert not any(xff_splice.LINE_RE.match(line) for line in result.splitlines())
+    else:
+        with pytest.raises(SpliceError, match="f0.*size"):
+            xff_splice.splice("TEST", [tmp_path / "f0.o"], asm, output, elf)
+        assert not output.exists()
+
+
+def test_named_function_without_explicit_size_keeps_inferred_extent_behavior():
+    obj = CompiledObject("f", [fn([0, 0, 0])], {})
+    assert place_functions(obj, {"f": Symbol(0, ".text")}, {}) == {"f": 0}
