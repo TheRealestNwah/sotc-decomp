@@ -202,3 +202,118 @@ This is an instruction/data-flow finding, without a runtime reproduction.
 Preserve it during matching. [Issue #708](https://github.com/TheRealestNwah/sotc-decomp/issues/708)
 tracks confirming the intended inactive-sequence contract and interrupt
 restoration during future port planning.
+
+## AI damage-check object precondition (#490)
+
+The Original GAMECORE `AI_CheckDamage_Impact`, `AI_CheckDamage_Sword` and
+`AI_CheckDamage_Reaction` read the first word returned by `GetDamageClass`
+before combining its value with the pointer's nonzero test. The reads are at
+GAMECORE text offsets `0x9B5B8`, `0x9B618` and `0x9B678`, respectively.
+The recovered bitwise expression `(d != 0) & (d[0] == 1)` preserves this
+ordering; the apparent null test does not protect the read.
+
+MANAGER `GetDamageClass` (`0xEB980`) first reads the object's unsigned type
+byte at `object + 8`. Its supported cases resolve as follows, using
+`GetCharacterClass` (`0x457E0`), `GetScriptLayoutClass` (`0x91DC8`) and
+`GetScriptAnimationClass` (`0x8F5A8`):
+
+| Object type | Damage pointer |
+| --- | --- |
+| `0x09` | `GetCharacterClass(object) + 0x200` = `object + 0x290` |
+| `0x0B` | `GetScriptLayoutClass(object) + 0x230` = `object + 0x250` |
+| `0x0D` | `GetScriptAnimationClass(object) + 0x230` = `object + 0x250` |
+| `0x16` | `object + 0x290` directly |
+
+Every other type returns zero. The three checks therefore require a live,
+readable object of one of these types with readable damage storage. A null
+object already fails inside `GetDamageClass`; an unsupported type reaches
+the subsequent null-based damage read.
+
+`AI_CheckDamage_Bow` and `AI_CheckDamage_SoundBow` instead short-circuit their
+damage-pointer checks. Their false result is not evidence of a supported
+object type: an unsupported type also returns false. For example,
+`func_000A2D50` obtains the current subthread object and tries bow, sword,
+sound-bow, then optionally impact. The bow call at GAMECORE `0xA2ED8` falls
+through to the sword call at `0xA2EEC` when false, passing the same object.
+That sequence supplies no type validation before the sword check.
+
+These are static instruction and caller-data-flow findings. They do not
+establish that an unsupported type reaches these checks during gameplay.
+Keep the matching implementation unchanged. Before a Native-port correction,
+trace the creation/type invariants of the current subthread and other caller
+objects, then define and test the unsupported-type behavior deliberately.
+[Issue #490](https://github.com/TheRealestNwah/sotc-decomp/issues/490) remains
+open for that reachability and contract investigation.
+
+## Sheet lookup missing-header contract (#492)
+
+Original MANAGER `sheetMgrSearchSheetDataObj` (`0xE39F8`) indexes the header
+pointer table `D_00139F10` using its sheet ID, then searches the selected
+header's linked data objects by hash. A readable, initialized table, a valid
+index and a present header are preconditions for this lookup.
+
+The missing-header diagnostic does not safely handle an absent header:
+`0xE3A1C` branches over it only when the selected header is nonzero. Otherwise
+`0xE3A24` reads the descriptor at header `+0x38`, and the recovery call's delay
+slot at `0xE3A34` reads the descriptor's first word as the diagnostic argument.
+Both reads happen before `iosJumpRecoverPoint` can handle the error. Giving
+that recovery function a nonreturning contract cannot protect argument
+construction that has already dereferenced the absent header.
+
+`sheetIdToName` (`0xE3998`) is not a safe substitute for that argument: its
+loads at `0xE39A8`, `0xE39AC` and `0xE39B4` perform the same table-to-header,
+header-to-descriptor and descriptor-to-name traversal without a missing-header
+check. A future safe diagnostic needs information independent of the absent
+header, such as the requested numeric sheet ID and hash, or a separately
+validated name source.
+
+A missing data entry is a different case. With a valid header, the search
+starts from header `+0x40`, compares each entry's descriptor hash at
+`entry->descriptor + 4`, and follows entry `+0x54`. Exhausting that list returns
+zero through `0xE3A68`, without the missing-header diagnostic.
+
+The two direct calls in `func_000E1270`, at MANAGER `0xE1340` and `0xE1510`,
+pass sheet IDs and hashes read from request records. Those sites alone do not
+establish that every requested header has been installed and remains live.
+Trace request validation and header lifetime before defining a Native-port
+error result. This is static instruction/data-flow evidence, without a
+runtime reproduction. Preserve the original matching implementation;
+[issue #492](https://github.com/TheRealestNwah/sotc-decomp/issues/492) remains
+open for the missing-header contract and reachability investigation.
+
+## Memory-card request-pool exhaustion (#1219)
+
+Original MANAGER `initMcManager` clears two request state words in
+`B_0014DB50`; each request occupies `0x30` bytes. The message queue is
+initialized with capacity one. Request storage and queue capacity are separate:
+the wrappers scan for a request whose state is zero before sending it.
+
+In `mcGetInfo` (`0xCE1E0`), the scan limit is two at `0xCE220`. When both
+requests are busy, `0xCE238` sets the selected request pointer to zero,
+`0xCE23C` calls `LoaderSysPrintf`, then `0xCE24C` and `0xCE254` store the port
+and slot through that zero pointer. The state store and message dispatch
+follow. `mcGetMainDataInfo` (`0xCE2C8`) has the same scan/diagnostic shape;
+its first post-diagnostic request store is at `0xCE334`.
+
+The diagnostic is not a recovery jump. Original Loader `LoaderSysPrintf`
+(`0x102CF8`) calls `vsprintf` at `0x102D48`, `printf` at `0x102D50` and
+`strlen` at `0x102D58`, then returns normally at `0x102D64`. The specific
+exhaustion message at MANAGER rodata address `0x140D10` is 31 bytes with no
+percent directives, so the second-formatting concern in
+[issue #2385](https://github.com/TheRealestNwah/sotc-decomp/issues/2385) does
+not itself supply an escape from this path. Once the output calls return,
+the caller continues to the null-based stores.
+
+Successful `mcGetInfo` requests set their state, send the request, and invoke
+the function pointer `B_0014DBB4` while waiting for that state to clear
+(`0xCE280` through `0xCE298`). `mcReqSetWaitFunc` assigns this callback.
+Before porting, audit both concurrent callers and reentrancy through the wait
+callback; a synchronous wrapper alone does not establish that the two-slot
+pool cannot be exhausted.
+
+This is static instruction and data-flow evidence, without a runtime
+pool-exhaustion reproduction. Preserve matching behavior. A deliberate
+Native-port correction must define a pool-exhaustion result before request
+stores or dispatch, with coverage for two busy slots and the wait-callback
+contract. [Issue #1219](https://github.com/TheRealestNwah/sotc-decomp/issues/1219)
+remains open for reachability and the eventual error-handling change.

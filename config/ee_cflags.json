@@ -61,5 +61,23 @@
   ],
   "src/xff/MANAGER/charrootdyn_getCollisionDBwithFunc.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/GAMEUTIL_set_col_plane_info.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/begin_nico_sight_on.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/ReplayOverBGScript.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/timeAttackOverBGScript.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/EndMessageScript.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/PlayDemoCameraOrient.c": [
+    "-fno-strict-aliasing"
   ]
 }
