@@ -1,4 +1,5 @@
 import json
+from itertools import permutations
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ from tools.xff_splice import (
     CompiledFunction,
     CompiledObject,
     DataSection,
+    FunctionReplacement,
     OriginalSection,
     Place,
     Resolver,
@@ -25,6 +27,7 @@ from tools.xff_splice import (
     read_object_list,
     replace_data,
     replace_function,
+    replace_functions,
 )
 
 JAL = 0x0C000000
@@ -323,6 +326,121 @@ def test_replace_function_stops_at_the_next_label_without_endlabel():
     ]
     out = replace_function(lines, "f", 0x100, 0, [["    A"]], "f")
     assert out[3:] == lines[2:] and out[1:3] == ["    /* 0000 from C (f.c) */", "    A"]
+
+
+@pytest.mark.parametrize("order", list(permutations(range(3))))
+def test_batch_function_replacement_preserves_splits_labels_and_relocations(order):
+    lines = [
+        ".section .text",
+        "glabel f",
+        '    .reloc ., R_MIPS_32, "old"',
+        "    /* 000100 00000100 00000000 */ .word 0",
+        "endlabel f",
+        "glabel false_split",
+        ".Lxff.inner:",
+        "    /* 000104 00000104 00000000 */ .word 0",
+        "endlabel false_split",
+        "glabel g",
+        "    /* 000108 00000108 00000000 */ .word 0",
+        "  /* no endlabel before the next function */",
+        "glabel h",
+        "    /* 00010C 0000010C 00000000 */ .word 0",
+        "endlabel h",
+        ".section .rodata",
+        "    .word 99",
+    ]
+    patches = [
+        FunctionReplacement("f", 0, [["    A"], ["    B"]], "first"),
+        FunctionReplacement("g", 8, [['    .reloc ., R_MIPS_32, "new"', "    C"]], "second"),
+        FunctionReplacement("h", 12, [["    D", "    # extra comment"]], "third"),
+    ]
+    ordered = [patches[i] for i in order]
+    expected = lines
+    for r in ordered:
+        expected = replace_function(expected, r.name, 0x100, r.start, r.generated, r.source)
+    actual = replace_functions(lines, 0x100, ordered)
+    assert actual == expected
+    assert actual[-2:] == lines[-2:]
+    assert ".Lxff.inner:" in actual
+    assert not any('"old"' in line for line in actual)
+    assert sum("from C" in line for line in actual) == 4
+
+
+@pytest.mark.parametrize(
+    ("lines", "patch", "message"),
+    [
+        (["glabel other"], FunctionReplacement("f", 0, [[" A"]], "f"), "not found"),
+        (
+            ["glabel f", " /* 000104 00000104 00000000 */ .word 0"],
+            FunctionReplacement("f", 0, [[" A"]], "f"),
+            "word 0 isn't where expected",
+        ),
+        (
+            ["glabel f", " /* 000100 00000100 00000000 */ .word 0", "endlabel f"],
+            FunctionReplacement("f", 0, [[" A"], [" B"]], "f"),
+            "replaced 1 of 2 words",
+        ),
+    ],
+)
+def test_batch_function_replacement_keeps_missing_and_malformed_span_errors(lines, patch, message):
+    with pytest.raises(SpliceError, match=message):
+        replace_functions(lines, 0x100, [patch])
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("alias", [False, True])
+def test_batch_overlapping_functions_retain_sequential_rejection(reverse, alias):
+    lines = [
+        "glabel f",
+    ]
+    if not alias:
+        lines.append(" /* 000100 00000100 00000000 */ .word 0")
+    offset = 0 if alias else 4
+    lines.extend(
+        [
+            "glabel g",
+            f" /* {0x100 + offset:06X} {0x100 + offset:08X} 00000000 */ .word 0",
+            "endlabel g",
+        ]
+    )
+    patches = [
+        FunctionReplacement("f", 0, [[" A"]] if alias else [[" A"], [" B"]], "f"),
+        FunctionReplacement("g", offset, [[" C"]], "g"),
+    ][:: -1 if reverse else 1]
+    with pytest.raises(SpliceError) as previous:
+        result = lines
+        for r in patches:
+            result = replace_function(result, r.name, 0x100, r.start, r.generated, r.source)
+    with pytest.raises(SpliceError) as batched:
+        replace_functions(lines, 0x100, patches)
+    assert str(batched.value) == str(previous.value)
+
+
+def test_splice_batches_reversed_functions_with_a_same_object_call(tmp_path, monkeypatch):
+    elf = synthetic_module()
+    text = xff_splice.original_sections(elf)[".text"]
+    asm = tmp_path / "asm"
+    asm.mkdir()
+    lines = [".section .text", ".Lxff.start.text:"]
+    for name, start, words in [("f0", 0, [0, 0]), ("f1", 8, [JAL, 0])]:
+        lines.append(f"glabel {name}")
+        for i, word in enumerate(words):
+            address = text.base + start + 4 * i
+            if word == JAL:
+                lines.append("    .reloc ., R_MIPS_26, .Lxff.start.text")
+            lines.append(f" /* {address:06X} {address:08X} 00000000 */ .word {word:#x}")
+        lines.append(f"endlabel {name}")
+    (asm / "text.s").write_text("\n".join(lines))
+    f0 = CompiledFunction("f0", "pair", [0, 0], {}, 0)
+    f1 = CompiledFunction("f1", "pair", [JAL, 0], {0: Reloc(4, ".text", True, 0)}, 8)
+    obj = CompiledObject("pair", [f1, f0], {})
+    monkeypatch.setattr(xff_splice, "load_object", lambda _: obj)
+    output = tmp_path / "output"
+    assert xff_splice.splice("TEST", [tmp_path / "pair.o"], asm, output, elf) == 2
+    result = (output / "text.s").read_text()
+    assert result.count("from C (pair.c)") == 4
+    assert result.count(".reloc ., R_MIPS_26, .Lxff.start.text") == 1
+    assert not any(xff_splice.LINE_RE.match(line) for line in result.splitlines())
 
 
 def test_unnamed_original_objects_resolve_by_label_name():
