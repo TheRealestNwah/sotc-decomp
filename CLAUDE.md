@@ -80,11 +80,13 @@ The Original Loader must be at `iso/SCUS_974.72` (copied from the owner's own di
    - Copy the useful change back by hand, then check with try_compilers.
 
 How it builds:
-- `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` in one WSL invocation. The standard-library-only `tools/ee_asm.py` applies the same assembly preparation in WSL and in standalone compiler comparisons. Before assembling, empty `.set noreorder`/`.set reorder` pairs go before every jump or branch gcc leaves to the assembler (and around volatile accesses), because the original assembler never filled a delay slot itself (see `docs/findings.md`). Indexed `lw $r,sym($b)` macros are also written out as `lui`/`addu`/`lw %lo` in -G0 code, since `ee-as` sometimes mis-encodes that `lui` (issue #2343).
+- `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` in one WSL invocation. The standard-library-only `tools/ee_asm.py` applies the same assembly preparation in WSL and in standalone compiler comparisons. Before assembling, empty `.set noreorder`/`.set reorder` pairs go before every jump or branch gcc leaves to the assembler (and around volatile accesses), because the original assembler never filled a delay slot itself (see `docs/findings.md`). Indexed `lw` and `lhu` symbol loads are also written out as `lui`/`addu`/load with `%lo` in -G0 code, since `ee-as` sometimes mis-encodes that `lui` (issues #2343 and #2265).
 - `tools/xff_splice.py` writes `build/xff/<MODULE>/spliced/`, which is the Game module's asm with each Matched function replaced by the compiled words. Relocated words become explicit `.reloc` directives.
 - The Game module is assembled from that copy and checked as usual.
 
-The splice step refuses any C function that doesn't match the Original exactly, so a wrong function fails the build instead of slipping in.
+The splice step refuses any C function that doesn't match the Original exactly, so a wrong function fails the build instead of slipping in. For named functions with an explicit Original symbol size, the compiled size must also match; a matching prefix is insufficient.
+
+Inline assembly that enters `.set noreorder` must restore `.set reorder` before returning control to compiler-generated code. Leaving it enabled can omit the final return's delay-slot instruction (issue #2391).
 
 C data (string literals, `switch` jump tables, constants and statics in `.rodata`/`.data`/`.bss`):
 - Each C data section is placed where the original references it (the original relocation paired with each C reference, or an original symbol of the same name). All anchors must agree, so a C file's data has to be laid out like the original's.
