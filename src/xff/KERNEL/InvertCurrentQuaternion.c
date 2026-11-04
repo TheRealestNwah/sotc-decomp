@@ -12,5 +12,6 @@ void InvertCurrentQuaternion(void)
                          "vsubw.x vf5, vf0, vf0w\n"
                          "vmulx.xyz vf11, vf11, vf5x\n"
                          "sqc2 vf11, 0(%0)\n"
+                         ".set reorder\n"
                          : : "r"(c) : "memory");
 }

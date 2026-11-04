@@ -5,5 +5,6 @@ void iosGetInverseVectorXYZ(void *dst, void *src)
                          "qmtc2.ni %2, vf6\n"
                          "vmulx.xyz vf5, vf5, vf6x\n"
                          "sqc2 vf5, 0(%0)\n"
+                         ".set reorder\n"
                          : : "r"(dst), "r"(src), "r"(-1.0f) : "memory");
 }

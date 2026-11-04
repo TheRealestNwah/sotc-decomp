@@ -28,8 +28,7 @@ def test_build_passes_selected_flags_to_original_compiler(tmp_path, monkeypatch)
     monkeypatch.setattr(ee_cc, "ROOT", tmp_path)
     monkeypatch.setattr(ee_cc, "find_package_as", lambda _: tmp_path / "ee-as")
     calls = []
-    monkeypatch.setattr(ee_cc, "compile_c", lambda *args: calls.append(args))
-    monkeypatch.setattr(ee_cc, "assemble", lambda *args: None)
+    monkeypatch.setattr(ee_cc, "compile_and_assemble", lambda *args: calls.append(args))
     assert ee_cc.build(tmp_path / "demo.c", tmp_path / "build/demo.o", tmp_path / "cc") is None
     assert calls[0][2] == ["-O2", "-G0", "-fno-strict-aliasing"]
 
