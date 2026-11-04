@@ -12,7 +12,6 @@ from tools.xff_split import (
     label_addresses,
     postprocess,
     referenced_address,
-    sext16,
     split,
 )
 
@@ -104,12 +103,6 @@ def run(sec, labels=None, bases=None):
     labels = labels if labels is not None else label_addresses([sec])
     out, twins, unlabeled = postprocess(sec, labels, bases or {sec.name: BASE}, fixups)
     return out, twins, unlabeled, fixups
-
-
-def test_sext16():
-    assert sext16(0x7FFF) == 0x7FFF
-    assert sext16(0x8000) == -0x8000
-    assert sext16(0x12345678) == 0x5678
 
 
 def test_word_without_original_reloc_becomes_plain_value():

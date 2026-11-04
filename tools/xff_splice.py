@@ -13,7 +13,9 @@ objects, and the data those objects own, is replaced by the compiler's output:
 - Every word must match the original exactly. Instructions are compared
   directly; relocated fields are compared by target. A mismatch is an error
   naming the function and the first differing word, so a non-matching C
-  function can never slip into the build.
+  function can never slip into the build. The rule is `compare` in
+  tools/functions.py, the same one try_compilers and the permuter use; this
+  step adds the placement it needs for same-file targets.
 - Plain words are emitted as-is. Relocated words get an explicit `.reloc`
   and their field is recomputed by the assembler from labels:
   - by name, when the original references the symbol by name (it lives in
@@ -52,28 +54,30 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from tools.xff2 import parse, to_elf  # noqa: E402
-from tools.xff_split import (  # noqa: E402
+from tools.functions import (  # noqa: E402
     ADDRESS_NAME_RE,
-    LINE_RE,
+    FIELD_MASKS,
+    R_MIPS_26,
+    R_MIPS_32,
+    R_MIPS_HI16,
     RELOC_NAMES,
-    SECTION_RE,
+    Function,
     Reloc,
+    compare,
+    describe,
+    open_module,
+    read_relocs,
+)
+from tools.xff_split import (  # noqa: E402
+    LINE_RE,
+    SECTION_RE,
     file_stem,
     label_name,
-    read_relocs,
     section_start,
     twin,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
-R_MIPS_32, R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16 = 2, 4, 5, 6
-FIELD_MASKS = {
-    R_MIPS_32: 0xFFFFFFFF,
-    R_MIPS_26: 0x03FFFFFF,
-    R_MIPS_HI16: 0xFFFF,
-    R_MIPS_LO16: 0xFFFF,
-}
 # Any addressed line: "/* <offset> <address> [<bytes>] */". Strings have no bytes column.
 ADDRESS_RE = re.compile(r"^\s*/\* ([0-9A-F]+) ([0-9A-F]+)(?: [0-9A-F]+)? \*/")
 TWIN_DEF_RE = re.compile(r"^(\.Lxff\.[^\s:]+):\s*$")
@@ -236,24 +240,14 @@ class Resolver:
             return f"{label} - {section_start(place.section)}"
         return f"{place.offset:#x}"
 
-    def check(self, mine: Reloc | None, theirs: Reloc, word: int, orig: int) -> tuple[str, str]:
-        """Checks that a C relocation hits the same target as the original one.
-        Returns (reloc directive, word expression), or raises with the reason."""
-        if mine is None or mine.type != theirs.type:
-            raise SpliceError(f"relocation {mine and mine.type} vs original {theirs.type}")
-        if (word ^ orig) & ~FIELD_MASKS[theirs.type] & 0xFFFFFFFF:
-            raise SpliceError("instruction")
+    def emit(self, mine: Reloc, theirs: Reloc, word: int) -> tuple[str, str]:
+        """(reloc directive, word expression) for a relocated word that
+        `compare` has already found matching."""
         name = RELOC_NAMES[theirs.type]
         if not theirs.section_relative:
-            if mine.section_relative or mine.target != theirs.target or word != orig:
-                raise SpliceError(f"target {describe(mine)} vs original {theirs.target}")
             return f'.reloc ., {name}, "{theirs.target}"', f"0x{word:08X}"
         # Same source file in the original: reference the target section-relative.
         place = self.place(mine)
-        if place is None or place.section != theirs.target:
-            raise SpliceError(f"{describe(mine)} isn't in the original {theirs.target}")
-        if theirs.addend is not None and not same_offset(theirs.type, place.offset, theirs.addend):
-            raise SpliceError(f"points at {place}, original at {theirs.target}+{theirs.addend:#x}")
         if mine.section_relative or mine.target not in self.symbols:
             value = self.relative(place)
         else:
@@ -275,24 +269,6 @@ class Resolver:
         return set()
 
 
-def same_offset(reloc_type: int, mine: int, theirs: int) -> bool:
-    """Whether a C target offset agrees with the original's implied addend.
-    Only the low 16 bits of a LO16's addend reach its field, and an original
-    LO16 without a HI16 of its own (one repeated in a branch delay slot) gets
-    its high half from an unrelated HI16, so LO16s compare modulo 0x10000."""
-    if reloc_type == R_MIPS_LO16:
-        return (mine - theirs) & 0xFFFF == 0
-    return mine == theirs
-
-
-def describe(reloc: Reloc | None) -> str:
-    if reloc is None:
-        return "nothing"
-    if reloc.section_relative:
-        return f"C {reloc.target}+{reloc.addend or 0:#x}"
-    return reloc.target
-
-
 def generate(
     fn: CompiledFunction,
     original_words: list[int],
@@ -305,28 +281,22 @@ def generate(
         raise SpliceError(
             f"{fn.name}: C is {len(fn.words)} words, original is {len(original_words)}"
         )
+    mismatches = compare(Function(original_words, original_relocs), fn, resolver.place)
+    if mismatches:
+        m = mismatches[0]
+        word, orig = fn.words[m.index], original_words[m.index]
+        raise SpliceError(
+            f"{fn.name}: word {m.index} (+{4 * m.index:#x}) differs: {m.detail} "
+            f"(C {word:08X}, original {orig:08X})"
+        )
     needs_twin: set[str] = set()
     lines = []
-    for i, (word, orig) in enumerate(zip(fn.words, original_words, strict=True)):
+    for i, word in enumerate(fn.words):
         mine, theirs = fn.relocs.get(i), original_relocs.get(i)
-
-        def mismatch(why: str, i=i, word=word, orig=orig) -> SpliceError:
-            return SpliceError(
-                f"{fn.name}: word {i} (+{4 * i:#x}) differs: {why} "
-                f"(C {word:08X}, original {orig:08X})"
-            )
-
         if theirs is None:
-            if mine is not None:
-                raise mismatch(f"C has a relocation against {describe(mine)}, the original none")
-            if word != orig:
-                raise mismatch("instruction")
             lines.append([f"    .word 0x{word:08X}"])
             continue
-        try:
-            directive, expr = resolver.check(mine, theirs, word, orig)
-        except SpliceError as e:
-            raise mismatch(str(e)) from None
+        directive, expr = resolver.emit(mine, theirs, word)
         needs_twin |= resolver.twins_needed(mine, theirs)
         lines.append([f"    {directive}", f"    .word {expr}"])
     return lines, needs_twin
@@ -487,10 +457,13 @@ def generate_data(
             raise SpliceError(f"{where}+{o:#x}: unsupported relocation type {theirs.type}")
         word = int.from_bytes(sec.data[o : o + 4], "little")
         orig = int.from_bytes(original.data[base + o : base + o + 4], "little")
-        try:
-            directive, expr = resolver.check(mine, theirs, word, orig)
-        except SpliceError as e:
-            raise SpliceError(f"{where}+{o:#x} ({at.section}+{base + o:#x}) differs: {e}") from None
+        mismatches = compare(Function([orig], {0: theirs}), Function([word], {0: mine}),
+                             resolver.place)  # fmt: skip
+        if mismatches:
+            raise SpliceError(
+                f"{where}+{o:#x} ({at.section}+{base + o:#x}) differs: {mismatches[0].detail}"
+            )
+        directive, expr = resolver.emit(mine, theirs, word)
         needs_twin |= resolver.twins_needed(mine, theirs)
         lines[base + o] = [f"    {directive}", f"    .word {expr}"]
     return lines, needs_twin
@@ -674,9 +647,7 @@ def original_sections(elf: ELFFile) -> dict[str, OriginalSection]:
     return out
 
 
-def splice(module: str, objects: list[Path], asm_dir: Path, out_dir: Path, original: Path) -> int:
-    with original.open("rb") as f:
-        elf = ELFFile(io.BytesIO(f.read()))
+def splice(module: str, objects: list[Path], asm_dir: Path, out_dir: Path, elf: ELFFile) -> int:
     symbols = symbol_table(elf)
     sections = original_sections(elf)
     text = sections[".text"]
@@ -767,12 +738,10 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(str(e))
     module = args.module.upper()
     out = args.out or ROOT / f"build/xff/{module}/spliced"
-    original = ROOT / f"build/xff/{module}.o"
-    if not original.exists():
-        original.parent.mkdir(parents=True, exist_ok=True)
-        original.write_bytes(to_elf(parse((ROOT / f"iso/{module}.XFF").read_bytes())))
     try:
-        count = splice(module, args.objects, ROOT / f"asm/xff/{module}", out, original)
+        count = splice(
+            module, args.objects, ROOT / f"asm/xff/{module}", out, open_module(module, ROOT / "iso")
+        )
     except SpliceError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1

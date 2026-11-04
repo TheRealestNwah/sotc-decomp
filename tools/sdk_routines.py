@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import io
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,6 +26,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
+from tools.functions import FIELD_MASKS, open_module, read_relocs  # noqa: E402
 from tools.progress import (  # noqa: E402
     SDK_ROUTINES,
     STT_FUNC,
@@ -34,11 +34,6 @@ from tools.progress import (  # noqa: E402
     module_functions,
     read_module,
 )
-
-R_MIPS_32, R_MIPS_26 = 2, 4
-# Bits of an instruction word each relocation type fills in.
-RELOC_MASKS = {R_MIPS_32: 0xFFFFFFFF, R_MIPS_26: 0x03FFFFFF}
-FIELD16 = 0x0000FFFF  # HI16, LO16, GPREL16
 
 
 @dataclass(frozen=True)
@@ -69,7 +64,7 @@ def signature(code: bytes, relocs: dict[int, int]) -> str:
     words = bytearray(code)
     for offset, reloc_type in relocs.items():
         word = int.from_bytes(words[offset : offset + 4], "little")
-        word &= ~RELOC_MASKS.get(reloc_type, FIELD16) & 0xFFFFFFFF
+        word &= ~FIELD_MASKS.get(reloc_type, 0xFFFF) & 0xFFFFFFFF
         words[offset : offset + 4] = word.to_bytes(4, "little")
     return hashlib.sha1(bytes(words)).hexdigest()[:16]
 
@@ -91,10 +86,7 @@ class ModuleCode:
     """A Game module's .text, relocations and function extents."""
 
     def __init__(self, xff: Path, asm: Path | None):
-        from elftools.elf.elffile import ELFFile
-
-        from tools.xff2 import parse, to_elf
-        from tools.xff_split import read_relocs
+        from tools.xff2 import parse
 
         module = parse(xff.read_bytes())
         text = module.index_of(".text")
@@ -112,7 +104,7 @@ class ModuleCode:
             for name in module_functions(named, labels, targets) - set(named):
                 starts[name] = labels[name] - base
         self.extents = function_extents(starts, sizes, len(self.code))
-        elf = ELFFile(io.BytesIO(to_elf(module)))
+        elf = open_module(xff.stem, xff.parent)
         self.relocs = {o: r.type for o, r in read_relocs(elf, ".text").items()}
 
     def routine(self, module: str, name: str, library: str) -> Routine:

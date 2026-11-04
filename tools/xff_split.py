@@ -39,6 +39,15 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tools.functions import (  # noqa: E402
+    ADDRESS_NAME_RE,
+    R_MIPS_32,
+    R_MIPS_HI16,
+    R_MIPS_LO16,
+    RELOC_NAMES,
+    Reloc,
+    read_relocs,
+)
 from tools.xff2 import parse, to_elf  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -50,26 +59,9 @@ LABEL_RE = re.compile(
 SECTION_RE = re.compile(r"^\.section\s+([^\s,]+)")
 SYMBOL_RE = re.compile(r"[A-Za-z_.$][A-Za-z0-9_.$]*")
 NUMBER_RE = re.compile(r"(?<![\w.$])-?0x[0-9A-Fa-f]+|%(?:hi|lo|gp_rel)|\$\w+")
-ADDRESS_NAME_RE = re.compile(r"[A-Za-z]+_([0-9A-F]{8})")
 OFFSET_RE = r"(?<![\w.$]){name}(?![\w.$])(?:\s*([+-])\s*(0x[0-9A-Fa-f]+|\d+))?"
-RELOC_NAMES = {
-    2: "R_MIPS_32",
-    4: "R_MIPS_26",
-    5: "R_MIPS_HI16",
-    6: "R_MIPS_LO16",
-    7: "R_MIPS_GPREL16",
-}
-R_MIPS_32, R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16 = 2, 4, 5, 6
 DEFAULT_AS = "mips64r5900el-ps2-elf-as"
 ASFLAGS = ["-EL", "-march=r5900", "-mabi=eabi", "-G", "0", "-no-pad-sections"]
-
-
-@dataclass(frozen=True)
-class Reloc:
-    type: int
-    target: str  # symbol name, or section name for section-relative relocations
-    section_relative: bool
-    addend: int | None = None  # implied addend for section-relative ones
 
 
 def label_name(line: str) -> str | None:
@@ -83,52 +75,6 @@ def twin(name: str) -> str:
 
 def section_start(section: str) -> str:
     return f".Lxff.start{section}"
-
-
-def sext16(value: int) -> int:
-    value &= 0xFFFF
-    return value - 0x10000 if value & 0x8000 else value
-
-
-def read_relocs(elf: ELFFile, section_name: str) -> dict[int, Reloc]:
-    """Relocations for a section, keyed by offset. Section-relative ones get
-    the addend implied by the instruction bits (pairing HI16/LO16)."""
-    rel = elf.get_section_by_name(".rel" + section_name)
-    target_section = elf.get_section_by_name(section_name)
-    if rel is None or target_section is None:
-        return {}
-    data = target_section.data()
-    symtab = elf.get_section(rel["sh_link"])
-    entries = []
-    for r in rel.iter_relocations():
-        sym = symtab.get_symbol(r["r_info_sym"])
-        if sym["st_info"]["type"] == "STT_SECTION":
-            target, section_relative = elf.get_section(sym["st_shndx"]).name, True
-        else:
-            target, section_relative = sym.name, False
-        word = int.from_bytes(data[r["r_offset"] : r["r_offset"] + 4], "little")
-        entries.append((r["r_offset"], r["r_info_type"], target, section_relative, word))
-
-    relocs: dict[int, Reloc] = {}
-    last_hi: dict[str, int] = {}
-    for i, (offset, rtype, target, section_relative, word) in enumerate(entries):
-        addend = None
-        if rtype == R_MIPS_32:
-            addend = word
-        elif rtype == R_MIPS_26:
-            addend = (word & 0x3FFFFFF) << 2
-        elif rtype == R_MIPS_HI16:
-            last_hi[target] = word
-            lo = next(
-                (e[4] for e in entries[i + 1 :] if e[1] == R_MIPS_LO16 and e[2] == target), None
-            )
-            if lo is not None:
-                addend = ((word & 0xFFFF) << 16) + sext16(lo)
-        elif rtype == R_MIPS_LO16:
-            hi = last_hi.get(target)
-            addend = ((hi & 0xFFFF) << 16 if hi is not None else 0) + sext16(word)
-        relocs[offset] = Reloc(rtype, target, section_relative, addend)
-    return relocs
 
 
 def symbols_by(elf: ELFFile, predicate) -> list:

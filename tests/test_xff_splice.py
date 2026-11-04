@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from tools import xff_splice
+from tools.functions import Reloc
 from tools.xff_splice import (
     CompiledFunction,
     CompiledObject,
@@ -24,7 +25,6 @@ from tools.xff_splice import (
     replace_data,
     replace_function,
 )
-from tools.xff_split import Reloc
 
 JAL = 0x0C000000
 SYMBOLS = {"callee": Symbol(0x40, ".text"), "other_file": Symbol(0x80, ".text")}
@@ -51,17 +51,16 @@ def test_missing_object_response_file_is_rejected(tmp_path):
 
 
 def test_splice_cli_accepts_response_file_and_positional_objects(tmp_path, monkeypatch):
-    original = tmp_path / "build/xff/TEST.o"
-    original.parent.mkdir(parents=True)
-    original.touch()
     response = tmp_path / "objects.rsp"
     response.write_text('["second.o", "third.o"]', encoding="utf-8")
     monkeypatch.setattr(xff_splice, "ROOT", tmp_path)
+    monkeypatch.setattr(xff_splice, "open_module", lambda m, iso_dir: f"{m} from {iso_dir}")
     calls = []
     monkeypatch.setattr(xff_splice, "splice", lambda *args: calls.append(args) or 3)
     assert xff_splice.main(["TEST", "first.o", "--objects-file", str(response)]) == 0
     assert calls[0][0] == "TEST"
     assert calls[0][1] == [Path("first.o"), Path("second.o"), Path("third.o")]
+    assert calls[0][4] == f"TEST from {tmp_path / 'iso'}"
 
 
 def fn(words, relocs=None):
@@ -93,13 +92,6 @@ def test_by_name_reference_keeps_the_name():
     assert lines == [['    .reloc ., R_MIPS_26, "other_file"', "    .word 0x0C000000"]]
 
 
-def test_wrong_target_is_an_error():
-    mine = {0: Reloc(4, "callee", False, 0)}
-    theirs = {0: Reloc(4, "other_file", False, 0)}
-    with pytest.raises(SpliceError, match="target"):
-        generate(fn([JAL], mine), [JAL], theirs, Resolver(SYMBOLS))
-
-
 def test_same_file_reference_is_recomputed_from_labels():
     # The original jal stores callee's section offset (0x40 >> 2) in its field.
     mine = {0: Reloc(4, "callee", False, 0)}
@@ -112,33 +104,12 @@ def test_same_file_reference_is_recomputed_from_labels():
     assert twins == {"callee"}
 
 
-def test_same_file_reference_to_wrong_place_is_an_error():
-    mine = {0: Reloc(4, "callee", False, 0)}
-    theirs = {0: Reloc(4, ".text", True, 0x44)}
-    with pytest.raises(SpliceError, match="original at"):
-        generate(fn([JAL], mine), [JAL | (0x44 >> 2)], theirs, Resolver(SYMBOLS))
-
-
 def test_unpaired_lo16_compares_only_the_low_half():
     # An original LO16 without its own HI16 implies 0x40 - 0x10000; only 0x0040 reaches the field.
     mine = {0: Reloc(6, "callee", False, 0)}
     theirs = {0: Reloc(6, ".text", True, 0x40 - 0x10000)}
     lines, _ = generate(fn([0x24420000], mine), [0x24420040], theirs, Resolver(SYMBOLS))
     assert lines[0][0] == "    .reloc ., R_MIPS_LO16, .Lxff.start.text"
-
-
-def test_lo16_to_a_different_low_half_is_an_error():
-    mine = {0: Reloc(6, "callee", False, 0)}
-    theirs = {0: Reloc(6, ".text", True, 0x44)}
-    with pytest.raises(SpliceError, match="original at"):
-        generate(fn([0x24420000], mine), [0x24420044], theirs, Resolver(SYMBOLS))
-
-
-def test_hi16_offsets_still_compare_exactly():
-    mine = {0: Reloc(5, "callee", False, 0)}
-    theirs = {0: Reloc(5, ".text", True, 0x40 + 0x10000)}
-    with pytest.raises(SpliceError, match="original at"):
-        generate(fn([0x3C020000], mine), [0x3C020001], theirs, Resolver(SYMBOLS))
 
 
 def test_field_expressions():
