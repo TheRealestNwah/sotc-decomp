@@ -169,3 +169,16 @@ def test_split_is_stale_when_its_inputs_change(tmp_path, monkeypatch):
     assert not configure.split_is_stale()
     (tmp_path / "symbol_addrs.txt").write_text("b\n")
     assert configure.split_is_stale()
+
+
+def test_splice_depends_on_the_original_and_every_module_it_imports(tmp_path, monkeypatch):
+    source_dir = tmp_path / "src/xff/TEST"
+    source_dir.mkdir(parents=True)
+    (source_dir / "a.c").touch()
+    monkeypatch.setattr(configure, "ROOT", tmp_path)
+    ninja = generate("test-", [], ["TEST"])
+    splice = next(line for line in ninja.splitlines() if ": splice " in line)
+    implicit = splice.split(" | ")[-1].split()
+    for path in ("iso/TEST.XFF", "tools/xff_splice.py", "tools/functions.py",
+                 "tools/xff_split.py", "tools/xff2.py"):  # fmt: skip
+        assert path in implicit
