@@ -30,7 +30,7 @@ static inline void planeVertices(int *out, CollisionRuntime *runtime, CollisionR
         resource->nodes, resource->vertices,
         &resource->planes[resource->nodes[nodeIndex].planeIndices[shapeIndex]]);
 }
-extern int RO_0011A538[];
+extern int RO_001407D8[];
 static inline void edgePoints(int *out, CollisionReference *reference)
 {
     int vertices[4];
@@ -44,7 +44,7 @@ static inline void edgePoints(int *out, CollisionReference *reference)
         planeVertices((int *)vertices, &layout->runtime, layout->collision->resource, nodeIndex, shapeIndex);
     }
     out[0] = vertices[edge];
-    out[1] = vertices[RO_0011A538[edge]];
+    out[1] = vertices[RO_001407D8[edge]];
 }
 void GetCollisionEdgePositionWithS(float *out, CollisionReference *reference, float t)
 {
