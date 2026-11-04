@@ -21,5 +21,6 @@ void MultiCurrentQuaternionL(s128 *q)
                          "vadd.xyz vf13, vf14, vf15\n"
                          "vadd.xyz vf13, vf13, vf16\n"
                          "sqc2 vf13, 0(%0)\n"
+                         ".set reorder\n"
                          : : "r"(c), "r"(q) : "memory");
 }

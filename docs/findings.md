@@ -80,6 +80,8 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
 - **Indexed `la` stays out of delay slots:** 2.96 writes the address of an array element with a constant base as the macro `la $r,sym($b)`, and knowing it is several instructions, leaves the following jump's delay slot to the assembler. `ee-as` expands it to `lui $at` / `addiu $at` / `addu $r,$at,$b` and then moves that last `addu` into the delay slot. The original build never did: across all three modules, every `addu ...,$at,...` directly before a jump or branch (28 sites, e.g. `GetCurrentQuaternion`, `getPathInfo`, `graphInitLayer`) is followed by an unfilled `nop` slot, and none sits in a delay slot. `tools/try_compilers.py` therefore puts an empty `.set noreorder` / `.set reorder` pair after each indexed `la`, the same barrier as for volatile accesses. Every previously matching function still matches with the rule; it is what made `GetCurrentQuaternion`, `GetScriptPriorityGroup`, `getPathInfo`, `_optionWorkPtr`, `isysGetGroupSrhNext` and `graphInitLayer` match. `ee-as -O0`/`-O1` doesn't change the reordering.
 - **The original assembler never filled a delay slot:** the volatile and indexed-`la` rules are two cases of one difference. gcc fills the delay slots it can inside its own `.set noreorder` blocks and writes every other jump or branch in reorder mode, leaving the slot to the assembler. Our `ee-as` then moves an earlier instruction into it; the original assembler left a `nop`. Evidence: `dsra32` occurs 270 times across the modules and never in a delay slot, because gcc emits a sign extension as the two-instruction pair `dsll`/`dsra $r,$r,32`, which it won't put in a slot itself (`iosGetField` ends `dsra32; jr $ra; nop`). `tools/try_compilers.py` therefore puts an empty `.set noreorder` / `.set reorder` pair before every jump or branch gcc emits in reorder mode. With that rule every previously matching function still matches (full `ninja check`), and `iosGetField` matches as well. `ee-as -O0`/`-O1` doesn't change the reordering, so the original build may have used an assembler version without it.
 - **Indexed `lw` is written out before assembling:** 2.96 writes an indexed load from a constant-base array (`name = table[i];`) as the macro `lw $r,sym($b)`. `ee-as` expands it to `lui` / `addu` / `lw %lo`, but in some positions it encodes the `lui` with the `lw` opcode (`8e100000` instead of `3c100000`, issue #2343). Deleting almost any earlier line of the same `.s`, even a blank one, makes the bad encoding go away, so it depends on where the macro lands, not on the instruction. The opcode bits sit outside the HI16 relocation, so such a function can never match. `tools/try_compilers.py` therefore rewrites each indexed `lw` with a symbol operand into the expansion the assembler makes itself (`lui $r,%hi(sym)` / `addu $r,$r,$b` / `lw $r,%lo(sym)($r)`, through `$at` when `$r` is the base), for -G0 code only. Every previously matching function still matches, and `ReplayPauseScript` matches with it.
+- **Indexed `lhu` has the same encoding fault (#2265):** KERNEL `func_0002F0D8` emits `lhu $2,pan_tbl($5)`, whose expansion can start with `94420000` (`lhu`) instead of `3c020000` (`lui`) at function offset `0x48`, carrying the same HI16 relocation. The indexed-load workaround also writes out `lhu` expansions for `-G0`; this removes the one verified word difference in that reproducer. Section-relative targets still require the splice checks. Loader `-G8` loads remain under the assembler's small-data handling.
+- **Inline VU blocks must restore assembler mode (#2391):** six C blocks entered `.set noreorder` without restoring `.set reorder`, leaving their compiler-generated final `jr $ra` with no following word in the compiled object. Their output was four bytes shorter than the explicit Original function size. Restoring reorder mode after each block makes the original assembler emit the complete Original delay slot; all six full function comparisons and strict splice checks pass. The XFF splice check now requires the explicit Original size for named functions (#2389), so an incomplete matching prefix cannot silently retain the Original assembly suffix. Placeholder statics and symbols without an explicit size retain their existing placement and comparison rules.
 - **Inline address getters:** `st_defaultAI` matches with a static inline getter returning the address of `gcGlobalVar`. Direct global access folds the address into the loads and emits 22 words; the inline getter preserves a materialized base and the original call/constant schedule, giving the matching 24-word function. This establishes a usable source shape; the original helper declaration is still unknown. See `src/xff/GAMECORE/st_defaultAI.c`.
 - **Callee return types affect register allocation:** a function declared `void` and one declared `int` (with the result ignored) can produce different temporaries in the caller after the call. `stagemanager_refleshCurrentArea` and `iosDlLockObj` differed only in v0/v1 choices while their callee was declared `void`. Both callees really return `int`: `isysAddGroupWithLinkParam` is declared `int` by 20 existing callers, and `isysAddGroupWithLinkParamNoWait` is a tail-call wrapper that passes that result through (its recovered C says `void`, which the wrapper's matching bytes can't distinguish). When a near-miss differs only in which scratch register holds a value after a call, check the callee's real return value before restructuring the source.
 - **Global base taken inside a loop:** `stagemanager_refleshCurrentArea` keeps the full address of `gcGlobalVar` in a saved register (`lui`/`addiu` into an `s` register, then `lw 0x308(sX)`) instead of folding `0x308` into `%lo`. A local `char *g = gcGlobalVar;` declared inside the loop body reproduces it; the same access written directly folds the offset.
@@ -243,3 +245,110 @@ trace the creation/type invariants of the current subthread and other caller
 objects, then define and test the unsupported-type behavior deliberately.
 [Issue #490](https://github.com/TheRealestNwah/sotc-decomp/issues/490) remains
 open for that reachability and contract investigation.
+
+## Sheet lookup missing-header contract (#492)
+
+Original MANAGER `sheetMgrSearchSheetDataObj` (`0xE39F8`) indexes the header
+pointer table `D_00139F10` using its sheet ID, then searches the selected
+header's linked data objects by hash. A readable, initialized table, a valid
+index and a present header are preconditions for this lookup.
+
+The missing-header diagnostic does not safely handle an absent header:
+`0xE3A1C` branches over it only when the selected header is nonzero. Otherwise
+`0xE3A24` reads the descriptor at header `+0x38`, and the recovery call's delay
+slot at `0xE3A34` reads the descriptor's first word as the diagnostic argument.
+Both reads happen before `iosJumpRecoverPoint` can handle the error. Giving
+that recovery function a nonreturning contract cannot protect argument
+construction that has already dereferenced the absent header.
+
+`sheetIdToName` (`0xE3998`) is not a safe substitute for that argument: its
+loads at `0xE39A8`, `0xE39AC` and `0xE39B4` perform the same table-to-header,
+header-to-descriptor and descriptor-to-name traversal without a missing-header
+check. A future safe diagnostic needs information independent of the absent
+header, such as the requested numeric sheet ID and hash, or a separately
+validated name source.
+
+A missing data entry is a different case. With a valid header, the search
+starts from header `+0x40`, compares each entry's descriptor hash at
+`entry->descriptor + 4`, and follows entry `+0x54`. Exhausting that list returns
+zero through `0xE3A68`, without the missing-header diagnostic.
+
+The two direct calls in `func_000E1270`, at MANAGER `0xE1340` and `0xE1510`,
+pass sheet IDs and hashes read from request records. Those sites alone do not
+establish that every requested header has been installed and remains live.
+Trace request validation and header lifetime before defining a Native-port
+error result. This is static instruction/data-flow evidence, without a
+runtime reproduction. Preserve the original matching implementation;
+[issue #492](https://github.com/TheRealestNwah/sotc-decomp/issues/492) remains
+open for the missing-header contract and reachability investigation.
+
+## Memory-card request-pool exhaustion (#1219)
+
+Original MANAGER `initMcManager` clears two request state words in
+`B_0014DB50`; each request occupies `0x30` bytes. The message queue is
+initialized with capacity one. Request storage and queue capacity are separate:
+the wrappers scan for a request whose state is zero before sending it.
+
+In `mcGetInfo` (`0xCE1E0`), the scan limit is two at `0xCE220`. When both
+requests are busy, `0xCE238` sets the selected request pointer to zero,
+`0xCE23C` calls `LoaderSysPrintf`, then `0xCE24C` and `0xCE254` store the port
+and slot through that zero pointer. The state store and message dispatch
+follow. `mcGetMainDataInfo` (`0xCE2C8`) has the same scan/diagnostic shape;
+its first post-diagnostic request store is at `0xCE334`.
+
+The diagnostic is not a recovery jump. Original Loader `LoaderSysPrintf`
+(`0x102CF8`) calls `vsprintf` at `0x102D48`, `printf` at `0x102D50` and
+`strlen` at `0x102D58`, then returns normally at `0x102D64`. The specific
+exhaustion message at MANAGER rodata address `0x140D10` is 31 bytes with no
+percent directives, so the second-formatting concern in
+[issue #2385](https://github.com/TheRealestNwah/sotc-decomp/issues/2385) does
+not itself supply an escape from this path. Once the output calls return,
+the caller continues to the null-based stores.
+
+Successful `mcGetInfo` requests set their state, send the request, and invoke
+the function pointer `B_0014DBB4` while waiting for that state to clear
+(`0xCE280` through `0xCE298`). `mcReqSetWaitFunc` assigns this callback.
+Before porting, audit both concurrent callers and reentrancy through the wait
+callback; a synchronous wrapper alone does not establish that the two-slot
+pool cannot be exhausted.
+
+This is static instruction and data-flow evidence, without a runtime
+pool-exhaustion reproduction. Preserve matching behavior. A deliberate
+Native-port correction must define a pool-exhaustion result before request
+stores or dispatch, with coverage for two busy slots and the wait-callback
+contract. [Issue #1219](https://github.com/TheRealestNwah/sotc-decomp/issues/1219)
+remains open for reachability and the eventual error-handling change.
+
+## Subthread-status diagnostic class contract (#1240)
+
+Original KERNEL `isysDumpSubThreadStatus` begins at XFF file offset
+`0x1D030` (symbol offset `.text + 0x1CFF8`, size `0xB0`). It reads the
+object's class byte at `object + 8`. Classes 6, 9, 11, 12, 13, 14, 22, 29
+and 33 select the environment at `object + 0x20`; every other class selects
+zero. The supported path establishes an environment location, not a check
+that its saved stack pointer or the object itself is valid.
+
+Both paths allocate two `0x100`-byte name buffers with alignment four.
+At file offset `0x1D0AC`, the function unconditionally reads the selected
+environment's first word as the saved stack pointer, before calling
+`isysSearchModuleFuncNameByAddr`. The unsupported-class path therefore reads
+through zero after those allocations. The function later frees both name
+buffers. It has no unsupported-class diagnostic or early return.
+
+A static reference audit of all 70,894 relocations in the three Original
+Game modules, including their nonstandard relocated sections, found no
+references to this function by name or by its section-relative address.
+The function name also does not occur in their PROGBITS contents; its
+KERNEL symbol is globally bound. This rules out an identified relocated
+call or callback-table entry in those modules, but does not establish
+runtime unreachability: dynamic symbol lookup, computed addresses and
+external diagnostic invocation remain untraced. No caller-side class
+filter has been established.
+
+Preserve the exact matching implementation. Before implementing the Native
+version, establish who may invoke this diagnostic and choose an explicit
+result for unsupported classes before reading the environment. Test that
+result alongside the nine supported classes and their saved-stack-pointer
+contract. This is static binary and relocation evidence, without a runtime
+reproduction. [Issue #1240](https://github.com/TheRealestNwah/sotc-decomp/issues/1240)
+remains open for reachability and the deliberate port-stage behavior change.

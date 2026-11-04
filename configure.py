@@ -48,7 +48,12 @@ LD_SCRIPTS = [
 
 # ee_cc.py imports its compile and assemble steps from try_compilers.py, so a
 # change to either or the per-source options must rebuild C objects (#388, #726).
-EECC_TOOLS = ("tools/ee_cc.py", "tools/try_compilers.py", "config/ee_cflags.json")
+EECC_TOOLS = (
+    "tools/ee_cc.py",
+    "tools/try_compilers.py",
+    "tools/ee_asm.py",
+    "config/ee_cflags.json",
+)
 C_SOURCES_MANIFEST = f"{BUILD_DIR}/c_sources.json"
 # The Loader's decompiled C (src/loader/*.c) replaces functions in this file.
 LOADER_ASM = "asm/cod/000000.s"

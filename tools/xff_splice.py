@@ -121,6 +121,7 @@ class CompiledObject:
 class Symbol:
     value: int
     section: str | None  # None for undefined/absolute
+    function_size: int = 0  # explicit STT_FUNC size; zero when no size is known
 
 
 @dataclass(frozen=True)
@@ -149,7 +150,8 @@ def symbol_table(elf: ELFFile) -> dict[str, Symbol]:
             continue
         shndx = s["st_shndx"]
         section = elf.get_section(shndx).name if isinstance(shndx, int) else None
-        table[s.name] = Symbol(s["st_value"], section)
+        size = s["st_size"] if s["st_info"]["type"] == "STT_FUNC" else 0
+        table[s.name] = Symbol(s["st_value"], section, size)
     return table
 
 
@@ -320,6 +322,11 @@ def place_functions(
         symbol = symbols.get(fn.name)
         address = ADDRESS_NAME_RE.fullmatch(fn.name)
         if symbol is not None and symbol.section == ".text":
+            size = 4 * len(fn.words)
+            if symbol.function_size and size != symbol.function_size:
+                raise SpliceError(
+                    f"{fn.name}: C function size {size:#x}, Original size {symbol.function_size:#x}"
+                )
             starts[fn.name] = symbol.value
         elif symbol is None and fn.local and address:
             starts[fn.name] = int(address.group(1), 16) - text_base

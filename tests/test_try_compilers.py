@@ -7,7 +7,7 @@ from tools import try_compilers
 from tools.functions import Function, Reloc
 from tools.try_compilers import (
     compile_c,
-    expand_indexed_lw,
+    expand_indexed_loads,
     fix_moves,
     indexed_la_barriers,
     jump_barriers,
@@ -135,16 +135,38 @@ def test_jump_barriers_only_guard_reorder_mode_jumps(tmp_path):
     )
 
 
-def test_expand_indexed_lw_writes_out_symbol_loads_only(tmp_path):
+@pytest.mark.parametrize("opcode", ["lw", "lhu"])
+def test_expand_indexed_loads_writes_out_symbol_loads_only(tmp_path, opcode):
     asm = tmp_path / "x.s"
     asm.write_text(
-        "\tlw\t$16,tbl($2)\n\tlw\t$2,tbl+8($2)\n\tlw\t$3,28($18)\n"
-        "\tlw\t$4,-4($sp)\n\tlw\t$5,%lo(tbl)($5)\n\tlw\t$6,tbl\n\tsw\t$7,tbl($2)\n",
+        f"\t{opcode}\t$16,tbl($2)\n\t{opcode}\t$2,tbl+8($2)\n\t{opcode}\t$3,28($18)\n"
+        f"\t{opcode}\t$4,-4($sp)\n\t{opcode}\t$5,%lo(tbl)($5)\n\t{opcode}\t$6,tbl\n\tsw\t$7,tbl($2)\n",
         encoding="latin-1",
     )
-    expand_indexed_lw(asm)
+    expand_indexed_loads(asm)
     assert asm.read_text(encoding="latin-1") == (
-        "\tlui\t$16,%hi(tbl)\n\taddu\t$16,$16,$2\n\tlw\t$16,%lo(tbl)($16)\n"
-        "\tlui\t$at,%hi(tbl+8)\n\taddu\t$at,$at,$2\n\tlw\t$2,%lo(tbl+8)($at)\n"
-        "\tlw\t$3,28($18)\n\tlw\t$4,-4($sp)\n\tlw\t$5,%lo(tbl)($5)\n\tlw\t$6,tbl\n\tsw\t$7,tbl($2)\n"
+        f"\tlui\t$16,%hi(tbl)\n\taddu\t$16,$16,$2\n\t{opcode}\t$16,%lo(tbl)($16)\n"
+        f"\tlui\t$at,%hi(tbl+8)\n\taddu\t$at,$at,$2\n\t{opcode}\t$2,%lo(tbl+8)($at)\n"
+        f"\t{opcode}\t$3,28($18)\n\t{opcode}\t$4,-4($sp)\n\t{opcode}\t$5,%lo(tbl)($5)\n\t{opcode}\t$6,tbl\n\tsw\t$7,tbl($2)\n"
     )
+
+
+@pytest.mark.parametrize("gp", [0, 8])
+def test_assemble_preserves_small_data_load_macros(tmp_path, monkeypatch, gp):
+    asm = tmp_path / "x.s"
+    obj = tmp_path / "x.o"
+    asm.write_text("\tlhu\t$2,pan_tbl($5)\n", encoding="latin-1")
+    captured = []
+
+    def run(*args, **kwargs):
+        captured.append(asm.read_text(encoding="latin-1"))
+        obj.write_bytes(b"object")
+        return CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(try_compilers.subprocess, "run", run)
+    assert try_compilers.assemble(asm, obj, gp=gp) is None
+    assert captured == [
+        "\tlui\t$2,%hi(pan_tbl)\n\taddu\t$2,$2,$5\n\tlhu\t$2,%lo(pan_tbl)($2)\n"
+        if gp == 0
+        else "\tlhu\t$2,pan_tbl($5)\n"
+    ]
