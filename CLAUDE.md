@@ -80,7 +80,7 @@ The Original Loader must be at `iso/SCUS_974.72` (copied from the owner's own di
    - Copy the useful change back by hand, then check with try_compilers.
 
 How it builds:
-- `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` (in WSL). Before assembling, empty `.set noreorder`/`.set reorder` pairs go before every jump or branch gcc leaves to the assembler (and around volatile accesses), because the original assembler never filled a delay slot itself (see `docs/findings.md`).
+- `tools/ee_cc.py` compiles each C file with `ee-gcc` 2.96 + `ee-as` (in WSL). Before assembling, empty `.set noreorder`/`.set reorder` pairs go before every jump or branch gcc leaves to the assembler (and around volatile accesses), because the original assembler never filled a delay slot itself (see `docs/findings.md`). Indexed `lw $r,sym($b)` macros are also written out as `lui`/`addu`/`lw %lo` in -G0 code, since `ee-as` sometimes mis-encodes that `lui` (issue #2343).
 - `tools/xff_splice.py` writes `build/xff/<MODULE>/spliced/`, which is the Game module's asm with each Matched function replaced by the compiled words. Relocated words become explicit `.reloc` directives.
 - The Game module is assembled from that copy and checked as usual.
 
