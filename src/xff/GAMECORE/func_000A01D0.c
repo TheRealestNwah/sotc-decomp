@@ -32,7 +32,7 @@ extern char *GetCharacterClass(int);
 
 #define FABS(x) ((x) < 0.0f ? -(x) : (x))
 
-int func_000A01D0(Animal *a, Target *t)
+static int func_000A01D0(Animal *a, Target *t)
 {
     float r;
     char *lay;
