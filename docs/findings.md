@@ -279,3 +279,40 @@ error result. This is static instruction/data-flow evidence, without a
 runtime reproduction. Preserve the original matching implementation;
 [issue #492](https://github.com/TheRealestNwah/sotc-decomp/issues/492) remains
 open for the missing-header contract and reachability investigation.
+
+## Memory-card request-pool exhaustion (#1219)
+
+Original MANAGER `initMcManager` clears two request state words in
+`B_0014DB50`; each request occupies `0x30` bytes. The message queue is
+initialized with capacity one. Request storage and queue capacity are separate:
+the wrappers scan for a request whose state is zero before sending it.
+
+In `mcGetInfo` (`0xCE1E0`), the scan limit is two at `0xCE220`. When both
+requests are busy, `0xCE238` sets the selected request pointer to zero,
+`0xCE23C` calls `LoaderSysPrintf`, then `0xCE24C` and `0xCE254` store the port
+and slot through that zero pointer. The state store and message dispatch
+follow. `mcGetMainDataInfo` (`0xCE2C8`) has the same scan/diagnostic shape;
+its first post-diagnostic request store is at `0xCE334`.
+
+The diagnostic is not a recovery jump. Original Loader `LoaderSysPrintf`
+(`0x102CF8`) calls `vsprintf` at `0x102D48`, `printf` at `0x102D50` and
+`strlen` at `0x102D58`, then returns normally at `0x102D64`. The specific
+exhaustion message at MANAGER rodata address `0x140D10` is 31 bytes with no
+percent directives, so the second-formatting concern in
+[issue #2385](https://github.com/TheRealestNwah/sotc-decomp/issues/2385) does
+not itself supply an escape from this path. Once the output calls return,
+the caller continues to the null-based stores.
+
+Successful `mcGetInfo` requests set their state, send the request, and invoke
+the function pointer `B_0014DBB4` while waiting for that state to clear
+(`0xCE280` through `0xCE298`). `mcReqSetWaitFunc` assigns this callback.
+Before porting, audit both concurrent callers and reentrancy through the wait
+callback; a synchronous wrapper alone does not establish that the two-slot
+pool cannot be exhausted.
+
+This is static instruction and data-flow evidence, without a runtime
+pool-exhaustion reproduction. Preserve matching behavior. A deliberate
+Native-port correction must define a pool-exhaustion result before request
+stores or dispatch, with coverage for two busy slots and the wait-callback
+contract. [Issue #1219](https://github.com/TheRealestNwah/sotc-decomp/issues/1219)
+remains open for reachability and the eventual error-handling change.
