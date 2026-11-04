@@ -1,55 +1,72 @@
-typedef struct Grp { int type; char pad[0x1C]; struct Grp *next; } Grp;
-typedef struct { char pad0[0x10]; Grp *grp; char pad14[4]; } Cell;
-typedef struct { char pad0[8]; Cell *cells; char padC[0x3C]; int nx; int ny; } StageMap;
+typedef struct Grp {
+    int state;
+    char pad4[0x1C];
+    struct Grp *next;
+} Grp;
+
+typedef struct {
+    char pad0[0x10];
+    Grp *grp;
+    char pad14[4];
+} ChipRow;
+
+typedef struct {
+    char pad0[8];
+    ChipRow *chips;
+    char padC[0x3C];
+    int width;
+    int height;
+} StageMap;
 
 extern StageMap D_0017A340;
 extern Grp *D_0017A310;
 extern void iosFree(void *);
 
-static inline int cellIndex(int x, int y)
+static inline int getChipNo(int x, int y)
 {
-    if (x < 0 || x >= D_0017A340.nx || y < 0 || y >= D_0017A340.ny)
+    if (x < 0 || x >= D_0017A340.width || y < 0 || y >= D_0017A340.height)
         return -1;
-    return y * D_0017A340.nx + x;
+    return y * D_0017A340.width + x;
 }
 
-static inline Grp *cellGroup(int x, int y)
+static inline int getGrpState(int no)
 {
-    return D_0017A340.cells[cellIndex(x, y)].grp;
+    Grp *g = D_0017A340.chips[no].grp;
+
+    return g != 0 ? g->state : 0;
 }
 
-static inline int groupType(Grp *g)
+static inline void DeleteLoadAreaGroupData(Grp *g)
 {
-    return g != 0 ? g->type : 0;
-}
+    Grp **h = &D_0017A310;
+    Grp *p = *h;
 
-void DeleteNoUseLoadAreaGroupData(Grp *g)
-{
-    int x, y;
-
-    for (y = 0; y < D_0017A340.ny; y++) {
-        for (x = 0; x < D_0017A340.nx; x++) {
-            if (groupType(cellGroup(x, y)) == 5 && cellGroup(x, y) == g)
-                return;
-        }
-    }
-    {
-        Grp **h = &D_0017A310;
-        Grp *p = *h;
-        if (p == g) {
-            *h = g->next;
-            iosFree(g);
-            g = 0;
-            return;
-        }
+    if (p == g) {
+        *h = g->next;
+        iosFree(g);
+    } else {
         while (p != 0) {
             if (p->next == g) {
                 p->next = g->next;
                 iosFree(g);
-                g = 0;
                 break;
             }
             p = p->next;
         }
     }
+}
+
+void DeleteNoUseLoadAreaGroupData(Grp *g)
+{
+    int x;
+    int y;
+
+    for (y = 0; y < D_0017A340.height; y++) {
+        for (x = 0; x < D_0017A340.width; x++) {
+            if (getGrpState(getChipNo(x, y)) == 5 && D_0017A340.chips[getChipNo(x, y)].grp == g) {
+                return;
+            }
+        }
+    }
+    DeleteLoadAreaGroupData(g);
 }

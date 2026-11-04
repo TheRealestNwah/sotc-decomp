@@ -4,14 +4,13 @@ from subprocess import CompletedProcess
 import pytest
 
 from tools import try_compilers
+from tools.functions import Function, Reloc
 from tools.try_compilers import (
-    Function,
     compile_c,
-    diff,
     fix_moves,
     indexed_la_barriers,
     jump_barriers,
-    strip_padding,
+    verdict,
     volatile_barriers,
     wsl_path,
 )
@@ -72,23 +71,16 @@ def test_wsl_path_converts_drive_letters():
     assert wsl_path(Path("D:/Modding/compilers/x")) == "/mnt/d/Modding/compilers/x"
 
 
-def test_strip_padding():
-    assert strip_padding([1, 2, 0, 0]) == [1, 2]
+def test_verdict_counts_differing_words():
+    target = Function([0x0C000000, 0x24840010], {0: Reloc(4, "callee", False, 0)})
+    assert verdict(target, Function([0x0C000000, 0x24850010], target.relocs)) == ("1", 1)
+    assert verdict(target, target) == ("MATCH", 0)
 
 
-def test_diff_ignores_relocated_fields_only():
-    jal = 0x0C000000
-    target = Function([jal | 0x1234, 0x24840010], {0: 4})
-    same_but_relocated = Function([jal | 0x9999, 0x24840010], {0: 4})
-    assert diff(target, same_but_relocated) == 0
-    different_opcode = Function([jal | 0x1234, 0x24850010], {0: 4})
-    assert diff(target, different_opcode) == 1
-    missing_reloc = Function([jal | 0x1234, 0x24840010], {})
-    assert diff(target, missing_reloc) == 1
-
-
-def test_diff_counts_length_difference():
-    assert diff(Function([1, 2, 3], {}), Function([1, 2], {})) == 1
+def test_verdict_marks_unchecked_same_file_targets():
+    target = Function([0x0C000010], {0: Reloc(4, ".text", True, 0x40)})
+    built = Function([0x0C000000], {0: Reloc(4, "callee", False, 0)})
+    assert verdict(target, built) == ("MATCH?", 0)
 
 
 def test_fix_moves_uses_daddu(tmp_path):

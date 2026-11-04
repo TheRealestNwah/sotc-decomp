@@ -28,7 +28,7 @@ _Avoid_: Library function (unqualified)
 ### Matching progress
 
 **Matched function**:
-A function, in the Loader or a Game module, whose C compiles to exactly the Original bytes and passes the full local check. The only state that counts as done.
+A function, in the Loader or a Game module, whose C compiles to exactly the Original bytes and passes the full local check. The only state that counts as done. A `MATCH?` from `try_compilers.py` isn't one yet: it leaves same-file targets to `ninja check`.
 _Avoid_: Recovered, decompiled, done (as status words)
 
 **Parked attempt**:

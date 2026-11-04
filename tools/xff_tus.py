@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import argparse
 import bisect
-import io
 import re
 import sys
 from dataclasses import dataclass, field
@@ -29,8 +28,7 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from tools.xff2 import parse, to_elf  # noqa: E402
-from tools.xff_split import read_relocs  # noqa: E402
+from tools.functions import open_module, read_relocs  # noqa: E402
 
 SOURCE_NAME_RE = re.compile(rb"[A-Za-z0-9_./\\-]+\.(?:c|cc|cpp|cxx)\b")
 
@@ -167,8 +165,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--list", action="store_true", help="print every group")
     args = parser.parse_args(argv)
     for xff in args.xff:
-        elf = ELFFile(io.BytesIO(to_elf(parse(xff.read_bytes()))))
-        result = infer(elf)
+        result = infer(open_module(xff.stem, xff.parent))
         print("\n".join(summarize(xff.stem.upper(), result)))
         if args.list:
             print("\n".join(listing(result)))

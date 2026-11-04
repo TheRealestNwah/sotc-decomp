@@ -34,7 +34,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import io
 import re
 import sys
 from dataclasses import dataclass
@@ -179,10 +178,8 @@ def loader_progress(path: Path, src_dir: Path) -> Progress:
 def read_module(xff: Path) -> tuple[dict[str, int], set[int]]:
     """A Game module's named .text functions (name -> offset) and the .text
     offsets its section-relative relocations point at."""
-    from elftools.elf.elffile import ELFFile
-
-    from tools.xff2 import parse, to_elf
-    from tools.xff_split import read_relocs
+    from tools.functions import open_module, read_relocs
+    from tools.xff2 import parse
 
     module = parse(xff.read_bytes())
     text = module.index_of(".text")
@@ -191,7 +188,7 @@ def read_module(xff: Path) -> tuple[dict[str, int], set[int]]:
         _, value, _, info, _, shndx = module.symbol(i)
         if info & 0xF == STT_FUNC and shndx == text:
             named[module.symbol_name(i)] = value
-    elf = ELFFile(io.BytesIO(to_elf(module)))
+    elf = open_module(xff.stem, xff.parent)
     targets = set()
     for section in elf.iter_sections():
         if section.name.startswith(".rel.") or section.name.startswith(".rela."):

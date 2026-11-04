@@ -43,14 +43,12 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tools.functions import FIELD_MASKS, RELOC_NAMES, function, open_module  # noqa: E402
 from tools.try_compilers import (  # noqa: E402
-    ADDRESS_NAME_RE,
     DEFAULT_COMPILERS,
     I386_LIBS,
     wsl_path,
 )
-from tools.xff2 import parse, to_elf  # noqa: E402
-from tools.xff_splice import FIELD_MASKS, RELOC_NAMES  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 PERMUTER = Path(os.environ.get("SOTC_PERMUTER", "D:/Modding/decomp-tools/decomp-permuter"))
@@ -63,32 +61,17 @@ NUMBER_RE = re.compile(r"(?<![\w$.])-?(?:0x[0-9a-fA-F]+|\d+)(?![\w])")
 def original_function(
     module: str, name: str, size: int | None = None
 ) -> tuple[list[int], dict[int, int]]:
-    """The original function's words and relocation types (word index -> type).
-    Named functions use the symbol; statics named after their asm label start
-    at the label's address and are `size` bytes long."""
-    elf = ELFFile(io.BytesIO(to_elf(parse((ROOT / f"iso/{module}.XFF").read_bytes()))))
-    text = elf.get_section_by_name(".text")
-    data = text.data()
-    symbol = next(
-        (s for s in elf.get_section_by_name(".symtab").iter_symbols() if s.name == name), None
-    )
-    if symbol is not None and symbol["st_size"]:
-        start, size = symbol["st_value"], symbol["st_size"]
-    else:
-        m = ADDRESS_NAME_RE.fullmatch(name)
-        if not m:
-            raise SystemExit(f"{name}: not a symbol of {module} and not named after an address")
-        if size is None:
-            raise SystemExit(f"{name}: the original has no size for it")
-        start = int(m.group(1), 16) - text["sh_offset"]
-    words = [int.from_bytes(data[o : o + 4], "little") for o in range(start, start + size, 4)]
+    """The original function's words, without alignment padding, and its
+    relocation types (word index -> type). Statics named after their asm label
+    start at the label's address and are `size` bytes long."""
+    try:
+        fn = function(open_module(module, ROOT / "iso"), name, size)
+    except KeyError as e:
+        raise SystemExit(f"{module}: {e.args[0]}") from None
+    words = list(fn.words)
     while words and words[-1] == 0:  # alignment padding
         words.pop()
-    relocs = {}
-    for r in elf.get_section_by_name(".rel.text").iter_relocations():
-        if start <= r["r_offset"] < start + 4 * len(words):
-            relocs[(r["r_offset"] - start) // 4] = r["r_info_type"]
-    return words, relocs
+    return words, {i: r.type for i, r in fn.relocs.items() if i < len(words)}
 
 
 NONMATCHING_RE = re.compile(r"^#ifdef NONMATCHING\n(.*?)^#(?:else\n(.*?)^#)?endif\n", re.M | re.S)
