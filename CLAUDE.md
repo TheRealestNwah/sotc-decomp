@@ -42,7 +42,7 @@ Current phase:
   - The 2.96 (and 2.9/3.2) builds are 32-bit Linux programs: they run under WSL (Ubuntu) with a private 32-bit libc unpacked from Ubuntu's `libc6:i386` package into `~/i386libs/root` (no `sudo`; override with `SOTC_I386_LIBS`).
   - Old 32-bit programs can't read files on `/mnt/<drive>` ("Value too large for defined data type"), so always copy inputs into WSL's `/tmp` first. `tools/try_compilers.py` does this.
   - The 2.95.x builds are Windows `cc1.exe` and run natively.
-- `tools/try_compilers.py <file.c> --module GAMECORE`: compiles every function in a C file with each candidate compiler and flag set, and reports instruction differences against the original functions of the same name. Useful for any matching work, not just compiler ID.
+- `tools/try_compilers.py <file.c> --module GAMECORE`: compiles every function in a C file with each candidate compiler and flag set, and reports differing words against the original functions of the same name, by the same rule as the splice step (`tools/functions.py`). Useful for any matching work, not just compiler ID.
 - **Decomp tools** (open source, cloned outside the repo into `D:\Modding\decomp-tools`):
   - m2c (`SOTC_M2C`) needs the `graphviz` Python package.
   - decomp-permuter (`SOTC_PERMUTER`) needs `toml`.
@@ -70,7 +70,7 @@ The Original Loader must be at `iso/SCUS_974.72` (copied from the owner's own di
 2. Write it in `src/xff/<MODULE>/<name>.c`. When `tools/xff_tus.py` has identified the Original source file, use one C file for it (e.g. `src/xff/GAMECORE/sword.c`), with its statics in the original order and functions in original order; otherwise one file per function. Use struct layouts with explicit padding until real headers exist.
    `python tools/m2c.py <function>` prints a first draft from m2c. Add `--through func_XXXXXXXX` when spimdisasm split the function at a tail call. Expect to fix types and structure by hand.
    For native EE type declarations, use `--ee-context types.c` (repeatable, self-contained declarations without preprocessor directives). Native `long` is 8 bytes; m2c's ordinary `--context` interprets it as 4. The wrapper adapts integer `long` to `long long` in temporary context files. Existing `--context` remains unchanged for declarations already written for m2c. Plain contexts are loaded before adapted contexts. Review the resulting draft's calls, pointer offsets and buffers; context conversion does not prove a match.
-3. Iterate with `python tools/try_compilers.py src/xff/<MODULE>/<name>.c --module <MODULE> --only ee-gcc2.96 --flags "-O2 -G0"` until it says MATCH. `--diff` prints a side-by-side listing of each mismatch.
+3. Iterate with `python tools/try_compilers.py src/xff/<MODULE>/<name>.c --module <MODULE> --only ee-gcc2.96 --flags "-O2 -G0"` until it says MATCH. `MATCH?` means every word matches but a same-file (section-relative) target wasn't checked, because that needs the splice step's placement; `ninja check` confirms it. `--diff` prints a side-by-side listing of each mismatch (`*` differs, `?` unchecked).
 4. Run `python configure.py` (picks up new C files), then `ninja check`.
    Don't run `tools/progress.py` or touch the README progress table in a matching PR: every PR would edit the same lines and conflict with the others. The table is refreshed on main periodically, in its own PR.
 5. If it's close but stuck on register allocation or instruction order, keep it as a Parked attempt in `#ifdef NONMATCHING` (with an `#else` declaring it extern if other C calls it). Then let the permuter search:
@@ -125,6 +125,7 @@ Splice limitations:
   - `loader_funcs.py`: sorts the Loader's functions into Game code and SDK routines (`--write` regenerates `config/loader_functions.csv`, `--check` checks it)
   - `xff_tus.py`: infers Source groups from relocations (`--list` prints every group); results summarized in `docs/findings.md`
   - `ee_cc.py`: compiles one C file with the game's toolchain
+  - `functions.py`: reads a function's words and relocations from an Original Game module or compiled C, and holds the one rule for whether two functions match (`compare`), used by try_compilers, the permuter and xff_splice
   - `xff_splice.py`: splices compiled C functions into a Game module's asm, verifying they match
   - `loader_splice.py`: the same for the Loader's asm (`src/loader/`)
   - `try_compilers.py`: compiles C with candidate compilers/flags and diffs against the original functions

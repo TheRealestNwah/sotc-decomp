@@ -53,6 +53,14 @@ C_SOURCES_MANIFEST = f"{BUILD_DIR}/c_sources.json"
 # The Loader's decompiled C (src/loader/*.c) replaces functions in this file.
 LOADER_ASM = "asm/cod/000000.s"
 LOADER_SPLICE_INPUTS = ("tools/loader_splice.py", "config/loader_functions.csv", "symbol_addrs.txt")
+# xff_splice.py reads the Original through functions.py and the asm helpers in
+# xff_split.py, so a change to any of them must re-splice.
+XFF_SPLICE_TOOLS = (
+    "tools/xff_splice.py",
+    "tools/functions.py",
+    "tools/xff_split.py",
+    "tools/xff2.py",
+)
 
 
 def update_c_sources() -> None:
@@ -276,7 +284,7 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
             objects_json = json.dumps(c_objects).replace("$", "$$")
             lines += [
                 f"build {spliced}/{m}.s | {extra}: splice {inputs}"
-                f" | {original} tools/xff_splice.py {deps}",
+                f" | iso/{m}.XFF {' '.join(XFF_SPLICE_TOOLS)} {deps}",
                 f"  module = {m}",
                 f"  outdir = {spliced}",
                 f"  objects_json = {objects_json}",

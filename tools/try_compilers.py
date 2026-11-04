@@ -4,8 +4,12 @@
     python tools/try_compilers.py experiments/test.c --module GAMECORE --flags "-O2 -G0" "-O1 -G0"
 
 Every function defined in the C file is compared with the function of the same
-name in the original module. Relocated fields are ignored on both sides (they
-depend on link layout), but relocation positions and types must line up.
+name in the original module, by the same rule the splice step uses
+(tools/functions.py): words, relocation types and by-name targets must match.
+A section-relative target depends on where the C file's statics and data land,
+which only the splice step works out, so a function whose words all match but
+which has such a reference prints MATCH? instead of MATCH. `ninja check`
+confirms it.
 
 Compilers come from decomp.me's archive, extracted under --compilers (default
 D:/Modding/compilers or $SOTC_COMPILERS). Windows builds (cc1.exe) run
@@ -16,19 +20,17 @@ directly; Linux builds run under WSL with a private 32-bit libc
 from __future__ import annotations
 
 import argparse
-import io
 import os
 import re
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
 
 from elftools.elf.elffile import ELFFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from tools.xff2 import parse, to_elf  # noqa: E402
+from tools.functions import Function, compare, function, functions, open_module  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_COMPILERS = Path(os.environ.get("SOTC_COMPILERS", "D:/Modding/compilers"))
@@ -36,13 +38,6 @@ I386_LIBS = os.environ.get("SOTC_I386_LIBS", "~/i386libs/root/usr/lib/i386-linux
 ASSEMBLER = os.environ.get("SOTC_AS", "mips64r5900el-ps2-elf-as")
 ASFLAGS = ["-EL", "-march=r5900", "-mabi=eabi", "-G", "0"]
 DEFAULT_FLAGS = ["-O2 -G0", "-O1 -G0", "-O3 -G0", "-O2 -G8", "-Os -G0"]
-RELOC_MASKS = {2: 0xFFFFFFFF, 4: 0x03FFFFFF, 5: 0x0000FFFF, 6: 0x0000FFFF, 7: 0x0000FFFF}
-
-
-@dataclass
-class Function:
-    words: list[int]
-    relocs: dict[int, int]  # word index -> relocation type
 
 
 def wsl_path(path: Path) -> str:
@@ -201,72 +196,14 @@ def assemble(asm: Path, obj: Path, package_as: Path | None = None, gp: int = 0) 
     return None
 
 
-def functions_in(elf: ELFFile) -> dict[str, Function]:
-    text_index = elf.get_section_index(".text")
-    text = elf.get_section_by_name(".text").data()
-    relocs: dict[int, int] = {}
-    rel = elf.get_section_by_name(".rel.text")
-    if rel is not None:
-        for r in rel.iter_relocations():
-            relocs[r["r_offset"]] = r["r_info_type"]
-    symbols = sorted(
-        (s["st_value"], s["st_size"], s.name)
-        for s in elf.get_section_by_name(".symtab").iter_symbols()
-        if s["st_info"]["type"] == "STT_FUNC" and s["st_shndx"] == text_index and s.name
-    )
-    out = {}
-    for i, (start, size, name) in enumerate(symbols):
-        if size == 0:
-            size = (symbols[i + 1][0] if i + 1 < len(symbols) else len(text)) - start
-        words = [int.from_bytes(text[o : o + 4], "little") for o in range(start, start + size, 4)]
-        out[name] = Function(
-            words, {(o - start) // 4: t for o, t in relocs.items() if start <= o < start + size}
-        )
-    return out
-
-
-ADDRESS_NAME_RE = re.compile(r"[A-Za-z]+_([0-9A-F]{8})")
-
-
-def unnamed_target(elf: ELFFile, name: str, size: int) -> Function | None:
-    """A static the original has no symbol for, named after its asm label
-    (func_000C5468): the original words at that address."""
-    m = ADDRESS_NAME_RE.fullmatch(name)
-    if not m:
-        return None
-    text = elf.get_section_by_name(".text")
-    start = int(m.group(1), 16) - text["sh_offset"]  # asm addresses are file offsets
-    data = text.data()
-    if not 0 <= start < len(data):
-        return None
-    words = [int.from_bytes(data[o : o + 4], "little") for o in range(start, start + size, 4)]
-    relocs: dict[int, int] = {}
-    rel = elf.get_section_by_name(".rel.text")
-    if rel is not None:
-        for r in rel.iter_relocations():
-            if start <= r["r_offset"] < start + size:
-                relocs[(r["r_offset"] - start) // 4] = r["r_info_type"]
-    return Function(words, relocs)
-
-
-def strip_padding(words: list[int]) -> list[int]:
-    while words and words[-1] == 0:
-        words = words[:-1]
-    return words
-
-
-def diff(target: Function, built: Function) -> int:
-    """Number of differing instructions (0 = match)."""
-    a, b = strip_padding(target.words), strip_padding(built.words)
-    count = abs(len(a) - len(b))
-    for i, (x, y) in enumerate(zip(a, b, strict=False)):
-        ta, tb = target.relocs.get(i), built.relocs.get(i)
-        if ta != tb:
-            count += 1
-            continue
-        mask = ~RELOC_MASKS.get(ta, 0) & 0xFFFFFFFF if ta else 0xFFFFFFFF
-        count += (x ^ y) & mask != 0
-    return count
+def verdict(target: Function, built: Function) -> tuple[str, int]:
+    """(cell text, number of differing words): MATCH, MATCH? when only
+    section-relative targets are left unchecked, or the count."""
+    mismatches = compare(target, built)
+    count = sum(m.verified for m in mismatches)
+    if count:
+        return str(count), count
+    return ("MATCH?" if mismatches else "MATCH"), 0
 
 
 def disassemble(word: int) -> str:
@@ -276,25 +213,23 @@ def disassemble(word: int) -> str:
 
 
 def show_diff(name: str, target: Function, built: Function) -> None:
-    """Side-by-side listing, original on the left; `*` marks differing words."""
-    a, b = strip_padding(target.words), strip_padding(built.words)
+    """Side-by-side listing, original on the left. `*` marks a differing word,
+    `?` one whose section-relative target isn't checked here."""
+    marks = {}
+    for m in compare(target, built):
+        if m.kind == "length":
+            for i in range(m.index, max(len(target.words), len(built.words))):
+                marks[i] = "*"
+        else:
+            marks[m.index] = "*" if m.verified else "?"
+    a, b = target.words, built.words
     print(f"\n{name}: original {len(a)} words, C {len(b)} words")
     for i in range(max(len(a), len(b))):
         x = a[i] if i < len(a) else None
         y = b[i] if i < len(b) else None
-        same = (
-            x is not None
-            and y is not None
-            and diff(
-                Function([x], {0: target.relocs[i]} if i in target.relocs else {}),
-                Function([y], {0: built.relocs[i]} if i in built.relocs else {}),
-            )
-            == 0
-        )
-        mark = " " if same else "*"
         left = disassemble(x) if x is not None else ""
         right = disassemble(y) if y is not None else ""
-        print(f"{mark} {4 * i:4X}  {left:40} {right}")
+        print(f"{marks.get(i, ' ')} {4 * i:4X}  {left:40} {right}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -315,8 +250,8 @@ def main(argv: list[str] | None = None) -> int:
     )  # fmt: skip
     args = parser.parse_args(argv)
 
-    original = ELFFile(io.BytesIO(to_elf(parse((ROOT / f"iso/{args.module}.XFF").read_bytes()))))
-    targets = functions_in(original)
+    original = open_module(args.module, ROOT / "iso")
+    targets = functions(original)
     compilers = sorted(
         p for p in args.compilers.iterdir() if p.is_dir() and not p.name.startswith("_")
     )
@@ -345,23 +280,24 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"{label} error: {error}")
                     continue
                 with obj.open("rb") as f:
-                    built = functions_in(ELFFile(f))
+                    built = functions(ELFFile(f))
                 for n, fn in built.items():
                     if n not in targets:
-                        found = unnamed_target(original, n, 4 * len(fn.words))
-                        if found is not None:
-                            targets[n] = found
+                        try:
+                            targets[n] = function(original, n, 4 * len(fn.words))
+                        except KeyError:
+                            pass  # not in the original
                 names = [n for n in built if n in targets]
                 if header is None:
                     header = names
                     print(f"{'':{names_width + 11}} " + " ".join(f"{n[:14]:>14}" for n in names))
-                cells = [diff(targets[n], built[n]) for n in header if n in built]
-                total = sum(cells)
-                print(f"{label} " + " ".join(f"{('MATCH' if c == 0 else c):>14}" for c in cells)
+                cells = [verdict(targets[n], built[n]) for n in header if n in built]
+                total = sum(count for _, count in cells)
+                print(f"{label} " + " ".join(f"{text:>14}" for text, _ in cells)
                       + f"   total {total}")  # fmt: skip
                 if args.diff:
                     for n in header:
-                        if n in built and diff(targets[n], built[n]):
+                        if n in built and verdict(targets[n], built[n])[0] != "MATCH":
                             show_diff(n, targets[n], built[n])
     return 0
 
