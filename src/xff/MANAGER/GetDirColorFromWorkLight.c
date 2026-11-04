@@ -8,5 +8,6 @@ void GetDirColorFromWorkLight(s128 *a0, void *a1, char *a2)
                          "qmtc2.ni %2, vf6\n"
                          "vmulx.xyz vf5, vf5, vf6x\n"
                          "sqc2 vf5, 0(%0)\n"
+                         ".set reorder\n"
                          : : "r"(a1), "r"(a2 + 0x20), "r"(1.0f / 255.0f) : "memory");
 }
