@@ -60,3 +60,4 @@ KERNEL sceCdReadClock libcdvd 0xbc a444a34068c1a4cc
 # libc (newlib). Rebuilt unmodified newlib-1.11.0 rand.c matches every word
 # and relocation target with the Original Sony toolchain.
 MANAGER rand libc 0x64 0676307c435b6afc
+MANAGER srand libc 0x18 d1687ebedd97b3b4
