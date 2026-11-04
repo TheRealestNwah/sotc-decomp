@@ -327,6 +327,7 @@ def test_replace_function_stops_at_the_next_label_without_endlabel():
 def test_unnamed_original_objects_resolve_by_label_name():
     resolver = Resolver({}, sections={".data": (0x1000, 0x100)})
     assert resolver.place(Reloc(5, "D_00001010", False, 4)) == Place(".data", 0x14)
+    assert resolver.place(Reloc(5, "D_STR_00001020", False, 0)) == Place(".data", 0x20)
     assert resolver.place(Reloc(5, "unknown", False, 0)) is None
 
 
