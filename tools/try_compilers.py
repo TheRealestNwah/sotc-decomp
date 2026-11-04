@@ -131,6 +131,32 @@ def indexed_la_barriers(asm: Path) -> None:
     asm.write_text(text, encoding="latin-1")
 
 
+INDEXED_LW_RE = re.compile(
+    r"^(\s*)lw\s+(\$\w+),((?![-+]?\d)[^\s()%]+)\((\$\w+)\)[ \t]*(#.*)?$", flags=re.M
+)
+
+
+def expand_indexed_lw(asm: Path) -> None:
+    """gcc writes an indexed load from a constant-base array as the macro
+    `lw $r,sym($b)`. Our ee-as sometimes encodes the `lui` of its expansion
+    with the `lw` opcode (8e100000 instead of 3c100000, issue #2343), so
+    write out the expansion the assembler would make: `lui` / `addu` / `lw
+    %lo` through $r, or through $at when $r is also the base. Only for -G0
+    code, where the assembler never picks a $gp-relative form."""
+    text = asm.read_text(encoding="latin-1")
+
+    def expand(m: re.Match[str]) -> str:
+        indent, reg, sym, base = m.group(1, 2, 3, 4)
+        tmp = "$at" if reg == base else reg
+        return (
+            f"{indent}lui\t{tmp},%hi({sym})\n"
+            f"{indent}addu\t{tmp},{tmp},{base}\n"
+            f"{indent}lw\t{reg},%lo({sym})({tmp})"
+        )
+
+    asm.write_text(INDEXED_LW_RE.sub(expand, text), encoding="latin-1")
+
+
 JUMP_RE = re.compile(r"^\s*(?:j|jal|jalr|jr|b|bal|b(?:eq|ne|lt|le|gt|ge)\w*|bc[01][tf]l?)\s")
 
 
@@ -172,6 +198,8 @@ def assemble(asm: Path, obj: Path, package_as: Path | None = None, gp: int = 0) 
     small-data limit (-G) the C was compiled with."""
     volatile_barriers(asm)
     indexed_la_barriers(asm)
+    if gp == 0:
+        expand_indexed_lw(asm)
     jump_barriers(asm)
     if package_as is not None:
         script = (

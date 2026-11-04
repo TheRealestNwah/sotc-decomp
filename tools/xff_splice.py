@@ -81,6 +81,8 @@ ROOT = Path(__file__).resolve().parent.parent
 # Any addressed line: "/* <offset> <address> [<bytes>] */". Strings have no bytes column.
 ADDRESS_RE = re.compile(r"^\s*/\* ([0-9A-F]+) ([0-9A-F]+)(?: [0-9A-F]+)? \*/")
 TWIN_DEF_RE = re.compile(r"^(\.Lxff\.[^\s:]+):\s*$")
+# Asm labels of unnamed data, including spimdisasm's string labels (D_STR_00130440)
+DATA_LABEL_RE = re.compile(r"[A-Za-z]+(?:_[A-Za-z]+)*_([0-9A-F]{8})")
 SKIPPED_SECTIONS = {".text", ".reginfo"}
 
 
@@ -223,8 +225,9 @@ class Resolver:
 
     def unnamed(self, name: str, addend: int) -> Place | None:
         """Something the original has no symbol for, named after its asm label
-        (func_000C3BA0, D_0017B0EC): C can refer to it before it's decompiled."""
-        m = ADDRESS_NAME_RE.fullmatch(name)
+        (func_000C3BA0, D_0017B0EC, D_STR_00130440): C can refer to it before
+        it's decompiled."""
+        m = DATA_LABEL_RE.fullmatch(name)
         if not m:
             return None
         address = int(m.group(1), 16)
