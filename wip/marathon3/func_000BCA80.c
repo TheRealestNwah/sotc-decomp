@@ -18,37 +18,37 @@ static void func_000BCA80(float dt)
         && !(__gameMode & 1)) {
         func_000BC988(4);
     }
-    for (i = 3, p = B_0019CCD0; i >= 0; i--, p++) {
-        switch (p->state) {
+    for (i = 0; i < 4; i++) {
+        switch (B_0019CCD0[i].state) {
         case 0:
-            p->timer += dt;
-            if (p->timer >= 5.0f)
+            B_0019CCD0[i].timer += dt;
+            if (B_0019CCD0[i].timer >= 5.0f)
                 count++;
             break;
         case 1:
         case 2:
-            p->alpha += p->speed * dt * 30.0f;
-            if (p->alpha >= 1.0f) {
-                p->alpha = 1.0f;
+            B_0019CCD0[i].alpha += B_0019CCD0[i].speed * dt * 30.0f;
+            if (B_0019CCD0[i].alpha >= 1.0f) {
+                B_0019CCD0[i].alpha = 1.0f;
                 goto reset;
             }
             break;
         case 3:
-            p->alpha += p->speed * dt * 30.0f;
-            if (p->alpha <= 0.0f) {
-                p->alpha = 0.0f;
+            B_0019CCD0[i].alpha += B_0019CCD0[i].speed * dt * 30.0f;
+            if (B_0019CCD0[i].alpha <= 0.0f) {
+                B_0019CCD0[i].alpha = 0.0f;
             reset:
-                p->state = 0;
-                p->speed = 0.0f;
-                p->timer = 0.0f;
+                B_0019CCD0[i].state = 0;
+                B_0019CCD0[i].speed = 0.0f;
+                B_0019CCD0[i].timer = 0.0f;
             }
             break;
         }
     }
     if (count == 4) {
-        for (i = 3, p = B_0019CCD0; i >= 0; i--, p++) {
-            p->state = 3;
-            p->speed = -0.05f;
+        for (i = 0; i < 4; i++) {
+            B_0019CCD0[i].state = 3;
+            B_0019CCD0[i].speed = -0.05f;
         }
     }
 }

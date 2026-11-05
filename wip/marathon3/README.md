@@ -4,8 +4,8 @@ These drafts aren't in `src/`, so the build ignores them. The counts are differi
 
 | Function | Diffs | Notes |
 | --- | --- | --- |
-| doit_camera_view_angle_cntrl | 4 | Only the `exist == 1` branch differs, in the order of the `set_param` and `doit` argument loads |
-| func_000BCA80 (static, called from playerlifebar_script) | 22 | Uses `bnel` where the original has `bnez` with a `lui` in the delay slot for the `__gameMode & 1` test; the final loop's registers are swapped |
+| doit_camera_view_angle_cntrl | 4 | Only the `exist == 1` branch differs, in the order of the `set_param` and `doit` argument loads. The original schedules b, c, a for set_param and a1 before f13 for doit, the reverse of the else branch. A 40-minute permuter run, an inline helper, and dropping or adding locals all stayed at 4 |
+| func_000BCA80 (static, called from playerlifebar_script) | 1 | Index-based loops fixed the rest; only `bnel` vs `bnez` (lui in delay slot) for the `__gameMode & 1` test remains. Condition reshapes (nested if, temp for pad bits) did not help |
 | begin_and_update_get_yaw_pitch_camera_target_visible_angle_manager | 89 | Register allocation: the original keeps idx in s1, prev in s0 and next in s2 |
 | nico_SmallKiteSpecialStart | 78 | The original uses 5 saved registers (its loop goes through a copy of `path`); the permuter stayed flat at 650 |
 | chkAttainExecColumn | 51 | The permuter timed out at a best score of 175 |
