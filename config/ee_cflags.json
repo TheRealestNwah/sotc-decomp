@@ -88,5 +88,14 @@
   ],
   "src/xff/GAMECORE/func_001289B8.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/Kite_InitKitePathWork.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/func_000B1BC8.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/func_000B2890.c": [
+    "-fno-strict-aliasing"
   ]
 }

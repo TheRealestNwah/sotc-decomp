@@ -127,6 +127,14 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
   optimization reuses the earlier index load and drops that reload. The additional
   option is recorded only for `src/xff/GAMECORE/func_001289B8.c` in
   `config/ee_cflags.json`; this does not establish flags for other sources.
+- **Path-work and list source alias option:** the recovered GAMECORE
+  `Kite_InitKitePathWork` (113 words), `func_000B1BC8` (112 words) and
+  `func_000B2890` (115 words) match with `-O2 -G0 -fno-strict-aliasing`.
+  With the base flags, the same sources differ by 9, 14 and 15 instructions:
+  the originals reload fields after stores through differently typed
+  pointers, which strict alias optimization treats as unrelated and reuses.
+  The additional option is recorded only for these three sources in
+  `config/ee_cflags.json`; this does not establish flags for other sources.
 - **`-O2` over `-O3`:** 41 tiny static functions (6 instructions or fewer) across the modules are still called rather than inlined, which `-O3` would have done.
 - **Float literals:** 2.96 truncates decimal float literals instead of rounding to nearest (`0.15f` gives `0x3E199999`, `0.735f` gives `0x3F3C28F5`). The original data has exactly these values, so plain literals like `0.15f` are right. A value that needs more digits, like π/180 (`0x3C8EFA35`), must be written with enough of them: `0.0174532925f`, not `0.017453292f`.
 
