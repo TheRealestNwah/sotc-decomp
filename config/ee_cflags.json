@@ -79,5 +79,8 @@
   ],
   "src/xff/GAMECORE/PlayDemoCameraOrient.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/st_controltarget.c": [
+    "-fno-strict-aliasing"
   ]
 }
