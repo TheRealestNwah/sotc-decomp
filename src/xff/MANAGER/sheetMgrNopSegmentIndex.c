@@ -6,7 +6,7 @@ extern char RO_0011BA70[];
 
 extern void WaitSema(int);
 extern void SignalSema(int, int);
-extern void iosJumpRecoverPoint(void *);
+extern void iosJumpRecoverPoint(const char *, ...);
 
 void sheetMgrNopSegmentIndex(int *flag)
 {
