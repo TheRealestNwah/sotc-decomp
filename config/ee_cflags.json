@@ -82,5 +82,8 @@
   ],
   "src/xff/GAMECORE/func_000B7220.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/st_controltarget.c": [
+    "-fno-strict-aliasing"
   ]
 }

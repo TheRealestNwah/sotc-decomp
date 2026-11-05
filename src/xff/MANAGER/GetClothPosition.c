@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 1 diff: operand order of the tracks + vertex*24 add */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef struct ClothFrame {
@@ -74,11 +73,14 @@ void GetClothPosition(float *out, void *layout, int cloth, int vertex, float tim
     ClothFrame f;
     ClothEntry *entry = &(**(ClothEntry ***)(GetLayoutClass(layout) + 0x178))[cloth];
     ClothResource *res = entry->resource;
+    ClothTrack *track;
     s128 *positions;
     s128 *cur;
 
     calcClothFrame(&f, res, vertex, time);
-    positions = entry->tracks[vertex].positions;
+    track = entry->tracks;
+    track += vertex;
+    positions = track->positions;
     cur = &positions[f.frame];
     if (f.rate == 0.0f) {
         *(s128 *)out = *cur;
@@ -87,4 +89,3 @@ void GetClothPosition(float *out, void *layout, int cloth, int vertex, float tim
     }
     out[3] = 1.0f;
 }
-#endif
