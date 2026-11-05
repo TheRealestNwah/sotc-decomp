@@ -5,7 +5,7 @@ extern float B_0014DBB0;
 extern float D_00137708;
 extern int D_0013771C;
 
-void func_000CF220(void)
+static void func_000CF220(void)
 {
     int start = getVIntrCnt();
     float t = 0.0f;

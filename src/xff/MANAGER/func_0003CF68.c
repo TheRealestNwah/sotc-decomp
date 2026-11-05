@@ -14,7 +14,7 @@ extern int GetObjectAnimationFloatFrame(void *out, void *motion, int index,
                                        float frame, float previousFrame);
 extern void GetTRS_Onake_From_ObjectAnimation(void *anim, void *s, void *t, void *r, void *q);
 
-void func_0003CF68(s128 *out, AnimSrc *src, int frame, int count) {
+static void func_0003CF68(s128 *out, AnimSrc *src, int frame, int count) {
     int i;
     if (src->unk8 != 0) {
         if (count != src->unk14 && src->unk14 < count) {

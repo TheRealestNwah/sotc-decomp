@@ -5,7 +5,7 @@ extern void sheetFileRead(int, int, int);
 
 #ifdef NONMATCHING
 /* 15 diffs: register allocation of the return value */
-int func_000DD6C0(void)
+static int func_000DD6C0(void)
 {
     int n;
     int ret = 0;

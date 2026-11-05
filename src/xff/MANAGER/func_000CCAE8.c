@@ -15,7 +15,7 @@ typedef struct {
 
 extern KeyState B_0014A6C0;
 
-int func_000CCAE8(unsigned char *msg)
+static int func_000CCAE8(unsigned char *msg)
 {
     int i;
 

@@ -23,7 +23,7 @@ typedef struct {
 
 #ifdef NONMATCHING
 /* 6 diffs: the invert flag load is scheduled first into a temp instead of last into the reused cond pointer register */
-int func_0004E5F8(CondState *s, Cond *c)
+static int func_0004E5F8(CondState *s, Cond *c)
 {
     int type = c->type;
     unsigned long mask = c->mask;

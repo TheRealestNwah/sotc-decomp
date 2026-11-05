@@ -38,7 +38,7 @@ static inline void *attributeAddress(CollisionReference *reference)
     int index = collisionAttributeIndex(reference);
     return resource->attributes + index * 16;
 }
-int func_000A80F0(CollisionReference *reference)
+static int func_000A80F0(CollisionReference *reference)
 {
     unsigned long attr = *(unsigned long *)attributeAddress(reference);
     unsigned long kind = attr & 0xF80000000ULL;

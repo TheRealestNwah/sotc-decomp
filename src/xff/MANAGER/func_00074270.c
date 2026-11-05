@@ -3,7 +3,7 @@ extern int ModelDispGetWorkSize(int);
 
 #ifdef NONMATCHING
 /* 71 diffs: flag-size sum uses xori/movn chains and register order the original lays out differently */
-int func_00074270(char *w) {
+static int func_00074270(char *w) {
     int n = *(int *)(w + 4);
     int hasExtra = 0;
     int flags;

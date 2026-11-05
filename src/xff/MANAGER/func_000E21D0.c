@@ -10,7 +10,7 @@ extern char *D_00139F14;
 
 #ifdef NONMATCHING
 /* 9 diffs: original keeps the 0x48 check and loop count in v1 instead of v0 */
-char *func_000E21D0(int id, int xff)
+static char *func_000E21D0(int id, int xff)
 {
     char *o = _isysCreateObj(rootPtn, 4, 0x4C, isysGetXffWorkSize(xff), 0, 8);
     char *h;
