@@ -1,0 +1,23 @@
+extern char RO_0017DB80[];
+extern char RO_0017DB90[];
+extern char RO_0017DBA8[];
+extern char RO_0017DBC0[];
+extern char RO_0017DBD8[];
+extern char RO_0017DC00[];
+extern char RO_0017DC60[];
+extern char RO_0017DCC8[];
+extern char RO_0017DCD8[];
+
+extern void SpriteMenuSetPartsDefValueByHashStrWithoutErrorCheck(void *, char *, char *, int);
+
+static void func_000660D8(void *menu, int value)
+{
+    SpriteMenuSetPartsDefValueByHashStrWithoutErrorCheck(menu, RO_0017DC60, RO_0017DCD8, value);
+    SpriteMenuSetPartsDefValueByHashStrWithoutErrorCheck(menu, RO_0017DBA8, RO_0017DCD8, value);
+    SpriteMenuSetPartsDefValueByHashStrWithoutErrorCheck(menu, RO_0017DB80, RO_0017DCD8, value);
+    SpriteMenuSetPartsDefValueByHashStrWithoutErrorCheck(menu, RO_0017DBD8, RO_0017DCD8, value);
+    SpriteMenuSetPartsDefValueByHashStrWithoutErrorCheck(menu, RO_0017DBC0, RO_0017DCD8, value);
+    SpriteMenuSetPartsDefValueByHashStrWithoutErrorCheck(menu, RO_0017DC00, RO_0017DCD8, value);
+    SpriteMenuSetPartsDefValueByHashStrWithoutErrorCheck(menu, RO_0017DCC8, RO_0017DCD8, value);
+    SpriteMenuSetPartsDefValueByHashStrWithoutErrorCheck(menu, RO_0017DB90, RO_0017DCD8, value);
+}
