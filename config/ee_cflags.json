@@ -88,5 +88,17 @@
   ],
   "src/xff/GAMECORE/func_001289B8.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/doit_camera_etc_condition.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/playerlifebar_script.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/nico_SmallKiteAdvertiseStart.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/func_000B6A58.c": [
+    "-fno-strict-aliasing"
   ]
 }
