@@ -104,6 +104,7 @@ Splice limitations:
 2. Write it in `src/loader/<name>.c` under its Original name from the list. Reference data by its asm label as an `extern` (`extern int D_00139E04;`); `%gp_rel` operands need a global of 8 bytes or less so gcc uses `$gp` too.
 3. `tools/ee_cc.py` builds `src/loader/` with `-O2 -G8`. Run `python configure.py`, then `ninja check`. `tools/loader_splice.py` refuses a function whose words, relocation types or targets differ from the Original, or whose size differs.
 4. `switch` jump tables work: the C `.rodata` is placed where the original's `%lo` operands put it, and each entry must equal the original table's word (from `asm/data/cod/036100.rodata.s`), which stays in the build. Other C data (string literals, constants, statics) isn't supported yet, so functions that need it have to wait.
+5. For register allocation or ordering differences, the permuter works on Loader functions too: `python tools/permute.py setup <file.c> <name> --module LOADER` reads the original from `asm/cod/000000.s` and compiles candidates with `-O2 -G8` wherever the file is (`tools/ee_cc.py --loader`).
 
 ## Tests and lint
 

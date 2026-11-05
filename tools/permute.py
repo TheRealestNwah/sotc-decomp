@@ -2,6 +2,7 @@
 
     python tools/permute.py setup src/xff/GAMECORE/sword.c func_000C29B0
     python tools/permute.py run build/permuter/func_000C29B0 -j8
+    python tools/permute.py setup draft.c _putString --module LOADER
 
 decomp-permuter (github.com/simonlindholm/decomp-permuter) randomly rewrites a
 C function in ways that keep its meaning, compiles each version and keeps the
@@ -13,10 +14,13 @@ D:/Modding/decomp-tools/decomp-permuter).
 `setup` writes build/permuter/<function>/:
 - base.c: the C file with only this function's parked (NONMATCHING) attempt
   switched on;
-- target.o: the original function's words. Relocated fields are zeroed and
-  every relocation points at one placeholder symbol: the original and the C
-  name statics differently, which says nothing about the code;
-- compile.sh: compiles with tools/ee_cc.py (ee-gcc 2.96 -O2 -G0 + ee-as);
+- target.o: the original function's words (from the Game module, or with
+  `--module LOADER` from asm/cod/000000.s and config/loader_functions.csv).
+  Relocated fields are zeroed and every relocation points at one placeholder
+  symbol: the original and the C name statics differently, which says
+  nothing about the code;
+- compile.sh: compiles with tools/ee_cc.py (ee-gcc 2.96 -O2 -G0 + ee-as;
+  -O2 -G8 for the Loader);
 - settings.toml: the function name and this script as objdump.
 
 `run` starts the permuter with what it expects on Windows: Git's bash,
@@ -28,6 +32,7 @@ Better candidates land in build/permuter/<function>/output-*/.
 from __future__ import annotations
 
 import argparse
+import csv
 import io
 import multiprocessing
 import os
@@ -43,6 +48,7 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tools import loader_splice  # noqa: E402
 from tools.functions import FIELD_MASKS, RELOC_NAMES, function, open_module  # noqa: E402
 from tools.try_compilers import (  # noqa: E402
     DEFAULT_COMPILERS,
@@ -72,6 +78,28 @@ def original_function(
     while words and words[-1] == 0:  # alignment padding
         words.pop()
     return words, {i: r.type for i, r in fn.relocs.items() if i < len(words)}
+
+
+def loader_function(name: str, functions_csv: str, asm: str) -> tuple[list[int], dict[int, int]]:
+    """The same for a Loader function, from config/loader_functions.csv and
+    the Loader's asm (one `/* offset address word */` line per instruction)."""
+    row = next((r for r in csv.DictReader(io.StringIO(functions_csv)) if r["name"] == name), None)
+    if row is None:
+        raise SystemExit(f"LOADER: no function {name} in config/loader_functions.csv")
+    start, size = int(row["address"], 16), int(row["size"], 16)
+    lines = loader_splice.original_lines(asm)
+    words, relocs = [], {}
+    for i in range(size // 4):
+        if start + 4 * i not in lines:
+            raise SystemExit(f"LOADER: no instruction at 0x{start + 4 * i:08X}")
+        word, text = lines[start + 4 * i]
+        words.append(word)
+        target = loader_splice.original_target(text)
+        if target is not None:
+            relocs[i] = target[0]
+    while words and words[-1] == 0:  # alignment padding
+        words.pop()
+    return words, {i: t for i, t in relocs.items() if i < len(words)}
 
 
 NONMATCHING_RE = re.compile(r"^#ifdef NONMATCHING\n(.*?)^#(?:else\n(.*?)^#)?endif\n", re.M | re.S)
@@ -122,7 +150,16 @@ def setup(c_file: Path, name: str, module: str, out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     base = out / "base.c"
     base.write_text(only_target(c_file.read_text(encoding="utf-8"), name), encoding="utf-8")
-    words, relocs = original_function(module, name, compiled_size(base, name))
+    if module == "LOADER":
+        flags = " --loader"
+        words, relocs = loader_function(
+            name,
+            loader_splice.LIST.read_text(encoding="utf-8"),
+            loader_splice.ASM.read_text(encoding="latin-1"),
+        )
+    else:
+        flags = ""
+        words, relocs = original_function(module, name, compiled_size(base, name))
     asm = out / "target.s"
     asm.write_text(target_asm(name, words, relocs), encoding="utf-8")
     subprocess.run(
@@ -132,7 +169,7 @@ def setup(c_file: Path, name: str, module: str, out: Path) -> None:
     )  # fmt: skip
     python = bash_path(Path(sys.executable))
     (out / "compile.sh").write_text(
-        f'#!/bin/bash\nexec "{python}" "{bash_path(ROOT / "tools/ee_cc.py")}" "$1" "$3"\n',
+        f'#!/bin/bash\nexec "{python}" "{bash_path(ROOT / "tools/ee_cc.py")}" "$1" "$3"{flags}\n',
         encoding="utf-8",
         newline="\n",
     )

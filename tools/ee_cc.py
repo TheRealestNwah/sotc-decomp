@@ -115,12 +115,16 @@ def compile_and_assemble(
     return None
 
 
-def build(source: Path, output: Path, compiler_dir: Path) -> str | None:
+def build(
+    source: Path, output: Path, compiler_dir: Path, flags: list[str] | None = None
+) -> str | None:
     package_as = find_package_as(compiler_dir)
     if package_as is None:
         return f"{compiler_dir} has no ee-as"
     output.parent.mkdir(parents=True, exist_ok=True)
-    return compile_and_assemble(compiler_dir, source, source_cflags(source), output, package_as)
+    if flags is None:
+        flags = source_cflags(source)
+    return compile_and_assemble(compiler_dir, source, flags, output, package_as)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -130,8 +134,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("source", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--compilers", type=Path, default=DEFAULT_COMPILERS)
+    parser.add_argument(
+        "--loader",
+        action="store_true",
+        help="use the Loader's flags (-O2 -G8) wherever the source is, e.g. a permuter copy",
+    )
     args = parser.parse_args(argv)
-    error = build(args.source, args.output, args.compilers / COMPILER)
+    flags = LOADER_CFLAGS.copy() if args.loader else None
+    error = build(args.source, args.output, args.compilers / COMPILER, flags)
     if error:
         print(f"{args.source}: {error}", file=sys.stderr)
         return 1
