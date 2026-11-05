@@ -110,6 +110,15 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
   still differs by 12 instructions with the base flags. The additional option
   is recorded only for `src/xff/KERNEL/isysRequestDeleteObj.c` in
   `config/ee_cflags.json`; this does not establish flags for other sources.
+- **Camera, life-bar, kite and list-pop source alias option:** four recovered
+  GAMECORE sources match only with `-O2 -G0 -fno-strict-aliasing`. With the
+  base flags they differ by:
+  - `doit_camera_etc_condition`: 4 instructions
+  - `playerlifebar_script`: 19 instructions
+  - `nico_SmallKiteAdvertiseStart`: 4 instructions
+  - the static `func_000B6A58`: 12 instructions
+
+  The additional option is recorded only for these four files in `config/ee_cflags.json`; this does not establish flags for other sources.
 - **List-transfer source alias option:** the recovered GAMECORE static
   `func_000B7220` (remove a node from one list, append it to the list at
   `w + 0x244`) matches all 62 instructions with `-O2 -G0 -fno-strict-aliasing`.
