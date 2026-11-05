@@ -11,7 +11,7 @@ static inline void setRatio(float ratio)
     *(unsigned long *)(g + 0x148) = 0;
 }
 
-void func_0000BA70(void)
+static void func_0000BA70(void)
 {
     char *g = gcGlobalVar;
     float target = *(float *)(g + 0x1A8);

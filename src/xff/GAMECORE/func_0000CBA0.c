@@ -7,7 +7,7 @@ extern float GAMEUTIL_get_cur_velocity_move_angle(void *);
 extern float func_0000E1D8(void *, int, int, int, int, float, float, float, float, float, float, int, float, float, float, float);
 extern float update_base_pitch_nico_yaw_pitch_cntrl(void *, float);
 
-void func_0000CBA0(char *c, float *v, float f)
+static void func_0000CBA0(char *c, float *v, float f)
 {
     float pitch = *(float *)(c + 0x68);
     float up = GAMEUTIL_get_move_radi_from_pitch1_to_pitch2(pitch, func_0000E158(c, pitch));
