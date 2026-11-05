@@ -64,8 +64,7 @@ DsysFile *_dsysOpen(const char *name, int type, int mode)
         if (func_000DDE48(&result->descriptor, name, mode) < 0)
             result = 0;
     } else {
-        iosJumpRecoverPoint("open dev code error
-");
+        iosJumpRecoverPoint("openDsysFile" "open dev code error\n");
     }
     if (result == 0)
         freeFile(file);
