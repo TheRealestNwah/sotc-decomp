@@ -8,7 +8,7 @@ extern void glEnd(void);
 extern void glColor4fv(float *);
 extern void glTexCoord2fv(float *);
 extern void glVertex4fv(float *);
-extern F16 RO_0011A9A0;
+static const F16 RO_0011A9A0 = {{ -0.5f, 0.5f, 0.0f, 1.0f, 0.5f, 0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, 0.0f, 1.0f }};
 
 static void func_000C70C0(char *d, float *uv, float *m2)
 {

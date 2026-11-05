@@ -32,6 +32,7 @@ static inline Req *popReq(ReqList *fl)
     return r;
 }
 
+#ifdef NONMATCHING
 static inline Req *getSheetMgrReqEmpty(void)
 {
     Req *r = popReq(&B_00155468);
@@ -41,7 +42,6 @@ static inline Req *getSheetMgrReqEmpty(void)
     return r;
 }
 
-#ifdef NONMATCHING
 /* 15 diffs: free-list address goes through v0 and the semaphore reload is scheduled above the final q->last store */
 void sheetMgrSpecialFsEnd(int fs, int *result)
 {
