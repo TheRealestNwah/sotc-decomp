@@ -4,8 +4,10 @@ from types import SimpleNamespace
 import pytest
 
 from tools import permute
+from tools.functions import R_MIPS_26, R_MIPS_GPREL16, R_MIPS_HI16, R_MIPS_LO16
 from tools.permute import (
     PLACEHOLDER,
+    loader_function,
     normalize_objdump,
     only_target,
     protect_inline_asm,
@@ -193,3 +195,31 @@ def test_search_workers_leaves_completed_search_alone(monkeypatch):
     monkeypatch.setattr(permute.multiprocessing, "active_children", lambda: next(snapshots))
     with permute.search_workers():
         pass
+
+
+LOADER_CSV = """address,size,name,class,library,evidence
+0x00100000,0x10,f,game,loader,Original name
+0x00100010,0x8,g,game,loader,Original name
+"""
+LOADER_ASM = """glabel f
+    /* 0 00100000 1300023C */  lui        $v0, %hi(D_00130000)
+    /* 4 00100004 0800E003 */  jr         $ra
+    /* 8 00100008 0400428C */   lw        $v0, %lo(D_00130000)($v0)
+    /* C 0010000C 00000000 */  nop
+glabel g
+    /* 10 00100010 0000000C */  jal        f
+    /* 14 00100014 F0FF828F */   lw        $v0, %gp_rel(D_00139E04)($gp)
+"""
+
+
+def test_loader_function_reads_words_and_relocation_types():
+    words, relocs = loader_function("f", LOADER_CSV, LOADER_ASM)
+    assert words == [0x3C020013, 0x03E00008, 0x8C420004]  # padding dropped
+    assert relocs == {0: R_MIPS_HI16, 2: R_MIPS_LO16}
+    _, relocs = loader_function("g", LOADER_CSV, LOADER_ASM)
+    assert relocs == {0: R_MIPS_26, 1: R_MIPS_GPREL16}
+
+
+def test_loader_function_rejects_unknown_names():
+    with pytest.raises(SystemExit):
+        loader_function("h", LOADER_CSV, LOADER_ASM)
