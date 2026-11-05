@@ -47,8 +47,8 @@ void playerlifebar_script(SpriteParam *parameters)
     D_0017B030.prev = 1.0f;
     D_0017B030.cur = 1.0f;
     D_0017B030.speed = 0.0f;
-    B_0019CD28 = 0;
     B_0019CD10 = 0;
+    B_0019CD28 = 0;
     B_0019CD40 = 0;
     B_0019CD44 = 0;
     while (*local.active) {
