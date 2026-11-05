@@ -1,41 +1,67 @@
 #ifdef NONMATCHING
-extern int B_00151860;
-extern char *B_00155468[2];
-extern char *B_00155470[8];
-extern char RO_0011BA70[];
+/* 21 diffs: addresses of the lists go through v0/a1/a2 instead of v1, and the SignalSema arg is rematerialised */
+typedef struct Req {
+    int type;
+    unsigned int flags;
+    int a;
+    int b;
+    int c;
+    int d;
+    int e;
+    int f;
+    int g;
+    int h;
+    int *result;
+    struct Req *next;
+} Req;
 
+typedef struct ReqList {
+    Req *head;
+    Req *last;
+} ReqList;
+
+extern int B_00151860;
+extern ReqList B_00155468;
+extern ReqList B_00155470[];
 extern void WaitSema(int);
 extern void SignalSema(int, int);
-extern void iosJumpRecoverPoint(const char *, ...);
+extern void iosJumpRecoverPoint(const char *);
 
-void sheetMgrNopSegmentIndex(int *flag)
+static inline Req *popReq(ReqList *fl)
 {
-    char *entry;
-    char **list;
+    Req *r = fl->head;
+
+    if (r != 0) {
+        Req *n = r->next;
+        fl->head = n;
+        if (n == 0)
+            fl->last = 0;
+    }
+    return r;
+}
+
+void sheetMgrNopSegmentIndex(int *result)
+{
+    Req *r;
+    ReqList *q;
+    int type = 9;
 
     WaitSema(B_00151860);
-    entry = B_00155468[0];
-    if (entry) {
-        char *next = *(char **)(entry + 0x2C);
-
-        B_00155468[0] = next;
-        if (next == 0)
-            B_00155468[1] = 0;
-    }
-    if (entry == 0)
-        iosJumpRecoverPoint(RO_0011BA70);
-    *(unsigned int *)(entry + 4) &= ~1;
-    list = &B_00155470[2];
-    *(int *)entry = 9;
-    *(int **)(entry + 0x28) = flag;
-    if (flag)
-        *flag = 0xDEAD;
-    *(int *)(entry + 0x2C) = 0;
-    if (list[1] == 0)
-        B_00155470[2] = entry;
+    r = popReq(&B_00155468);
+    if (r == 0)
+        iosJumpRecoverPoint("getSheetMgrReqEmpty: req over\n");
+    r->flags &= ~1;
+    q = &B_00155470[1];
+    r->type = type;
+    r->result = result;
+    if (result)
+        *result = 0xDEAD;
+    r->next = 0;
+    if (!(q->last == 0))
+        q->last->next = r;
     else
-        *(char **)(list[1] + 0x2C) = entry;
-    list[1] = entry;
-    SignalSema(B_00151860, 9);
+        q->head = r;
+    q->last = r;
+    SignalSema(B_00151860, type);
 }
 #endif
