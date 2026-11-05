@@ -23,14 +23,8 @@ typedef struct {
 extern GcGlobalVar gcGlobalVar;
 extern float ZeroVector[];
 
-static const union {
-    int i;
-    float f;
-} RO_001812D0 = { 0x7FFFFFFF };
-static const union {
-    int i;
-    float f;
-} RO_001812D4 = { 0xFFFFFFFF };
+static const int RO_001812D0 = 0x7FFFFFFF;
+static const int RO_001812D4 = 0xFFFFFFFF;
 
 extern void InitTwoWayLink(void *, void *);
 extern void resetUserPathWork(int, UserPathWork *);
@@ -80,7 +74,7 @@ void createUserPathWork(int owner, UserPathWork *work, int idx, float x, float z
     setRouteMinAngle(work, 0.0f);
     setSearchRouteMaxAngle(work, 3.14159251f);
     setReductionCosUserPathWork(work, 3.14159251f);
-    r = RO_001812D0.f;
+    r = *(float *)&RO_001812D0;
     do {
         setSelfColAndNearMinDist(work, 0, r);
         setSearchRadius(work, sqrtF(r));
@@ -91,7 +85,7 @@ void createUserPathWork(int owner, UserPathWork *work, int idx, float x, float z
     setPassageWideRayPathWork(work, 0);
     setAngleStabilizeYPathWork(work, 0);
     setExecRayChkPathWork(work, 1);
-    setPathRayWideParam(work, 0, RO_001812D4.f);
+    setPathRayWideParam(work, 0, *(float *)&RO_001812D4);
     setForceRouteAttrPathWork(work, 0);
     setRouteColCheckPathWork(work, 1);
     setRouteLockPathWork(work, 0);
