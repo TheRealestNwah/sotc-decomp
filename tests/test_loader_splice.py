@@ -5,6 +5,7 @@ import pytest
 from tools import loader_splice
 from tools.loader_splice import (
     R_MIPS_26,
+    R_MIPS_32,
     R_MIPS_GPREL16,
     R_MIPS_HI16,
     R_MIPS_LO16,
@@ -135,8 +136,60 @@ def test_section_relative_jump_is_placed_by_the_object():
 
 
 def test_splice_refuses_c_data():
-    with pytest.raises(SpliceError, match=r"has data \(\.rodata\)"):
-        run(store(), data=[".rodata"])
+    with pytest.raises(SpliceError, match=r"has data \(\.data\)"):
+        run(store(), data=[".rodata", ".data"])
+
+
+# Switch: loads its jump table entry with %hi/%lo; the table's two entries
+# point back into the function (0x101A38 and 0x101A3C).
+SWITCH = [
+    (0x101A30, 0x3C030014, "lui        $v1, %hi(jtbl_00137C70)"),
+    (0x101A34, 0x8C637C70, "lw         $v1, %lo(jtbl_00137C70)($v1)"),
+    (0x101A38, 0x03E00008, "jr         $ra"),
+    (0x101A3C, 0x00000000, "nop"),
+]
+SWITCH_RODATA = "\n".join(
+    [
+        "dlabel jtbl_00137C70",
+        "    /* 37C70 00137C70 381A1000 */ .word .L00101A38",
+        "    /* 37C74 00137C74 3C1A1000 */ .word .L00101A3C",
+    ]
+)
+
+
+def run_switch(table: list[int], rodata_offset: int = 0, relocs=None) -> str:
+    fn = CompiledFunction(
+        "Store",
+        "store",
+        0,
+        [0x3C030000, 0x8C630000 | rodata_offset, 0x03E00008, 0x00000000],
+        {0: Reloc(R_MIPS_HI16, "", ".rodata"), 1: Reloc(R_MIPS_LO16, "", ".rodata")},
+    )
+    rodata = b"".join(w.to_bytes(4, "little") for w in table)
+    if relocs is None:
+        relocs = {4 * i: Reloc(R_MIPS_32, "", ".text") for i in range(len(table))}
+    obj = CompiledObject("store", [fn], [".rodata"], rodata, relocs)
+    asm = "\n".join(line(*o) for o in SWITCH)
+    return splice(asm, [obj], Names.load(CSV), {}, SWITCH_RODATA)
+
+
+def test_splice_places_jump_tables_at_the_original():
+    out = run_switch([0x8, 0xC])
+    assert out.splitlines()[1].endswith("%lo(jtbl_00137C70)($v1)")
+    # Every C word is checked, so one the original lacks is refused.
+    with pytest.raises(SpliceError, match="original nothing at 0x137c6c"):
+        run_switch([0x8, 0x8, 0xC], rodata_offset=4)
+
+
+def test_splice_refuses_wrong_jump_tables():
+    with pytest.raises(SpliceError, match=r"\.rodata\+0x4 is 0x101a38, the original 0x101a3c"):
+        run_switch([0x8, 0x8])
+    with pytest.raises(SpliceError, match="original nothing at 0x137c78"):
+        run_switch([0x8, 0xC, 0x8])
+    with pytest.raises(SpliceError, match="isn't a jump table entry"):
+        run_switch([0x8, 0xC], relocs={0: Reloc(R_MIPS_32, "", ".text")})
+    with pytest.raises(SpliceError, match="points outside its functions"):
+        run_switch([0x8, 0x40])
 
 
 def test_splice_refuses_data_relocations():

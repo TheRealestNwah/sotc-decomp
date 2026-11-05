@@ -16,7 +16,12 @@ name, and compared word by word with the instruction words splat printed:
 
 Anything else is an error, so a C function that doesn't match fails the build.
 `ninja check` then compares the linked image with the Original as usual.
-C data sections (strings, jump tables, statics) aren't supported yet.
+
+A C file's `.rodata` may hold `switch` jump tables (every word a .text
+address). It is placed where the original's %lo operands put it, all of
+which must agree, and each entry must equal the original table's word there
+(read from the Loader's rodata asm), so the original table can stay. Other C
+data (strings, constants, statics) isn't supported yet.
 """
 
 from __future__ import annotations
@@ -36,8 +41,9 @@ ROOT = Path(__file__).resolve().parent.parent
 ASM = ROOT / "asm/cod/000000.s"
 LIST = ROOT / "config/loader_functions.csv"
 SYMBOL_ADDRS = ROOT / "symbol_addrs.txt"
+RODATA_ASM = ROOT / "asm/data/cod/036100.rodata.s"
 
-R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16, R_MIPS_GPREL16 = 4, 5, 6, 7
+R_MIPS_32, R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16, R_MIPS_GPREL16 = 2, 4, 5, 6, 7
 RELOC_NAMES = {
     R_MIPS_26: "R_MIPS_26",
     R_MIPS_HI16: "%hi",
@@ -87,23 +93,31 @@ class CompiledObject:
     source: str
     functions: list[CompiledFunction]
     data_sections: list[str]
+    rodata: bytes = b""
+    rodata_relocs: dict[int, Reloc] | None = None  # offset -> relocation
+
+
+def section_relocs(elf: ELFFile, name: str) -> dict[int, Reloc]:
+    relocs: dict[int, Reloc] = {}
+    rel = elf.get_section_by_name(name)
+    if rel is None:
+        return relocs
+    symtab = elf.get_section(rel["sh_link"])
+    for r in rel.iter_relocations():
+        sym = symtab.get_symbol(r["r_info_sym"])
+        if sym["st_info"]["type"] == "STT_SECTION":
+            reloc = Reloc(r["r_info_type"], "", elf.get_section(sym["st_shndx"]).name)
+        else:
+            reloc = Reloc(r["r_info_type"], sym.name, "")
+        relocs[r["r_offset"]] = reloc
+    return relocs
 
 
 def load_object(obj: Path) -> CompiledObject:
     elf = ELFFile(io.BytesIO(obj.read_bytes()))
     text_index = elf.get_section_index(".text")
     text = elf.get_section_by_name(".text").data()
-    relocs: dict[int, Reloc] = {}
-    rel = elf.get_section_by_name(".rel.text")
-    if rel is not None:
-        symtab = elf.get_section(rel["sh_link"])
-        for r in rel.iter_relocations():
-            sym = symtab.get_symbol(r["r_info_sym"])
-            if sym["st_info"]["type"] == "STT_SECTION":
-                reloc = Reloc(r["r_info_type"], "", elf.get_section(sym["st_shndx"]).name)
-            else:
-                reloc = Reloc(r["r_info_type"], sym.name, "")
-            relocs[r["r_offset"]] = reloc
+    relocs = section_relocs(elf, ".rel.text")
     functions = []
     for s in elf.get_section_by_name(".symtab").iter_symbols():
         if s["st_info"]["type"] != "STT_FUNC" or s["st_shndx"] != text_index:
@@ -117,7 +131,14 @@ def load_object(obj: Path) -> CompiledObject:
         for sec in elf.iter_sections()
         if sec["sh_flags"] & 2 and sec["sh_size"] and sec.name not in (".text", ".reginfo")
     ]
-    return CompiledObject(obj.stem, sorted(functions, key=lambda f: f.start), data)
+    rodata = elf.get_section_by_name(".rodata")
+    return CompiledObject(
+        obj.stem,
+        sorted(functions, key=lambda f: f.start),
+        data,
+        rodata.data() if rodata is not None else b"",
+        section_relocs(elf, ".rel.rodata"),
+    )
 
 
 def sign16(value: int) -> int:
@@ -176,6 +197,7 @@ class Placement:
     """Where the C object's functions go: C .text offset -> Loader address."""
 
     starts: list[tuple[int, int, int]]  # (C offset, size, address)
+    rodata: int | None = None  # the address of the C .rodata
 
     def address(self, offset: int) -> int | None:
         for start, size, address in self.starts:
@@ -207,6 +229,8 @@ def c_target(
         addend = ((word & 0xFFFF) << 16) + sign16(lo)
     else:
         addend = sign16(word)
+    if reloc.section == ".rodata" and placement.rodata is not None:
+        return ".rodata", placement.rodata + addend, 0
     if reloc.section:
         if reloc.section != ".text":
             raise SpliceError(
@@ -294,14 +318,72 @@ def original_lines(asm: str) -> dict[int, tuple[int, str]]:
     return out
 
 
-def splice(asm: str, objects: list[CompiledObject], names: Names, sizes: dict[str, int]) -> str:
+def rodata_address(
+    obj: CompiledObject, starts: list[tuple[int, int, int]], original: dict[int, tuple[int, str]]
+) -> int:
+    """Where the C .rodata goes: the address every %lo of it points to in the
+    original, less the offset the C gives it."""
+    anchors = set()
+    for fn, (_, _, address) in zip(obj.functions, starts, strict=True):
+        for i, reloc in fn.relocs.items():
+            if reloc.section != ".rodata" or reloc.type != R_MIPS_LO16:
+                continue
+            at = address + 4 * i
+            theirs = original_target(original[at][1]) if at in original else None
+            if theirs is None:
+                raise SpliceError(f"{fn.name}: word {i} references .rodata, the original nothing")
+            _, symbol, addend = theirs
+            base = PLACEHOLDER_RE.match(symbol)
+            if not base:
+                raise SpliceError(f"{fn.name}: can't place .rodata at {symbol}")
+            anchors.add(int(base.group(1), 16) + addend - sign16(fn.words[i]))
+    if len(anchors) != 1:
+        raise SpliceError(f"{obj.source}.c: .rodata has no single place ({sorted(anchors)})")
+    return anchors.pop()
+
+
+def check_jump_tables(
+    obj: CompiledObject, placement: Placement, original: dict[int, tuple[int, str]]
+) -> None:
+    """Every .rodata word must be a .text address equal to the original's word."""
+    relocs = obj.rodata_relocs or {}
+    if len(obj.rodata) % 4:
+        raise SpliceError(f"{obj.source}.c: .rodata isn't a jump table")
+    for offset in range(0, len(obj.rodata), 4):
+        reloc = relocs.get(offset)
+        if reloc is None or reloc.type != R_MIPS_32 or reloc.section != ".text":
+            raise SpliceError(
+                f"{obj.source}.c: .rodata+{offset:#x} isn't a jump table entry, which the"
+                " Loader splice doesn't support yet"
+            )
+        target = placement.address(int.from_bytes(obj.rodata[offset : offset + 4], "little"))
+        at = placement.rodata + offset
+        if target is None:
+            raise SpliceError(f"{obj.source}.c: .rodata+{offset:#x} points outside its functions")
+        if at not in original or original[at][0] != target:
+            found = f"{original[at][0]:#x}" if at in original else "nothing"
+            raise SpliceError(
+                f"{obj.source}.c: .rodata+{offset:#x} is {target:#x}, the original {found}"
+                f" at {at:#x}"
+            )
+
+
+def splice(
+    asm: str,
+    objects: list[CompiledObject],
+    names: Names,
+    sizes: dict[str, int],
+    rodata_asm: str = "",
+) -> str:
     original = original_lines(asm)
+    original_data = original_lines(rodata_asm)
     replaced: dict[int, tuple[str, str]] = {}  # address -> (text, source)
     placed: dict[int, str] = {}
     for obj in objects:
-        if obj.data_sections:
+        other = [d for d in obj.data_sections if d != ".rodata"]
+        if other:
             raise SpliceError(
-                f"{obj.source}.c: has data ({', '.join(obj.data_sections)}), which the Loader"
+                f"{obj.source}.c: has data ({', '.join(other)}), which the Loader"
                 " splice doesn't support yet"
             )
         starts = []
@@ -319,6 +401,9 @@ def splice(asm: str, objects: list[CompiledObject], names: Names, sizes: dict[st
             placed[address] = fn.name
             starts.append((fn.start, 4 * len(fn.words), address))
         placement = Placement(starts)
+        if obj.rodata:
+            placement.rodata = rodata_address(obj, starts, original)
+            check_jump_tables(obj, placement, original_data)
         for fn, (_, _, address) in zip(obj.functions, starts, strict=True):
             for at, text in generate(fn, address, original, names, placement).items():
                 replaced[at] = (text, obj.source)
@@ -358,6 +443,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("objects", nargs="*", type=Path)
     parser.add_argument("--objects-file", type=Path, help="JSON list of objects")
     parser.add_argument("--asm", type=Path, default=ASM)
+    parser.add_argument("--rodata-asm", type=Path, default=RODATA_ASM)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     functions_csv = LIST.read_text(encoding="utf-8")
@@ -371,6 +457,7 @@ def main(argv: list[str] | None = None) -> int:
             [load_object(o) for o in objects],
             names,
             original_sizes(functions_csv),
+            args.rodata_asm.read_text(encoding="latin-1") if args.rodata_asm.exists() else "",
         )
     except SpliceError as e:
         print(f"error: {e}", file=sys.stderr)
