@@ -110,6 +110,14 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
   still differs by 12 instructions with the base flags. The additional option
   is recorded only for `src/xff/KERNEL/isysRequestDeleteObj.c` in
   `config/ee_cflags.json`; this does not establish flags for other sources.
+- **List-transfer source alias option:** the recovered GAMECORE static
+  `func_000B7220` (remove a node from one list, append it to the list at
+  `w + 0x244`) matches all 62 instructions with `-O2 -G0 -fno-strict-aliasing`.
+  With the base flags, the same source differs by four instructions: the
+  appended list's count load moves above the node's `next` and the list's
+  `tail` stores, which strict alias optimization treats as unrelated. The
+  additional option is recorded only for `src/xff/GAMECORE/func_000B7220.c`
+  in `config/ee_cflags.json`; this does not establish flags for other sources.
 - **`-O2` over `-O3`:** 41 tiny static functions (6 instructions or fewer) across the modules are still called rather than inlined, which `-O3` would have done.
 - **Float literals:** 2.96 truncates decimal float literals instead of rounding to nearest (`0.15f` gives `0x3E199999`, `0.735f` gives `0x3F3C28F5`). The original data has exactly these values, so plain literals like `0.15f` are right. A value that needs more digits, like π/180 (`0x3C8EFA35`), must be written with enough of them: `0.0174532925f`, not `0.017453292f`.
 
