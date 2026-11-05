@@ -103,7 +103,7 @@ Splice limitations:
 1. Pick a Game code row from `config/loader_functions.csv` (SDK routines are identified, not decompiled) and find it in `asm/cod/000000.s`.
 2. Write it in `src/loader/<name>.c` under its Original name from the list. Reference data by its asm label as an `extern` (`extern int D_00139E04;`); `%gp_rel` operands need a global of 8 bytes or less so gcc uses `$gp` too.
 3. `tools/ee_cc.py` builds `src/loader/` with `-O2 -G8`. Run `python configure.py`, then `ninja check`. `tools/loader_splice.py` refuses a function whose words, relocation types or targets differ from the Original, or whose size differs.
-4. Not supported yet: C data sections (string literals, jump tables, statics). Functions that need them have to wait for that splice support.
+4. `switch` jump tables work: the C `.rodata` is placed where the original's `%lo` operands put it, and each entry must equal the original table's word (from `asm/data/cod/036100.rodata.s`), which stays in the build. Other C data (string literals, constants, statics) isn't supported yet, so functions that need it have to wait.
 
 ## Tests and lint
 
