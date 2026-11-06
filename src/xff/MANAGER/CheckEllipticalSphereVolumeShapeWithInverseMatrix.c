@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* gcc puts the v0 = 0 result init in the first bc1f delay slot; original keeps it before c.le.s */
 
 typedef struct {
     float x, y, z, w;
@@ -94,6 +93,9 @@ int CheckEllipticalSphereVolumeShapeWithInverseMatrix(float *inv, float *point, 
     Vec4 scale __attribute__((aligned(16)));
     float sq;
     float *s;
+    int result;
+    float cone;
+    float one;
 
     {
         float one = 1.0f;
@@ -106,6 +108,12 @@ int CheckEllipticalSphereVolumeShapeWithInverseMatrix(float *inv, float *point, 
         scaleVector(p, p, s);
     }
     sq = squareLength(local);
-    return sq <= 1.0f && shape[1] * shape[1] <= sq && inCone(s, local, shape[0]);
+    result = 0;
+    cone = shape[1];
+    one = 1.0f;
+    if (sq <= one) {
+        if (shape[1] * cone <= sq)
+            result = inCone(s, local, shape[0]) != 0;
+    }
+    return result;
 }
-#endif
