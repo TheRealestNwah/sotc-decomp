@@ -67,24 +67,29 @@ static int func_000EBEF0(char *c)
     return 0;
 }
 
-#ifdef NONMATCHING
+extern float D_0017B720;
+
 static void func_000EBF58(char *o, char *c, int flag)
 {
     char *s = c + 0x3270;
+    char *sp = o + 0x1A4;
     int m = *(int *)(c + 0x1360);
     float t;
 
     if (m != 7)
         s = m == 8 ? c + 0x34E0 : 0;
-    if (s != 0)
-        t = func_000ECCE8(s);
-    else
+    if (s != 0) {
+        /* The loop wrapper keeps o and sp in the original's saved registers. */
+        do {
+            t = func_000ECCE8(s);
+        } while (0);
+    } else {
         t = func_000E6B00(o);
-    set_param_double_spring_interp_common(o + 0x1A4, *(float *)(*(char **)o + 0x174), *(float *)(*(char **)o + 0x17C),
+    }
+    set_param_double_spring_interp_common(sp, *(float *)(*(char **)o + 0x174), *(float *)(*(char **)o + 0x17C),
                                           *(float *)(*(char **)o + 0x178), -1.0f);
     if (flag != 0 || s != 0)
-        reset_double_spring_interp_cntrl(o + 0x1A4, t);
+        reset_double_spring_interp_cntrl(sp, t);
     else
-        doit_double_spring_interp_cntrl(o + 0x1A4, t, 0, D_0017B720);
+        doit_double_spring_interp_cntrl(sp, t, 0, D_0017B720);
 }
-#endif
