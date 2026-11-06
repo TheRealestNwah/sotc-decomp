@@ -102,7 +102,11 @@ def loader_function(name: str, functions_csv: str, asm: str) -> tuple[list[int],
     return words, {i: t for i, t in relocs.items() if i < len(words)}
 
 
-NONMATCHING_RE = re.compile(r"^#ifdef NONMATCHING\n(.*?)^#(?:else\n(.*?)^#)?endif\n", re.M | re.S)
+# Parks often carry a comment on a directive line, such as the diff count
+# after `#ifdef NONMATCHING`.
+NONMATCHING_RE = re.compile(
+    r"^#ifdef NONMATCHING\b[^\n]*\n(.*?)^#(?:else\b[^\n]*\n(.*?)^#)?endif\b[^\n]*\n", re.M | re.S
+)
 
 
 def only_target(source: str, name: str) -> str:

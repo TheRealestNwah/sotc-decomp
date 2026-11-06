@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* v0/v1 register swap on the flags mask; otherwise matches. */
 typedef struct Ptn Ptn;
 typedef struct {
     char pad[0x2C];
@@ -13,13 +11,12 @@ typedef struct {
 extern Ptn rootPtn;
 extern int D_00136C10;
 extern BinarySize B_001498C0;
-extern char RO_00119A58[];
 extern void *iosMallocInGarbagePtn(int, int);
 extern void vschedSetNextFrameForceGarbage(void);
 extern void sheetWait(void);
 extern void sheetFileRead(void *, void *, int);
 extern ModuleObj *isysCreateModuleObjExisted(void *, int, Ptn *, int, int, int, Ptn *);
-extern void isysAddGroupWithLinkParam(ModuleObj *, int, int, int);
+extern int isysAddGroupWithLinkParam(ModuleObj *, int, int, int);
 extern void iosJumpRecoverPoint(void *, ...);
 
 static inline ModuleObj *createModule(void *buf, Ptn *ptn, int flag)
@@ -29,7 +26,7 @@ static inline ModuleObj *createModule(void *buf, Ptn *ptn, int flag)
     if (obj != 0) {
         isysAddGroupWithLinkParam(obj, D_00136C10, 0, 0);
         if (!(obj->flags & 0x40000000)) {
-            iosJumpRecoverPoint(RO_00119A58);
+            iosJumpRecoverPoint("objman:\t\272\306\307\333\303\326\311\324\307\275\262\275\274\272\307\324\n");
         }
     }
     return obj;
@@ -53,4 +50,3 @@ ModuleObj *loadCdXffFile(void *f, int unused, int size)
     }
     return obj;
 }
-#endif

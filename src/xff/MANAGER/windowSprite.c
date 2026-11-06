@@ -19,7 +19,7 @@ typedef struct {
 
 extern void iosDlPushLayer(int);
 extern void iosDlPopLayer(void);
-extern void gsRegBegin(void);
+extern int gsRegBegin(void);
 extern void gsReg(int, u64);
 extern void gsRegEnd(void);
 typedef struct {
@@ -46,8 +46,6 @@ extern void texTransRequest(Texture *, int, int);
 extern void texGetSize(Texture *, int *, int *);
 extern void spriteDrawUVSensitive(int x, int y, int w, int h, int z, int u0, int v0, int u1, int v1, int r, int g, int b, int a);
 
-#ifdef NONMATCHING
-/* 2 diffs: the texture info pointer is loaded into v0 instead of v1 */
 void windowSprite(Window *win, Rect r, UColor *col, Texture *tex, float z)
 {
     int tw = 0;
@@ -70,4 +68,3 @@ void windowSprite(Window *win, Rect r, UColor *col, Texture *tex, float z)
         iosDlPopLayer();
     }
 }
-#endif

@@ -1,4 +1,4 @@
-#ifdef NONMATCHING
+#ifdef NONMATCHING /* 12 diffs with WaitSema/SignalSema returning int */
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -16,9 +16,9 @@ typedef struct ReqList {
 extern int B_00151860;
 extern ReqList B_00155468;
 extern ReqList B_00155470[];
-extern void WaitSema(int);
-extern void SignalSema(int);
-extern void iosJumpRecoverPoint(const char *);
+extern int WaitSema(int);
+extern int SignalSema(int);
+extern int iosJumpRecoverPoint(const char *);
 
 static inline Req *popReq(ReqList *fl)
 {

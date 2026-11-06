@@ -124,5 +124,8 @@
   ],
   "src/xff/MANAGER/func_000D4788.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/_initBaseMoveTmpWork.c": [
+    "-fno-strict-aliasing"
   ]
 }

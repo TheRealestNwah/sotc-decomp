@@ -512,6 +512,7 @@ def byte_lines(data: bytes, offset: int) -> list[str]:
 
 
 C_DATA_ADDRESS_RE = re.compile(r"^\s*/\* ([0-9A-F]+) from C \([^)]*\.c\) \*/")
+DATA_DIRECTIVES = (".word ", ".half ", ".byte ", ".reloc ")  # lines of regenerated C data
 
 
 def replace_data(
@@ -540,7 +541,18 @@ def replace_data(
         raise SpliceError(f"{source}.c: no lines for {original.name}+{lo:#x} in the asm")
     out: list[str] = []
     pending: list[str] = []  # .reloc lines apply to the next addressed line
+    skipping = False  # inside the words of a line regenerated earlier from C
+
+    def reloc_of_addressed_line(i: int) -> bool:
+        while i < len(lines) and lines[i].strip().startswith(".reloc "):
+            i += 1
+        return i in spans
+
     for i, line in enumerate(lines):
+        if skipping and i not in spans and line.strip().startswith(DATA_DIRECTIVES):
+            if not line.strip().startswith(".reloc ") or not reloc_of_addressed_line(i):
+                continue
+        skipping = False
         if line.strip().startswith(".reloc "):
             pending.append(line)
             continue
@@ -555,6 +567,9 @@ def replace_data(
             pending = []
             continue
         pending = []  # regenerated below
+        # Another C file already regenerated this line (shared data, such as
+        # one string literal): its words follow the line and are replaced too.
+        skipping = bool(C_DATA_ADDRESS_RE.match(line))
         start, end = spans[i]
         out.append(f"    /* {original.base + start:06X} from C ({source}.c) */")
         o = start

@@ -35,7 +35,10 @@ typedef struct {
 
 static void func_000ED110(SpringPos *w, float *prm, int on, s128 *pos)
 {
+    char one;
+
     set_param_double_spring_interp_common(w->spring, prm[0], prm[2], prm[1], -1.0f);
+    one = 1;
     if (w->state == 0) {
         if (on == 1) {
             w->state = on;
@@ -43,7 +46,7 @@ static void func_000ED110(SpringPos *w, float *prm, int on, s128 *pos)
             reset_double_spring_interp_cntrl3D(w->spring, pos);
         }
     } else {
-        if (on == 1)
+        if (on == one)
             w->pos = *pos;
         doit_double_spring_interp_cntrl3D(w->spring, &w->pos, 0, 1, D_0017B720);
     }

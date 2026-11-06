@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 2 diffs: the second D_00136C10 load uses v0 for the lui where the original uses v1 */
 typedef struct Ptn Ptn;
 typedef struct {
     void *model;
@@ -21,7 +20,8 @@ extern void iosMallocSetExecGarbageCallback(void *, void *, void *);
 extern void *isysGetXffEntryPointPreRelocation(void *);
 extern void isysResolveOneModuleObj(ModObj *);
 extern int modelGetWorkSize(void *);
-extern void modelInitialize(void *, void *, void *);
+/* modelInitialize returns int; declaring it void changes the register for the next load. */
+extern int modelInitialize(void *, void *, void *);
 extern int garbageNmoCallBack();
 extern int DldSysUndefSymbol;
 
@@ -87,4 +87,3 @@ ModObj *loadCdNmoFile(void *file, int unused, int size)
     }
     return obj;
 }
-#endif

@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* 21 diffs: addresses of the lists go through v0/a1/a2 instead of v1, and the SignalSema arg is rematerialised */
+/* 19 diffs (WaitSema/SignalSema return int): addresses of the lists go through v0/a1/a2 instead of v1, and the SignalSema arg is rematerialised */
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -23,9 +23,9 @@ typedef struct ReqList {
 extern int B_00151860;
 extern ReqList B_00155468;
 extern ReqList B_00155470[];
-extern void WaitSema(int);
-extern void SignalSema(int, int);
-extern void iosJumpRecoverPoint(const char *);
+extern int WaitSema(int);
+extern int SignalSema(int, int);
+extern int iosJumpRecoverPoint(const char *);
 
 static inline Req *popReq(ReqList *fl)
 {

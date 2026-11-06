@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 7 diffs: gcc loads the free-list address via v0 and schedules the semaphore reload above the final q->last store */
+#ifdef NONMATCHING /* 5 diffs: gcc schedules the semaphore reload above the final q->last store */
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -20,9 +20,9 @@ typedef struct ReqList {
 extern int B_00151860;
 extern ReqList B_00155468;
 extern ReqList B_00155470[];
-extern void WaitSema(int);
-extern void SignalSema(int);
-extern void iosJumpRecoverPoint(const char *);
+extern int WaitSema(int);
+extern int SignalSema(int);
+extern int iosJumpRecoverPoint(const char *);
 extern int sheetFsSrhSpecialFs(int);
 
 static inline Req *popReq(ReqList *fl)

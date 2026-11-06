@@ -566,3 +566,23 @@ def test_splice_enforces_explicit_original_size(tmp_path, monkeypatch, word_coun
 def test_named_function_without_explicit_size_keeps_inferred_extent_behavior():
     obj = CompiledObject("f", [fn([0, 0, 0])], {})
     assert place_functions(obj, {"f": Symbol(0, ".text")}, {}) == {"f": 0}
+
+
+def test_replace_data_twice_replaces_the_earlier_c_words():
+    # Two C files can share one piece of data, such as a string literal.
+    original = original_rodata(b"abcdhi\0\0wxyz")
+    lines = [
+        ".section .rodata",
+        "    /* 001000 00001000 61626364 */ .word 0x64636261",
+        "    /* 001004 00001004 68690000 */ .word 0x00006968",
+        '    .reloc ., R_MIPS_32, "x"',
+        "    /* 001008 00001008 7778797A */ .word x",
+    ]
+    once = replace_data(lines, original, 4, 6, b"hi", {}, "f")
+    twice = replace_data(once, original, 4, 6, b"hi", {}, "g")
+    assert twice[2:] == [
+        "    /* 001004 from C (g.c) */",
+        "    .word 0x00006968",
+        '    .reloc ., R_MIPS_32, "x"',
+        "    /* 001008 00001008 7778797A */ .word x",
+    ]
