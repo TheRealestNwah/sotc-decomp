@@ -362,6 +362,19 @@ def test_functions_split_at_a_branch_label_where_spimdisasm_merged_them():
     ]
 
 
+def test_function_names_use_a_jump_table_label_spimdisasm_gave_a_function():
+    lines = [
+        "jlabel .L00000200 # 7",
+        ".Lxff..L00000200:",
+        "    /* 000200 00000200 00000000 */  .word 0",
+        "endlabel .L00000200",
+        "glabel g",
+        "  jlabel .L00000204",
+        "    /* 000204 00000204 00000000 */  .word 0",
+    ]
+    assert function_names(lines, 0) == {0x200: ".L00000200", 0x204: "g"}
+
+
 @pytest.mark.parametrize("order", list(permutations(range(3))))
 def test_batch_function_replacement_preserves_splits_labels_and_relocations(order):
     lines = [
