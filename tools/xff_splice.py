@@ -80,6 +80,7 @@ from tools.xff_split import (  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 # Any addressed line: "/* <offset> <address> [<bytes>] */". Strings have no bytes column.
+BRANCH_LABEL_RE = re.compile(r"^\s*(\.L[0-9A-F]{8}):\s*$")
 ADDRESS_RE = re.compile(r"^\s*/\* ([0-9A-F]+) ([0-9A-F]+)(?: [0-9A-F]+)? \*/")
 TWIN_DEF_RE = re.compile(r"^(\.Lxff\.[^\s:]+):\s*$")
 # Asm labels of unnamed data, including spimdisasm's string labels (D_STR_00130440)
@@ -371,16 +372,27 @@ def place_functions(
     return starts
 
 
+def start_label(line: str) -> str | None:
+    """A label a spliced function can start at: a symbol label, or a branch
+    label like .L000FA610 where spimdisasm ran one function into the next."""
+    m = BRANCH_LABEL_RE.match(line)
+    return m.group(1) if m else label_name(line)
+
+
 def function_names(lines: list[str], base: int) -> dict[int, str]:
     """Original .text offset -> the function label the asm uses there
-    (glabel, or alabel for code spimdisasm didn't see as a function)."""
-    names, pending = {}, None
+    (glabel, or alabel for code spimdisasm didn't see as a function).
+    Offsets with only a branch label map to it, so a C function can start
+    inside a function spimdisasm merged with its neighbour."""
+    names, pending, branch = {}, None, None
     for line in lines:
         if re.match(r"\s*[ga]label\s", line):
             pending = label_name(line)
-        elif pending and (m := ADDRESS_RE.match(line)):
-            names.setdefault(int(m.group(1), 16) - base, pending)
-            pending = None
+        elif m := BRANCH_LABEL_RE.match(line):
+            branch = m.group(1)
+        elif (pending or branch) and (m := ADDRESS_RE.match(line)):
+            names.setdefault(int(m.group(1), 16) - base, pending or branch)
+            pending = branch = None
     return names
 
 
@@ -580,7 +592,7 @@ def replace_function(
     """Replaces the function's words, starting at its label. A function
     spimdisasm split in two (it ends a function at a tail call) carries on
     through the next labels until every word is replaced."""
-    first = next((i for i, line in enumerate(lines) if label_name(line) == name), None)
+    first = next((i for i, line in enumerate(lines) if start_label(line) == name), None)
     if first is None:
         raise SpliceError(f"{name}: not found in the module's text.s")
     out, stop = function_replacement(lines, first, name, base, start, generated, source)
@@ -597,7 +609,7 @@ def function_replacement(
     source: str,
 ) -> tuple[list[str], int]:
     """Generate the replacement span, retaining the single-function checks."""
-    if not 0 <= first < len(lines) or label_name(lines[first]) != name:
+    if not 0 <= first < len(lines) or start_label(lines[first]) != name:
         raise SpliceError(f"{name}: not found in the module's text.s")
     out, used, i = [], 0, first
     while i < len(lines):
@@ -607,7 +619,7 @@ def function_replacement(
             if re.match(r"\s*endlabel\s", line):
                 out.append(line)
                 break
-            if LINE_RE.match(line) or label_name(line) is not None:
+            if LINE_RE.match(line) or start_label(line) is not None:
                 i -= 1  # spimdisasm put no endlabel here; keep the next thing
                 break
             out.append(line)
@@ -651,7 +663,7 @@ def replace_functions(
         return sequential()
     positions: dict[str, int] = {}
     for i, line in enumerate(lines):
-        name = label_name(line)
+        name = start_label(line)
         if name is not None:
             positions.setdefault(name, i)
     for r in replacements:

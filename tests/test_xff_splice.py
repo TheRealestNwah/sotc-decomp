@@ -20,6 +20,7 @@ from tools.xff_splice import (
     add_missing_twins,
     byte_lines,
     field_expression,
+    function_names,
     generate,
     generate_data,
     place_data,
@@ -326,6 +327,39 @@ def test_replace_function_stops_at_the_next_label_without_endlabel():
     ]
     out = replace_function(lines, "f", 0x100, 0, [["    A"]], "f")
     assert out[3:] == lines[2:] and out[1:3] == ["    /* 0000 from C (f.c) */", "    A"]
+
+
+MERGED = [
+    "glabel f",
+    "    /* 000100 00000100 00000000 */  .word 0",
+    "    /* 000104 00000104 00000000 */  .word 0",
+    "  .L00000108:",
+    "    /* 000108 00000108 00000000 */  .word 0",
+    "endlabel f",
+]
+
+
+def test_function_names_fall_back_to_branch_labels():
+    assert function_names(MERGED, 0) == {0x100: "f", 0x108: ".L00000108"}
+
+
+def test_functions_split_at_a_branch_label_where_spimdisasm_merged_them():
+    # spimdisasm ran f into the next function, which starts at .L00000108.
+    patches = [
+        FunctionReplacement(".L00000108", 0x108, [["    C"]], "g"),
+        FunctionReplacement("f", 0x100, [["    A"], ["    B"]], "f"),
+    ]
+    assert replace_functions(MERGED, 0, patches) == [
+        "glabel f",
+        "    /* 0000 from C (f.c) */",
+        "    A",
+        "    /* 0004 from C (f.c) */",
+        "    B",
+        "  .L00000108:",
+        "    /* 0000 from C (g.c) */",
+        "    C",
+        "endlabel f",
+    ]
 
 
 @pytest.mark.parametrize("order", list(permutations(range(3))))

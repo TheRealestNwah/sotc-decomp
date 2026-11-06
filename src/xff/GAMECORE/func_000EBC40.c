@@ -12,9 +12,6 @@ static void func_000EBC60(void *a)
     func_000E95E0(a);
 }
 
-/* Both match, but the asm's func_000EBC78 label also covers func_000EBC90
-   (which has no label), so the splice can't place them yet. */
-#ifdef NONMATCHING
 static void func_000EBC78(void *a)
 {
     func_000E95E0(a);
@@ -30,7 +27,6 @@ static void func_000EBC90(char *dst, char *src)
     *(char **)(dst + 0x2FF0) = src + 0x4E4;
     *(char **)(dst + 0x3120) = src + 0x5C8;
 }
-#endif
 
 extern void constructor_game_camera_param_update_data_manager(void *);
 extern void func_000E5268(void *, void *, char *, char *, void *);
