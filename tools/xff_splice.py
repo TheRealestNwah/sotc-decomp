@@ -381,13 +381,16 @@ def start_label(line: str) -> str | None:
 
 def function_names(lines: list[str], base: int) -> dict[int, str]:
     """Original .text offset -> the function label the asm uses there
-    (glabel, or alabel for code spimdisasm didn't see as a function).
-    Offsets with only a branch label map to it, so a C function can start
+    (glabel, or alabel for code spimdisasm didn't see as a function, or a
+    jlabel it used for one). Offsets with only a branch label map to it, so a C function can start
     inside a function spimdisasm merged with its neighbour."""
     names, pending, branch = {}, None, None
     for line in lines:
         if re.match(r"\s*[ga]label\s", line):
             pending = label_name(line)
+        elif re.match(r"\s*jlabel\s", line):
+            # A jump-table label spimdisasm used for a whole function (.L000EBD80).
+            pending = pending or label_name(line)
         elif m := BRANCH_LABEL_RE.match(line):
             branch = m.group(1)
         elif (pending or branch) and (m := ADDRESS_RE.match(line)):

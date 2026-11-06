@@ -48,7 +48,7 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from tools import loader_splice  # noqa: E402
+from tools import ee_cc, loader_splice  # noqa: E402
 from tools.functions import FIELD_MASKS, RELOC_NAMES, function, open_module  # noqa: E402
 from tools.try_compilers import (  # noqa: E402
     DEFAULT_COMPILERS,
@@ -160,6 +160,9 @@ def setup(c_file: Path, name: str, module: str, out: Path) -> None:
     else:
         flags = ""
         words, relocs = original_function(module, name, compiled_size(base, name))
+    # Per-file flags from config/ee_cflags.json follow the copy into the permuter.
+    for extra in ee_cc.source_cflags(c_file, ROOT)[2:]:
+        flags += f" --flag={extra}"
     asm = out / "target.s"
     asm.write_text(target_asm(name, words, relocs), encoding="utf-8")
     subprocess.run(

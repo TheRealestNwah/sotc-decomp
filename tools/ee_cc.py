@@ -139,8 +139,17 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="use the Loader's flags (-O2 -G8) wherever the source is, e.g. a permuter copy",
     )
+    parser.add_argument(
+        "--flag",
+        action="append",
+        default=[],
+        help="an extra compiler flag (repeatable, e.g. --flag=-fno-strict-aliasing), "
+        "for a copy outside src/ that config/ee_cflags.json can't name",
+    )
     args = parser.parse_args(argv)
     flags = LOADER_CFLAGS.copy() if args.loader else None
+    if args.flag:
+        flags = (flags or CFLAGS.copy()) + args.flag
     error = build(args.source, args.output, args.compilers / COMPILER, flags)
     if error:
         print(f"{args.source}: {error}", file=sys.stderr)
