@@ -127,5 +127,11 @@
   ],
   "src/xff/GAMECORE/_initBaseMoveTmpWork.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/CheckEllipticalCylinderVolumeShape.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/CheckEllipticalCylinderVolumeShapeWithInverseMatrix.c": [
+    "-fno-strict-aliasing"
   ]
 }
