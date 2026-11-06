@@ -15,12 +15,12 @@ typedef struct {
 
 typedef int (*NodeCallback)(void *, float, int, float);
 
-extern void iosPushCurrentMatrix(void);
-extern void iosSetCurrentMatrix(void *);
-extern void iosPopCurrentMatrix(void);
+extern int iosPushCurrentMatrix(void);
+extern int iosSetCurrentMatrix(void *);
+extern int iosPopCurrentMatrix(void);
 
 #ifdef NONMATCHING
-/* 20 diffs: saved registers rotate */
+/* 15 diffs (iosPushCurrentMatrix returns int): saved registers rotate */
 static void func_0003DB80(int idx, Model *model, char *mats, NodeCallback cb, float a, float b, void *ctx, int *count)
 {
     Node *node;

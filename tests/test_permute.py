@@ -43,6 +43,18 @@ def test_only_target_switches_on_the_target_and_drops_other_attempts():
     assert "NONMATCHING" not in out
 
 
+def test_only_target_accepts_comments_on_directive_lines():
+    source = (
+        "#ifdef NONMATCHING /* 5 diffs: ordering */\n"
+        "int h(void) { return 2; }\n"
+        "#else /* parked */\n"
+        "extern int h(void);\n"
+        "#endif /* NONMATCHING */\n"
+    )
+    out = only_target(source, "h")
+    assert out == "int h(void) { return 2; }\n"
+
+
 def test_only_target_keeps_other_code():
     assert only_target(SOURCE, "g").startswith("int a(void) { return 1; }")
 

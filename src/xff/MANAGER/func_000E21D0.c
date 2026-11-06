@@ -2,14 +2,14 @@ extern char rootPtn[];
 extern char *_isysCreateObj(void *, int, int, int, int, int);
 extern int isysGetXffWorkSize(int);
 extern void isysInitModuleObjExisted(char *, int, int, int, int, void *);
-extern void isysDisposeModuleObjRelocationElement(char *);
-extern void isysSearchSymbol(int *, int);
+extern int isysDisposeModuleObjRelocationElement(char *);
+extern int isysSearchSymbol(int *, int);
 extern int isysGetModuleObjMallocSize(char *);
 extern void AddObjectManagerSheetWorkSize(int);
 extern char *D_00139F14;
 
 #ifdef NONMATCHING
-/* 9 diffs: original keeps the 0x48 check and loop count in v1 instead of v0 */
+/* 2 diffs: the store to o+0x38 and the h+4 addiu come out swapped (isysSearchSymbol and isysDisposeModuleObjRelocationElement return int) */
 static char *func_000E21D0(int id, int xff)
 {
     char *o = _isysCreateObj(rootPtn, 4, 0x4C, isysGetXffWorkSize(xff), 0, 8);

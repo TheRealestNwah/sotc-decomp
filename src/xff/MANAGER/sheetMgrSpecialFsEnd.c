@@ -15,9 +15,9 @@ typedef struct ReqList {
 extern int B_00151860;
 extern ReqList B_00155468;
 extern ReqList B_00155470[];
-extern void WaitSema(int);
-extern void SignalSema(int);
-extern void iosJumpRecoverPoint(const char *);
+extern int WaitSema(int);
+extern int SignalSema(int);
+extern int iosJumpRecoverPoint(const char *);
 
 static inline Req *popReq(ReqList *fl)
 {
@@ -42,7 +42,7 @@ static inline Req *getSheetMgrReqEmpty(void)
     return r;
 }
 
-/* 15 diffs: free-list address goes through v0 and the semaphore reload is scheduled above the final q->last store */
+/* 13 diffs (WaitSema/SignalSema return int): free-list address goes through v0 and the semaphore reload is scheduled above the final q->last store */
 void sheetMgrSpecialFsEnd(int fs, int *result)
 {
     Req *r;

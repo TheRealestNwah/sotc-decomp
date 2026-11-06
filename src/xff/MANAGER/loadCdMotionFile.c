@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 4 instruction diffs: v0/v1 swapped on the 0x40000000 flags test after isysAddGroupWithLinkParam (same as loadCdXffFile); everything else matches */
 typedef struct Ptn Ptn;
 typedef struct {
     char pad[0x2C];
@@ -16,7 +15,7 @@ extern void vschedSetNextFrameForceGarbage(void);
 extern void sheetWait(void);
 extern void sheetFileRead(void *, void *, int);
 extern ModObj *isysCreateModuleObjExisted(void *, int, void *, int, int, int, void *);
-extern void isysAddGroupWithLinkParam(ModObj *, int, int, int);
+extern int isysAddGroupWithLinkParam(ModObj *, int, int, int);
 extern void iosJumpRecoverPoint(const char *);
 extern SheetData *sheetFileGetDataAdrs(void *);
 static inline ModObj *createObj(void *buffer, int work, Ptn *ptn, int garbage)
@@ -49,4 +48,3 @@ ModObj *loadCdMotionFile(void *file, int unused, int size)
     data->obj = obj;
     return obj;
 }
-#endif
