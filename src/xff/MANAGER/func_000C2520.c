@@ -22,8 +22,6 @@ typedef struct {
     float m[16];
 } Geom;
 
-#ifdef NONMATCHING
-/* 1 diffs: &l.g kept in a saved register instead of recomputed before each call */
 static void func_000C2520(void *pos, void *dir, char *def)
 {
     struct { Quat q; Geom g; } l;
@@ -36,4 +34,3 @@ static void func_000C2520(void *pos, void *dir, char *def)
         boot_particle_emitter_extend(get_particle_effect_id_from_sheet(resourceData((unsigned int *)(def + 0x40))), &l.g, 0, 0, 0);
     }
 }
-#endif

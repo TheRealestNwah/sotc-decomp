@@ -148,5 +148,14 @@
   ],
   "src/xff/MANAGER/func_000EB038.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/func_000C5A50.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/entrySyncAnim.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/func_000C2520.c": [
+    "-fno-gcse"
   ]
 }
