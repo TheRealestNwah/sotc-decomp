@@ -1,6 +1,19 @@
 extern int getDrawScreenWidth(void);
 extern int getDrawScreenHeight(void);
-extern int func_00026DB0(float *p);
+/* Defined before its caller: as an extern prototype gcc fills the last branch as bnel. */
+static int func_00026DB0(float *p)
+{
+    if (p[0] < 0.0f || p[1] < 0.0f || p[2] < 0.0f || p[3] < 0.0f ||
+        p[3] < 0.0f || p[4] < 0.0f || p[5] < 0.0f || p[6] < 0.0f ||
+        p[6] < 0.0f || p[7] < 0.0f || p[8] < 0.0f || p[9] < 0.0f ||
+        p[9] < 0.0f || p[10] < 0.0f || p[11] < 0.0f || p[12] < 0.0f ||
+        4096.0f <= p[0] || 4096.0f <= p[1] || 4096.0f <= p[2] || 4096.0f <= p[3] ||
+        4096.0f <= p[3] || 4096.0f <= p[4] || 4096.0f <= p[5] || 4096.0f <= p[6] ||
+        4096.0f <= p[6] || 4096.0f <= p[7] || 4096.0f <= p[8] || 4096.0f <= p[9] ||
+        4096.0f <= p[9] || 4096.0f <= p[10] || 4096.0f <= p[11] || 4096.0f <= p[12])
+        return 1;
+    return 0;
+}
 
 static inline int allXLess(float *p, float l)
 {
@@ -30,8 +43,6 @@ static inline int allYMore(float *p, float l)
     return 0;
 }
 
-#ifdef NONMATCHING
-/* 1 diffs: bnel vs bnez delay slot on the last bounds check */
 static int func_00026F68(float *p)
 {
     int left = 0x800 - (getDrawScreenWidth() >> 1);
@@ -44,4 +55,3 @@ static int func_00026F68(float *p)
         return 1;
     return 0;
 }
-#endif
