@@ -49,3 +49,15 @@ def test_function_without_vu0_says_so():
     asm = "glabel f # 1\n    /* 0 0 0 */  jr $ra\nendlabel f\n"
     asm = asm.replace("/* 0 0 0 */", "/* 000000 00000000 03E00008 */")
     assert "no VU0" in vu0_lift.lift_function(asm, "f")
+
+
+def test_branch_labels_split_runs():
+    asm = """
+glabel f # 1
+    /* 000000 00000000 00000000 */  lqc2        $vf5, 0x0($a0)
+  .L00000004:
+    /* 000004 00000004 00000000 */  sqc2        $vf5, 0x0($a1)
+endlabel f
+"""
+    runs = vu0_lift.split_runs(vu0_lift.read_function(asm, "f"))
+    assert [len(r) for r in runs] == [1, 1]
