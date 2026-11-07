@@ -21,23 +21,19 @@ static inline float vecDot(float *a, float *b)
 
 #define ABS(x) ((x) < 0.0f ? -(x) : (x))
 
-#ifdef NONMATCHING
-/* 2 diffs: hcol and body pointer adds swap around the beqz */
 void motrootdyn_changehcol_from_xz(void *obj)
 {
     char *c = GetCharacterClass(obj);
-    char *hcol = c + 0xF70;
     float *a;
     float *b;
     float d;
 
     if (*(int *)(c + 0xFBC) != 0) {
         a = GetGeometryPointerSurfacePlane(c + 0xC0);
-        b = GetGeometryPointerSurfacePlane(hcol);
+        b = GetGeometryPointerSurfacePlane(c + 0xF70);
         d = ABS(vecDot(a, b) - 1.0f);
         if (d < 0.001f) {
-            ParentLayoutObj(obj, hcol);
+            ParentLayoutObj(obj, c + 0xF70);
         }
     }
 }
-#endif
