@@ -44,6 +44,11 @@ the scalar code around it in plain C.
   `if` (`cone = shape[1];`). gcc then fills the slot with the load instead of
   the initialization. This fixed `CheckEllipticalSphereVolumeShape` and
   `CheckEllipticalSphereVolumeShapeWithInverseMatrix`.
+- If argument-setup instructions (`mov.s $f12, ...`, `daddu $a1, ...`) come out in a different
+  order than the Original, reorder the callee's *prototype* parameters (and the call) while keeping each
+  argument in its register class: `f(int, float, float, void *)` and `f(int, void *, float, float)` emit
+  the moves in different orders. Try all permutations (4 parameters = 24 builds). This matched
+  `ExecScriptLwsOrientClass`.
 - The permuter parses files with `__asm__` statements; run it on the C around
   the asm when only scheduling or register choice differs.
 
@@ -52,6 +57,5 @@ the scalar code around it in plain C.
 - `CheckEllipticalSphereVolumeShape` and `...WithInverseMatrix` (MANAGER): four
   VU0 runs (matrix apply, scale, squared length, normalize + dot) around
   scalar comparisons.
-- `ExecScriptLwsOrientClass` (MANAGER, not matched yet; 3 words off, call
-  argument order): the distance-squared test is a seven-instruction run that
-  `vu0_lift.py` produces verbatim.
+- `ExecScriptLwsOrientClass` (MANAGER): the distance-squared test is a
+  seven-instruction run that `vu0_lift.py` produces verbatim.
