@@ -17,8 +17,6 @@ typedef struct {
 
 extern float GetRateInOutCubeVolumeWithInverseMatrix(float *, void *, void *, void *);
 
-#ifdef NONMATCHING
-/* 3 diffs: *dist store scheduled after the -1.0f load */
 static float func_000CBD28(float *dist, float *diff, float *pos, Volume *vol)
 {
     float r = 1.0f;
@@ -49,6 +47,8 @@ static float func_000CBD28(float *dist, float *diff, float *pos, Volume *vol)
                              : "r"(pos), "r"(vol->center), "r"(diff)
                              : "$2", "memory");
         *dist = d;
+        do {
+        } while (0);
         r = -1.0f;
     }
     if (r < 0.0f) {
@@ -61,4 +61,3 @@ static float func_000CBD28(float *dist, float *diff, float *pos, Volume *vol)
     }
     return r;
 }
-#endif
