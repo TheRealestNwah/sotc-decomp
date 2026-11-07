@@ -21,21 +21,17 @@ typedef struct {
     int invert;
 } Cond;
 
-#ifdef NONMATCHING
-/* 6 diffs: the invert flag load is scheduled first into a temp instead of last into the reused cond pointer register */
 static int func_0004E5F8(CondState *s, Cond *c)
 {
     int type = c->type;
-    unsigned long mask = c->mask;
     int r = 0;
-    long match = c->match;
     RangeVal *sub = &s->sub;
+    long match = c->match;
     float max = c->max;
     float min = c->min;
+    int inv = c->invert;
+    unsigned long mask = c->mask;
     int lo, hi;
-    int inv;
-
-    inv = c->invert;
 
     switch (type) {
     case 4:
@@ -79,4 +75,3 @@ static int func_0004E5F8(CondState *s, Cond *c)
     }
     return inv ? r : !r;
 }
-#endif
