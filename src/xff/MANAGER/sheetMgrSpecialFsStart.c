@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 5 diffs: gcc schedules the semaphore reload above the final q->last store */
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -69,6 +68,7 @@ void sheetMgrSpecialFsStart(int name, int arg, int *result)
     else
         q->head = r;
     q->last = r;
+    do {
+    } while (0);
     SignalSema(B_00151860);
 }
-#endif
