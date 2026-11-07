@@ -32,33 +32,31 @@ static inline char *setClassSwitch(unsigned char *o, int sw)
 {
     char *c = layoutClass(o);
 
-    if (c == 0)
-        return 0;
-    if (*(signed char *)(c + 0x1B8) == sw)
-        return 0;
-    *(signed char *)(c + 0x1B8) = sw;
-    if (*(int *)(c + 0x180) != 0)
-        SetClothAccessSwitch(*(int *)(c + 0x178), sw);
-    return c;
+    if (c && *(signed char *)(c + 0x1B8) != sw) {
+        *(signed char *)(c + 0x1B8) = sw;
+        if (*(int *)(c + 0x180))
+            SetClothAccessSwitch(*(int *)(c + 0x178), sw);
+        return c;
+    }
+    return 0;
 }
 
-#ifdef NONMATCHING
-/* 5 diffs: inline result kept in v0 instead of a0 */
 int SetLayoutObjAccessSwitch(unsigned char *o, int sw)
 {
     char *c = setClassSwitch(o, sw);
     void *link;
 
-    if (c == 0)
-        return 0;
-    for (link = GetTwoWayLinkNext(c + 0x10C); link != 0; link = GetTwoWayLinkNext(link)) {
-        unsigned char *d = GetTwoWayLinkData(link);
+    do {
+        if (c == 0)
+            return 0;
+        for (link = GetTwoWayLinkNext(c + 0x10C); link != 0; link = GetTwoWayLinkNext(link)) {
+            unsigned char *d = GetTwoWayLinkData(link);
 
-        if (d[8] == 0xD)
-            SetScriptAnimationObjAccessSwitch(d, sw);
-        else
-            SetLayoutObjAccessSwitch(d, sw);
-    }
+            if (d[8] == 0xD)
+                SetScriptAnimationObjAccessSwitch(d, sw);
+            else
+                SetLayoutObjAccessSwitch(d, sw);
+        }
+    } while (0);
     return 1;
 }
-#endif

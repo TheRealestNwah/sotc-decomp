@@ -40,8 +40,6 @@ static inline int isDone(McReq *req)
     return req->busy == 0;
 }
 
-#ifdef NONMATCHING
-/* 6 diffs: scheduling of the busy = 7 store and the D_00137708 store */
 int mcFormat(int port, int slot)
 {
     McReq *req = getMcReq();
@@ -51,12 +49,15 @@ int mcFormat(int port, int slot)
     D_0013771C = 0;
     B_0014DBB0 = 17.0f;
     iosStartThread(iosCreateThreadS(func_000CF220, 0, rootPtn, 0x1000, 0x2F, 0), 0);
-    D_00137708 = 0;
-    req->busy = 7;
+    {
+        int busy = 7;
+
+        D_00137708 = 0;
+        req->busy = busy;
+    }
     iosSendMsg(B_0014DB10, req, 1);
     while (!isDone(req))
         B_0014DBB4();
     D_0013771C = 1;
     return req->result;
 }
-#endif
