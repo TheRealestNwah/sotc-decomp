@@ -29,8 +29,8 @@ static inline float *startOf(Fade *f, int dir)
     }
 }
 
-#ifdef NONMATCHING
-/* 16 diffs: float register allocation in the rate tail */
+
+/* Defined before func_00098948: as an extern prototype gcc fills its first case branch as beql. */
 static void func_00093880(Fade *f, unsigned int dir)
 {
     Fade *parent;
@@ -77,10 +77,27 @@ static void func_00093880(Fade *f, unsigned int dir)
     }
     parent = f->parent;
     if (parent->pos <= 0.0f)
-        rate = (f->pos - *startOf(f, dir)) * 5.0f;
-    else
-        rate = (f->pos - *startOf(f, dir)) / parent->pos;
-    f->rate = rate;
+    parent = f->parent;
+    if (parent->pos <= 0.0f) {
+        f->rate = (f->pos - *startOf(f, dir)) * 5.0f;
+    } else {
+        f->rate = (f->pos - *startOf(f, dir)) / f->parent->pos;
+    }
     f->time = parent->rate;
 }
-#endif
+
+typedef struct { int *p; int pad; unsigned int state : 4; } Obj;
+
+static void func_00098948(Obj *o)
+{
+    switch (o->state) {
+    case 1:
+        func_00093880((Fade *)o, o->p[3]);
+        o->state = 2;
+        break;
+    case 4:
+        func_00093880((Fade *)o, o->p[3]);
+        o->state = 5;
+        break;
+    }
+}
