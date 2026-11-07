@@ -48,6 +48,9 @@ GPR_NAMES = {
 }  # fmt: skip
 
 
+LABEL = "<label>"
+
+
 def read_function(text: str, name: str) -> list[tuple[int, str, str]]:
     """(address, mnemonic, operands) for every instruction of `glabel name`."""
     out: list[tuple[int, str, str]] = []
@@ -63,6 +66,9 @@ def read_function(text: str, name: str) -> list[tuple[int, str, str]]:
         m = LINE_RE.match(line)
         if m:
             out.append((int(m.group(1), 16), m.group(2), m.group(3)))
+        elif re.match(r"\s*\.L\w+\s*:\s*$", line) and out:
+            # A branch target: control can join here, so a run must not span it.
+            out.append((out[-1][0] + 4, LABEL, line.strip()))
     return out
 
 
@@ -72,12 +78,19 @@ def is_cop2(mnemonic: str) -> bool:
 
 def split_runs(instrs: list[tuple[int, str, str]]) -> list[list[tuple[int, str, str]]]:
     runs: list[list[tuple[int, str, str]]] = []
+    broken = True  # True after a label: the next instruction starts a new run
     for item in instrs:
+        if item[1] == LABEL:
+            broken = True
+            continue
         if is_cop2(item[1]):
-            if runs and runs[-1][-1][0] + 4 == item[0]:
+            if runs and not broken and runs[-1][-1][0] + 4 == item[0]:
                 runs[-1].append(item)
             else:
                 runs.append([item])
+            broken = False
+        else:
+            broken = False
     return runs
 
 
