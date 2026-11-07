@@ -50,7 +50,6 @@ static inline Dmg *getDamageClass(char *o)
     return 0;
 }
 
-#ifdef NONMATCHING
 /* 29 diffs: target reloads s->anim after every store to the damage class */
 static void func_000EB038(char *o, Src *s)
 {
@@ -71,4 +70,3 @@ static void func_000EB038(char *o, Src *s)
         d->rate = s->anim->rate * 0.033333333f;
     }
 }
-#endif

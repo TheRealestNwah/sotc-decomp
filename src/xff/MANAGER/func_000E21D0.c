@@ -8,7 +8,6 @@ extern int isysGetModuleObjMallocSize(char *);
 extern void AddObjectManagerSheetWorkSize(int);
 extern char *D_00139F14;
 
-#ifdef NONMATCHING
 /* 2 diffs: the store to o+0x38 and the h+4 addiu come out swapped (isysSearchSymbol and isysDisposeModuleObjRelocationElement return int) */
 static char *func_000E21D0(int id, int xff)
 {
@@ -40,4 +39,3 @@ static char *func_000E21D0(int id, int xff)
     AddObjectManagerSheetWorkSize(isysGetModuleObjMallocSize(o));
     return o;
 }
-#endif

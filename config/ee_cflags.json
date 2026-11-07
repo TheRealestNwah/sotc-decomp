@@ -133,5 +133,20 @@
   ],
   "src/xff/MANAGER/CheckEllipticalCylinderVolumeShapeWithInverseMatrix.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/shockRequestCalcVol.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/GetMotionColSphereInfo.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/func_000E21D0.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/func_000E2FD8.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/func_000EB038.c": [
+    "-fno-strict-aliasing"
   ]
 }
