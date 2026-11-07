@@ -38,8 +38,7 @@ extern LwsRes *getAnimObjResource(int);
 extern int GetLayoutObjWorkSize(LwsObj *);
 extern int GetCalcNumObjWorkSize(int, int, int, int, int);
 
-#ifdef NONMATCHING
-/* 1 diff: operand order of the entries index add */
+
 int GetLwsOrientWorkSize(LwsObj *o)
 {
     LwsRes *r;
@@ -53,7 +52,8 @@ int GetLwsOrientWorkSize(LwsObj *o)
     o->hasE = 0;
     n = r->count;
     for (i = 0; i < n; i++) {
-        if (r->entries[i].type == 0xE) {
+        LwsEntry *e = &r->entries[i];
+        if (e->type == 0xE) {
             o->hasE = 1;
             break;
         }
@@ -71,4 +71,4 @@ int GetLwsOrientWorkSize(LwsObj *o)
         k = o->n94;
     return size + GetCalcNumObjWorkSize(n, 0, m, k, o->cls->flag6) + o->n128 * 0x50u + 0x33;
 }
-#endif
+
