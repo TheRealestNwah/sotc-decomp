@@ -1,10 +1,9 @@
-#ifdef NONMATCHING
-/* a1/a2 register swap in the fallback (index 0) arm; otherwise matches. */
 static inline int fadeCheck(unsigned char *c, int i)
 {
     char *e = *(char **)(c + 4) + i * 0x44;
+    int t = *(int *)(*(char **)e + 0xC);
     float *f;
-    switch (*(int *)(*(char **)e + 0xC)) {
+    switch (t) {
     case 1:
         f = (float *)(e + 0x20);
         break;
@@ -35,4 +34,3 @@ int SpriteMenuIsFadeCheckSelectLayer(unsigned char *o)
     }
     return fadeCheck(c, 0);
 }
-#endif
