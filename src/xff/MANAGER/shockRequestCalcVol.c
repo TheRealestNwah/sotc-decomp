@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* pattern copy from rodata is scheduled before the flags load; original loads flags first */
 typedef struct ShockPattern {
     unsigned char data[4];
 } ShockPattern;
@@ -74,4 +73,3 @@ int shockRequestCalcVol(ShockParam *param, float *pos)
     }
     return result;
 }
-#endif

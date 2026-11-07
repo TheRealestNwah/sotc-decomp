@@ -63,7 +63,6 @@ static inline void addInit(Sheet *p)
     B_00151854 = p;
 }
 
-#ifdef NONMATCHING
 /* 14 diffs: register allocation around the segment table */
 static void func_000E2FD8(void *arg)
 {
@@ -86,4 +85,3 @@ static void func_000E2FD8(void *arg)
     func_000E26D8();
     sheetFsSetStageTexSegTexSegDef(arg, 0);
 }
-#endif

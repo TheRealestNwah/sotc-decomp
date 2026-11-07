@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* matches in try_compilers, but the tail call target at 0x32780 is an unnamed static (no symbol), so it cannot link yet */
 extern int DldSysUndefSymbol;
 extern int _AnimObjDef;
 extern int _BlendMotionDef;
@@ -60,4 +59,3 @@ int GetMotionColSphereInfo(void *a, unsigned int *h, float f)
     }
     return 0;
 }
-#endif
