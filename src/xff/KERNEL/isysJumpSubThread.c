@@ -16,6 +16,7 @@ extern void isysWakeupSubThread(void);
 
 /* Parked: about 25 words differ: the switch matches, but the final volatile reads of B_000C28FC/B_000C2904 share the stores' address constants instead of recomputing them, and the jump into isysWakeupSubThread+0x3CC is an inline-asm guess. */
 #ifdef NONMATCHING
+/* Flag note: 22 diffs with per-file -fno-strict-aliasing (26 without). */
 void isysJumpSubThread(void *fn, int arg)
 {
     char *th = isysGetThisSubThread();
