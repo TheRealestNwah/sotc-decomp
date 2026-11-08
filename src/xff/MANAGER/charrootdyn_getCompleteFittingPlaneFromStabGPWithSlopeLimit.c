@@ -9,7 +9,7 @@ extern void CompletePlaneD(void *, void *);
 extern float GetPointDistanceFromPlane(void *, void *);
 extern void GetPlaneFittingDiffVector(void *, void *, void *);
 
-/* Parked: 12 words differ (scheduling of the float arg move before the getAverageNormal call, loop pointer register numbering, and base+index address order in the last loop). */
+/* Parked: 10 words differ (scheduling of the float arg move before the getAverageNormal call, loop pointer register numbering, and base+index address order in the last loop). */
 #ifdef NONMATCHING
 int charrootdyn_getCompleteFittingPlaneFromStabGPWithSlopeLimit(void *obj, s128 *out, void *gp, int p3, int p4, int p5, float lim0, float lim1)
 {
@@ -25,6 +25,7 @@ int charrootdyn_getCompleteFittingPlaneFromStabGPWithSlopeLimit(void *obj, s128 
     *(s128 *)L.sum = *(s128 *)L.n[0];
     sum = L.sum;
     acc = sum;
+    __asm__("" : "+r"(acc));
     cur = L.n[1];
     i = 2;
     do {
