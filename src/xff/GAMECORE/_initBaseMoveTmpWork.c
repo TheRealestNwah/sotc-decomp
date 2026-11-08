@@ -1,4 +1,5 @@
 #ifdef NONMATCHING /* 10 diffs: w->chr, chkTime2Int and gcGlobalVar get a0/a1/a2 where the original uses a1/a2/a0 */
+/* Flag note: 10 diffs with per-file -fno-strict-aliasing (23 without); permuter with the flag reached only 590. */
 
 typedef struct 
 {
