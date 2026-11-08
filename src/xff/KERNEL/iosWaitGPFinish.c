@@ -1,17 +1,14 @@
-#ifdef NONMATCHING
-/* 4 diffs: original keeps frames + D_00040BA8 in $v1 and only copies it to $s0 inside the loop; gcc allocates $s0 up front. Permuter best 40 did not improve on it. */
 extern void isysSleepSubThread(void);
 
 extern volatile long D_00040BA8;
 
-void iosWaitGPFinish(int unused, long frames)
+void iosWaitGPFinish(int unused, int frames)
 {
-    long target = D_00040BA8 + frames;
+    long start = D_00040BA8;
 
-    if (D_00040BA8 < target) {
+    if (D_00040BA8 < start + frames) {
         do {
             isysSleepSubThread();
-        } while (D_00040BA8 < target);
+        } while (D_00040BA8 < start + frames);
     }
 }
-#endif
