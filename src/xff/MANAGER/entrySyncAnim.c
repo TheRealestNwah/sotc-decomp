@@ -1,4 +1,3 @@
-#ifdef NONMATCHING
 extern void *DldSysUndefSymbol;
 extern char IdentityQuaternion[];
 extern char ZeroPoint[];
@@ -64,8 +63,8 @@ void entrySyncAnim(int group, int chr, char *data, int slot, float speed)
             s.b = 0;
             s.c = 0;
             s.chr = chr;
-            s.d = 0;
             s.cls = *(int *)(cls + 0x57C);
+            s.d = 0;
             s.e = 0;
             s.f = -1;
             obj = CreateScriptAnimationSequence(&s.data);
@@ -82,4 +81,3 @@ void entrySyncAnim(int group, int chr, char *data, int slot, float speed)
         ref++;
     } while (n != -1);
 }
-#endif
