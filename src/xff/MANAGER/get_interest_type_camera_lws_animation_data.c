@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* the init stores are scheduled in a different order */
 typedef int Quadword __attribute__((mode(TI)));
 typedef struct { Quadword q; } Vector;
 extern int is_sub_type_camera_lws_animation(void *);
@@ -53,7 +52,6 @@ typedef struct {
     int auxiliary;
     char tail[0x2C];
 } AnimationSample;
-static float T_000E5EA0(void *, const Vector *);
 extern int GetAnimationClassObjectAnimation(void *, float *, void *, int);
 static inline void scaleXYZ(Vector *out, float scale)
 {
@@ -65,27 +63,8 @@ static inline void scaleXYZ(Vector *out, float scale)
         ".set reorder\n"
         : : "r"(out), "r"(scale) : "memory");
 }
-static void func_000E75F8(CameraLwsAnimeData *out, void *animation, const Vector *reference)
-{
-    AnimationSample sample;
-    float scale = T_000E5EA0(animation, reference);
-    (void)GetAnimationClassObjectAnimation(&sample, (float *)((char *)animation + 4),
-        (void *)*(int *)((char *)animation + 0x44), 1);
-    out->unk54 = sample.auxiliary;
-    out->target = sample.position;
-    if (scale != 1.0f)
-        scaleXYZ(&out->target, scale);
-}
-static void func_000E7688(Vector *out, const Vector *input, void *parameter, unsigned char *object, int mode, const Vector *offset)
-{
-    *out = *input;
-    if (!is_sub_type_camera_lws_animation(parameter)) {
-        if (object)
-            multiplyXYZ(out, (Vector *)(GetLayoutClass(object) + 0x90));
-        if (mode == 1)
-            addXYZ(out, offset);
-    }
-}
+extern void func_000E75F8(CameraLwsAnimeData *out, void *animation, const Vector *reference);
+extern void func_000E7688(Vector *out, const Vector *input, void *parameter, unsigned char *object, int mode, const Vector *offset);
 
 extern Vector ZeroVector;
 extern Vector ZeroPoint;
@@ -103,8 +82,8 @@ static inline void initAnimeData(CameraLwsAnimeData *out)
     out->unk50 = 0;
     out->unk54 = -1;
     out->target = ZeroPoint;
-    out->scale = 1.0f;
     out->target_speed = ZeroPoint;
+    out->scale = 1.0f;
     out->unk80 = 0;
     out->unk84 = 0;
     out->unk88 = 0;
@@ -125,4 +104,3 @@ int get_interest_type_camera_lws_animation_data(CameraLwsAnimeData *out, int *an
     }
     return 0;
 }
-#endif
