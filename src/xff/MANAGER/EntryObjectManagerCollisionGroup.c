@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 3 diffs: unsigned i avoids loop reversal but gives sltiu and swaps the two pointer increments */
 extern char *D_00136C10;
 extern char *GetLayoutClass(void *);
 extern void **isysGroupForFirst(void *, int);
@@ -9,12 +8,12 @@ extern void isysAddGroupWithLinkParam(void *, void *, int, int);
 
 void EntryObjectManagerCollisionGroup(void *obj, char *def)
 {
-    unsigned int i;
+    int i;
     char *groups = D_00136C10 + 0x60;
     int *flags = (int *)(def + 0x10);
 
     *(int *)(*(char **)(GetLayoutClass(obj) + 0x174) + 0x20) = *(short *)(def + 0xC);
-    for (i = 0; i < 16; i++, flags++) {
+    for (i = 0; i < 16; flags++, i++) {
         void **node;
         void *last;
         int found;
@@ -41,4 +40,3 @@ void EntryObjectManagerCollisionGroup(void *obj, char *def)
         }
     }
 }
-#endif
