@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Close: v0/v1 swapped for the nodes pointer in the position add. */
 typedef unsigned int qword __attribute__((mode(TI)));
 
 typedef struct {
@@ -67,9 +65,16 @@ void GetMotionNodeBasePos(qword *out, Motion *m, qword *quats, int node)
 {
     *out = ZeroPoint;
     while (node != -1) {
-        RotVec(out, &quats[node]);
+        /* The identical branches (found by the permuter) are needed to load
+           the nodes pointer before the index shift, as the original does. */
+        do {
+            if (m) {
+                RotVec(out, &quats[node]);
+            } else {
+                RotVec(out, &quats[node]);
+            }
+        } while (0);
         AddVec(out, m->nodes[node].pos);
         node = m->nodes[node].parent;
     }
 }
-#endif
