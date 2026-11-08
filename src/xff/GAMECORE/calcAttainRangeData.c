@@ -6,6 +6,7 @@ extern float iosGetCosf(float);
 extern void iosGetLengthPointToLine(void *, void *, void *, void *);
 
 #ifdef NONMATCHING
+/* Flag note: 28 diffs with per-file -fno-strict-aliasing (42 without); permuter with the flag reached only 760. */
 /* Parked: 42 words differ (copy/compare scheduling, stack vector order, float constant spelling). */
 void calcAttainRangeData(char *out, char *in, int flag)
 {

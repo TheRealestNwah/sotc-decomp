@@ -31,6 +31,7 @@ typedef struct {
 
 /* Parked: about 40 words differ (float store scheduling around the vb0/a0 copy). */
 #ifdef NONMATCHING
+/* Flag note: 36 diffs with per-file -fno-strict-aliasing (48 without); permuter with the flag reached only 770. */
 void nico_createPlayerParachute(int chara)
 {
     struct { LoadDesc d; char pad[4]; char geo[0x40]; Vec4 v80; Vec4 q90; Vec4 a0; Vec4 vb0; } L;
