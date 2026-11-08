@@ -17,6 +17,7 @@ extern void nico_calcWormGenealogicalNodeHeadBase(void *);
 extern void func_001289B8(void *, void *, void *);
 
 #ifdef NONMATCHING
+/* Flag note: 29 diffs with per-file -fno-strict-aliasing (48 without); permuter with the flag reached only 1070. */
 /* Parked: 48 words differ (scheduling of the geometry/position copies around the D_0017B8C8 reloads). */
 void nico_calcWormGenealogicalNodeHead(HeadCtrl *ctrl)
 {

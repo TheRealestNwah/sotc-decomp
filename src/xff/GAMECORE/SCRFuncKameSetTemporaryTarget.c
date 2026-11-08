@@ -51,6 +51,7 @@ static inline void vecAdd(void *out, void *a, void *b)
 }
 
 #ifdef NONMATCHING
+/* Flag note: 12 diffs with per-file -fno-strict-aliasing (19 without); permuter with the flag found no improvement. */
 /* Parked: 19 words differ (RO copy scheduled before the ctrl call; lui s7 order; one swc1/lq swap). */
 void SCRFuncKameSetTemporaryTarget(void *obj, float a, float b)
 {

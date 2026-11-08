@@ -160,5 +160,11 @@
   ],
   "src/xff/MANAGER/EntryObjectManagerCollisionGroup.c": [
     "-fno-rerun-loop-opt"
+  ],
+  "src/xff/GAMECORE/func_000ECED0.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/GAMEUTIL_doit_col_plane_info_filter.c": [
+    "-fno-strict-aliasing"
   ]
 }

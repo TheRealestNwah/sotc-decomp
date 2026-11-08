@@ -8,8 +8,6 @@ extern void GAMEUTIL_set_parameter_col_plane_info_filter(char *, float, float);
 #define F(p, o) (*(float *)((p) + (o)))
 #define P(p, o) (*(char **)((p) + (o)))
 
-#ifdef NONMATCHING
-/* Parked: 12 words differ (copy-block lq/ld scheduling). */
 void GAMEUTIL_doit_col_plane_info_filter(char *f, char *in, float add)
 {
     char *target;
@@ -78,6 +76,3 @@ void GAMEUTIL_doit_col_plane_info_filter(char *f, char *in, float add)
         GAMEUTIL_set_parameter_col_plane_info_filter(f, p0, p1);
     }
 }
-#else
-void GAMEUTIL_doit_col_plane_info_filter(char *f, char *in, float add);
-#endif
