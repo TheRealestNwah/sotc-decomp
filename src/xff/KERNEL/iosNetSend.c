@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 57 words differ (register allocation, rpc arg setup order) */
 extern int D_000407F0;
 typedef struct { char sub[0x3C]; int len; int sock; } NetConn;
 extern NetConn B_000508B8[];
@@ -16,14 +14,18 @@ int iosNetSend(int id, void *buf, int len, int flags)
 {
     if (D_000407F0) {
         int r = 0;
-        return sceInetSend(&B_000508B8[id], B_000508B8[id - 1].sock, B_000508B8[id - 1].len, buf, len, &r, flags);
+        return sceInetSend(&B_000508B8[id], ((int *)((char *)B_000508B8 + id * 0x44))[-1], ((int *)((char *)B_000508B8 + id * 0x44))[-2], buf, len, &r, flags);
     }
-    B_0004F880[0] = id;
-    B_0004F880[1] = len;
-    memcpy(&B_0004F880[2], buf, len);
-    WaitSema(B_000508A8);
-    sceSifCallRpc(B_00050880, 3, 0, B_0004F880, len + 8, B_0004F880, 4, 0, 0);
-    SignalSema(B_000508A8);
-    return B_0004F880[0];
+    {
+        int *b = B_0004F880;
+        int *sem = &B_000508A8;
+        int l8 = len + 8;
+        b[0] = id;
+        b[1] = len;
+        memcpy(b + 2, buf, len);
+        WaitSema(*sem);
+        sceSifCallRpc(B_00050880, 3, 0, b, l8, b, 4, 0, 0);
+        SignalSema(*sem);
+        return *b;
+    }
 }
-#endif
