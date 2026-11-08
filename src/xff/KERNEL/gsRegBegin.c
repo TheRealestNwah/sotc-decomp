@@ -11,8 +11,7 @@ typedef struct {
 
 extern GsPacket *D_00040BF4;
 extern u64 *iosGetPacketPtrPath1(void);
-#ifdef NONMATCHING
-/* Parked: 49 words differ (original reloads D_00040BF4 after every store; this exact body matches with -fno-strict-aliasing) */
+/* Original reloads D_00040BF4 after every store: needs -fno-strict-aliasing (config/ee_cflags.json) */
 
 u64 *gsRegBegin(void)
 {
@@ -34,4 +33,3 @@ u64 *gsRegBegin(void)
     }
     return D_00040BF4->cur;
 }
-#endif

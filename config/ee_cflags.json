@@ -166,5 +166,11 @@
   ],
   "src/xff/GAMECORE/GAMEUTIL_doit_col_plane_info_filter.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/gsRegBegin.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/gsReglistBegin.c": [
+    "-fno-strict-aliasing"
   ]
 }
