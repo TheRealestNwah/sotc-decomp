@@ -6,8 +6,6 @@ extern float iosGetCpuRapCountPar1Int(void);
 extern int func_00007E00(void *);
 extern void func_00007810(void *, int);
 
-#ifdef NONMATCHING
-/* Parked: 19 words differ (s0/s1/s2 register allocation for object, link, pending) */
 static inline int resolve_module(char *object)
 {
     int pending;
@@ -28,9 +26,9 @@ static inline int resolve_module(char *object)
 
 int isysResolveAllModuleObjOfGroup(void *group)
 {
+    int count = 0;
     char *object = 0;
     void **link;
-    int count = 0;
 
     for (link = isysGroupForFirst(group, 0); link != 0; link = isysGroupForNext(link, 0)) {
         object = *link;
@@ -42,4 +40,3 @@ int isysResolveAllModuleObjOfGroup(void *group)
     }
     return count;
 }
-#endif
