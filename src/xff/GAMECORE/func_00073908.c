@@ -1,5 +1,3 @@
-/* Parked: register allocation near-miss; permuter stalled. */
-#ifdef NONMATCHING
 extern char RO_0017E0C8[];
 extern char *D_STR_0017AE58[];
 extern int MakeStrHashValue(const char *);
@@ -13,9 +11,11 @@ static void func_00073908(void *menu, int val)
     char **p;
     int cur;
     unsigned i = 0;
+    int v;
     f = (int *)(SpriteMenuGetLayerByHash(menu, MakeStrHashValue(RO_0017E0C8)) + 0x34);
+    v = SpriteMenuGetPartsDefValueByHashStr(menu, RO_0017E0C8, D_STR_0017AE58[(f[1] << 11) >> 22]);
     p = D_STR_0017AE58;
-    cur = SpriteMenuGetPartsDefValueByHashStr(menu, RO_0017E0C8, D_STR_0017AE58[(f[1] << 11) >> 22]);
+    cur = v;
     while (i < 10) {
         i++;
         if (SpriteMenuGetPartsDefValueByHashStr(menu, RO_0017E0C8, *p) == val) {
@@ -26,4 +26,3 @@ static void func_00073908(void *menu, int val)
     }
     SpriteMenuSetPartsDefValueByHashStr(menu, RO_0017E0C8, D_STR_0017AE58[(f[1] << 11) >> 22], val);
 }
-#endif
