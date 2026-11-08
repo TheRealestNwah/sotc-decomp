@@ -157,5 +157,8 @@
   ],
   "src/xff/MANAGER/func_000C2520.c": [
     "-fno-gcse"
+  ],
+  "src/xff/MANAGER/EntryObjectManagerCollisionGroup.c": [
+    "-fno-rerun-loop-opt"
   ]
 }
