@@ -13,11 +13,11 @@ extern int D_0017B8C8;
 extern s128 ZeroVector;
 extern char B_001A5B50[];
 extern char *GetSCRCharaAIWorkPtr(int);
-extern #ifdef NONMATCHING
-/* Parked: 48 words differ (scheduling of the geometry/position copies around the D_0017B8C8 reloads). */
-void nico_calcWormGenealogicalNodeHeadBase(void *);
+extern void nico_calcWormGenealogicalNodeHeadBase(void *);
 extern void func_001289B8(void *, void *, void *);
 
+#ifdef NONMATCHING
+/* Parked: 48 words differ (scheduling of the geometry/position copies around the D_0017B8C8 reloads). */
 void nico_calcWormGenealogicalNodeHead(HeadCtrl *ctrl)
 {
     char *w = (char *)(((int)GetSCRCharaAIWorkPtr(ctrl->chara) + 0x41B3) & ~0xF);
