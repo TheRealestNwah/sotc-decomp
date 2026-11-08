@@ -52,8 +52,23 @@ static inline void rotAxis(float *q, float angle, float *axis, float *rot, float
     quatMul(q, rot);
 }
 
-/* Parked: 1 word differs (the first axis block's quaternion multiply reads the rotation temp as 0($sp); the compiler uses the saved copy $s0 instead). */
-#ifdef NONMATCHING
+static inline void rotAxis0(float *q, float angle, float *axis, float *rot, float *sc)
+{
+    iosGetSinCosf(sc, -angle * 0.5f);
+    __asm__ __volatile__("lqc2 vf5, 0x0(%0)
+"
+                         "qmtc2.ni %1, vf6
+"
+                         "vmulx.xyzw vf5, vf5, vf6x
+"
+                         "sqc2 vf5, 0x0(%2)
+"
+                         : : "r"(axis), "r"(sc[1]), "r"(rot) : "memory");
+    rot[3] = sc[0];
+    quatMul(q, (float *)((char *)sc - 0x10));
+}
+
+
 void GetQuaternionByEulerXYZExact(float *q, float x, float y, float z)
 {
     struct { Vec4 r0; float s0[4] __attribute__((aligned(16))); Vec4 r1; float s1[4] __attribute__((aligned(16))); Vec4 r2; float s2[4] __attribute__((aligned(16))); } B;
@@ -61,7 +76,7 @@ void GetQuaternionByEulerXYZExact(float *q, float x, float y, float z)
     __asm__ __volatile__("sqc2 vf0, 0x0(%0)
 " : : "r"(q) : "memory");
     if (x != 0.0f) {
-        rotAxis(q, x, XUnitVector, B.r0.f, B.s0);
+        rotAxis0(q, x, XUnitVector, B.r0.f, B.s0);
         changed = 1;
     }
     if (y != 0.0f) {
@@ -94,6 +109,3 @@ void GetQuaternionByEulerXYZExact(float *q, float x, float y, float z)
                              : : "r"(q) : "memory");
     }
 }
-#else
-extern void GetQuaternionByEulerXYZExact(float *q, float x, float y, float z);
-#endif
