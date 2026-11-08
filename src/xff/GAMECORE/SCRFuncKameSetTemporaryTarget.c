@@ -2,6 +2,7 @@ typedef struct {
     float x, y, z, w;
 } __attribute__((aligned(16))) Vec4;
 
+typedef struct { long long a, b; } LL2;
 typedef int s128 __attribute__((mode(TI)));
 
 extern char gcGlobalVar[];
@@ -50,7 +51,7 @@ static inline void vecAdd(void *out, void *a, void *b)
 }
 
 #ifdef NONMATCHING
-/* Parked: 23 words differ (s4/s5 assignment of retry flag vs attain-pos pointer; initial load order). */
+/* Parked: 19 words differ (RO copy scheduled before the ctrl call; lui s7 order; one swc1/lq swap). */
 void SCRFuncKameSetTemporaryTarget(void *obj, float a, float b)
 {
     struct { char buf[0x50]; Vec4 p50; Vec4 v60; Vec4 o70; Vec4 n80; } L;
@@ -65,9 +66,8 @@ void SCRFuncKameSetTemporaryTarget(void *obj, float a, float b)
     char *ctrl;
 
     work = GetSCRCharaAIWorkPtr(obj);
+    *(LL2 *)&L.p50 = *(LL2 *)RO_00180AD0;
     ctrl = getSCRDataCtrlWork(obj);
-    ((long long *)&L.p50)[1] = RO_00180AD0[1];
-    ((long long *)&L.p50)[0] = RO_00180AD0[0];
     *(s128 *)&L.v60 = **(s128 **)(*(char **)(ctrl + 0x407C) + 0x134);
     if (ColCont2_IsColStatus(getPlayerColCont2(*(void **)(ctrl + 0x4078)), 0xFE00LL << 38, 0xB000LL << 36) != 0) {
         L.p50.x = 818.0f;
