@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* store scheduling around the jal delay slot */
 typedef struct {
     char pad0[0x20];
     int unk20;
@@ -42,10 +41,11 @@ int charrootdyn_detectCharEdge(EdgeObj *obj, void *db, void *a2, void *a3, void 
     int res;
 
     obj->unk20 = 0;
-    obj->unk98 = obj->unk38 = r;
+    obj->unk38 = r;
+    obj->unk80 = 0;
     obj->unk8C = 0;
     obj->unk3C = r;
-    obj->unk80 = 0;
+    obj->unk98 = r;
     res = detectEdges(info, obj, db, a2, a3, t0, t1);
     if (res == 0) {
         db2 = func_00059EA0(db, a3);
@@ -55,4 +55,3 @@ int charrootdyn_detectCharEdge(EdgeObj *obj, void *db, void *a2, void *a3, void 
     }
     return res;
 }
-#endif
