@@ -13,7 +13,7 @@ extern int getNearPointPosUserPathWork(void *, void *, void *, int, int);
 extern int ClipCollisionDirectCallBack(void *, void *, void *, void *, int, int, int, void *, int);
 extern s128 *GetGeometryPointerSurfacePlane(void *);
 extern void setAttainmentPosAndDir(void *, void *, void *);
-extern int T_0006B070(void *);
+extern int T_0006A9C0(void *);
 
 static inline void vecNormalize(void *v)
 {
@@ -69,18 +69,18 @@ void SCRFuncMinoBSetTemporaryTarget(void *obj, int u1, int u2, long long ex, lon
     held.y = ey;
     if (getNearPointPosUserPathWork(attain, pt, &v70, 1, -1) != 0) {
         char *grp = gcGlobalVar + 0x238;
-        if (ClipCollisionDirectCallBack(buf, pt, &v70, grp, 0, 0, 0, T_0006B070, &held) != 0) {
+        if (ClipCollisionDirectCallBack(buf, pt, &v70, grp, 0, 0, 0, T_0006A9C0, &held) != 0) {
             *(volatile s128 *)&nrm = *GetGeometryPointerSurfacePlane(buf);
             *(volatile float *)&nrm.y = 0.0f;
             vecNormalize(&nrm);
             vecScale(&v80, &nrm, 30.0f);
             vecAdd(&v80, &v70, &v80);
             v80.w = 1.0f;
-            if (ClipCollisionDirectCallBack(buf, &v80, &v70, grp, 0, 0, 0, T_0006B070, &held) != 0)
+            if (ClipCollisionDirectCallBack(buf, &v80, &v70, grp, 0, 0, 0, T_0006A9C0, &held) != 0)
                 hit = 1;
         }
     } else {
-        hit = ClipCollisionDirectCallBack(buf, *(void **)(GetLayoutClass(obj) + 0x134), &v70, gcGlobalVar + 0x238, 0, 0, 0, T_0006B070, &held) != 0;
+        hit = ClipCollisionDirectCallBack(buf, *(void **)(GetLayoutClass(obj) + 0x134), &v70, gcGlobalVar + 0x238, 0, 0, 0, T_0006A9C0, &held) != 0;
     }
     if (hit != 0) {
         *(volatile s128 *)&nrm = *GetGeometryPointerSurfacePlane(buf);
