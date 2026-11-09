@@ -159,12 +159,12 @@ static inline void matFromQuat(float *mat, float *q)
 "
                          : : "r"(mat), "r"(q) : "memory");
 }
-/* Parked: 7 words off; only the placement of the changed=0 load and the lui/addiu of the first unit-vector address differ. */
+/* Parked: 6 words off; only the placement of the changed=0 load and the lui/addiu of the first unit-vector address differ. */
 #ifdef NONMATCHING
 void GetEulerXYZFromQuaternion(float *out, float *q)
 {
     struct { Vec4 a; Vec4 b; Vec4 c; Vec4 mat[4]; Vec4 r; Vec4 t0; Vec4 t1; Vec4 t2; } L;
-    float *ax, *p1, *p2, *m1, *m2, *t0p;
+    float *new_var, *ax, *p1, *p2, *m1, *m2, *t0p;
     int changed;
     float zero;
     float x;
@@ -182,8 +182,9 @@ void GetEulerXYZFromQuaternion(float *out, float *q)
     changed = 0;
     __asm__ __volatile__("sqc2 vf0, 0x0(%0)
 " : : "r"(L.r) : "memory");
+    new_var = XUnitVector;
     if (out[0] != zero) {
-        { short a0 = (short)(out[0] * 32768.0f / 3.14159274f); SetQuaternionByAxisRotateVWithNoRegularize(L.t0, -a0, XUnitVector); }
+        { short a0 = (short)(out[0] * 32768.0f / 3.14159274f); SetQuaternionByAxisRotateVWithNoRegularize(L.t0, -a0, new_var); }
         quatMul(L.r, t0p);
         changed = 1;
     }
