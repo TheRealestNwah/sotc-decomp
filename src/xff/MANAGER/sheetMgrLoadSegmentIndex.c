@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 23 diffs: same request-queue pattern as sheetMgrMapDataLoad (flags loaded in the bnel delay slot, mask and queue address in different registers). */
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -50,27 +49,27 @@ static inline Req *getSheetMgrReqEmpty(void)
 void sheetMgrLoadSegmentIndex(int a, int b, int *result)
 {
     Req *r;
+    char *qq;
     ReqList *q;
 
     WaitSema(B_00151860);
     r = getSheetMgrReqEmpty();
-    r->arg = a;
     r->flags &= ~1;
+    qq = (char *)B_00155470;
+    q = (ReqList *)(qq + 8);
+    r->arg = a;
     r->xC = b;
     r->type = 0;
     r->result = result;
     if (result != 0)
         *result = 0xDEAD;
-    q = B_00155470;
-    q += 3;
     r->next = 0;
     if (q->last != 0)
         q->last->next = r;
     else
         q->head = r;
     q->last = r;
+    do {
+    } while (0);
     SignalSema(B_00151860);
 }
-#else
-extern void sheetMgrLoadSegmentIndex(int a, int b, int *result);
-#endif

@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 33 diffs: same request-queue pattern as sheetMgrMapDataLoad (flags loaded in the bnel delay slot, mask and queue address in different registers). */
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -22,7 +21,7 @@ extern int B_00151860;
 extern ReqList B_00155468;
 extern ReqList B_00155470[];
 extern int WaitSema(int);
-extern int SignalSema(int, int);
+extern int SignalSema(int);
 extern int iosJumpRecoverPoint(const char *);
 
 static inline Req *popReq(ReqList *fl)
@@ -50,11 +49,14 @@ static inline Req *getSheetMgrReqEmpty(void)
 void sheetMgrMapDataUnloadOneBlock(int a, int b, int c, int *result)
 {
     Req *r;
+    char *qq;
     ReqList *q;
 
     WaitSema(B_00151860);
     r = getSheetMgrReqEmpty();
     r->flags &= ~1;
+    qq = (char *)B_00155470;
+    q = (ReqList *)(qq + 8);
     r->type = 3;
     r->arg = c;
     r->b = a;
@@ -62,16 +64,13 @@ void sheetMgrMapDataUnloadOneBlock(int a, int b, int c, int *result)
     r->result = result;
     if (result != 0)
         *result = 0xDEAD;
-    q = B_00155470;
-    q += 3;
     r->next = 0;
     if (q->last != 0)
         q->last->next = r;
     else
         q->head = r;
     q->last = r;
-    SignalSema(B_00151860, 3);
+    do {
+    } while (0);
+    SignalSema(B_00151860);
 }
-#else
-extern void sheetMgrMapDataUnloadOneBlock(int a, int b, int c, int *result);
-#endif
