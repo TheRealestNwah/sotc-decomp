@@ -155,11 +155,10 @@ static inline void matFromQuat(float *mat, float *q)
                          : : "r"(mat), "r"(q) : "memory");
 }
 /* Parked: 7 words off; placement of the changed=0 load and the lui/addiu of the first unit-vector address. */
-#ifdef NONMATCHING
 void GetEulerZXYFromQuaternion(float *out, float *q)
 {
     struct { Vec4 a; Vec4 b; Vec4 c; Vec4 mat[4]; Vec4 r; Vec4 t0; Vec4 t1; Vec4 t2; } L;
-    float *ax, *p1, *p2, *m1, *m2, *t0p;
+    float *rp, *ax, *p1, *p2, *m1, *m2, *t0p;
     int changed;
     float zero;
     float x;
@@ -173,12 +172,14 @@ void GetEulerZXYFromQuaternion(float *out, float *q)
     out[2] = iosGetATan2fExact(-L.b[0], L.b[1]);
     y = iosGetASinfExact(L.a[2]);
     out[0] = y;
+    x = out[2];
     t0p = L.t0;
+    rp = L.r;
     changed = 0;
     __asm__ __volatile__("sqc2 vf0, 0x0(%0)
-" : : "r"(L.r) : "memory");
-    if (out[2] != zero) {
-        { short a0 = (short)(out[2] * 32768.0f / 3.14159274f); SetQuaternionByAxisRotateVWithNoRegularize(L.t0, -a0, ZUnitVector); }
+" : : "r"(rp) : "memory");
+    if (x != zero) {
+        { short a0 = (short)(x * 32768.0f / 3.14159274f); SetQuaternionByAxisRotateVWithNoRegularize(L.t0, -a0, ZUnitVector); }
         quatMul(L.r, t0p);
         changed = 1;
     }
@@ -252,6 +253,3 @@ void GetEulerZXYFromQuaternion(float *out, float *q)
     out[1] = iosGetATan2fExact(L.c[0], L.c[2]);
     ((int *)out)[3] = 0;
 }
-#else
-extern void GetEulerZXYFromQuaternion(float *out, float *q);
-#endif

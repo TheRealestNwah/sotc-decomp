@@ -155,11 +155,12 @@ static inline void matFromQuat(float *mat, float *q)
 }
 /* Parked: 17 words off (was 63). Launder recipe applied; what is left is the order of the t0/r pointer setup, the neg/sll order of the negated short angle and swapped $v0/$v1 for the matrix pointers. */
 /* Parked: 13 words off (was 63): placement of the changed=0 load and swapped $v0/$v1 for the matrix pointers. */
+/* Parked: 5 words off (was 63); only $v0/$v1 for the matrix-pointer temporaries differ (the original keeps the matrix base in $v1 and the mat[3] address fresh in $v0). */
 #ifdef NONMATCHING
 void GetEulerYXZFromQuaternion(float *out, float *q)
 {
     struct { Vec4 a; Vec4 b; Vec4 c; Vec4 mat[4]; Vec4 r; Vec4 t0; Vec4 t1; Vec4 t2; } L;
-    float *ax, *p1, *p2, *m1, *m2, *t0p;
+    float *rp, *ax, *p1, *p2, *m1, *m2, *t0p;
     int changed;
     float zero;
     float x;
@@ -175,9 +176,10 @@ void GetEulerYXZFromQuaternion(float *out, float *q)
     y = out[1];
     out[0] = x;
     t0p = L.t0;
+    rp = L.r;
     changed = 0;
     __asm__ __volatile__("sqc2 vf0, 0x0(%0)
-" : : "r"(L.r) : "memory");
+" : : "r"(rp) : "memory");
     if (y != zero) {
         { short a0 = (short)(y * 32768.0f / 3.14159274f); SetQuaternionByAxisRotateVWithNoRegularize(L.t0, -a0, YUnitVector); }
         quatMul(L.r, t0p);
@@ -226,7 +228,7 @@ void GetEulerYXZFromQuaternion(float *out, float *q)
     __asm__("" : "+r"(m1));
     matFromQuat(m1, L.r);
     __asm__ __volatile__("sqc2 vf0, 0x0(%0)
-" : : "r"(L.mat[3]) : "memory");
+" : : "r"((char *)m1 + 0x30) : "memory");
     m2 = L.mat[0];
     __asm__("" : "+r"(m2));
     __asm__ __volatile__("lqc2 vf8, 0x0(%1)

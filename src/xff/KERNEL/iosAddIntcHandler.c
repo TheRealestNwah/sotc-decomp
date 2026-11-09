@@ -1,5 +1,4 @@
-#ifdef NONMATCHING
-/* Parked: 44 words differ (a1 copied to t1, register allocation) */
+/* Matches only with -fno-strict-aliasing (config/ee_cflags.json). */
 typedef struct {
     int id;
     int intc;
@@ -33,4 +32,3 @@ found:
     LoaderSysEntryExternalIntcHandlerList(AddIntcHandler(D_000405A0[i].intc, handler, 0), D_000405A0[i].intc);
     EnableIntc(D_000405A0[i].intc);
 }
-#endif

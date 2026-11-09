@@ -24,8 +24,7 @@ extern LetterType *get_letter_type(int);
 extern void *iosMallocAlign(void *, int, int);
 extern void func_0001BB90(Letter *, int, int, LetterType *);
 
-/* Parked: ~20 words differ; the original stores data and data2 before reloading lt and its fields. */
-#ifdef NONMATCHING
+/* Matches only with -fno-strict-aliasing (config/ee_cflags.json). */
 Letter *create_letter(void **out_data, void **out_data2, int type, int a3, int a4)
 {
     LetterType *lt = get_letter_type(type);
@@ -53,6 +52,3 @@ Letter *create_letter(void **out_data, void **out_data2, int type, int a3, int a
     }
     return 0;
 }
-#else
-extern Letter *create_letter(void **out_data, void **out_data2, int type, int a3, int a4);
-#endif
