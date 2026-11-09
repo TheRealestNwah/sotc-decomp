@@ -1,7 +1,7 @@
 extern unsigned char *B_000C5C0C;
 extern char *B_000C5C10;
 
-/* Parked: 12 diffs: the per-branch halfword store order and branch-likely forms differ */
+/* Parked: 6 diffs: the final channel pointer is copied to a second register before the second halfword store */
 #ifdef NONMATCHING
 static void func_00024C58(void)
 {
@@ -14,8 +14,8 @@ static void func_00024C58(void)
         v[1] = -1;
         v[0] = -1;
     } else if (mode == 2) {
-        v[1] = -1;
         v[0] = 1;
+        v[1] = -1;
     } else if (mode == 1) {
         v[1] = 1;
         v[0] = -1;

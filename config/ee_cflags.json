@@ -196,5 +196,14 @@
   ],
   "src/xff/KERNEL/gsRegEndWithPtr.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/func_00019820.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/isysJumpSubThread.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/isysDisposeModuleObjRelocationElement.c": [
+    "-fno-strict-aliasing"
   ]
 }
