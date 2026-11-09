@@ -170,6 +170,12 @@
   "src/xff/KERNEL/gsRegBegin.c": [
     "-fno-strict-aliasing"
   ],
+  "src/xff/KERNEL/gsRegEnd.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/gsRegEndWithPtr.c": [
+    "-fno-strict-aliasing"
+  ],
   "src/xff/KERNEL/gsReglistBegin.c": [
     "-fno-strict-aliasing"
   ]
