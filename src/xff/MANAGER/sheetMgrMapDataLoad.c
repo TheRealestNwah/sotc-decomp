@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 11 diffs: same as sheetMgrStageTexLoad; the original keeps the flags in v1 and the queue address in v0/v1, where gcc uses v0 and a0. */
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -50,13 +49,14 @@ static inline Req *getSheetMgrReqEmpty(void)
 void sheetMgrMapDataLoad(int arg, int b, int c, int d, int e, int *result)
 {
     Req *r;
+    char *qq;
     ReqList *q;
 
     WaitSema(B_00151860);
     r = getSheetMgrReqEmpty();
     r->flags &= ~1;
-    q = B_00155470;
-    q += 3;
+    qq = (char *)B_00155470;
+    q = (ReqList *)(qq + 24);
     r->type = 2;
     r->arg = arg;
     r->b = b;
@@ -76,4 +76,3 @@ void sheetMgrMapDataLoad(int arg, int b, int c, int d, int e, int *result)
     } while (0);
     SignalSema(B_00151860);
 }
-#endif
