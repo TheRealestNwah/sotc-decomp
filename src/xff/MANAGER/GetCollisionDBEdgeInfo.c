@@ -1,69 +1,94 @@
-typedef struct { char pad0[0x30]; int attribute; } FullCollisionShape;
-typedef struct { unsigned short attribute; char pad2[0x12]; } PackedCollisionShape;
-typedef struct { char pad0[0x3C]; int attribute; } CollisionPlane;
-typedef struct {
-    char pad0[8];
-    unsigned char packed;
-    char pad9[0xB];
-    void *shapes;
-    char pad18[0x3C];
-    int *planeIndices;
-    char pad58[0x38];
-} CollisionNode;
-typedef struct {
-    char pad0[8]; CollisionNode *nodes;
-    char padC[8]; void *vertices; CollisionPlane *planes;
-    char pad1C[0x18]; char *attributes;
-} CollisionResource;
-typedef struct { char pad0[0x20]; CollisionResource *resource; } CollisionFile;
-typedef struct { char pad0[0x24]; void *nodes; char geometry[16]; } CollisionModel;
-typedef struct { char pad0[8]; void *matrices; char padC[0x14]; CollisionModel *model; char pad24[0xC]; } CollisionRuntime;
-typedef struct { char pad0[0x154]; CollisionRuntime runtime; CollisionFile *collision; } LayoutClass;
-typedef struct { void *object; unsigned int packed; } CollisionReference;
-typedef struct { void *object; unsigned int packed; int index; int value; } CollisionEdgeInfo;
-extern LayoutClass *GetLayoutClass(void *);
+/* Parked: same size, only register allocation and scheduling of the group lookup differ (68 words). */
 #ifdef NONMATCHING
-/* Parked: 86 words differ (register allocation/scheduling); permuter found no zero. */
-void GetCollisionDBEdgeInfo(CollisionEdgeInfo *out, CollisionReference *reference)
+typedef struct Edge {
+    int obj;
+    unsigned int key;
+    int idx;
+    int val;
+} Edge;
+
+typedef struct Group {
+    char pad0[8];
+    unsigned char has14;
+    char pad9[0xB];
+    char *tbl14;
+    char pad18[0x3C];
+    int *tbl54;
+} Group;
+
+typedef struct Db {
+    char pad0[8];
+    char *groups;
+    char *base18;
+} Db;
+
+typedef struct Cls {
+    char pad0[0x20];
+    Db *db;
+} Cls;
+
+typedef struct Layout {
+    char pad0[0x184];
+    Cls *cls184;
+} Layout;
+
+extern Layout *GetLayoutClass(int);
+
+void GetCollisionDBEdgeInfo(Edge *out, Edge *in)
 {
-    int nodeIndex = ((unsigned char *)reference)[7] & 0x7F;
-    CollisionResource *resource = GetLayoutClass(reference->object)->collision->resource;
-    int shapeIndex;
-    int i;
-    if (resource->nodes[nodeIndex].packed != 0) {
+    unsigned int k;
+    unsigned char b = ((unsigned char *)in)[7];
+    Cls *c = GetLayoutClass(in->obj)->cls184;
+    Group *g = (Group *)(c->db->groups + ((b & 0x7F) * 0x90));
+
+    if (g->has14 != 0) {
+        int i;
         unsigned short *p;
-        shapeIndex = reference->packed & 0xFFFFFF;
-        nodeIndex = (reference->packed >> 24) & 0x7F;
-        resource = GetLayoutClass(reference->object)->collision->resource;
-        p = (unsigned short *)((char *)resource->nodes[nodeIndex].shapes + shapeIndex * 0x14 + 8);
-        for (i = 0; i < 3; i++) {
-            out->object = reference->object;
-            out->index = i;
-            out->packed = reference->packed;
-            out->value = *p & 0x7FFF;
-            p += 2;
-            out++;
-        }
-    } else {
+        Edge *o;
+        unsigned int hi, lo;
+        k = in->key;
+        hi = k >> 24;
+        lo = k & 0xFFFFFF;
+        p = (unsigned short *)(((Group *)(GetLayoutClass(in->obj)->cls184->db->groups + ((hi & 0x7F) * 0x90)))->tbl14 + lo * 0x14 + 8);
+        o = out;
+        i = 0;
+        do {
+            o->obj = in->obj;
+            o->idx = i;
+            i++;
+            o->key = in->key;
+            o->val = *p & 0x7FFF;
+            p += 4;
+            o++;
+        } while (i < 3);
+        return;
+    }
+    {
+        unsigned int key = in->key;
+        int s1 = key & 0xFFFFFF;
+        int s0 = (key >> 24) & 0x7F;
+        Db *d = GetLayoutClass(in->obj)->cls184->db;
         int *p;
-        shapeIndex = reference->packed & 0xFFFFFF;
-        nodeIndex = (reference->packed >> 24) & 0x7F;
-        resource = GetLayoutClass(reference->object)->collision->resource;
-        if ((int)reference->packed < 0) {
-            p = (int *)((char *)resource->nodes[nodeIndex].shapes + shapeIndex * 0x34 + 0xC);
-        } else {
-            p = (int *)((char *)&resource->planes[resource->nodes[nodeIndex].planeIndices[shapeIndex]] + 0x18);
-        }
-        for (i = 0; i < 3; i++) {
-            out->object = reference->object;
-            out->index = i;
-            out->packed = reference->packed;
-            out->value = *p;
-            p += 3;
-            out++;
-        }
+        Edge *o;
+        int i;
+
+        if ((int)in->key < 0)
+            p = (int *)(((Group *)(d->groups + s0 * 0x90))->tbl14 + s1 * 0x34 + 0xC);
+        else
+            p = (int *)(d->base18 + (((Group *)(d->groups + s0 * 0x90))->tbl54[s1] << 6) + 0x18);
+        o = out;
+        i = 0;
+        do {
+            o->obj = in->obj;
+            o->idx = i;
+            i++;
+            o->key = in->key;
+            o->val = *p;
+            p += 12;
+            o++;
+        } while (i < 3);
     }
 }
 #else
-void GetCollisionDBEdgeInfo(CollisionEdgeInfo *out, CollisionReference *reference);
+extern void GetCollisionDBEdgeInfo(void *, void *);
 #endif
