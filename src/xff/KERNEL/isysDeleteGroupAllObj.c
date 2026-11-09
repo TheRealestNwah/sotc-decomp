@@ -23,8 +23,7 @@ extern int D_00040D5C;
 extern int D_00040D60;
 extern SysGroup B_0006D640[];
 
-/* Parked: 2 diffs: count store scheduled after D_00040D60 load */
-#ifdef NONMATCHING
+/* Matches only with -fno-strict-aliasing (config/ee_cflags.json). */
 void isysDeleteGroupAllObj(GroupHead *head)
 {
     SysGroup *g;
@@ -54,6 +53,3 @@ void isysDeleteGroupAllObj(GroupHead *head)
         SignalSema(B_000BF6CC);
     }
 }
-#else
-extern void isysDeleteGroupAllObj(GroupHead *head);
-#endif

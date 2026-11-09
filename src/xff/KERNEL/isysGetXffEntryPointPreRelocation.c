@@ -25,8 +25,7 @@ extern char RO_000428E0[];
 extern char RO_00042940[];
 extern char RO_000429A8[];
 
-/* Parked: 36 words differ (section count reload placement and switch layout) */
-#ifdef NONMATCHING
+/* Matches only with -fno-strict-aliasing (config/ee_cflags.json). */
 char *isysGetXffEntryPointPreRelocation(XffHdr *h)
 {
     XffSect *s;
@@ -57,6 +56,3 @@ char *isysGetXffEntryPointPreRelocation(XffHdr *h)
     }
     return 0;
 }
-#else
-extern char *isysGetXffEntryPointPreRelocation(XffHdr *h);
-#endif

@@ -172,5 +172,20 @@
   ],
   "src/xff/KERNEL/gsReglistBegin.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/create_letter.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/func_00019820.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/iosAddIntcHandler.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/isysDeleteGroupAllObj.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/isysGetXffEntryPointPreRelocation.c": [
+    "-fno-strict-aliasing"
   ]
 }
