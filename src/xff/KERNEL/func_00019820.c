@@ -19,7 +19,8 @@ extern void iosJumpRecoverPoint(char *);
 #define IDX(p) ((p) ? (p) - B_0006D640 : 0)
 #define PTR(i) ((i) ? &B_0006D640[i] : 0)
 
-/* Matches only with -fno-strict-aliasing (config/ee_cflags.json). */
+/* Parked: 10 diffs: target reloads g->group for the second store in the at==0 path */
+#ifdef NONMATCHING
 void func_00019820(SysGroup *at, SysGroup *g, int mode)
 {
     GroupHead *h;
@@ -55,3 +56,6 @@ void func_00019820(SysGroup *at, SysGroup *g, int mode)
         break;
     }
 }
+#else
+extern void func_00019820(SysGroup *at, SysGroup *g, int mode);
+#endif
