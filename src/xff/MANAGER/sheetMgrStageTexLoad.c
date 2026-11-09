@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 11 diffs: gcc stores type before flags and keeps the queue pointer in a0/a1; the original hoists -2 and the queue address into v1 first */
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -45,29 +44,6 @@ static inline Req *getSheetMgrReqEmpty(void)
     return r;
 }
 
-static inline void addReq(int idx, int type, int arg, int seg, int *result)
-{
-    Req *r = getSheetMgrReqEmpty();
-    ReqList *q = B_00155470;
-
-    q += idx;
-    r->flags &= ~1;
-    r->type = type;
-    r->arg = arg;
-    r->seg = seg;
-    r->result = result;
-    if (result != 0)
-        *result = 0xDEAD;
-    r->next = 0;
-    if (q->last != 0) {
-        q->last->next = r;
-        q->last = r;
-    } else {
-        q->head = r;
-        q->last = r;
-    }
-}
-
 void sheetMgrStageTexLoad(int arg, int a, int b, int *result)
 {
     int seg;
@@ -75,10 +51,33 @@ void sheetMgrStageTexLoad(int arg, int a, int b, int *result)
     WaitSema(B_00151860);
     seg = sheetFsGetStageTexSegIndex(a, b);
     if (sheetFsAddStageTexSegIndex(seg) == 0) {
-        addReq(1, 4, arg, seg, result);
+        {
+            Req *r = getSheetMgrReqEmpty();
+            char *qq;
+            ReqList *q;
+
+            r->flags &= ~1;
+            qq = (char *)B_00155470;
+            q = (ReqList *)(qq + 16);
+            r->type = 4;
+            r->arg = arg;
+            r->seg = seg;
+            r->result = result;
+            if (result != 0)
+                *result = 0xDEAD;
+            r->next = 0;
+            if (q->last != 0) {
+                q->last->next = r;
+                q->last = r;
+            } else {
+                q->head = r;
+                do {
+                } while (0);
+                q->last = r;
+            }
+        }
     } else if (result != 0) {
         *result = 0xDEAF;
     }
     SignalSema(B_00151860);
 }
-#endif
