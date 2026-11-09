@@ -1,56 +1,50 @@
-extern char RO_00119A90[];
-extern void *memset(void *, int, unsigned int);
-extern void CreateLightObj(int, int, void *);
-
-typedef struct {
-    void *vt;
-    int one;
-    char pad8[0x44];
-    int a4C;
-    float a50;
-    int a54;
-    char pad58[0x24];
-    int a7C;
-    float a80;
-    float a84;
-    float a88;
-    int a8C;
-    float a90;
-    float a94;
-    float a98;
-    int a9C;
-    float aA0;
-    float aA4;
-    char padA8[8];
-} __attribute__((aligned(8))) LightDesc;
-
+/* Parked: 25 words off, only the scheduling of the argument loads differs; struct is copied through a second 8-aligned local. */
 #ifdef NONMATCHING
-/* Parked: 22 words differ (load/store scheduling of the descriptor fields). */
-void initLightObj(int obj, char *src, char *cfg)
-{
-    LightDesc dst;
-    LightDesc tmp;
+typedef struct LightDesc {
+    void *vtbl;
+    int f4;
+    char pad8[0x44];
+    int f4C;
+    float f50;
+    int f54;
+    char pad58[0x24];
+    int f7C;
+    float f80, f84, f88;
+    int f8C;
+    float f90, f94, f98;
+    int f9C;
+    float fA0, fA4;
+    char padA8[8];
+} LightDesc __attribute__((aligned(8)));
 
-    memset(&tmp, 0, 0x7C);
-    tmp.vt = RO_00119A90;
-    tmp.one = 1;
-    tmp.a4C = *(int *)(cfg + 0x14);
-    tmp.a50 = *(float *)(cfg + 0x18);
-    tmp.a54 = *(int *)(cfg + 0x24);
-    tmp.a7C = *(int *)(src + 4);
-    tmp.a80 = *(float *)(src + 8);
-    tmp.a84 = *(float *)(src + 0xC);
-    tmp.a88 = *(float *)(src + 0x10);
-    tmp.a8C = 0;
-    tmp.aA4 = *(float *)(src + 0x24);
-    tmp.a90 = *(float *)(src + 0x14);
-    tmp.a94 = *(float *)(src + 0x18);
-    tmp.a98 = *(float *)(src + 0x1C);
-    tmp.aA0 = *(float *)(src + 0x20);
-    tmp.a9C = 0;
-    dst = tmp;
-    CreateLightObj(obj, 0x10, &dst);
+extern char RO_0013FD30[];
+extern void *memset(void *, int, unsigned int);
+extern void CreateLightObj(int, int, LightDesc);
+
+void initLightObj(int arg0, int *arg1, int *arg2)
+{
+    LightDesc e, d;
+
+    memset(&d, 0, 0x7C);
+    d.vtbl = RO_0013FD30;
+    d.f4 = 1;
+    d.f4C = arg2[5];
+    d.f50 = ((float *)arg2)[6];
+    d.f54 = arg2[9];
+    d.f7C = arg1[1];
+    d.f80 = ((float *)arg1)[2];
+    d.f84 = ((float *)arg1)[3];
+    d.f88 = ((float *)arg1)[4];
+    d.f8C = 0;
+    d.f90 = ((float *)arg1)[5];
+    d.f94 = ((float *)arg1)[6];
+    d.f98 = ((float *)arg1)[7];
+    d.f9C = 0;
+    d.fA0 = ((float *)arg1)[8];
+    d.fA4 = ((float *)arg1)[9];
+    e = d;
+    CreateLightObj(arg0, 0x10, e);
 }
 #else
-void initLightObj(int obj, char *src, char *cfg);
+extern void initLightObj(int, int *, int *);
 #endif
