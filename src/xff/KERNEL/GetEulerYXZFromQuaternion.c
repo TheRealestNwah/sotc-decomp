@@ -153,12 +153,12 @@ static inline void matFromQuat(float *mat, float *q)
 "
                          : : "r"(mat), "r"(q) : "memory");
 }
-/* Parked WIP: ~63 words differ (saved-register order for the rotation temp pointers). */
+/* Parked: 17 words off (was 63). Launder recipe applied; what is left is the order of the t0/r pointer setup, the neg/sll order of the negated short angle and swapped $v0/$v1 for the matrix pointers. */
 #ifdef NONMATCHING
 void GetEulerYXZFromQuaternion(float *out, float *q)
 {
     struct { Vec4 a; Vec4 b; Vec4 c; Vec4 mat[4]; Vec4 r; Vec4 t0; Vec4 t1; Vec4 t2; } L;
-    float *ax;
+    float *ax, *p1, *p2, *m1, *m2, *t0p;
     int changed;
     float zero;
     float x;
@@ -173,17 +173,22 @@ void GetEulerYXZFromQuaternion(float *out, float *q)
     x = -iosGetASinfExact(L.a[1]);
     y = out[1];
     out[0] = x;
+    t0p = L.t0;
     changed = 0;
     __asm__ __volatile__("sqc2 vf0, 0x0(%0)
 " : : "r"(L.r) : "memory");
     if (y != zero) {
         SetQuaternionByAxisRotateVWithNoRegularize(L.t0, -(short)(y * 32768.0f / 3.14159274f), YUnitVector);
-        quatMul(L.r, L.t0);
+        quatMul(L.r, t0p);
         changed = 1;
     }
     if (x != zero) {
-        SetQuaternionByAxisRotateVWithNoRegularize(L.t1, -(short)(x * 32768.0f / 3.14159274f), XUnitVector);
-        quatMul(L.r, L.t1);
+        p1 = L.t1;
+        __asm__("" : "+r"(p1));
+        SetQuaternionByAxisRotateVWithNoRegularize(p1, -(short)(x * 32768.0f / 3.14159274f), XUnitVector);
+        p2 = L.t1;
+        __asm__("" : "+r"(p2));
+        quatMul(L.r, p2);
         changed = 1;
     }
     if (changed) {
@@ -216,9 +221,13 @@ void GetEulerYXZFromQuaternion(float *out, float *q)
                          "sqc2 vf11, 0x0(%0)
 "
                          : : "r"(L.r) : "memory");
-    matFromQuat(L.mat[0], L.r);
+    m1 = L.mat[0];
+    __asm__("" : "+r"(m1));
+    matFromQuat(m1, L.r);
     __asm__ __volatile__("sqc2 vf0, 0x0(%0)
 " : : "r"(L.mat[3]) : "memory");
+    m2 = L.mat[0];
+    __asm__("" : "+r"(m2));
     __asm__ __volatile__("lqc2 vf8, 0x0(%1)
 "
                          "lqc2 vf14, 0x0(%0)
@@ -239,9 +248,9 @@ void GetEulerYXZFromQuaternion(float *out, float *q)
 "
                          "sqc2 vf10, 0x0(%1)
 "
-                         : : "r"(L.mat[0]), "r"(ax) : "memory");
-    out[2] = -iosGetATan2fExact(ax[0], ax[1]);
-    out[3] = 0.0f;
+                         : : "r"(m2), "r"(ax) : "memory");
+    out[2] = -iosGetATan2fExact(L.c[0], L.c[1]);
+    ((int *)out)[3] = 0;
 }
 #else
 extern void GetEulerYXZFromQuaternion(float *out, float *q);
