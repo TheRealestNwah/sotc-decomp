@@ -19,13 +19,11 @@ typedef struct SepEnt {
     char pad64[0xC];
 } SepEnt;
 
-extern void WaitSema(int);
+extern unsigned int WaitSema(int);
 extern void SignalSema(int);
 extern int B_000C3710;
 extern SepEnt B_000C2910[];
 extern int soundTickProcCnt;
-/* Parked: 2 diffs: the table base address goes through v1 in the target and v0 here */
-#ifdef NONMATCHING
 SepEnt *sndSepReq(int a, int b, int c, int d, void (*init)(SepEnt *), int type, int e10)
 {
     SepEnt *e = 0;
@@ -58,6 +56,3 @@ out:
     SignalSema(B_000C3710);
     return e;
 }
-#else
-extern SepEnt *sndSepReq(int a, int b, int c, int d, void (*init)(SepEnt *), int type, int e10);
-#endif
