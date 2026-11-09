@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 12 diffs with WaitSema/SignalSema returning int */
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -42,29 +41,29 @@ static inline Req *getSheetMgrReqEmpty(void)
     return r;
 }
 
-static inline void addReq(int idx, int type, int *result)
-{
-    Req *r = getSheetMgrReqEmpty();
-    ReqList *q;
-
-    q = &B_00155470[idx];
-    r->type = type;
-    r->flags &= ~1;
-    r->result = result;
-    if (result != 0)
-        *result = 0xDEAD;
-    r->next = 0;
-    if (q->last != 0)
-        q->last->next = r;
-    else
-        q->head = r;
-    q->last = r;
-}
-
 void sheetMgrAllReqWait(int *result)
 {
     WaitSema(B_00151860);
-    addReq(4, 10, result);
+    {
+        Req *r = getSheetMgrReqEmpty();
+        char *qq;
+        ReqList *q;
+
+        r->flags &= ~1;
+        qq = (char *)B_00155470;
+        q = (ReqList *)(qq + 32);
+        r->type = 10;
+        r->result = result;
+        if (result != 0)
+            *result = 0xDEAD;
+        r->next = 0;
+        if (q->last != 0)
+            q->last->next = r;
+        else
+            q->head = r;
+        q->last = r;
+    }
+    do {
+    } while (0);
     SignalSema(B_00151860);
 }
-#endif
