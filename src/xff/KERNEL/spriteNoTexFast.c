@@ -19,7 +19,7 @@ static __inline__ void GSREG(long reg, long data)
     }
 }
 #define RGBAQ(c) ((long)(c)[0] | ((long)(c)[1] << 8) | ((long)(c)[2] << 16) | ((long)(c)[3] << 24) | ((long)0x3F800000 << 32))
-#define XYZ(x, y, z) (((x) + 0x8000) | (((y) + 0x8000) << 16) | ((u64)(z) << 32))
+#define XYZ(x, y, z) (((x) + 0x8000) | ((u64)((y) + 0x8000) << 16) | ((u64)(z) << 32))
 #define SCISSOR(x0, x1, y0, y1) ((u64)(x0) | ((u64)(x1) << 16) | ((u64)(y0) << 32) | ((u64)(y1) << 48))
 
 /* Parked: arg-copy register order and loop/scissor scheduling differ. */
