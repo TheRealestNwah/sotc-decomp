@@ -7,9 +7,6 @@ typedef struct { u64 tag; u64 t2, t3, t4; unsigned int lo; Node *tail; } Layer;
 typedef struct { int a, b; int adrs[2]; char *ptr; int e; int cur; } DlBufs;
 
 extern DlBufs B_00065018;
-
-/* Parked: 9 words differ (missing sign-extension of the next-tag address and the tail store sinks into the delay slot). */
-#ifdef NONMATCHING
 void iosDlChainTail(int layer, int tag)
 {
     volatile DlBufs *dl = &B_00065018;
@@ -24,10 +21,11 @@ void iosDlChainTail(int layer, int tag)
     *(volatile int *)(node + 0x18) = 0;
     *(volatile int *)(node + 0xC) = 0;
     *(volatile int *)(node + 8) = 0;
-    *(volatile u64 *)(node + 0x10) = ((u64)(int)(*(Node *volatile *)&base->tail)->next.addr << 32) | 0x20000000;
+    {
+        int a = (*(Node *volatile *)&base->tail)->next.addr;
+        __asm__("" : "+r"(a));
+        *(volatile u64 *)(node + 0x10) = ((u64)a << 32) | 0x20000000;
+    }
     (*(Node *volatile *)&base->tail)->next.addr = (int)node;
-    *(Node *volatile *)&base->tail = (Node *)node;
+    *(int *)&base->tail = (int)node;
 }
-#else
-extern void iosDlChainTail(int layer, int tag);
-#endif
