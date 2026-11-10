@@ -1,10 +1,10 @@
-#ifdef NONMATCHING /* 5 diffs: matrix pointer in v0 instead of v1; m[3] derived from it instead of sp+0x50 */
+#ifdef NONMATCHING /* 2 diffs (volatile SetQuaternion declaration, found by the volatile sweep, cut it from 14): m[3] is derived from the laundered matrix pointer ($v1+0x30) instead of a fresh sp+0x50. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef float Mtx4[4][4] __attribute__((aligned(16)));
 extern Vec4 YUnitVector;
 extern float iosGetACosfExact(float);
-extern void SetQuaternionByAxisRotateVWithNoRegularize(Vec4 *, short, Vec4 *);
+extern volatile int SetQuaternionByAxisRotateVWithNoRegularize(Vec4 *, short, Vec4 *);
 extern void iosApplyRotMatrix(Vec4 *, float (*)[4], Vec4 *);
 
 static inline void outerProduct(Vec4 *out, Vec4 *a, Vec4 *b)
