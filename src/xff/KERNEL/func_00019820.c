@@ -13,7 +13,7 @@ typedef struct {
 } SysGroup;
 
 extern SysGroup B_0006D640[];
-extern char RO_00041E80[];
+extern char RO_00044320[];
 extern void iosJumpRecoverPoint(char *);
 
 #define IDX(p) ((p) ? (p) - B_0006D640 : 0)
@@ -50,7 +50,7 @@ static void func_00019820(SysGroup *at, SysGroup *g, int mode)
         at->prev = IDX(g);
         break;
     default:
-        iosJumpRecoverPoint(RO_00041E80);
+        iosJumpRecoverPoint(RO_00044320);
         break;
     }
 }

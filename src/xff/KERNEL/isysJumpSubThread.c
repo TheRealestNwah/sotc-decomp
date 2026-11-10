@@ -23,10 +23,11 @@ void isysJumpSubThread(void *fn, int arg)
     case 6:
     case 9:
     case 11:
+    case 12:
     case 13:
     case 14:
-    case 15:
     case 22:
+    case 29:
     case 33:
         w = (SubWork *)(th + 0x20);
         break;
