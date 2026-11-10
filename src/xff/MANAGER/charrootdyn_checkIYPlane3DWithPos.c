@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* matrix pointer allocated to $a1 instead of $v1 */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -70,10 +69,13 @@ static inline void addXYZ(Vec4 *out, Vec4 *a, Vec4 *b)
 int charrootdyn_checkIYPlane3DWithPos(int arg, char *obj, Vec4 *pos, float z, float x)
 {
     Vec4 v; Vec4 from; Vec4 to; Vec4 off; Vec4 matrix[4];
-    quatPosToMatrix(matrix, *(Vec4 **)(obj + 0x13C), pos);
-    D_00136B20.f[0] = x;
-    D_00136B20.f[2] = z;
-    matrixApply(&off, matrix, &D_00136B20);
+    register Vec4 *mp __asm__("$3") = matrix;
+    __asm__("" : "+r"(mp));
+    quatPosToMatrix(mp, *(Vec4 **)(obj + 0x13C), pos);
+    { register Vec4 *gp __asm__("$2") = &D_00136B20;
+    gp->f[0] = x;
+    gp->f[2] = z;
+    matrixApply(&off, matrix, gp); }
     addXYZ(&from, pos, &off);
     v.q = ZeroPoint.q;
     v.f[1] = -*(float *)(obj + 0xE34);
@@ -81,4 +83,3 @@ int charrootdyn_checkIYPlane3DWithPos(int arg, char *obj, Vec4 *pos, float z, fl
     addXYZ(&to, &to, &off);
     return ClipCollisionFinderCallBack(arg, &from, &to, obj + 0xE20, func_00064660, 0);
 }
-#endif
