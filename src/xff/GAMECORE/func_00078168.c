@@ -1,4 +1,4 @@
-/* ~19 diffs (mostly relocation addends), same length (152 words). Player-state initialiser (HP/grip reset, weapon setup, parent-judge callbacks, double-spring interp, motion IK interest, ColCont init, release/control callbacks). Remaining real diffs: store scheduling of the three small int/byte blocks (w+0x84 / w+0x30 clears, w+0x4B0 vs the quad copies) and f13/f14 load order for set_param_double_spring_interp_common. */
+/* ~16 diffs (mostly relocation addends), same length (152 words). Player-state initialiser (HP/grip reset, weapon setup, parent-judge callbacks, double-spring interp, motion IK interest, ColCont init, release/control callbacks). Remaining real diffs: store scheduling of the three small int/byte blocks (w+0x84 / w+0x30 clears, w+0x4B0 vs the quad copies) and f13/f14 load order for set_param_double_spring_interp_common. */
 typedef int Vec4 __attribute__((mode(TI)));
 extern int dispCompleteAlertHard;
 extern int dispCompleteAlertNormal;
@@ -87,7 +87,7 @@ void func_00078168(char *w)
     *(int *)(w + 0x188) = 0;
     constructor_nico_sight_on(w + 0x190);
     constructor_double_spring_interp_cntrl(w + 0x470, 0.0001f);
-    set_param_double_spring_interp_common(w + 0x470, 4.0f, 2.0f, -1.0f, -1.0f);
+    set_param_double_spring_interp_common(w + 0x470, 4.0f, -1.0f, 2.0f, -1.0f);
     reset_double_spring_interp_cntrl(w + 0x470, 1.0f);
     *(Vec4 *)(w + 0x490) = *(Vec4 *)IdentityQuaternion;
     *(int *)(w + 0x4B0) = 0;
