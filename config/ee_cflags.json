@@ -191,12 +191,6 @@
   "src/xff/KERNEL/isysGetXffEntryPointPreRelocation.c": [
     "-fno-strict-aliasing"
   ],
-  "src/xff/KERNEL/gsRegEnd.c": [
-    "-fno-strict-aliasing"
-  ],
-  "src/xff/KERNEL/gsRegEndWithPtr.c": [
-    "-fno-strict-aliasing"
-  ],
   "src/xff/KERNEL/func_00019820.c": [
     "-fno-strict-aliasing"
   ],
