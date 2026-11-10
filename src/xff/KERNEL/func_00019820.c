@@ -19,7 +19,7 @@ extern void iosJumpRecoverPoint(char *);
 #define IDX(p) ((p) ? (p) - B_0006D640 : 0)
 #define PTR(i) ((i) ? &B_0006D640[i] : 0)
 
-void func_00019820(SysGroup *at, SysGroup *g, int mode)
+static void func_00019820(SysGroup *at, SysGroup *g, int mode)
 {
     GroupHead *h;
     if (at == 0) {
