@@ -2,7 +2,7 @@ extern float D_0017AD1C, D_0017AD20, D_0017AD24, D_0017AD28;
 extern int D_0017AD2C, D_0017AD30;
 extern void setLoadMapOffset(float, float, int, int);
 
-void func_00068020(void)
+static void func_00068020(void)
 {
     float d;
 
