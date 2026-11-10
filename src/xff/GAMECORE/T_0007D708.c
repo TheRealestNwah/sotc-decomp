@@ -1,5 +1,3 @@
-/* Parked: register allocation near-miss; permuter stalled. */
-#ifdef NONMATCHING
 
 typedef struct 
 {
@@ -57,10 +55,12 @@ static void T_0007D708(void *obj)
   char *w = GetSCRCharaAIWorkPtr(obj);
   HarpoonLws *h;
   float v[4];
-  float *pos = (float *) (w + 0x30);
+  float *pos;
   void *new_var;
   float *tgt = (float *) (w + 0x4A0);
-  vecSubNormalize(v, pos, tgt);
+  { register float *p __asm__("$3") = (float *) (w + 0x30); /* pinned to the original's $v1 */
+    __asm__("" : "+r"(p));
+    vecSubNormalize(v, p, tgt); }
   h = (HarpoonLws *) (w + 0x60);
   pos = h->b;
   if (pos != 0)
@@ -101,4 +101,3 @@ static void T_0007D708(void *obj)
   func_00076698(w);
   SCRSetupArrow1ByPlayer2(obj, *((int *) (w + 0x70)), v, tgt);
 }
-#endif
