@@ -1,5 +1,4 @@
-#ifdef NONMATCHING
-/* 6 diffs (3 real, the rest relocation addends), same length (142 words). Sibling of nico_BossMinotaurAStart: boss partition + script work setup, then four LWS armour parts (neck, chest, waist, tail) started with _SCRSetupLWSWithTargetNodeParent + _SCRStartLWS unless flag 0x125 is set, four torch access switches cleared and the delete callback / sub-thread jump. The only real difference is the register for the StageLayout_LEO_TORCH1..3 loads (Original: lui $v1 / lw $v0,0($v1); ours: lui $v0 / lw $v0,0($v0)); the temp-pointer block form got it from 9 to 6, int * / struct pointer typings and a separate temp did not. Permuter (12 workers, 12 min): no improvement. */
+/* The torch access-switch call is declared volatile (permuter find) to get the Original register choice for the torch loads. */
 extern char rootPtn[];
 extern int SkelFocusDef_LEO_NECK_A;
 extern int SkelFocusDef_LEO_CHEST;
@@ -31,7 +30,7 @@ extern void scrRunM(int);
 extern int _gameFlagChk(int);
 extern int _SCRSetupLWSWithTargetNodeParent(int, void *, int);
 extern void _SCRStartLWS(int, int, int, int);
-extern void SetLayoutObjAccessSwitch(int, int);
+extern volatile int SetLayoutObjAccessSwitch(int, int);
 extern void SetScriptObjDeleteCallBackFunc(void *, void (*)(void), int);
 extern void func_00064200(void);
 extern void func_00063C70(void);
@@ -85,4 +84,3 @@ void nico_leoBossStart(void)
     SetScriptObjDeleteCallBackFunc(th, func_00064200, 0);
     isysJumpSubThread(func_00063C70, w);
 }
-#endif
