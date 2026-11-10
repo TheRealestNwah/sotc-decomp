@@ -134,6 +134,7 @@ Splice limitations:
   - `loader_splice.py`: the same for the Loader's asm (`src/loader/`)
   - `try_compilers.py`: compiles C with candidate compilers/flags and diffs against the original functions
   - `progress.py`: refreshes the README progress table from each Game module's symbol table, relocations and the matching C (needs `iso/` and `asm/`)
+    `--unmatched docs/unmatched.md` lists the real unmatched functions per module (tails split off by spimdisasm excluded)
   - `sdk_routines.py`: checks `config/sdk_routines.txt`, the SDK routines identified in the Game modules by signature, and prints entries for new ones
   - `m2c.py`, `permute.py`: run m2c and decomp-permuter on an XFF function
   - `refrun.py`: records and diffs Reference runs from PCSX2 (`docs/reference-runs.md`), with `pine.py` (PCSX2 PINE client), `p2m2.py` (Input Recording files) and `disc.py` (reads files from a Disc image)
