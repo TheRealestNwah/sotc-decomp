@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 4 words differ (epilogue scheduling of the final store) */
 extern char *D_00040AE0;
 extern char *D_00040AE4;
 extern int D_00040AE8;
@@ -27,7 +25,7 @@ void iosResetDC(char *dc)
     } else {
         iosPushDC(dc);
     }
-    D_00040AE0 = dc;
+    /* Written as a macro in the original. */
+    do { D_00040AE0 = dc; } while (0);
     iosDlPopLayer();
 }
-#endif

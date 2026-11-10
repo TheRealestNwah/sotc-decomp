@@ -16,8 +16,6 @@ typedef struct {
 extern SepEntry B_000DD700[];
 extern void Sg2SepStopSndOff(int);
 
-#ifdef NONMATCHING
-/* Parked: 7 words differ (second loop pointer in a1 instead of a0, set before the branch) */
 static void func_00025B50(int a, int b, int c, unsigned int limit)
 {
     Cand list[48];
@@ -40,14 +38,18 @@ static void func_00025B50(int a, int b, int c, unsigned int limit)
     if (limit < n) {
         best.idx = list[0].idx;
         best.val = list[0].val;
-        for (i = 1, v = &list[1].val; i < n; i++, v += 2) {
-            if (*v < best.val) {
-                best.idx = v[-1];
-                best.val = v[0];
-            }
+        i = 1;
+        if (i < n) {
+            v = &list[1].val;
+            do {
+                if (*v < best.val) {
+                    best.idx = v[-1];
+                    best.val = v[0];
+                }
+                i++; v += 2;
+            } while (i < n);
         }
         Sg2SepStopSndOff(best.idx);
         B_000DD700[best.idx].b = -1;
     }
 }
-#endif
