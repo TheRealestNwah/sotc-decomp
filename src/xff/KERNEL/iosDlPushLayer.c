@@ -12,12 +12,13 @@ extern char RO_00042FB8[];
 extern char RO_00042FA0[];
 extern void LoaderSysPrintf(const char *, ...);
 
-/* Parked: 5 words differ, register choice only */
+/* Parked: 1 word differs. The original passes layer to the printf from $a0 rather than its $s0 copy. */
 #ifdef NONMATCHING
 void iosDlPushLayer(int layer)
 {
     int i = D_00040B00;
-    int n = i + 1;
+    register int n __asm__("$5") = i + 1;
+    __asm__("" : "+r"(n));
 
     B_00065048[i] = B_00065018.layer;
     D_00040B00 = n;

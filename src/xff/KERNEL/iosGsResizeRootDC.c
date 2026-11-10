@@ -13,8 +13,6 @@ extern void iosSetDCParam(void *dc, int a, int b, int c);
 extern void iosSetDCClearParam(void *dc, int on, int r, int g, int b, int a);
 extern void iosSetDCViewPort(void *dc, int x, int y, int w, int h);
 
-#ifdef NONMATCHING
-/* Parked: 2 words differ (t0/v1 swap on the root->sy load) */
 void iosGsResizeRootDC(void)
 {
     GsRoot *root = &B_00065550;
@@ -26,7 +24,8 @@ void iosGsResizeRootDC(void)
         int h = root->h;
         int x, y;
 
-        y = h * root->sy >> 11;
+        { register int sy __asm__("$8") = root->sy; /* pinned to match the original's $t0 */
+          y = h * sy >> 11; }
         x = root->w * root->sx >> 11;
         iosSetDCParam(root->dc + off, x + y, x, h);
         iosSetDCClearParam(root->dc + off, 1, clear[0], clear[1], clear[2], clear[3]);
@@ -34,4 +33,3 @@ void iosGsResizeRootDC(void)
         off += 0x190;
     }
 }
-#endif
