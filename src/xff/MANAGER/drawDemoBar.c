@@ -1,10 +1,9 @@
-/* Parked: 2 words off (0x64 lands in $v0 instead of $v1). The inline_fn helper is what fixes the constant scheduling. */
-#ifdef NONMATCHING
+/* gsRegBegin is declared volatile (found by the volatile-callee sweep) to get the original constant scheduling. */
 
 extern int getDrawScreenHeight(void);
 extern int getDrawScreenWidth(void);
 extern void gsReg(int, long);
-extern void gsRegBegin(void);
+extern volatile int gsRegBegin(void);
 extern void gsRegEnd(void);
 extern void iosDlPopLayer(void);
 extern void iosDlPushLayer(int);
@@ -47,6 +46,3 @@ void drawDemoBar(int arg0, int arg1, float alpha)
     iosDlPopLayer();
   }
 }
-#else
-extern void drawDemoBar(int, int, float);
-#endif
