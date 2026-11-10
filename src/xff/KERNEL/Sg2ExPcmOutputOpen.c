@@ -18,10 +18,8 @@ extern void *malloc(int size);
 extern int DIntr(void);
 extern int EIntr(void);
 extern void Sg2ExPcmOutputBufferClear(void);
-extern int Sg2ExPcmOutputAutoFilterInit(int a);
+extern void Sg2ExPcmOutputAutoFilterInit(int a);
 
-#ifdef NONMATCHING
-/* Parked: 2 words differ (v0/v1 swap for the constant in p->open = 1) */
 int Sg2ExPcmOutputOpen(int arg0, int arg1, int size)
 {
     PcmOut *p = &B_000E2360;
@@ -53,4 +51,3 @@ int Sg2ExPcmOutputOpen(int arg0, int arg1, int size)
     }
     return 0;
 }
-#endif

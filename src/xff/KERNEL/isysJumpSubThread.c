@@ -14,9 +14,6 @@ extern int B_000C2908;
 extern void *isysGetThisSubThread(void);
 extern void isysWakeupSubThread(void);
 
-/* Parked: about 25 words differ: the switch matches, but the final volatile reads of B_000C28FC/B_000C2904 share the stores' address constants instead of recomputing them, and the jump into isysWakeupSubThread+0x3CC is an inline-asm guess. */
-#ifdef NONMATCHING
-/* Flag note: 22 diffs with per-file -fno-strict-aliasing (26 without). */
 void isysJumpSubThread(void *fn, int arg)
 {
     char *th = isysGetThisSubThread();
@@ -26,10 +23,11 @@ void isysJumpSubThread(void *fn, int arg)
     case 6:
     case 9:
     case 11:
+    case 12:
     case 13:
     case 14:
-    case 15:
     case 22:
+    case 29:
     case 33:
         w = (SubWork *)(th + 0x20);
         break;
@@ -43,13 +41,19 @@ void isysJumpSubThread(void *fn, int arg)
     B_000C2904 = arg;
     B_000C28FC = w->d10;
     B_000C2908 = w->d4;
-    {
-        register int spv __asm__("$29") = *(volatile int *)&B_000C28FC;
-        register int a0v __asm__("$4") = *(volatile int *)&B_000C2904;
-
-        __asm__ __volatile__("j isysWakeupSubThread+0x3CC" : : "r"(spv), "r"(a0v));
-    }
+    __asm__ __volatile__(
+        ".set noreorder\n"
+        "lui $2, %hi(B_000C28FC)\n"
+        "nop\n"
+        "addiu $2, $2, %lo(B_000C28FC)\n"
+        "nop\n"
+        "lw $29, 0($2)\n"
+        "lui $2, %hi(B_000C2904)\n"
+        "nop\n"
+        "addiu $2, $2, %lo(B_000C2904)\n"
+        "nop\n"
+        "lw $4, 0($2)\n"
+        "j isysWakeupSubThread+0x3CC\n"
+        "nop\n"
+        ".set reorder\n");
 }
-#else
-extern void isysJumpSubThread(void *fn, int arg);
-#endif

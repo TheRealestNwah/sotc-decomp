@@ -28,8 +28,6 @@ static inline void send_path3(long addr, long qwc)
     *(volatile int *)0x1000A000 = 0x141;
 }
 
-#ifdef NONMATCHING
-/* Parked: 3 words differ (constant load scheduling in the prologue) */
 void iosGsSetDrawContext(void)
 {
     GpState *gp = &B_00065550;
@@ -38,7 +36,7 @@ void iosGsSetDrawContext(void)
     char *p;
     long *tag;
 
-    for (i = 1; i >= 0; i--, c++) {
+    for (i = 0; i < 2; i++, c++) {
         c->flags = (c->flags & ~1) | (gp->field & 1);
         c->flags = (c->flags & ~0x20) | ((gp->field & 1) << 5);
     }
@@ -50,4 +48,3 @@ void iosGsSetDrawContext(void)
     tag = (long *)(p + 0x10);
     send_path3((unsigned int)tag, (int)(*tag & 0x7FFF) + 1);
 }
-#endif

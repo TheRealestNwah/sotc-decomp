@@ -28,8 +28,6 @@ typedef struct {
 
 extern int Sg2ExStAdpcmOpenFake(ExSt *);
 
-/* Parked: 2 diffs: li 100 and addiu 0x250 swapped */
-#ifdef NONMATCHING
 int Sg2ExStAdpcmOpen(ExSt *st, ExStHdr *hdr, int a2, int a3, int a4, int a5)
 {
     int i;
@@ -40,6 +38,8 @@ int Sg2ExStAdpcmOpen(ExSt *st, ExStHdr *hdr, int a2, int a3, int a4, int a5)
     st->unk234 = a3;
     st->unk238 = a4;
     st->unk23C = a5;
+    st++;
+    st--;
     st->unk2D8 = 0;
     st->unk2DC = 0;
     st->unk240 = hdr->w[4] << 11;
@@ -53,6 +53,3 @@ int Sg2ExStAdpcmOpen(ExSt *st, ExStHdr *hdr, int a2, int a3, int a4, int a5)
     st->unk2CC = 100;
     return Sg2ExStAdpcmOpenFake(st);
 }
-#else
-extern int Sg2ExStAdpcmOpen(ExSt *st, ExStHdr *hdr, int a2, int a3, int a4, int a5);
-#endif

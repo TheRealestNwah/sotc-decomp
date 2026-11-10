@@ -26,7 +26,7 @@ static void func_00025B50(int a, int b, int c, unsigned int limit)
     SepEntry *tbl = B_000DD700;
     int *e = &tbl->pad10;
     unsigned int n = 0;
-    Cand *q;
+    unsigned int *v;
     int i;
 
     for (i = 0, p = list; i < 32; i++, e += 0x14) {
@@ -40,10 +40,10 @@ static void func_00025B50(int a, int b, int c, unsigned int limit)
     if (limit < n) {
         best.idx = list[0].idx;
         best.val = list[0].val;
-        for (i = 1, q = &list[1]; i < n; i++, q++) {
-            if (q->val < best.val) {
-                best.idx = q->idx;
-                best.val = q->val;
+        for (i = 1, v = &list[1].val; i < n; i++, v += 2) {
+            if (*v < best.val) {
+                best.idx = v[-1];
+                best.val = v[0];
             }
         }
         Sg2SepStopSndOff(best.idx);
