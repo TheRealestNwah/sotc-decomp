@@ -1,0 +1,126 @@
+/* ~23 diffs (mostly relocation addends), same length (152 words). Player-state initialiser (HP/grip reset, weapon setup, parent-judge callbacks, double-spring interp, motion IK interest, ColCont init, release/control callbacks). Remaining real diffs: store scheduling of the three small int/byte blocks (w+0x84 / w+0x30 clears, w+0x4B0 vs the quad copies) and f13/f14 load order for set_param_double_spring_interp_common. */
+typedef int Vec4 __attribute__((mode(TI)));
+extern int dispCompleteAlertHard;
+extern int dispCompleteAlertNormal;
+extern int playerEnableDeath;
+extern int D_0017AE8C;
+extern float IdentityQuaternion[];
+extern float ZeroPoint[];
+extern void *isysGetThisSubThread(void);
+extern float getPlayerMaxHp(void);
+extern void setPlayerHp(float);
+extern float getPlayerMaxGrip(void);
+extern void setPlayerGrip(float);
+extern int SCRSetupWeaponPlayer(void *, int);
+extern void SetCharacterObjParentPointXZFitGpChangeJudgeFunc(void *, void *, int);
+extern void SetCharacterObjParentPlaneDiscontinuousJudgeFunc(void *, void *);
+extern char *GetCharacterClass(void *);
+extern char *GetScriptClass(void *);
+extern void initWeapon(void);
+extern void SCRPlayerGetWeapon(int);
+extern int getEditWorkInitData(int);
+extern void constructor_nico_sight_on(void *);
+extern void constructor_double_spring_interp_cntrl(void *, float);
+extern void set_param_double_spring_interp_common(void *, float, float, float, float);
+extern void reset_double_spring_interp_cntrl(void *, float);
+extern void constructor_motion_ik_interest(void *);
+extern void init_player_expression(void *);
+extern void DirectTurn_Reset(void *);
+extern void ColCont_Reset(void *);
+extern void ColCont2_Init(void *);
+extern void SetScriptCharacterObjReleaseCallBackFunc(void *, void *, void *);
+extern void initPowerWork(void);
+extern void SetCharacterObjControlCallBackFunc(void *, void *);
+extern void func_0007BE98(void);
+extern char D_0007C180[];
+extern void nico_hydePlayerByNearClip(void);
+extern void func_0007BFD8(void);
+extern void T_00077088(void);
+
+#ifdef NONMATCHING
+void func_00078168(char *w)
+{
+    void *th = isysGetThisSubThread();
+    char *c;
+
+    setPlayerHp(getPlayerMaxHp());
+    setPlayerGrip(getPlayerMaxGrip());
+    *(int *)(w + 0x20) = 0;
+    {
+        char *p = w + 0x60;
+        *(int *)(p + 0xC) = 1;
+        *(int *)(p + 0x8) = 1;
+        p[0x14] = 0;
+        p[0x15] = 0;
+        *(int *)(p + 0x0) = 0;
+        *(int *)(p + 0x4) = 0;
+    }
+    *(int *)(w + 0x70) = 1;
+    *(int *)(w + 0x7C) = 1;
+    *(int *)(w + 0x80) = 0;
+    *(int *)(w + 0x78) = SCRSetupWeaponPlayer(th, 1);
+    SetCharacterObjParentPointXZFitGpChangeJudgeFunc(th, func_0007BE98, 2);
+    SetCharacterObjParentPlaneDiscontinuousJudgeFunc(th, D_0007C180);
+    c = GetCharacterClass(th);
+    *(void **)(c + 0xCC0) = nico_hydePlayerByNearClip;
+    *(int *)(w + 0x170) = 0;
+    *(long *)(w + 0x178) = 0;
+    *(int *)(w + 0x164) = 0;
+    *(int *)(w + 0x13C) = 0;
+    *(int *)(w + 0x144) = 0;
+    *(int *)(w + 0x148) = 0;
+    *(int *)(w + 0x14C) = 0;
+    *(int *)(w + 0x150) = 0;
+    *(int *)(w + 0x140) = 0;
+    *(int *)(w + 0x16C) = 0;
+    *(int *)(w + 0x180) = 0;
+    *(int *)(w + 0x138) = 0;
+    *(int *)(w + 0x134) = 0;
+    dispCompleteAlertHard = 0;
+    playerEnableDeath = 1;
+    dispCompleteAlertNormal = 0;
+    *(int *)(w + 0x68) = 0;
+    *(int *)(w + 0x6C) = 0;
+    initWeapon();
+    SCRPlayerGetWeapon(1);
+    *(int *)(w + 0x184) = getEditWorkInitData(*(int *)(GetScriptClass(th) + 0x40));
+    *(int *)(w + 0x188) = 0;
+    constructor_nico_sight_on(w + 0x190);
+    constructor_double_spring_interp_cntrl(w + 0x470, 0.0001f);
+    set_param_double_spring_interp_common(w + 0x470, 4.0f, 2.0f, -1.0f, -1.0f);
+    reset_double_spring_interp_cntrl(w + 0x470, 1.0f);
+    *(Vec4 *)(w + 0x490) = *(Vec4 *)IdentityQuaternion;
+    *(int *)(w + 0x4B0) = 0;
+    *(Vec4 *)(w + 0x4A0) = *(Vec4 *)ZeroPoint;
+    constructor_motion_ik_interest(w + 0x4C0);
+    constructor_motion_ik_interest(w + 0x550);
+    init_player_expression(th);
+    *(int *)(w + 0xD8C) = 0;
+    DirectTurn_Reset(w + 0xDA0);
+    ColCont_Reset(w + 0xDC0);
+    ColCont2_Init(w + 0xDD0);
+    SetScriptCharacterObjReleaseCallBackFunc(th, func_0007BFD8, th);
+    *(int *)(w + 0xD90) = 0;
+    w[0xD9C] = 0;
+    w[0xD9D] = 0;
+    *(int *)(w + 0xD94) = 0;
+    {
+        char *v = w + 0x84;
+        char *v1 = w + 0x30;
+        v1[0x21] = 0;
+        v1[0x20] = 0;
+        *(int *)(w + 0xE0) = 0;
+        *(int *)(v + 0xC) = 0;
+        v[0x10] = 0;
+        *(int *)(v + 0x4) = 0;
+        *(int *)(v + 0x0) = 0;
+        v[0x11] = 0;
+        *(int *)(v + 0x8) = 0;
+    }
+    D_0017AE8C = 0;
+    initPowerWork();
+    SetCharacterObjControlCallBackFunc(th, T_00077088);
+    *(int *)(w + 0x1C78) = 0;
+    *(long *)(w + 0x1C80) = 0;
+}
+#endif
