@@ -13,6 +13,7 @@ from tools.progress import (
     render_sdk,
     render_table,
     strip_nonmatching,
+    unmatched_functions,
     update_readme,
 )
 
@@ -270,3 +271,10 @@ def test_main_keeps_table_and_bars_in_sync_as_matching_source_changes(tmp_path, 
     assert "[██████████░░░░░░░░░░] 50%" not in complete
     assert progress.main(args) == 0
     assert readme.read_text(encoding="utf-8") == complete
+
+
+def test_unmatched_functions_sizes_and_exclusions():
+    asm = "nonmatching a, 0x20\n"
+    labels = {"a": 0x100, "b": 0x120, "c": 0x140, "d": 0x180}
+    got = unmatched_functions(asm, labels, {"a", "b", "c", "d"}, {"c"}, set(), {"d"})
+    assert got == [(0x20, "a"), (0x20, "b")]
