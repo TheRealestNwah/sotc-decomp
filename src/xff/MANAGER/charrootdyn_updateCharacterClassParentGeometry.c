@@ -56,8 +56,6 @@ static inline void matApply(float *out, Mat44 *m, float *v)
 
 typedef int Blk64 __attribute__((mode(TI)));
 
-#ifdef NONMATCHING
-/* 5 diffs: quat/pos/vector pointers land in different scratch registers */
 int charrootdyn_updateCharacterClassParentGeometry(char *c)
 {
     Mat44 m;
@@ -69,9 +67,9 @@ int charrootdyn_updateCharacterClassParentGeometry(char *c)
     out = (float *)(c + 0x4D0);
     **(Blk64 **)(c + 0x138) = **(Blk64 **)(c + 0x134);
     __asm__ __volatile__("" ::: "memory");
-    { float *p = *(float **)(c + 0x134); float *q = *(float **)(c + 0x13C); quatPosToMatrix(&m, q, p); }
+    { float *p = *(float **)(c + 0x134); float *q = *(float **)(c + 0x13C); __asm__("" : "+r"(q)); quatPosToMatrix(&m, q, p); }
     v = (float *)(c + 0x3C0);
+    __asm__("" : "+r"(v));
     matApply(out, &m, v);
     return 1;
 }
-#endif
