@@ -11,10 +11,10 @@ typedef struct {
 } AimCtl;
 
 extern int GAMEUTIL_inc_or_dec_for_near_to_aim_yaw(float *, float, float, float);
-extern int GAMEUTIL_inc_or_dec_for_near_to_aim_pitch(float *, int, float, float, float, float, float);
+extern int GAMEUTIL_inc_or_dec_for_near_to_aim_pitch(float, float, float, float, float, float *, int);
 extern float GAMEUTIL_increase_yaw(int *, float, float);
 extern int GAMEUTIL_is_reach_aim_yaw_angle(float *out, float a, float b, float aim);
-extern int GAMEUTIL_is_reach_aim_pitch_angle(float from, float next, float aim, float *out);
+extern int GAMEUTIL_is_reach_aim_pitch_angle(float *out, float from, float next, float aim);
 
 static int func_000DCC98(float *out, AimCtl *s, float from, float step, float aim)
 {
@@ -52,7 +52,7 @@ static int func_000DCC98(float *out, AimCtl *s, float from, float step, float ai
         }
         return GAMEUTIL_is_reach_aim_yaw_angle(out, from, *out, aim);
     }
-    GAMEUTIL_inc_or_dec_for_near_to_aim_pitch(out, s->clip, from, step, aim, s->high, s->low);
-    return GAMEUTIL_is_reach_aim_pitch_angle(from, *out, aim, out);
+    GAMEUTIL_inc_or_dec_for_near_to_aim_pitch(from, step, aim, s->high, s->low, out, s->clip);
+    return GAMEUTIL_is_reach_aim_pitch_angle(out, from, *out, aim);
 }
 #endif

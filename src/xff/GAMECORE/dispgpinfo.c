@@ -11,7 +11,7 @@ typedef struct KPrintfContext {
 extern unsigned char RO_0017C108[];
 
 extern void GetGeometryPointerPosition(Vec4 *, void *);
-extern int iosInitKPrintfContext3D(KPrintfContext *, Vec4 *, int, int, float, float, float, float);
+extern int iosInitKPrintfContext3D(float, float, float, KPrintfContext *, Vec4 *, int, int, float);
 extern void kprintfContextCentering(KPrintfContext *, unsigned char *, char *);
 extern void glColor4f(float, float, float, float);
 extern void DebugDispRadiusIndicator(Vec4 *, int, float);
@@ -23,7 +23,7 @@ void dispgpinfo(char *name, void *gp, float r, float g, float b)
     Vec4 p;
 
     GetGeometryPointerPosition(&pos, gp);
-    if (iosInitKPrintfContext3D(&ctx, &pos, 0, 1, r, g, b, 1.0f)) {
+    if (iosInitKPrintfContext3D(r, g, b, &ctx, &pos, 0, 1, 1.0f)) {
         kprintfContextCentering(&ctx, RO_0017C108, name);
     }
     glColor4f(r, g, b, 1.0f);
