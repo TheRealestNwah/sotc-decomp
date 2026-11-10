@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* 7 diffs, same length (129 words). Draft from the asm; the static helpers func_0006F8E0 / 6ED88 / 6F230 / 70788 / 70760 / 70710 are guessed prototypes (only the reloc targets differ in the diff). While the sight state is 1 it runs the three sight updaters and clears o+0x14C, then in state 2 decides from the base yaw whether the sight needs a nudge (compare against 0.0003 and 0.1745 rad) and calls the left/right helper from the move radians; in state 1 it sets o+0x14C when the yaw difference reaches 2.2689 rad. Only the argument-move scheduling around the first three calls is left (the Original issues mov.s $f13 then daddu $a0 and fills the delay slot with mov.s $f12; ours orders them differently); the q = o + 0xC local and reusing `on` for o[0x2B8] were needed to get everything else. Permuter (12 workers, 15 min): best 460, no fix. */
 extern int is_doing_nico_sight_on(void *);
 extern float get_base_yaw_nico_yaw_pitch_cntrl(void *);
 extern float get_base_yaw_move_nico_yaw_pitch_cntrl(void *);
@@ -10,8 +8,8 @@ extern void GAMEUTIL_get_local_directionZ(float *, int);
 extern int GAMEUTIL_get_yaw_pitch_by_direction(float *, float *, float *);
 extern float GAMEUTIL_increase_yaw(int, float, float);
 extern void func_0006F8E0(void *, float, float);
-extern void func_0006ED88(void *, int, float);
-extern void func_0006F230(void *, int, float, float);
+extern void func_0006ED88(void *, float, int);
+extern void func_0006F230(void *, float, float, int);
 extern void func_00070788(void *);
 extern void func_00070760(void *);
 extern void func_00070710(void *, float);
@@ -23,8 +21,8 @@ void doit_nico_sight_on(char *o, float f0, float f1, float f2)
     if (on != 1)
         return;
     func_0006F8E0(o, f1, f2);
-    func_0006ED88(o, 0, f0);
-    func_0006F230(o, 0, f1, f2);
+    func_0006ED88(o, f0, 0);
+    func_0006F230(o, f1, f2, 0);
     *(int *)(o + 0x14C) = 0;
     if (*(int *)(o + 0x294) == 2) {
         char *q = o + 0xC;
@@ -65,4 +63,3 @@ void doit_nico_sight_on(char *o, float f0, float f1, float f2)
         }
     }
 }
-#endif

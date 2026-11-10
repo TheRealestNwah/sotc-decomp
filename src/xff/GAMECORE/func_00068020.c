@@ -1,10 +1,8 @@
-/* Parked: 15 differing words (register allocation of the float globals' address registers); permuter found nothing. */
-#ifdef NONMATCHING
 extern float D_0017AD1C, D_0017AD20, D_0017AD24, D_0017AD28;
 extern int D_0017AD2C, D_0017AD30;
-extern void setLoadMapOffset(int, int, float, float);
+extern void setLoadMapOffset(float, float, int, int);
 
-void func_00068020(void)
+static void func_00068020(void)
 {
     float d;
 
@@ -18,9 +16,5 @@ void func_00068020(void)
     d = D_0017AD28 - D_0017AD20;
     if (d < 0.0f ? -1.0f < d : d < 1.0f)
         D_0017AD20 = D_0017AD28;
-    setLoadMapOffset(D_0017AD2C, D_0017AD30, D_0017AD1C, D_0017AD20);
+    setLoadMapOffset(D_0017AD1C, D_0017AD20, D_0017AD2C, D_0017AD30);
 }
-#endif
-#ifndef NONMATCHING
-extern void func_00068020(void);
-#endif
