@@ -7,7 +7,7 @@ extern volatile int gsRegBegin(void);
 extern void gsRegEnd(void);
 extern void iosDlPopLayer(void);
 extern void iosDlPushLayer(int);
-inline int inline_fn(int arg0, int arg1)
+static inline int inline_fn(int arg0, int arg1)
 {
   return arg0 + arg1;
 }
