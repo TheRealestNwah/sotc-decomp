@@ -13,17 +13,24 @@ static inline unsigned long channelMask(int channel)
     return 1UL << channel;
 }
 #ifdef NONMATCHING
-/* Parked: 38 words differ (volume slot address is formed as (stream + 0xC) + trk * 8 with stream kept in $t0) */
-int Sg2ExStAdpcmTrkVolumePercent(Stream *stream, int trk, int left, int right)
+/* Parked: 22 words differ (loop scheduling around the pinned stream copy in $t0) */
+int Sg2ExStAdpcmTrkVolumePercent(Stream *stream0, int trk, int left, int right)
 {
+    register Stream *stream __asm__("$8") = stream0;
     unsigned long i;
     int n;
 
     {
-        VolumePercent *v = stream->vol + trk;
-        VolumePercent *w = v;
-        w[72].left = left;
-        v[72].right = right;
+        register int off __asm__("$2") = trk * 8;
+        register char *base __asm__("$3") = (char *)stream + 0xC;
+        register char *q __asm__("$4") = (char *)(off + (int)base);
+        __asm__("" : "+r"(q));
+        {
+            register char *g __asm__("$2") = q;
+            __asm__ volatile("" : "+r"(g));
+            *(int *)(g + 0x240) = left;
+        }
+        *(int *)(q + 0x244) = right;
     }
     if (stream->state < 16)
         return -1;
