@@ -60,21 +60,20 @@ typedef struct {
     char padC8[0x18];
 } Sg2Slot;
 
-typedef struct { unsigned int v; char pad[0xDC]; } VolLfoField;
 extern Sg2Slot B_000DE370[];
-extern VolLfoField B_000DE404[];
 
-/* Parked: ~54 words differ; the float conversion and flag test schedule differently from the original. */
+/* Parked: 44 words differ (the dpcmp call and unsigned-to-float conversion miss their delay slots, shifting the tail by one word). */
 #ifdef NONMATCHING
 void Sg2SlotSetLfoVolDepth(int slot, int val)
 {
     float f;
-    if (val != 0)
-        f = val / 127.0f;
-    else
+    if (val != 0) {
+        f = val;
+        f = f / 127.0f;
+    } else
         f = 0.0f;
-    B_000DE404[slot].v = f;
-    if (f != 0.0 && (float)*(unsigned int *)((char *)&B_000DE370[slot] + 0x90) != 0.0f)
+    B_000DE370[slot].lfoVolDepth = f;
+    if (f != 0.0 && (float)B_000DE370[slot].lfoVolSpeed != 0.0f)
         B_000DE370[slot].flags |= 0x800;
     else
         B_000DE370[slot].flags &= ~0x800;

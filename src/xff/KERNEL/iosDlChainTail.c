@@ -8,7 +8,7 @@ typedef struct { int a, b; int adrs[2]; char *ptr; int e; int cur; } DlBufs;
 
 extern DlBufs B_00065018;
 
-/* Parked: ~23 words differ (constant sharing and scheduling around the tail merge). */
+/* Parked: 9 words differ (missing sign-extension of the next-tag address and the tail store sinks into the delay slot). */
 #ifdef NONMATCHING
 void iosDlChainTail(int layer, int tag)
 {
@@ -25,8 +25,8 @@ void iosDlChainTail(int layer, int tag)
     *(volatile int *)(node + 0xC) = 0;
     *(volatile int *)(node + 8) = 0;
     *(volatile u64 *)(node + 0x10) = ((u64)(int)(*(Node *volatile *)&base->tail)->next.addr << 32) | 0x20000000;
-    { Node *tl = *(Node *volatile *)&base->tail; u64 t = *(volatile u64 *)&tl->nlo; t = (t & 0x80000000FFFFFFFFull) | (((u64)((int)node & 0x7FFFFFFF)) << 32); *(volatile u64 *)&tl->nlo = t; }
-    base->tail = (Node *)node;
+    (*(Node *volatile *)&base->tail)->next.addr = (int)node;
+    *(Node *volatile *)&base->tail = (Node *)node;
 }
 #else
 extern void iosDlChainTail(int layer, int tag);
