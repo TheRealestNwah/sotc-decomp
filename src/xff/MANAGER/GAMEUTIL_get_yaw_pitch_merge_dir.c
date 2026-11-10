@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* matrix pointer kept in a1 instead of v1 + rematerialized for the call */
+#ifdef NONMATCHING /* 5 diffs: matrix pointer in v0 instead of v1; m[3] derived from it instead of sp+0x50 */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef float Mtx4[4][4] __attribute__((aligned(16)));
@@ -69,7 +69,7 @@ void GAMEUTIL_get_yaw_pitch_merge_dir(Vec4 *out, Vec4 *dir, Vec4 *pitch_dir)
         ang = -1.48352981f;
     }
     SetQuaternionByAxisRotateVWithNoRegularize(&q, (short)(int)(ang * 32768.0f / 3.14159255f), &axis);
-    quatToMatrix(m, &q);
+    { float (*mm)[4] = m; __asm__("" : "+r"(mm)); quatToMatrix(mm, &q); }
     iosApplyRotMatrix(out, m, dir);
 }
 #endif
