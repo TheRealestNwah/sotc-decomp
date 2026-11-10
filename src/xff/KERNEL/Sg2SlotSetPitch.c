@@ -18,25 +18,34 @@ typedef struct {
 extern Sg2Slot B_000DE370[];
 
 #ifdef NONMATCHING
-/* Parked: 18 words differ (original keeps redundant slot address copies and uses $s0 for the dead divide) */
-static inline void set_lfo(SlotLfo *l, int b, int end, int cur)
-{
-    int div = 12;
-    int q;
-
-    l->b = b;
-    l->end = end;
-    l->cur = cur;
-    q = 3 / div;
-}
-
+/* Parked: 4 words differ (l6 lands in $v0 instead of $t6, and the $s0 = 12 load is scheduled early); register pins keep the redundant slot address copies */
 void Sg2SlotSetPitch(int s, int a, int b, int c, int d, int e)
 {
-    Sg2Slot *p = &B_000DE370[s];
-
-    set_lfo(&p->pitch, a, b, c);
-    p->p30 = d;
-    p->directPitch = e;
-    p->flags |= 0x80;
+    register int off __asm__("$3") = s * (int)sizeof(Sg2Slot);
+    register char *bs __asm__("$2") = (char *)B_000DE370;
+    register int o20 __asm__("$4") = off + 0x20;
+    register Sg2Slot *p7 __asm__("$15") = (Sg2Slot *)(bs + off);
+    register SlotLfo *l6 __asm__("$14") = (SlotLfo *)(bs + o20);
+    register Sg2Slot *p3 __asm__("$11") = p7;
+    register SlotLfo *l2 __asm__("$10") = l6;
+    register SlotLfo *l4 __asm__("$4");
+    register Sg2Slot *p1 __asm__("$3");
+    register int div __asm__("$16");
+    register int d4 __asm__("$12");
+    register int d5 __asm__("$13");
+    __asm__("" : "+r"(p3), "+r"(l2));
+    l4 = l2;
+    p1 = p3;
+    div = 12;
+    d4 = 12;
+    d5 = 3;
+    __asm__("" : "+r"(l4), "+r"(p1), "+r"(div), "+r"(d4), "+r"(d5));
+    l2->b = a;
+    l4->end = b;
+    l6->cur = c;
+    p3->p30 = d;
+    p1->directPitch = e;
+    d5 = d5 / div;
+    p7->flags |= 0x80;
 }
 #endif
