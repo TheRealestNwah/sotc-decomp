@@ -14,7 +14,7 @@ extern void SleepThread(void);
 extern int SignalSema(int);
 extern int TerminateThread(int);
 extern int DeleteThread(int);
-extern void LoaderSysDeleteExternalThreadList(int);
+extern short LoaderSysDeleteExternalThreadList(int);
 extern void iosFree(void *);
 extern void iosJumpRecoverPoint(void *);
 extern char RO_00042758[];
@@ -52,8 +52,6 @@ static inline void list_push(Thread **head, Thread *t)
     *head = t;
 }
 
-#ifdef NONMATCHING
-/* Parked: 3 words differ (flag test uses v1 and a branch-likely in the target) */
 static void func_00006340(void)
 {
     int *sp = &B_00053B04;
@@ -91,4 +89,3 @@ static void func_00006340(void)
         SignalSema(B_00053B04);
     }
 }
-#endif
