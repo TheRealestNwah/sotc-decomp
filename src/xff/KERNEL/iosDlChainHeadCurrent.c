@@ -4,7 +4,7 @@ typedef struct { int a, b; int adrs[2]; char *ptr; int e; int cur; int layer; } 
 
 extern DlBufs B_00065018;
 
-/* Parked: 12 words differ (register allocation of the final tag merge). */
+/* Parked: 1 word differs (operand order of the and that masks node << 32). */
 #ifdef NONMATCHING
 void iosDlChainHeadCurrent(int tag)
 {
@@ -22,7 +22,14 @@ void iosDlChainHeadCurrent(int tag)
     *(volatile int *)(node + 8) = 0;
     *(volatile u64 *)(node + 0x10) = ((u64)((Layer *)base)->lo << 32) | 0x20000000;
     *(volatile int *)((char *)base + 0x20) = (int)node;
-    { u64 t = ((Layer *)base)->tag; t = (t & 0x80000000FFFFFFFFull) | (((u64)(int)node << 32) & 0x7FFFFFFF00000000ull); t = (t & 0xFFFFFFFF8FFFFFFFull) | 0x50000000; ((Layer *)base)->tag = t; }
+    {
+        register u64 t __asm__("$2");
+        register u64 hi __asm__("$3") = ((u64)(int)node << 32) & 0x7FFFFFFF00000000ull;
+        t = ((Layer *)base)->tag;
+        t = (t & 0x80000000FFFFFFFFull) | hi;
+        t = (t & 0xFFFFFFFF8FFFFFFFull) | 0x50000000;
+        ((Layer *)base)->tag = t;
+    }
 
 }
 #else
