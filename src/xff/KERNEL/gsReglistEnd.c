@@ -41,10 +41,8 @@ typedef struct {
 
 extern GsPacket *D_00040BF4;
 extern void iosSetPacketPtrPath1(u64 *);
+extern void iosDlChainTailCurrent(void *);
 
-#ifdef NONMATCHING
-/* Parked: the original reloads D_00040BF4 after every store (as if no alias
-   analysis) and does each GIF tag field as its own read-modify-write. */
 void gsReglistEnd(int prim)
 {
     if (D_00040BF4->err == 0) {
@@ -79,4 +77,3 @@ void gsReglistEnd(int prim)
     }
     D_00040BF4->cur = 0;
 }
-#endif
