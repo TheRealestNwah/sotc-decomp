@@ -18,7 +18,7 @@ typedef struct {
 extern Sg2Slot B_000DE370[];
 
 #ifdef NONMATCHING
-/* Parked: 4 words differ (l6 lands in $v0 instead of $t6, and the $s0 = 12 load is scheduled early); register pins keep the redundant slot address copies */
+/* Parked: 1 word differs (addu $t6 operands swapped: original adds $v0,$a0, gcc emits $a0,$v0); pinned locals with "+r" barriers fix everything else */
 void Sg2SlotSetPitch(int s, int a, int b, int c, int d, int e)
 {
     register int off __asm__("$3") = s * (int)sizeof(Sg2Slot);
@@ -26,6 +26,8 @@ void Sg2SlotSetPitch(int s, int a, int b, int c, int d, int e)
     register int o20 __asm__("$4") = off + 0x20;
     register Sg2Slot *p7 __asm__("$15") = (Sg2Slot *)(bs + off);
     register SlotLfo *l6 __asm__("$14") = (SlotLfo *)(bs + o20);
+    __asm__("" : "+r"(p7), "+r"(l6));
+    {
     register Sg2Slot *p3 __asm__("$11") = p7;
     register SlotLfo *l2 __asm__("$10") = l6;
     register SlotLfo *l4 __asm__("$4");
@@ -36,10 +38,11 @@ void Sg2SlotSetPitch(int s, int a, int b, int c, int d, int e)
     __asm__("" : "+r"(p3), "+r"(l2));
     l4 = l2;
     p1 = p3;
+    __asm__("" : "+r"(l4), "+r"(p1));
     div = 12;
     d4 = 12;
     d5 = 3;
-    __asm__("" : "+r"(l4), "+r"(p1), "+r"(div), "+r"(d4), "+r"(d5));
+    __asm__("" : "+r"(div), "+r"(d4), "+r"(d5));
     l2->b = a;
     l4->end = b;
     l6->cur = c;
@@ -47,5 +50,6 @@ void Sg2SlotSetPitch(int s, int a, int b, int c, int d, int e)
     p1->directPitch = e;
     d5 = d5 / div;
     p7->flags |= 0x80;
+    }
 }
 #endif
