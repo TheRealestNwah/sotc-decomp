@@ -11,9 +11,16 @@ class) can match. Example: `f(int, void *, float, float)` vs
     python tools/proto_perm.py <file.c> <callee> --module MANAGER [--flags "-O2 -G0"]
 
 Requires one `extern ... callee(<types>);` declaration and exactly one call
-`callee(<args>);` in the file. Tries every permutation (at most 5 parameters),
-prints the differing-word count of each improvement, and with --write leaves
-the best version in the file.
+`callee(<args>);` in the file. Prints the differing-word count of each
+improvement, and with --write leaves the best version in the file.
+
+Modes (--mode):
+  perm        every permutation of the parameters (at most 5)
+  interleave  only the orders that keep the relative order of the float
+              parameters and of the other parameters, i.e. the ones that leave
+              every argument in the same register. That is C(n, floats)
+              candidates, so any parameter count works.
+  auto        perm up to 5 parameters, interleave beyond (default)
 """
 
 from __future__ import annotations
@@ -59,12 +66,36 @@ def find_sites(source: str, callee: str) -> tuple[re.Match[str], re.Match[str]]:
     return proto, calls[0]
 
 
+def is_float_type(type_text: str) -> bool:
+    """True for a plain float/double parameter (passed in an FPU register)."""
+    return "*" not in type_text and re.search(r"\b(float|double)\b", type_text) is not None
+
+
+def interleavings(types: list[str]) -> list[tuple[int, ...]]:
+    """Orders that keep the relative order inside the float and the non-float class.
+
+    The EE ABI numbers integer and float argument registers separately, so such an
+    order leaves every argument in its register and only moves where the setup
+    instructions are emitted.
+    """
+    floats = [i for i, t in enumerate(types) if is_float_type(t)]
+    others = [i for i in range(len(types)) if i not in floats]
+    orders = []
+    for slots in itertools.combinations(range(len(types)), len(floats)):
+        order = [0] * len(types)
+        f_iter, o_iter = iter(floats), iter(others)
+        for pos in range(len(types)):
+            order[pos] = next(f_iter) if pos in slots else next(o_iter)
+        orders.append(tuple(order))
+    return orders
+
+
 def permuted(source: str, callee: str, order: tuple[int, ...]) -> str:
     proto, call = find_sites(source, callee)
     types = split_args(proto.group(1))
     args = split_args(call.group(1))
-    if len(types) != len(args) or len(types) > 5:
-        raise SystemExit("prototype and call must have the same, at most 5, parameters")
+    if len(types) != len(args) or len(order) != len(types):
+        raise SystemExit("prototype and call must have the same number of parameters")
     new_proto = proto.group(0).replace(proto.group(1), ", ".join(types[i] for i in order))
     new_call = call.group(0).replace(call.group(1), ", ".join(args[i] for i in order))
     # Replace the later site first so earlier offsets stay valid.
@@ -103,13 +134,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("callee")
     parser.add_argument("--module", required=True)
     parser.add_argument("--flags", default="-O2 -G0")
+    parser.add_argument(
+        "--mode",
+        choices=("auto", "perm", "interleave"),
+        default="auto",
+        help="candidate orders to try (see above)",
+    )
     parser.add_argument("--write", action="store_true", help="keep the best version in the file")
     args = parser.parse_args(argv)
     original = args.file.read_text(encoding="utf-8")
-    count = len(split_args(find_sites(original, args.callee)[0].group(1)))
+    types = split_args(find_sites(original, args.callee)[0].group(1))
+    mode = args.mode
+    if mode == "auto":
+        mode = "perm" if len(types) <= 5 else "interleave"
+    if mode == "perm" and len(types) > 5:
+        raise SystemExit("perm mode supports at most 5 parameters; use --mode interleave")
+    orders = (
+        list(itertools.permutations(range(len(types)))) if mode == "perm" else interleavings(types)
+    )
     best: tuple[int, tuple[int, ...], str] | None = None
     try:
-        for order in itertools.permutations(range(count)):
+        for order in orders:
             text = permuted(original, args.callee, order)
             args.file.write_text(text, encoding="utf-8")
             n = diff_count(args.file, args.module, args.flags)
