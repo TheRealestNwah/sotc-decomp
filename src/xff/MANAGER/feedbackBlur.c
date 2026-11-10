@@ -1,4 +1,5 @@
-/* ~11 diffs (2 relocations), same length (150 words). Feedback-blur screen pass (template: drawDemoBar): skip while D_00135420 counts down, else under layer 0x1D writes GS regs (alpha via 0x42, TEX0 from the disp-buffer TBP with TW of the disp height and width as TBW dispW/64, two sprite-corner XYZ pairs around 0x800 +- half the draw size, UV box dispW*16+8 / dispH*16+8) and pops the layer. Matches except the TEX0 or-chain scheduling and which register holds alpha<<32 (Original: $v1 for the alpha shift, twh << 26 computed after the movn of the TBW divide). Needed: getTWH(dispH) first, an inline_fn add for the +0x800 corners (stops gcc distributing the *16), and `return` after iosDlPopLayer so it becomes the tail call. */
+#ifdef NONMATCHING
+/* ~11 diffs (2 relocations), same length (150 words). Feedback-blur screen pass (template: drawDemoBar): skip while D_00130420 counts down, else under layer 0x1D writes GS regs (alpha via 0x42, TEX0 from the disp-buffer TBP with TW of the disp height and width as TBW dispW/64, two sprite-corner XYZ pairs around 0x800 +- half the draw size, UV box dispW*16+8 / dispH*16+8) and pops the layer. Matches except the TEX0 or-chain scheduling and which register holds alpha<<32 (Original: $v1 for the alpha shift, twh << 26 computed after the movn of the TBW divide). Needed: getTWH(dispH) first, an inline_fn add for the +0x800 corners (stops gcc distributing the *16), and `return` after iosDlPopLayer so it becomes the tail call. */
 extern int D_00130420;
 extern int getDispScreenWidth(void);
 extern int getDispScreenHeight(void);
@@ -65,4 +66,4 @@ void feedbackBlur(int alpha)
         return;
     }
 }
-
+#endif
