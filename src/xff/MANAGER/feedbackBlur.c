@@ -17,6 +17,7 @@ extern void iosDlPopLayer(void);
 extern void iosDlPushLayer(int);
 
 
+#ifdef NONMATCHING
 void feedbackBlur(int alpha)
 {
     int dispW = getDispScreenWidth();
@@ -65,4 +66,6 @@ void feedbackBlur(int alpha)
         return;
     }
 }
-
+#else
+extern void feedbackBlur(int alpha);
+#endif
