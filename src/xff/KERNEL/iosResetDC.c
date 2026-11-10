@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 12 words differ (index increment order, epilogue scheduling) */
+/* Parked: 4 words differ (epilogue scheduling of the final store) */
 extern char *D_00040AE0;
 extern char *D_00040AE4;
 extern int D_00040AE8;
@@ -10,7 +10,8 @@ extern void iosDlPopLayer(void);
 
 static inline void iosPushDC(char *dc)
 {
-    B_00064C08[D_00040AE8++] = dc;
+    B_00064C08[D_00040AE8] = dc;
+    D_00040AE8++;
     iosDlChainTailCurrent(dc);
 }
 

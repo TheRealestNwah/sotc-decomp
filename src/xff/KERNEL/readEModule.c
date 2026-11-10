@@ -17,7 +17,7 @@ extern int iosLoaderGetFileSizeName(char *);
 extern int func_00008BB0(char *, int, int);
 
 #ifdef NONMATCHING
-/* Parked: 9 words differ (register allocation and ordering) */
+/* Parked: 2 words differ (name/size argument copy order) */
 int readEModule(char *name, int arg)
 {
     int result = 0;
@@ -27,6 +27,7 @@ int readEModule(char *name, int arg)
     if (strncmp(name, RO_00042A40, 7) == 0) {
         char *path = strstr(name, RO_00042A10) + 1;
 
+        result++; result--;
         if (sceCdSearchFile(&file, path) == 0) {
             iosJumpRecoverPoint(RO_00042A18, path);
         }

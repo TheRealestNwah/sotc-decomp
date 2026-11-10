@@ -53,10 +53,11 @@ static inline void list_push(Thread **head, Thread *t)
 }
 
 #ifdef NONMATCHING
-/* Parked: 9 words differ (semaphore store addressing and flag test register) */
+/* Parked: 3 words differ (flag test uses v1 and a branch-likely in the target) */
 static void func_00006340(void)
 {
-    B_00053B04 = iosCreateSema(1, 1, 0);
+    int *sp = &B_00053B04;
+    *sp = iosCreateSema(1, 1, 0);
     while (1) {
         SleepThread();
         switch (B_00053B00) {

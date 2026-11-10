@@ -13,15 +13,13 @@ typedef struct {
 } SysGroup;
 
 extern SysGroup B_0006D640[];
-extern char RO_00041E80[];
+extern char RO_00044320[];
 extern void iosJumpRecoverPoint(char *);
 
 #define IDX(p) ((p) ? (p) - B_0006D640 : 0)
 #define PTR(i) ((i) ? &B_0006D640[i] : 0)
 
-/* Parked: 10 diffs: target reloads g->group for the second store in the at==0 path */
-#ifdef NONMATCHING
-void func_00019820(SysGroup *at, SysGroup *g, int mode)
+static void func_00019820(SysGroup *at, SysGroup *g, int mode)
 {
     GroupHead *h;
     if (at == 0) {
@@ -52,10 +50,7 @@ void func_00019820(SysGroup *at, SysGroup *g, int mode)
         at->prev = IDX(g);
         break;
     default:
-        iosJumpRecoverPoint(RO_00041E80);
+        iosJumpRecoverPoint(RO_00044320);
         break;
     }
 }
-#else
-extern void func_00019820(SysGroup *at, SysGroup *g, int mode);
-#endif
