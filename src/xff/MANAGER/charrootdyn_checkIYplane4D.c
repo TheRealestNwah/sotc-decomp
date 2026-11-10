@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* matrix pointer allocated to $a1 instead of $v1 */
+#ifdef NONMATCHING /* 9 diffs: pos/fp/pointer-temp register choice */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -71,11 +71,14 @@ int charrootdyn_checkIYplane4D(int arg, char *obj, float z, float x)
 {
     Vec4 v; Vec4 from; Vec4 to; Vec4 off; Vec4 matrix[4];
     Vec4 *pos = *(Vec4 **)(obj + 0x134);
-    quatPosToMatrix(matrix, *(Vec4 **)(obj + 0x13C), pos);
+    Vec4 *fp = *(Vec4 **)(obj + 0x138);
+    Vec4 *mp = matrix;
+    __asm__("" : "+r"(mp));
+    quatPosToMatrix(mp, *(Vec4 **)(obj + 0x13C), pos);
     D_00136B20.f[0] = x;
     D_00136B20.f[2] = z;
     matrixApply(&off, matrix, &D_00136B20);
-    addXYZ(&from, *(Vec4 **)(obj + 0x138), &off);
+    addXYZ(&from, fp, &off);
     v.q = ZeroPoint.q;
     v.f[1] = -*(float *)(obj + 0xE34);
     matrixApply(&to, matrix, &v);

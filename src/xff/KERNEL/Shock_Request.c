@@ -28,20 +28,27 @@ extern ShockTable *D_000408F8;
 extern ShockReq *func_000070F0(void *pad, int *pattern, ShockPattern p);
 
 #ifdef NONMATCHING
-/* Parked: 11 words differ (register allocation and branch layout) */
+/* Parked: 7 words differ (prologue order and index register) */
+static inline ShockSet *getSet(unsigned int k)
+{
+    if (k < D_000408F8->count)
+        return D_000408F8->sets[k];
+    return 0;
+}
+static inline int *getPat(ShockSet *set, unsigned int index)
+{
+    if (set != 0 && index < set->hdr->count)
+        return &set->list[index];
+    return 0;
+}
 ShockReq *Shock_Request(void *pad, unsigned int index, ShockPattern pattern)
 {
     ShockSet *set;
     int *p;
     ShockReq *req;
 
-    set = 0;
-    if ((unsigned char)pattern.data[0] < D_000408F8->count)
-        set = D_000408F8->sets[(unsigned char)pattern.data[0]];
-    p = 0;
-    if (set != 0 && index < set->hdr->count)
-        p = &set->list[index];
-    if (p == 0)
+    set = getSet((unsigned char)pattern.data[0]);
+    p = getPat(set, index);    if (p == 0)
         return 0;
     req = func_000070F0(pad, p, pattern);
     if (req != 0)
