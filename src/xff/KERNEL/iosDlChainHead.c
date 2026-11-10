@@ -1,15 +1,16 @@
-typedef struct { int a, b; int adrs[2]; char *ptr; int e; int cur; } DlBufs;
 typedef unsigned long long u64;
+typedef struct { u64 tag; u64 t2, t3, t4; unsigned int lo; unsigned int hi; } Layer;
+typedef struct { int a, b; int adrs[2]; char *ptr; int e; int cur; } DlBufs;
 
 extern DlBufs B_00065018;
 
-/* Parked: 46 words differ (register allocation of the node/base pointers; volatile accesses already match in order). */
+/* Parked: 12 words differ (register allocation of the final tag merge). */
 #ifdef NONMATCHING
 void iosDlChainHead(int layer, int tag)
 {
     volatile DlBufs *dl = &B_00065018;
-    int *adrs = (int *)dl->adrs;
-    volatile char *base = (char *)adrs[dl->cur] + layer * 0x30;
+    int off = layer * 0x30;
+    volatile Layer *base = (Layer *)((char *)dl->adrs[dl->cur] + off);
     volatile char *node = dl->ptr;
 
     dl->ptr = dl->ptr + 0x20;
@@ -19,9 +20,9 @@ void iosDlChainHead(int layer, int tag)
     *(volatile int *)(node + 0x18) = 0;
     *(volatile int *)(node + 0xC) = 0;
     *(volatile int *)(node + 8) = 0;
-    *(volatile u64 *)(node + 0x10) = ((u64)*(volatile unsigned int *)(base + 0x20) << 32) | 0x20000000;
-    *(volatile int *)(base + 0x20) = (int)node;
-    *(volatile u64 *)base = ((((*(volatile u64 *)base & 0x80000000FFFFFFFFull) | (((u64)(int)node << 32) & 0x7FFFFFFF00000000ull)) & 0xFFFFFFFF8FFFFFFFull) | 0x50000000);
+    *(volatile u64 *)(node + 0x10) = ((u64)((Layer *)base)->lo << 32) | 0x20000000;
+    *(volatile int *)((char *)base + 0x20) = (int)node;
+    { u64 t = ((Layer *)base)->tag; t = (t & 0x80000000FFFFFFFFull) | (((u64)(int)node << 32) & 0x7FFFFFFF00000000ull); t = (t & 0xFFFFFFFF8FFFFFFFull) | 0x50000000; ((Layer *)base)->tag = t; }
 }
 #else
 extern void iosDlChainHead(int layer, int tag);
