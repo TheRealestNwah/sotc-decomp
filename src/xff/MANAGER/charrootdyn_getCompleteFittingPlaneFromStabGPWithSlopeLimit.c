@@ -4,12 +4,12 @@ typedef float Vec4[4] __attribute__((aligned(16)));
 extern s128 ZeroVector;
 extern void GetGeometryPointerPosition(void *, void *);
 extern void *GetGeometryPointerSurfacePlane(void *);
-extern int getAverageNormal(void *, void *, int, void *, int, int, void *, float, float, float);
+extern int getAverageNormal(void *, float, void *, int, void *, float, float, int, int, void *);
 extern void CompletePlaneD(void *, void *);
 extern float GetPointDistanceFromPlane(void *, void *);
 extern void GetPlaneFittingDiffVector(void *, void *, void *);
 
-/* Parked: 10 words differ (scheduling of the float arg move before the getAverageNormal call, loop pointer register numbering, and base+index address order in the last loop). */
+/* Parked: 2 words differ (the last loop forms base+index as (sp+index)+0x10 instead of (sp+0x10)+index). The getAverageNormal prototype order and the $3 pin on acc were found by search. */
 #ifdef NONMATCHING
 int charrootdyn_getCompleteFittingPlaneFromStabGPWithSlopeLimit(void *obj, s128 *out, void *gp, int p3, int p4, int p5, float lim0, float lim1)
 {
@@ -17,15 +17,14 @@ int charrootdyn_getCompleteFittingPlaneFromStabGPWithSlopeLimit(void *obj, s128 
     int r;
     int i;
     float *sum;
-    float *acc;
+    register float *acc __asm__("$3");
     float *cur;
 
     GetGeometryPointerPosition(L.pos, gp);
-    r = getAverageNormal(obj, L.n[0], p4, L.pos, p3, p5, GetGeometryPointerSurfacePlane(gp), lim0, lim0, lim1);
+    r = getAverageNormal(obj, lim0, L.n[0], p4, L.pos, lim0, lim1, p3, p5, GetGeometryPointerSurfacePlane(gp));
     *(s128 *)L.sum = *(s128 *)L.n[0];
     sum = L.sum;
     acc = sum;
-    __asm__("" : "+r"(acc));
     cur = L.n[1];
     i = 2;
     do {
