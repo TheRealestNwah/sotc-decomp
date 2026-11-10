@@ -44,7 +44,7 @@ static inline void mulCurrentMatrix(Matrix *src)
 }
 
 #ifdef NONMATCHING
-/* 10 diffs: rotation matrix stores scheduled in a different order */
+/* 7 diffs: rotation matrix stores scheduled in a different order (this store order is the best of 150 random orders) */
 void glRotatex(float angle)
 {
     float sc[4];
@@ -53,14 +53,14 @@ void glRotatex(float angle)
 
     iosGetSinCosf(sc, angle);
     memset(&rot.m[0], 0, 0x10);
-    rot.m[0] = 1.0f;
-    rot.m[6] = sc[1];
-    rot.m[4] = 0.0f;
     rot.m[5] = sc[0];
-    rot.m[7] = 0.0f;
-    rot.m[8] = 0.0f;
-    rot.m[9] = -sc[1];
     rot.m[10] = sc[0];
+    rot.m[4] = 0.0f;
+    rot.m[8] = 0.0f;
+    rot.m[7] = 0.0f;
+    rot.m[0] = 1.0f;
+    rot.m[9] = -sc[1];
+    rot.m[6] = sc[1];
     rot.m[11] = 0.0f;
     memset(&rot.m[12], 0, 0x10);
     rot.m[15] = 1.0f;
