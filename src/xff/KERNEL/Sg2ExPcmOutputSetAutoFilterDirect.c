@@ -16,21 +16,35 @@ extern int EIntr(void);
 extern PcmOutput B_000E2368[];
 extern void func_0002E728(PcmOutput *out, int ch, int arg1, int arg2, float f0, float f1);
 
+/*
+ * The inline's parameter copy is pinned to $a0 and the filter pointer to $a1,
+ * reproducing the original's `daddu $a0, $a1` copy.
+ */
 static inline void filterReset(Filter *f)
 {
+    register Filter *g __asm__("$4") = f;
+    __asm__("" : "+r"(g));
     f->b = -1;
-    f->d = 0;
+    g->d = 0;
 }
 
 #ifdef NONMATCHING
-/* Parked: 31 words differ (register allocation and ordering) */
+/*
+ * Parked: 1 word differs. The original computes the filter pointer as
+ * `addu $a1, $s1, $a0` (base first); this emits `addu $a1, $a0, $s1`.
+ */
 void Sg2ExPcmOutputSetAutoFilterDirect(int ch, int arg1, int arg2, float f0, float f1)
 {
     PcmOutput *base = B_000E2368;
     int intr = DIntr();
 
-    base[ch].filter.a = 0;
-    filterReset(&base[ch].filter);
+    {
+        int off = ch * sizeof(PcmOutput);
+        register int foff __asm__("$4") = off + 0x30;
+        register Filter *fp __asm__("$5") = (Filter *)((char *)base + foff);
+        ((PcmOutput *)((char *)base + off))->filter.a = 0;
+        filterReset(fp);
+    }
     if (intr) {
         EIntr();
     }
