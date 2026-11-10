@@ -1,13 +1,15 @@
 typedef int s128 __attribute__((mode(TI)));
 extern s128 D_00040B50[2];
 
-/* Parked: 19 words differ; original rematerializes the constant 1 instead of reusing it */
-#ifdef NONMATCHING
 void iosResetPath(void)
 {
-    int v = 0;
+    /* The register pins reproduce the original's separate loads of the constant 1. */
+    register int v __asm__("$3") = 0;
 
-    *(volatile int *)0x10003C10 = 1;
+    {
+        register int one0 __asm__("$4") = 1;
+        *(volatile int *)0x10003C10 = one0;
+    }
     __asm__ __volatile__(
         "cfc2.ni %0, $vi28\n"
         "\tori %0, %0, 0x200\n"
@@ -18,6 +20,3 @@ void iosResetPath(void)
     *(volatile s128 *)0x10005000 = D_00040B50[1];
     *(volatile int *)0x10003000 = 1;
 }
-#else
-extern void iosResetPath(void);
-#endif

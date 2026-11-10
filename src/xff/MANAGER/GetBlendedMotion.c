@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* 1 word off: lerp reads q through the hoisted copy in $t2 instead of $sp (index-first pointer arithmetic fixes the addu operand order). */
 typedef unsigned int qword __attribute__((mode(TI)));
 
 typedef union {
@@ -62,7 +60,8 @@ void GetBlendedMotion(Quat *out, Quat *a, Quat *b, int n, float t)
         if (d.i < 0) {
             scale4(&q, &q, -1.0f);
         }
-        lerp4(po, pa, &q, t);
+        { register Quat *qp __asm__("$29") = &q; /* operand addressed straight off $sp */
+          __asm__("" : "+r"(qp));
+          lerp4(po, pa, qp, t); }
     }
 }
-#endif

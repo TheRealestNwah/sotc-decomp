@@ -1,5 +1,6 @@
 #ifdef NONMATCHING
-/* 27 diffs: the original keeps &B[1] and the byte offset as two induction variables (n - B computed as offset + (&B[1] - B)); gcc strength-reduces them into one pointer. The null check on the next slot is what leaves the odd else branch. */
+/* Parked: 29 diffs. The original keeps &B[1] and the byte offset as two induction
+ * variables (t0 = a3 - s0); gcc strength-reduces them into one pointer. */
 typedef struct {
     char pad0[0xE];
     short next;
@@ -13,6 +14,7 @@ extern int B_000BF6C8;
 extern int B_000BF6CC;
 extern void *memset(void *, int, unsigned int);
 extern int iosCreateSema(int, int, int);
+
 
 void isysInitObjSystem(void)
 {
@@ -30,7 +32,7 @@ void isysInitObjSystem(void)
         else
             p->next = 0;
     }
-    B_000BF6C0 = iosCreateSema(1, 1, 0);
-    B_000BF6CC = B_000BF6C0;
+    *(ObjSlot **)&B_000BF6C0 = &B_0006D640[1];
+    B_000BF6CC = iosCreateSema(1, 1, 0);
 }
 #endif

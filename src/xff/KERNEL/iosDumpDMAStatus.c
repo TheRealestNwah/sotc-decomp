@@ -1,6 +1,6 @@
 #ifdef NONMATCHING
-/* Parked: DMA channel register dump; the original re-reads chcr[ch] for each
- * field and lays out the stack arrays differently (~100 words differ). */
+/* Parked: 17 diffs. Volatile local arrays reproduce the repeated reloads; left are the
+ * load order of the D_00040B78/D_00040B80 arguments and a v0/v1 swap in the == 2 test. */
 extern char *D_00040B78[];
 extern char *D_00040B80[];
 extern char *D_00040B90[];
@@ -10,12 +10,12 @@ extern void LoaderSysPrintf(const char *, ...);
 
 void iosDumpDMAStatus(int ch)
 {
-    unsigned int chcr[2] = { *(volatile unsigned int *)0x10009000, *(volatile unsigned int *)0x1000A000 };
-    unsigned int madr[2] = { *(volatile unsigned int *)0x10009010, *(volatile unsigned int *)0x1000A010 };
-    unsigned int tadr[2] = { *(volatile unsigned int *)0x10009030, *(volatile unsigned int *)0x1000A030 };
-    unsigned int asr0[2] = { *(volatile unsigned int *)0x10009040, *(volatile unsigned int *)0x1000A040 };
-    unsigned int asr1[2] = { *(volatile unsigned int *)0x10009050, *(volatile unsigned int *)0x1000A050 };
-    unsigned int qwc[2] = { *(volatile unsigned int *)0x10009020, *(volatile unsigned int *)0x1000A020 };
+    volatile unsigned int chcr[2] = { *(volatile unsigned int *)0x10009000, *(volatile unsigned int *)0x1000A000 };
+    volatile unsigned int madr[2] = { *(volatile unsigned int *)0x10009010, *(volatile unsigned int *)0x1000A010 };
+    volatile unsigned int tadr[2] = { *(volatile unsigned int *)0x10009030, *(volatile unsigned int *)0x1000A030 };
+    volatile unsigned int asr0[2] = { *(volatile unsigned int *)0x10009040, *(volatile unsigned int *)0x1000A040 };
+    volatile unsigned int asr1[2] = { *(volatile unsigned int *)0x10009050, *(volatile unsigned int *)0x1000A050 };
+    volatile unsigned int qwc[2] = { *(volatile unsigned int *)0x10009020, *(volatile unsigned int *)0x1000A020 };
 
     LoaderSysPrintf(RO_00043058, ch + 1);
     LoaderSysPrintf(RO_00043098);
