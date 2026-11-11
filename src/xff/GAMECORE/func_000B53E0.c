@@ -19,7 +19,7 @@ typedef struct {
 
 extern float RO_001800A0;
 
-#ifdef NONMATCHING /* 79 diffs: the original keeps the first ten-entry loop as separate base+index streams (c+4+off, c+8+off, c+0xC+off, c+0x10+off) instead of one strength-reduced pointer */
+#ifdef NONMATCHING /* 75 diffs: register numbering (original copies a1 to t5, c in t2) and the RO_001800A0 load is not hoisted out of the first loop */
 static void func_000B53E0(char *c, int a1, int a2)
 {
     List *list = (List *)(c + 0x244);
@@ -29,6 +29,7 @@ static void func_000B53E0(char *c, int a1, int a2)
     int *p;
     Slot *s;
     int i;
+    char *b4 = c + 4, *b8 = c + 8, *bC = c + 0xC, *b10 = c + 0x10;
 
     *(int *)(c + 0x244) = 0;
     list->last = 0;
@@ -41,10 +42,10 @@ static void func_000B53E0(char *c, int a1, int a2)
     off = 0;
     n = 9;
     do {
-        *(int *)(c + 4 + off) = -1;
-        *(int *)(c + 8 + off) = -1;
-        *(float *)(c + 0xC + off) = RO_001800A0;
-        *(int *)(c + 0x10 + off) = 0;
+        *(int *)(b4 + off) = -1;
+        *(int *)(b8 + off) = -1;
+        *(float *)(bC + off) = RO_001800A0;
+        *(int *)(b10 + off) = 0;
         n--;
         off += 0x1C;
         p[0] = 0;
