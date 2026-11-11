@@ -2,6 +2,9 @@
   "src/xff/GAMECORE/func_000FA1D0.c": [
     "-fno-strict-aliasing"
   ],
+  "src/xff/GAMECORE/func_000D0878.c": [
+    "-fno-strict-aliasing"
+  ],
   "src/xff/MANAGER/SetDemoMotionOrientInfo.c": [
     "-fno-strict-aliasing"
   ],
