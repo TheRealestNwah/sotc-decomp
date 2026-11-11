@@ -2,7 +2,6 @@ extern char *GetLayoutClass(int);
 extern long fptodp(float);
 extern int dpcmp(long, double);
 
-#ifdef NONMATCHING /* 6 diffs: sqrt.s result lands in $f1 instead of $f0 (const/div operands swap), and the dpcmp double constant load comes after the $a0 move instead of before it */
 #define XFORM(dst, src, m)                                  \
     __asm__ __volatile__("lqc2 vf8, 0x0(%1)\n"             \
                          "lqc2 vf14, 0x0(%2)\n"            \
@@ -16,8 +15,9 @@ extern int dpcmp(long, double);
                          "sqc2 vf10, 0x0(%0)\n"            \
                          : : "r"(dst), "r"(src), "r"(m) : "memory")
 
-int func_00081450(float *p, int layout)
+static int func_00081450(float *p, int layout)
 {
+    register double k __asm__("$5");
     float *q;
     float v[4] __attribute__((aligned(16)));
     float w[4] __attribute__((aligned(16)));
@@ -25,7 +25,7 @@ int func_00081450(float *p, int layout)
     int ok = 0;
     int ok2;
     float d;
-    float sq;
+    register float sq __asm__("$f0");
     register long dp __asm__("$4");
 
     XFORM(v, p, *(char **)(lc + 0x164) + 0x180);
@@ -69,11 +69,11 @@ int func_00081450(float *p, int layout)
     }
     ok2 = 0;
     dp = fptodp(p[1]);
+    k = 9.01;
     __asm__ __volatile__("" : "+r"(dp));
-    if (dpcmp(dp, 9.01) < 0) {
+    if (dpcmp(dp, k) < 0) {
         p[1] = 9.01f;
         ok2 = 1;
     }
     return ok | ok2;
 }
-#endif
