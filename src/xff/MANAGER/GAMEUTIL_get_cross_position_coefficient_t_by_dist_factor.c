@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 2 diffs: the two mov.s zero-inits of b and c come out swapped */
+#ifdef NONMATCHING /* 2 diffs: the two mov.s zero-inits of b and c come out swapped. Tried every zero-init and declaration order; permuter (5 workers, 25 min): no improvement. */
 int GAMEUTIL_get_cross_position_coefficient_t_by_dist_factor(float dist, float *t0, float *t1, float *p, float *q, float *r)
 {
     float a, b, c;

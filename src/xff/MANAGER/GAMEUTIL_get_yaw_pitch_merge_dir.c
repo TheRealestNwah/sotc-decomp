@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 2 diffs (volatile SetQuaternion declaration, found by the volatile sweep, cut it from 14): m[3] is derived from the laundered matrix pointer ($v1+0x30) instead of a fresh sp+0x50. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef float Mtx4[4][4] __attribute__((aligned(16)));
@@ -18,7 +17,7 @@ static inline void outerProduct(Vec4 *out, Vec4 *a, Vec4 *b)
                          : : "r"(out), "r"(a), "r"(b) : "memory");
 }
 
-static inline void quatToMatrix(float (*m)[4], Vec4 *q)
+static inline void quatToMatrix(float (*m)[4], Vec4 *q, float (*m0)[4])
 {
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
@@ -48,7 +47,7 @@ static inline void quatToMatrix(float (*m)[4], Vec4 *q)
                          "sqc2 vf15, 0x10(%0)\n"
                          "sqc2 vf16, 0x20(%0)\n"
                          : : "r"(m), "r"(q) : "memory");
-    __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(m[3]) : "memory");
+    __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(m0[3]) : "memory");
 }
 
 void GAMEUTIL_get_yaw_pitch_merge_dir(Vec4 *out, Vec4 *dir, Vec4 *pitch_dir)
@@ -69,7 +68,6 @@ void GAMEUTIL_get_yaw_pitch_merge_dir(Vec4 *out, Vec4 *dir, Vec4 *pitch_dir)
         ang = -1.48352981f;
     }
     SetQuaternionByAxisRotateVWithNoRegularize(&q, (short)(int)(ang * 32768.0f / 3.14159255f), &axis);
-    { float (*mm)[4] = m; __asm__("" : "+r"(mm)); quatToMatrix(mm, &q); }
+    { float (*mm)[4] = m; __asm__("" : "+r"(mm)); quatToMatrix(mm, &q, m); }
     iosApplyRotMatrix(out, m, dir);
 }
-#endif
