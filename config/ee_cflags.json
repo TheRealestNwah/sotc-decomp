@@ -1,4 +1,7 @@
 {
+  "src/xff/GAMECORE/func_000D0878.c": [
+    "-fno-strict-aliasing"
+  ],
   "src/xff/MANAGER/SetDemoMotionOrientInfo.c": [
     "-fno-strict-aliasing"
   ],
