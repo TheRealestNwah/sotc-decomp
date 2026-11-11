@@ -7,7 +7,7 @@ extern void (*B_00151834)(void *, int);
 extern int D_00139F08;
 
 #ifdef NONMATCHING
-/* 11 diffs: jalr target registers and argument setup order */
+/* 11 diffs: jalr target registers and argument setup order. Permuter (5 workers, 25 min): no improvement. */
 static void T_000E1AD0(void *fs)
 {
     int size0;
