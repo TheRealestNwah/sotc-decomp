@@ -25,7 +25,7 @@ static inline void subVec(Vec4 *out, Vec4 *a, Vec4 *b)
 }
 
 #ifdef NONMATCHING
-/* 9 diffs: rot and the first quaternion buffer swap saved registers s3/s4 */
+/* 9 diffs: rot and the first quaternion buffer swap saved registers s3/s4. Permuter (5 workers, 25 min) reported a better score from unitQuat(rot), but it is still 9 diffs here. */
 void PredictMotionGeometryPotential(Vec4 *rot, Vec4 *trans, char *obj, float start, float end)
 {
     Vec4 *r = rot;

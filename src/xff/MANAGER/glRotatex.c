@@ -44,7 +44,7 @@ static inline void mulCurrentMatrix(Matrix *src)
 }
 
 #ifdef NONMATCHING
-/* 7 diffs: rotation matrix stores scheduled in a different order (this store order is the best of 150 random orders) */
+/* 7 diffs: rotation matrix stores scheduled in a different order (this store order is the best of 150 random orders). Permuter (4 workers, 25 min) only improved it by moving the m[5] store after the matrix is used, which changes behaviour. */
 void glRotatex(float angle)
 {
     float sc[4];
