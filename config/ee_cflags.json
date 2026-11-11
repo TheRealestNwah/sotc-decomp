@@ -202,5 +202,11 @@
   ],
   "src/xff/KERNEL/isysDisposeModuleObjRelocationElement.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/func_000FA168.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/func_000ED110.c": [
+    "-fno-strict-aliasing"
   ]
 }
