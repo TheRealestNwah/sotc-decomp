@@ -49,7 +49,7 @@ extern float modelClipSolid(ClipObj *, void *);
 extern float modelClipSkin(ClipObj *, void *);
 
 #ifdef NONMATCHING
-/* 7 diffs: with -fno-strict-aliasing, the model pointer reload lands after the float-to-int conversion instead of before it */
+/* 7 diffs: with -fno-strict-aliasing, the model pointer reload lands after the float-to-int conversion instead of before it. Permuter (5 workers, 25 min) only improved it by moving the modelClipSolid call out of its branch, which changes behaviour. */
 void ClipLayoutObjModel(void) {
     ClipObj *lc;
     ClipObj *info;
