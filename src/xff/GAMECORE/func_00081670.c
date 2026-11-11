@@ -76,10 +76,8 @@ static int func_00081670(void *out, int layout)
                          : "=f"(d2) : "r"(out), "r"(inv), "r"(res) : "$2", "memory");
     if (d2 < 0.03239999f) {
         scale = 0.17999998f / sqrtF(d2);
-        __asm__ __volatile__("lqc2 vf5, 0x0(%1)
-"
-                             "mfc1 %0, %4
-"
+        __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                             "mfc1 %0, %4\n"
                              "qmtc2.ni %0, vf6\n"
                              "vmulx.xy vf5, vf5, vf6x\n"
                              "sqc2 vf5, 0x0(%1)\n"
