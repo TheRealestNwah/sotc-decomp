@@ -1,5 +1,5 @@
-#ifdef NONMATCHING /* 10 diffs: w->chr, chkTime2Int and gcGlobalVar get a0/a1/a2 where the original uses a1/a2/a0 */
-/* Flag note: 10 diffs with per-file -fno-strict-aliasing (23 without); permuter with the flag reached only 590. */
+#ifdef NONMATCHING /* 2 words: with chr/in pinned to $a1/$v1 and the two global addresses to $a2/$a0, only the order of the two hoisted lui (gcGlobalVar first in the original) differs; an asm barrier on the gcGlobalVar pointer forces the full address instead */
+/* Flag note: needs per-file -fno-strict-aliasing (16 without). */
 
 typedef struct 
 {
@@ -54,7 +54,6 @@ void _initBaseMoveTmpWork(int obj, BmWork *w, int *state, int path)
 {
   float g;
   float ct;
-  BmInner *in;
   w->obj = obj;
   w->state = state;
   w->path = path;
@@ -62,19 +61,24 @@ void _initBaseMoveTmpWork(int obj, BmWork *w, int *state, int path)
   w->w1 = getPassageWork(path, 1);
   w->chr = GetCharacterClass(obj);
   w->layout = GetLayoutClass(obj);
-  w->in = (in = (BmInner *) (((char *) w->chr) + 0x1C0));
-  ct = chkTime2Int;
+  {
+  register char *chr __asm__("$5") = (char *)w->chr;
+  register char *gp __asm__("$6") = gcGlobalVar;
+  register BmInner *in __asm__("$3") = (BmInner *)(chr + 0x1C0);
+  w->in = in;
+  { register float *cp __asm__("$4") = &chkTime2Int; ct = *cp; }
   w->a4 = ((float) in->sub->deg) * 0.0174532924f;
-  w->a8 = (*((float *) (((char *) w->chr) + 0x72C))) * 0.0174532924f;
+  w->a8 = (*((float *) (chr + 0x72C))) * 0.0174532924f;
   w->aC = in->f1C;
-  w->b0 = 1.0f / (((*((float *) (((char *) w->chr) + 0x374))) * in->f1C) * (*((float *) (((char *) w->chr) + 0x524))));
-  w->b4 = *((float *) (((char *) w->chr) + 0x574));
-  w->b8 = *((float *) (((char *) w->chr) + 0x570));
-  g = *((float *) (gcGlobalVar + 0x190));
+  w->b0 = 1.0f / (((*((float *) (chr + 0x374))) * in->f1C) * (*((float *) (chr + 0x524))));
+  w->b4 = *((float *) (chr + 0x574));
+  w->b8 = *((float *) (chr + 0x570));
+  g = *((float *) (gp + 0x190));
   w->dt = g;
   if (ct < g)
   {
     w->dt = ct;
+  }
   }
   *state = 0;
 }
