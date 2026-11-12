@@ -1,38 +1,31 @@
 #ifdef NONMATCHING
-/* Close: the inlined layer search computes the menu pointer with movz instead of movn and the loop is laid out differently. */
+/* Parked: 15 diffs. The plain for loop gives the original layout; left are movz vs movn for the menu pointer and o+0x90 being shared (t4) between the two inlines. */
 typedef struct { int a; int hash; } LayerDef;
 typedef struct { LayerDef *def; char pad[0x40]; } Layer;
 
 static inline int GetLayerNo(unsigned char *o, int hash)
 {
-    unsigned char *c = o[8] == 0x21 ? o + 0x90 : 0;
+    unsigned char *c;
     int no = -1;
-    int i = 0;
+    int i;
 
-    if (*(int *)(c + 8) > 0) {
+    c = o[8] != 0x21 ? 0 : o + 0x90;
+    {
         Layer *layers = *(Layer **)(c + 4);
-        Layer *p = layers;
-        LayerDef *def = p->def;
-        goto test;
-    loop:
-        i++;
-        if (i >= *(int *)(c + 8))
-            goto out;
-        p = &layers[i];
-        def = p->def;
-    test:
-        if (def->hash != hash)
-            goto loop;
-        no = i;
+        for (i = 0; i < *(int *)(c + 8); i++) {
+            if (layers[i].def->hash == hash) {
+                no = i;
+                break;
+            }
+        }
     }
-out:
     return no;
 }
 
 static inline void SetDispFlag(unsigned char *o, int i, int disp)
 {
     int off = i * 0x44;
-    unsigned char *c = o[8] == 0x21 ? o + 0x90 : 0;
+    unsigned char *c = o[8] != 0x21 ? 0 : o + 0x90;
     char *e = *(char **)(c + 4) + off;
 
     if (disp) {
