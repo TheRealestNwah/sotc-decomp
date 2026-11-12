@@ -37,7 +37,7 @@ static inline void normalize4(void *v)
                          : : "r"(v) : "memory");
 }
 
-#ifdef NONMATCHING /* 53 diffs: out/s1 swapped in $s0/$s1 and the $a0/$a1 node-pointer load order */
+#ifdef NONMATCHING /* 50 diffs: out/s1 swapped in $s0/$s1 and the $a0/$a1 node-pointer load order */
 int func_00125C38(float *out, float *out2, int id, char *w)
 {
     float tmp[4] __attribute__((aligned(16)));
@@ -55,7 +55,7 @@ int func_00125C38(float *out, float *out2, int id, char *w)
         return 1;
     }
     if (*(int *)(GetCharacterClass(chr) + 0x378) == s1) {
-        quatMul(out, GetCharacterClass(chr) + 0x480, *(char **)(*(char **)(w + 0x10) + 8) + (s1 << 6) + 0x20);
+        quatMul(out, GetCharacterClass(chr) + 0x480, (s1 << 6) + *(char **)(*(char **)(w + 0x10) + 8) + 0x20);
         normalize4(out);
         func_00127AC8(out2, *(void **)(GetLayoutClass(chr) + 0x134), out, s1, w);
         return 1;
@@ -66,16 +66,17 @@ int func_00125C38(float *out, float *out2, int id, char *w)
         return 0;
     {
         char *a = *(char **)(w + 4) + (s1 << 4);
-        char *b = *(char **)(w + 0xC) + (s1 << 4);
+        char *b;
         __asm__ __volatile__("lqc2 vf11, 0x0(%1)\n"
                              "vsubw.x vf5, vf0, vf0w\n"
                              "vmulx.xyz vf11, vf11, vf5x\n"
                              "sqc2 vf11, 0x0(%0)\n"
                              : : "r"(tmp), "r"(a) : "memory");
+        b = *(char **)(w + 0xC) + (s1 << 4);
         quatMul(out, b, tmp);
-        quatMul(out, out, *(char **)(*(char **)(w + 0x10) + 8) + (s1 << 6) + 0x20);
+        quatMul(out, out, (s1 << 6) + *(char **)(*(char **)(w + 0x10) + 8) + 0x20);
         normalize4(out);
-        *(s128 *)out2 = *(s128 *)(*(char **)(w + 8) + (s1 << 6) + 0x30);
+        *(s128 *)out2 = *(s128 *)((s1 << 6) + *(char **)(w + 8) + 0x30);
     }
     return 1;
 }
