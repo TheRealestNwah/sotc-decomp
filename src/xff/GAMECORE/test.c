@@ -1,16 +1,12 @@
-/* Parked draft (identical code to horse_hoist_sword): piecewise blend in double precision (soft-float dpadd/dpmul/dpsub/dpcmp on the
-   R5900; plain `double` in C). x is the sample position with knots at -0.5, 0 and 0.5; each side
-   mixes a linear term (position times a coefficient float) with a quadratic ease; y adds an
-   offset term. The result is returned as a float (dptofp). Written from the m2c draft; not yet
-   compared closely. */
-#ifdef NONMATCHING
+/* Same code as horse_hoist_sword. Piecewise blend in double precision (soft-float on the R5900): knots at -0.5, 0 and 0.5 on x,
+   each side mixing a linear term with a quadratic ease, plus an offset term from y. */
 float test(float c0, float c1, float c2, float c3, float c4, float c5, float x, float y)
 {
     double tail;
-    double t;
     double u;
-    float f;
+    double a;
     double r;
+    float f;
 
     if (y >= 0.0f)
         f = y * c4;
@@ -19,28 +15,22 @@ float test(float c0, float c1, float c2, float c3, float c4, float c5, float x, 
     tail = f;
     if (x >= 0.0f) {
         double xd = x;
-        f = x * c0;
-        if (xd >= 0.5) {
-            double v = xd - 0.5;
-            u = v + v;
-            t = (double)(2.0f * f) * (1.0 - u);
-            r = t + u * (double)(x * c1);
+        if (xd < 0.5) {
+            r = 2.0f * (x * c0) + tail;
         } else {
-            r = (double)(2.0f * f);
+            a = 2.0f * (x * c0);
+            u = (xd - 0.5) * 2.0;
+            r = a * (1.0 - u) + u * (double)(x * c1) + tail;
         }
     } else {
         double xd = x;
-        float nc2 = -c2;
         if (xd > -0.5) {
-            f = x * nc2;
-            r = (double)(2.0f * f);
+            r = 2.0f * (x * -c2) + tail;
         } else {
-            double v = xd + 0.5;
-            u = v + v;
-            t = (double)(2.0f * (x * nc2)) * (u + 1.0);
-            r = t - u * (double)(x * -c3);
+            a = 2.0f * (x * -c2);
+            u = (xd + 0.5) * 2.0;
+            r = a * (u + 1.0) - u * (double)(x * -c3) + tail;
         }
     }
-    return (float)(r + tail);
+    return r;
 }
-#endif
