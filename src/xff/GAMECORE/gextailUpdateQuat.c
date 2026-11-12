@@ -48,7 +48,8 @@ static inline void quatRotateVector(Vec4 *out0, float *quat0, Vec4 *vec0)
 }
 
 
-#ifdef NONMATCHING /* 2 diffs: otherwise exact (quat rotate VU blocks with pinned $v0/$v1/$a0 operands); the second rotate orders its address setup lui/lo-addiu/out/quat while ours does lui/out/quat/lo-addiu */
+/* Matched via the permuter: the second rotate sits in a do { } while (0), which changes how gcc orders its
+   address setup (lui / lo-addiu / out / quat). */
 static void gextailUpdateQuat(int obj)
 {
     char sp[0x40] __attribute__((aligned(16)));
@@ -68,7 +69,9 @@ static void gextailUpdateQuat(int obj)
         *(s128 *)sp = *(s128 *)(s1 + 0x40);
     }
     quatRotateVector((Vec4 *)(sp + 0x20), (float *)(s1 + 0x70), (Vec4 *)XUnitVector);
-    quatRotateVector((Vec4 *)(sp + 0x30), (float *)(s1 + 0x70), (Vec4 *)YUnitVector);
+    do {
+        quatRotateVector((Vec4 *)(sp + 0x30), (float *)(s1 + 0x70), (Vec4 *)YUnitVector);
+    } while (0);
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)
 "
                          "lqc2 vf6, 0x0(%2)
@@ -126,4 +129,3 @@ static void gextailUpdateQuat(int obj)
     }
     GetQuaternionByAxisDirZY(s1 + 0x60, sp + 0x10, sp);
 }
-#endif
