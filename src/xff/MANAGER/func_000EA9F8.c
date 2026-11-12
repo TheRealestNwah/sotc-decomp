@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 25 diffs: the early returns load the result register differently and the final filter test is not branched */
+#ifdef NONMATCHING /* 23 diffs (the dead do-while after the return is from the permuter, was 25): the early returns load the result register differently and the final filter test is not branched */
 extern char *GetCharacterClass(void *);
 extern char *GetScriptLayoutClass(void *);
 extern char *GetScriptAnimationClass(void *);
@@ -53,5 +53,6 @@ static inline int body(char *o, char **p)
 static int func_000EA9F8(char *o, char **p)
 {
     return body(o, p);
+    do { } while (0);
 }
 #endif
