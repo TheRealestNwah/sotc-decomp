@@ -41,7 +41,7 @@ extern int iosMcGetDir(int, int, const char *, unsigned int, int, McDirEntry *, 
 extern int iosMcWriteFile(int, int, const char *, void *, int, int);
 
 #ifdef NONMATCHING
-/* 22 diffs: slot pointer and file offset swap s0/s1 */
+/* 18 diffs: slot pointer and file offset swap s0/s1. Loading index into offset first (permuter) narrowed it from 22. */
 static void func_000CDC38(McWork *w)
 {
     int port = w->port;
@@ -60,8 +60,9 @@ static void func_000CDC38(McWork *w)
     if (w->result != 0)
         return;
     file = RO_00140D58;
-    s = &w->data->slot[w->index];
-    offset = w->index * 0x5800 + 0x800;
+    offset = w->index;
+    s = &w->data->slot[offset];
+    offset = offset * 0x5800 + 0x800;
     memset(s, 0, sizeof(McSaveSlot));
     memcpy(s->name2, RO_00140D48, 10);
     memcpy(s->name, RO_00140D48, 10);

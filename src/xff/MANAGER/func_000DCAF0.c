@@ -1,5 +1,3 @@
-/* Parked: 9 diffs (original keeps the config pointer in $a2 instead of $t0). */
-#ifdef NONMATCHING
 typedef struct { int f0, f4, f8, fC; } SheetCfg;
 typedef struct { char pad[0xC]; int fC; int f10; } SheetSrc;
 
@@ -12,7 +10,7 @@ extern void createSheetMenu(SheetCfg *, int, SheetCfg *, int);
 static void func_000DCAF0(void) {
     SheetSrc *p;
     int a3;
-    SheetCfg *c = &D_00139CA0;
+    register SheetCfg *c __asm__("$6") = &D_00139CA0;
     D_00139BF4 = 1;
     p = (SheetSrc *)SH_AdpcmSeqDEFAULT;
     if (p == (SheetSrc *)DldSysUndefSymbol) p = 0;
@@ -21,4 +19,3 @@ static void func_000DCAF0(void) {
     c->fC = p->fC;
     createSheetMenu(c, 0, c, a3);
 }
-#endif
