@@ -4,7 +4,7 @@ extern char ZeroVector[];
 extern char All1Vector[];
 extern float iosGetRandom(void);
 
-#ifdef NONMATCHING /* 21 diffs: the nine-entry jump table, register use and VU0 sequence match; gcc hoists the 0x26C/0x270 stores ahead of the float math where the original leaves them in the branch delay slots */
+#ifdef NONMATCHING /* 17 diffs: the nine-entry jump table, register use and VU0 sequence match; a memory barrier before each case-final 0x26C store keeps the stores unmerged; remaining diffs are the ZeroVector pointer/value register pair ($v0/$v1 swapped) and the 0x270 store sitting before the float math instead of between lq/sq */
 static void func_0009D208(char *c)
 {
     char *p;
@@ -28,6 +28,7 @@ static void func_0009D208(char *c)
         *(float *)(c + 0x1C0) = *(float *)(p + 0x38) + *(float *)(p + 0x3C) * r;
         *(int *)(c + 0x270) = 0;
         *(s128 *)(c + 0x4D0) = *(s128 *)ZeroVector;
+        __asm__ __volatile__("" : : : "memory");
         *(int *)(c + 0x26C) = 0;
         break;
     case 2:
@@ -35,6 +36,7 @@ static void func_0009D208(char *c)
     case 7:
         *(int *)(c + 0x270) = 0;
         *(s128 *)(c + 0x4D0) = *(s128 *)ZeroVector;
+        __asm__ __volatile__("" : : : "memory");
         *(int *)(c + 0x26C) = 0;
         break;
     case 4:
@@ -47,6 +49,7 @@ static void func_0009D208(char *c)
     case 6:
         *(int *)(c + 0x270) = 0;
         *(int *)(c + 0x1C0) = 0;
+        __asm__ __volatile__("" : : : "memory");
         *(int *)(c + 0x26C) = 0;
         break;
     case 8:

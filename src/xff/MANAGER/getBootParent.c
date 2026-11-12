@@ -1,4 +1,4 @@
-#ifdef NONMATCHING
+#ifdef NONMATCHING /* 6 diffs: the original returns 0 through a beql on obj == 0 and fills the jal delay slot with daddu a0,s0. Permuter (25 min) found only semantics-changing variants. */
 extern void *GetGeometryPointerObject(void *);
 extern char *GetLayoutClass(void *);
 
