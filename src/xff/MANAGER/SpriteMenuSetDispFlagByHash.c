@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 15 diffs. The plain for loop gives the original layout; left are movz vs movn for the menu pointer and o+0x90 being shared (t4) between the two inlines. */
+/* Parked: 15 diffs. The plain for loop gives the original layout; left are movz vs movn for the menu pointer and o+0x90 being shared (t4) between the two inlines. Permuter (40 min) found no real improvement. */
 typedef struct { int a; int hash; } LayerDef;
 typedef struct { LayerDef *def; char pad[0x40]; } Layer;
 
