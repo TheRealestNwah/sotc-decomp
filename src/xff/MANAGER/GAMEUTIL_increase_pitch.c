@@ -1,16 +1,21 @@
-#ifdef NONMATCHING /* 11 diffs (was 28; the unclamped path is two independent ifs, not else-if): the near-zero check comes out as eps < x / bc1f instead of x <= eps / bc1tl, and the clamp-to-limit tails use bnel instead of beqz + b */
+#ifdef NONMATCHING /* 7 diffs (was 28; the unclamped path is two independent ifs, not else-if, and the near-zero check uses the goto nearlyZero idiom from GAMEUTIL_act_pitch_rot_limit_clip): the clamp-to-limit tails use bnel instead of beqz + b, and the max clamp branches past the min check */
 static inline int is_near_zero(float x, float eps)
 {
     if (x < 0.0f) {
-        if (-x > eps) {
-            return 0;
-        }
-        return 1;
+        if (-x <= eps)
+            goto nearZero;
+        else
+            goto notNearZero;
+    } else {
+        if (x <= eps)
+            goto nearZero;
+        else
+            goto notNearZero;
     }
-    if (x > eps) {
-        return 0;
-    }
+nearZero:
     return 1;
+notNearZero:
+    return 0;
 }
 float GAMEUTIL_increase_pitch(int *changed, int clamp, float pitch, float add, float max, float min)
 {
