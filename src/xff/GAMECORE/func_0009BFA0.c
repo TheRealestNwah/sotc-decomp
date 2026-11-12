@@ -4,7 +4,7 @@ extern int *isysGroupForNext(int *, int);
 extern void isysGroupForExit(int, int);
 extern char *GetScriptCharacterClass(int);
 
-#ifdef NONMATCHING /* 41 diffs: second half now matches except layout; near-check result is booleanized (sltiu) where the original branches on it (bnel + shared exits) */
+#ifdef NONMATCHING /* 16 diffs: second half matches; only the near-check result lands in $v1 (ours) instead of $v0 and its exit uses bnez instead of bnel, plus the final return branches */
 static inline float distSq(char *a, char *b)
 {
     float d;
@@ -67,12 +67,7 @@ static int func_0009BFA0(char *c)
             isysGroupForExit(last, 0);
         if (ok == 0)
             return 0;
-        x = *(int *)(c + 0x270);
-        if (x == 0)
-            return 0;
-        x = near3(c);
-        nr = x;
-        if (nr != 0)
+        if (*(int *)(c + 0x270) != 0 && near3(c) != 0)
             return 0;
         return 1;
     }
