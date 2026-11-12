@@ -1,9 +1,7 @@
-/* Parked draft: tail-state handler for a boss part. On a state change to 3 (death) it publishes the
-   stored value and switches the script control to SCRDeath; on 2 it detaches the layout object,
-   resets the sync mode, rotates the part's velocity by its orientation (quaternion -> matrix on VU0)
-   and picks SCRTailDamage or SCRTailFallDamage by the sign of the Y component. Written from the m2c
-   draft; not yet compared closely. */
-#ifdef NONMATCHING
+/* Tail-state handler for a boss part. On a state change to 3 (death) it publishes the stored
+   quadword and switches the script control to SCRDeath; on 2 it detaches the layout object, resets
+   the sync mode, rotates YUnitVector by the layout's orientation quaternion (VU0) and picks
+   SCRTailDamage or SCRTailFallDamage by the sign of the rotated Y component. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -15,7 +13,7 @@ typedef struct {
 extern ScriptCtrlDef *ScriptCtrlDef_SCRDeath;
 extern ScriptCtrlDef *ScriptCtrlDef_SCRTailDamage;
 extern ScriptCtrlDef *ScriptCtrlDef_SCRTailFallDamage;
-extern void CharaCtrlSetScriptCtrlStatus(int, int, void *);
+extern void CharaCtrlSetScriptCtrlStatus(int, int);
 extern void ForceUnparentLayoutObj(int);
 extern int GetCharacterClass(int);
 extern char *GetLayoutClass(int);
@@ -30,7 +28,7 @@ typedef struct {
     int old;
     int state;
     int flag;
-    int value;
+    s128 value;
 } PartState;
 
 static inline void rotateByQuat(Vec4 *out, Vec4 *q, Vec4 *v)
@@ -68,23 +66,19 @@ static inline void rotateByQuat(Vec4 *out, Vec4 *q, Vec4 *v)
                          : : "r"(out), "r"(q), "r"(v) : "memory");
 }
 
+extern Vec4 YUnitVector;
+
 static void func_000B48A8(PartState *p)
 {
     int thread = isysGetThisSubThread();
 
     if (p->old != p->state) {
         switch (p->state) {
-        case 3:
-            if (p->flag != 0)
-                **(int **)(GetLayoutClass(thread) + 0x134) = p->value;
-            CharaCtrlSetScriptCtrlStatus(isysGetThisSubThread(), ScriptCtrlDef_SCRDeath->ctrl, ScriptCtrlDef_SCRDeath);
-            break;
         case 2: {
             int owner = p->owner;
             int self = isysGetThisSubThread();
             int t2;
-            char *layout;
-            Vec4 vel __attribute__((aligned(16)));
+            Vec4 vel[2];
 
             if (owner != 0) {
                 char *cc = *(char **)(GetScriptCharacterClass(owner) + 0x1200);
@@ -97,16 +91,19 @@ static void func_000B48A8(PartState *p)
                 ResetCharacterClassSyncMode(GetCharacterClass(self));
             }
             t2 = isysGetThisSubThread();
-            layout = GetLayoutClass(t2);
-            rotateByQuat(&vel, (Vec4 *)(layout + 0x10), &vel);
-            if (vel.f[1] >= 0.0f)
-                CharaCtrlSetScriptCtrlStatus(t2, ScriptCtrlDef_SCRTailDamage->ctrl, 0);
+            rotateByQuat(&vel[1], *(Vec4 **)(GetLayoutClass(t2) + 0x13C), &YUnitVector);
+            if (vel[1].f[1] >= 0.0f)
+                CharaCtrlSetScriptCtrlStatus(t2, ScriptCtrlDef_SCRTailDamage->ctrl);
             else
-                CharaCtrlSetScriptCtrlStatus(t2, ScriptCtrlDef_SCRTailFallDamage->ctrl, 0);
+                CharaCtrlSetScriptCtrlStatus(t2, ScriptCtrlDef_SCRTailFallDamage->ctrl);
             SetCharacterObjCollisionProcFlag(thread, 1);
-            return;
+            break;
         }
+        case 3:
+            if (p->flag != 0)
+                **(s128 **)(GetLayoutClass(thread) + 0x134) = p->value;
+            CharaCtrlSetScriptCtrlStatus(isysGetThisSubThread(), ScriptCtrlDef_SCRDeath->ctrl);
+            break;
         }
     }
 }
-#endif
