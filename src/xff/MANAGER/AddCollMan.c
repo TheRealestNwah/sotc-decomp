@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 10 diffs: scheduling of the group-pointer movn and the s0/s1/s4 setup before the inner loop */
+#ifdef NONMATCHING /* 10 diffs: scheduling of the group-pointer movn and the s0/s1/s4 setup before the inner loop. Permuter (5 workers, 25 min): best was a volatile char temp for pass != 0, still not a match. */
 typedef struct FogColMan {
     char pad0[0x90];
     int flags;
