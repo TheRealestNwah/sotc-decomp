@@ -1,9 +1,9 @@
-#ifdef NONMATCHING /* 17 diffs: scheduling only. The original copies obj+0x10 into a1 before the boss-check branch and moves the riding-obj result into t2 after the float args; ours does both the other way round. */
+#ifdef NONMATCHING /* 12 diffs (int return on CAM_get_warp_position, found by permuter): scheduling only. The original copies obj+0x10 into a1 before the boss-check branch and moves the riding-obj result into t2 after the float args; ours does both the other way round. */
 typedef float Vec[4] __attribute__((aligned(16)));
 extern int GAMEUTIL_is_boss_obj(int, int);
 extern void CAM_add_plane_offset_in_position(float *, float *, float *, float);
 extern int CAM_get_target_riding_obj(void *);
-extern void CAM_get_warp_position(float *, float *, float *, float *, int, int, int, void *, float, float, int);
+extern int CAM_get_warp_position(float *, float *, float *, float *, int, int, int, void *, float, float, int);
 
 static inline float sqrtf_(float x)
 {
