@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 3 diffs (int return on CAM_get_warp_position, obj+0x10 passed directly, both found by permuter): scheduling only. The original moves the two float args into f12/f13 before computing w+0x1814 into t3; ours computes t3 first. */
+#ifdef NONMATCHING /* 3 diffs (int return on CAM_get_warp_position, obj+0x10 passed directly, both found by permuter): scheduling only. The original moves the two float args into f12/f13 before computing w+0x1814 into t3; ours computes t3 first. A further 40-min permuter run from 3 diffs found nothing. */
 typedef float Vec[4] __attribute__((aligned(16)));
 extern int GAMEUTIL_is_boss_obj(int, int);
 extern void CAM_add_plane_offset_in_position(float *, float *, float *, float);
