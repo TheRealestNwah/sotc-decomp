@@ -5,8 +5,8 @@ typedef struct {
     Vec4 dir;
     Vec4 target;
     int node;
-    float time;
     float weight;
+    float time;
     int flag;
 } PinAttackIK;
 typedef struct {
@@ -24,7 +24,7 @@ extern void GetMotionNodeQuaternionPosToolCoord(void *, void *, int, int);
 extern char *GetCharacterClass(int);
 extern void func_00038238(void *, int, void *, void *, void *);
 
-#ifdef NONMATCHING /* 98 diffs, same shape as nico_IK_footPosCalc (tail call passes 1) */
+#ifdef NONMATCHING /* 97 diffs, same shape as nico_IK_footPosCalc (tail call passes 1) */
 void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
 {
     float qv[4] __attribute__((aligned(16)));
@@ -48,12 +48,14 @@ void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
         *(int *)(chr + 0x1100) == *CharIkTypeDef_PINATTACKIK)
         ik = *(PinAttackIK **)(chr + 0x1110) + (node & 0xFFFEFFFF);
     if (ik != 0) {
-        float t = ik->time;
-        if (t >= 0.0f && ik->weight > 0.0f) {
+        float *tp = &ik->time;
+        float *wp = &ik->weight;
+        float t = *tp;
+        if (t >= 0.0f && *wp > 0.0f) {
             t -= *(float *)(gcGlobalVar + 0x180);
-            ik->time = t;
+            *tp = t;
             if (t > 0.0f) {
-                float s = t / ik->weight;
+                float s = t / *wp;
                 int si;
                 __asm__ __volatile__("mfc1 %0, %1" : "=r"(si) : "f"(s));
                 __asm__ __volatile__("qmtc2.ni %2, vf7\n"
