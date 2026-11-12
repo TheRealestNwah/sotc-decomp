@@ -45,11 +45,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from elftools.elf.elffile import ELFFile
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from tools import ee_cc, loader_splice  # noqa: E402
-from tools.functions import FIELD_MASKS, RELOC_NAMES, function, open_module  # noqa: E402
 from tools.try_compilers import (  # noqa: E402
     DEFAULT_COMPILERS,
     I386_LIBS,
@@ -70,6 +66,8 @@ def original_function(
     """The original function's words, without alignment padding, and its
     relocation types (word index -> type). Statics named after their asm label
     start at the label's address and are `size` bytes long."""
+    from tools.functions import function, open_module
+
     try:
         fn = function(open_module(module, ROOT / "iso"), name, size)
     except KeyError as e:
@@ -83,6 +81,8 @@ def original_function(
 def loader_function(name: str, functions_csv: str, asm: str) -> tuple[list[int], dict[int, int]]:
     """The same for a Loader function, from config/loader_functions.csv and
     the Loader's asm (one `/* offset address word */` line per instruction)."""
+    from tools import loader_splice
+
     row = next((r for r in csv.DictReader(io.StringIO(functions_csv)) if r["name"] == name), None)
     if row is None:
         raise SystemExit(f"LOADER: no function {name} in config/loader_functions.csv")
@@ -125,6 +125,8 @@ def only_target(source: str, name: str) -> str:
 
 def compiled_size(source: Path, name: str) -> int | None:
     """Size of `name` as the C file compiles now."""
+    from elftools.elf.elffile import ELFFile
+
     obj = source.with_suffix(".o")
     subprocess.run([sys.executable, str(ROOT / "tools/ee_cc.py"), str(source), str(obj)],
                    check=True)  # fmt: skip
@@ -136,6 +138,8 @@ def compiled_size(source: Path, name: str) -> int | None:
 
 
 def target_asm(name: str, words: list[int], relocs: dict[int, int]) -> str:
+    from tools.functions import FIELD_MASKS, RELOC_NAMES
+
     lines = [".set noreorder", ".set noat", ".text", f".globl {name}", f".ent {name}", f"{name}:"]
     for i, word in enumerate(words):
         if i in relocs:
@@ -151,6 +155,8 @@ def bash_path(path: Path) -> str:
 
 
 def setup(c_file: Path, name: str, module: str, out: Path) -> None:
+    from tools import ee_cc, loader_splice
+
     out.mkdir(parents=True, exist_ok=True)
     base = out / "base.c"
     base.write_text(only_target(c_file.read_text(encoding="utf-8"), name), encoding="utf-8")

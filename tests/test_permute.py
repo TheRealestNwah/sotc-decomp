@@ -1,4 +1,7 @@
+import subprocess
+import sys
 from base64 import b64decode
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -257,3 +260,14 @@ def test_protect_inline_asm_declares_register_variables_before_their_function():
     assert out.index("extern T *p;") < out.index("void g")
     # Multiple declarators are left without a type declaration.
     assert "extern" not in protect_inline_asm('void g(void) { register int a, b __asm__("$4"); }')
+
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+@pytest.mark.parametrize("module", ["tools.try_compilers", "tools.ee_cc", "tools.permute"])
+def test_permuter_hot_path_does_not_import_elftools(module):
+    """The permuter starts the compiler and objdump scripts once per candidate, so
+    importing them must stay cheap: elftools alone costs seconds on a cold disk."""
+    code = f"import sys, {module}; sys.exit('elftools' in sys.modules)"
+    assert subprocess.run([sys.executable, "-c", code], cwd=ROOT, check=False).returncode == 0
