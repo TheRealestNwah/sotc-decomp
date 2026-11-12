@@ -6,12 +6,10 @@ extern void iosAbsVector(void *, void *);
 extern float AI_GetAccelA(float, float, float, float);
 extern float AI_GetAccelB(float, float, float, float);
 
-#ifdef NONMATCHING /* 76 diffs: o lands in $s2 not $s0 (orig o=$s0, o+0x160=$s1, v=$s2), axis-pick branch layout */
 static void func_0009C638(char *o, float *v, float t)
 {
     float ab[4] __attribute__((aligned(16)));
     float d;
-    char *axis;
     float b;
     int idx;
 
@@ -30,18 +28,18 @@ static void func_0009C638(char *o, float *v, float t)
     } else if (d <= -0.99f) {
         iosAbsVector(ab, o + 0x160);
         *(float *)(o + 0x260) = 3.1415927f;
-        if (ab[1] < ab[0] && ab[2] < ab[0])
+        if (!(ab[0] > ab[1]) || !(ab[0] > ab[2])) {
+            if (!(ab[1] > ab[2]))
+                idx = 2;
+            else
+                idx = 1;
+        } else
             idx = 0;
-        else if (ab[2] < ab[1])
-            idx = 1;
-        else
-            idx = 2;
         switch (idx) {
-        case 0: axis = YUnitVector; break;
-        case 1: axis = ZUnitVector; break;
-        default: axis = XUnitVector; break;
+        case 0: *(s128 *)(o + 0x250) = *(s128 *)YUnitVector; break;
+        case 1: *(s128 *)(o + 0x250) = *(s128 *)ZUnitVector; break;
+        case 2: *(s128 *)(o + 0x250) = *(s128 *)XUnitVector; break;
         }
-        *(s128 *)(o + 0x250) = *(s128 *)axis;
     } else {
         *(float *)(o + 0x260) = iosGetACosfExact(d);
         __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -66,4 +64,3 @@ static void func_0009C638(char *o, float *v, float t)
     *(float *)(o + 0x268) = b;
     *(float *)(o + 0x264) = AI_GetAccelA(0.0f, 0.0f, t, b);
 }
-#endif
