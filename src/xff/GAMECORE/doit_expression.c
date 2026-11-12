@@ -1,6 +1,6 @@
-/* doit_expression: interp-value update for an expression controller (~8 diffs: _setRootXYZHPB arg
- * setup order -- original moves f12-f17 first, a3/t0 last. The volatile stores keep the zero-clear
- * order; the original probably used a struct here.) */
+/* doit_expression: interp-value update for an expression controller (2 diffs: a3/t0 order before
+ * _setRootXYZHPB. Declaring the two class pointers after the floats (same EABI registers) puts
+ * f12-f17 first like the original. The volatile stores keep the zero-clear order.) */
 extern char *GetCharacterClass(int);
 extern int GAMEUTIL_is_status_change_status_manager(void *);
 extern void GAMEUTIL_reset_interp_ratio_cntrl(void *);
@@ -8,7 +8,7 @@ extern void GAMEUTIL_set_param_interp_ratio_cntrl(void *, float, float);
 extern void GAMEUTIL_doit_interp_ratio_cntrl(void *, float);
 extern void GAMEUTIL_doit_interp_value_cntrl(void *, void *, float);
 extern float GAMEUTIL_get_interp_value_interp_value_cntrl(void *);
-extern void _setRootXYZHPB(int, int, int, int, int, float, float, float, float, float, float);
+extern void _setRootXYZHPB(int, int, int, float, float, float, float, float, float, int, int);
 extern void _setNodeHPB(int, int, int, int, int, float, float, float);
 
 #ifdef NONMATCHING
@@ -54,8 +54,8 @@ void doit_expression(char *o, float a, float b)
     f2 = GAMEUTIL_get_interp_value_interp_value_cntrl(w);
     f3 = GAMEUTIL_get_interp_value_interp_value_cntrl(p44);
     f4 = GAMEUTIL_get_interp_value_interp_value_cntrl(t);
-    _setRootXYZHPB(s4, s8, sp10, (int)(cls + 0x40), (int)(cls + 0x90), f0, f1, f2, f3, f4,
-                   GAMEUTIL_get_interp_value_interp_value_cntrl(u));
+    _setRootXYZHPB(s4, s8, sp10, f0, f1, f2, f3, f4,
+                   GAMEUTIL_get_interp_value_interp_value_cntrl(u), (int)(cls + 0x40), (int)(cls + 0x90));
     *(volatile float *)(p + 4) = 0.0f;
     *(volatile float *)(p + 0x40) = 0.0f;
     *(volatile float *)(p + 8) = 0.0f;

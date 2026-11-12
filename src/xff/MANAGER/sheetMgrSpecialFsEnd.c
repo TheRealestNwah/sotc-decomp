@@ -32,37 +32,30 @@ static inline Req *popReq(ReqList *fl)
     return r;
 }
 
-#ifdef NONMATCHING
-static inline Req *getSheetMgrReqEmpty(void)
-{
-    Req *r = popReq(&B_00155468);
-
-    if (r == 0)
-        iosJumpRecoverPoint("getSheetMgrReqEmpty: req over\n");
-    return r;
-}
-
-/* 13 diffs (WaitSema/SignalSema return int): free-list address goes through v0 and the semaphore reload is scheduled above the final q->last store */
 void sheetMgrSpecialFsEnd(int fs, int *result)
 {
     Req *r;
+    char *qq;
     ReqList *q;
 
     WaitSema(B_00151860);
-    r = getSheetMgrReqEmpty();
+    r = popReq(&B_00155468);
+    if (r == 0)
+        iosJumpRecoverPoint("getSheetMgrReqEmpty: req over\n");
     r->flags &= ~1;
-    q = B_00155470;
+    qq = (char *)B_00155470;
+    q = (ReqList *)(qq + 0x20);
     r->type = 12;
-    q += 4;
     r->result = result;
-    if (result != 0)
+    if (result)
         *result = 0xDEAD;
     r->next = 0;
-    if (q->last != 0)
+    if (!(q->last == 0))
         q->last->next = r;
     else
         q->head = r;
     q->last = r;
+    do {
+    } while (0);
     SignalSema(B_00151860);
 }
-#endif
