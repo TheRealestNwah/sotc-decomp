@@ -4,7 +4,6 @@ extern int *isysGroupForNext(int *, int);
 extern void isysGroupForExit(int, int);
 extern char *GetScriptCharacterClass(int);
 
-#ifdef NONMATCHING /* 24 diffs: structure and loop match (sibling of func_0009BC48); the first-half flag/value variables take different registers and the loop constants are hoisted in another order */
 static inline float distSq(char *a, char *b)
 {
     float d;
@@ -32,10 +31,11 @@ static int func_0009BDC8(char *c)
     int ok;
     int last;
     int *node;
-    char *t;
+    register char *t __asm__("$5");
     register int v0 __asm__("$2");
     int a0;
-    int a1;
+    register int a1 __asm__("$4");
+    register int x __asm__("$2");
     register int v1 __asm__("$3");
     char *o;
 
@@ -44,11 +44,10 @@ static int func_0009BDC8(char *c)
         v0 = 0;
         if (v1 != 0) {
             ok = 1;
-            node = isysGroupForFirst(gcGlobalVar + 0x2BC, 0);
             last = 0;
-            if (node != 0) {
-                last = *node;
-                for (;;) {
+            for (node = isysGroupForFirst(gcGlobalVar + 0x2BC, 0); node != 0; node = isysGroupForNext(node, 0)) {
+                {
+                    last = *node;
                     o = *(char **)(GetScriptCharacterClass(last) + 0x1200);
                     if (o != 0 && *(int *)o == 4) {
                         int id = *(int *)(o + 8);
@@ -67,10 +66,6 @@ static int func_0009BDC8(char *c)
                             }
                         }
                     }
-                    node = isysGroupForNext(node, 0);
-                    if (node == 0)
-                        break;
-                    last = *node;
                 }
             }
             if (last != 0)
@@ -81,27 +76,17 @@ static int func_0009BDC8(char *c)
     }
     a1 = 0;
     if (*(int *)(c + 0x28) != 0 && (t = *(char **)(c + 0x30)) != 0) {
-        v0 = 0 != 0;
-        if (*(int *)(c + 0x1A0) != 4) {
-            v0 = 0 != 0;
-            if (*(int *)(c + 0x19C) != 4) {
-                a0 = *(int *)(c + 0x500);
-                a1 = 1;
-                if (*(int *)(t + 0x580) != a0 && (a1 = 0, *(int *)(t + 0x500) != a0)) {
-                    v0 = 0 != 0;
-                    if (*(int *)(t + 0x540) != a0) {
-                        a1 = *(int *)(t + 0x560) != a0;
-                        goto b30;
-                    }
-                } else {
-                    goto b30;
+        if (*(int *)(c + 0x1A0) != 4 && *(int *)(c + 0x19C) != 4) {
+            a0 = *(int *)(c + 0x500);
+            a1 = 1;
+            if (*(int *)(t + 0x580) != a0) {
+                a1 = 0;
+                if (*(int *)(t + 0x500) != a0 && *(int *)(t + 0x540) != a0) {
+                    x = *(int *)(t + 0x560) ^ a0;
+                    a1 = x != 0;
                 }
             }
         }
-    } else {
-b30:
-        v0 = a1 != 0;
     }
-    return v0;
+    return a1 != 0;
 }
-#endif
