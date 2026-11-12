@@ -1,8 +1,7 @@
-/* ~71 diffs, 2 words short (159 vs 161). Allocates a 0x60-byte path1 packet for a debug line attribute: GIF tag words, then the packed RGBA colour word (r | 0xFE00 << 46 | b << 16 | g << 8 | a*128 << 24, floats scaled by 255 and converted with the unsigned 2^31 branch), a 1, the line width ((width+1) << 17 | 0x11001, or 0x11000 when flag is set), and a prim register selected by mode (2 -> 0x48, 3 -> 0x44, else 0x42). Conversions are done in the original order r, b, g, a (the Original does not combine them with the same parenthesisation: the or-chain places (r|K) | (b<<16 | g<<8) first, my parenthesised variant made it worse, 80). Remaining diffs: the shift/or interleaving of the colour chain. */
+/* Allocates a 0x60-byte path1 packet for a debug line attribute: GIF tag words, then a GS RGBAQ word (r, g, b scaled by 255 and a by 128, with Q = 1.0f in the high word, written with the SCE_GS_SET_RGBAQ field order), a 1, the line width ((width+1) << 17 | 0x11001, or 0x11000 when flag is set), and a prim register selected by mode (2 -> 0x48, 3 -> 0x42, else 0x44). */
 typedef unsigned long u64;
 extern char *iosAllocPacketPtrPath1(int);
 
-#ifdef NONMATCHING
 void *debugLineObjectCreateAttributre(int mode, int width, int flag, float r, float g, float b, float a)
 {
     char *p = iosAllocPacketPtrPath1(0x60);
@@ -18,21 +17,13 @@ void *debugLineObjectCreateAttributre(int mode, int width, int flag, float r, fl
     *(u64 *)(p + 0x20) = 0x1000000000008003UL;
     *(u64 *)(p + 0x28) = 0xE;
     *(int *)(p + 0xC) = 0;
-    col = (u64)(unsigned int)(r * 255.0f);
-    col |= 0xFE00UL << 46;
-    col |= ((u64)(unsigned int)(b * 255.0f) << 16);
-    col |= ((u64)(unsigned int)(g * 255.0f) << 8);
-    col |= ((u64)(unsigned int)(a * 128.0f) << 24);
+    col = (u64)(unsigned int)(r * 255.0f) | ((u64)(unsigned int)(g * 255.0f) << 8) | ((u64)(unsigned int)(b * 255.0f) << 16) | ((u64)(unsigned int)(a * 128.0f) << 24) | ((u64)0x3F800000 << 32);
     *(u64 *)(p + 0x30) = col;
     *(u64 *)(p + 0x38) = 1;
-    *(u64 *)(p + 0x40) = ((u64)(width + 1) << 17) | (flag != 0 ? 0x11000 : 0x11001);
+    *(u64 *)(p + 0x40) = ((u64)(width + 1) << 17) | (flag == 0 ? 0x11001 : 0x11000);
     *(u64 *)(p + 0x48) = 0x47;
-    if (mode == 2)
-        reg = 0x8000000048UL;
-    else
-        reg = mode == 3 ? 0x8000000044UL : 0x8000000042UL;
+    reg = mode == 2 ? 0x8000000048UL : mode == 3 ? 0x8000000042UL : 0x8000000044UL;
     *(u64 *)(p + 0x50) = reg;
     *(u64 *)(p + 0x58) = 0x42;
     return p;
 }
-#endif
