@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* 30 diffs: the address of the flip quaternion is kept in a saved register instead of being recomputed, so one argument spills */
+/* Parked: 2 diffs (cb reloaded into v0 instead of v1 for the jalr); flip/p1/p4 temps from the permuter, was 30 */
 extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, short, float *);
 extern void SetGeometryPointerNodePosState(void *, int, int, float *, void *);
 extern float XUnitVector[4];
@@ -27,12 +27,17 @@ static void func_00090C20(void (*cb)(void *, void *, void *, void *, void *), vo
 {
     char state[0x40] __attribute__((aligned(16)));
     float q[4] __attribute__((aligned(16)));
-    float flip[4] __attribute__((aligned(16)));
+    void *v2;
+    void *v1;
     float *pq = q;
+    float flip[4] __attribute__((aligned(16)));
 
-    SetQuaternionByAxisRotateVWithNoRegularize(flip, -0x8000, XUnitVector);
-    quatMul(pq, rot, flip);
+    v2 = flip;
+    SetQuaternionByAxisRotateVWithNoRegularize(v2, -0x8000, XUnitVector);
+    v2 = p1;
+    quatMul(q, rot, flip);
     SetGeometryPointerNodePosState(state, node, kind, pq, extra);
-    cb(p1, p2, p3, p4, state);
+    v1 = p4;
+    cb(v2, p2, p3, v1, state);
 }
 #endif
