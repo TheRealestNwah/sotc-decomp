@@ -4,9 +4,8 @@ extern s128 ZUnitVector;
 extern int is_reset_or_lws_movie_or_cutout_game_camera(int);
 extern int func_000D76A0(char *, char *, int, int);
 extern int func_000D77D8(char *, char *, int, float);
-extern void func_000D78D8(char *, char *, float);
+extern void func_000D78D8(char *, char *);
 
-#ifdef NONMATCHING /* 35 diffs: control flow and calls match; the zero-point/Z-unit vector copy block is scheduled differently (lui reg, store order) and the tail-call region carries an extra nop */
 static void func_000D7260(char *s, char *c, int a2, int a3, float dt)
 {
     int r;
@@ -18,9 +17,13 @@ static void func_000D7260(char *s, char *c, int a2, int a3, float dt)
         *(int *)s = 0;
         *(float *)(s + 8) = 1.0f;
         *(float *)(s + 4) = 0.0f;
-        *(s128 *)(s + 0x10) = ZeroPoint;
-        *(int *)(s + 0x30) = 0;
-        *(s128 *)(s + 0x20) = ZUnitVector;
+        {
+            s128 z1;
+            *(s128 *)(s + 0x10) = ZeroPoint;
+            z1 = ZUnitVector;
+            *(int *)(s + 0x30) = 0;
+            *(s128 *)(s + 0x20) = z1;
+        }
         return;
     }
     if (*(unsigned int *)s < 2U) {
@@ -50,7 +53,7 @@ static void func_000D7260(char *s, char *c, int a2, int a3, float dt)
                                      : "=f"(d) : "r"(c + 0x60), "r"(q) : "$2");
                 *(float *)(s + 8) = d;
             }
-                func_000D78D8(s, c, t);
+                func_000D78D8(s, c);
                 *(float *)(s + 4) = 0.0f;
                 return;
             }
@@ -61,10 +64,9 @@ static void func_000D7260(char *s, char *c, int a2, int a3, float dt)
         return;
     }
     if (func_000D76A0(s, c, a2, a3) != 0) {
-        func_000D78D8(s, c, dt);
+        func_000D78D8(s, c);
         return;
     }
     if (func_000D77D8(s, c, a2, dt) == 1)
         *(int *)s = 0;
 }
-#endif
