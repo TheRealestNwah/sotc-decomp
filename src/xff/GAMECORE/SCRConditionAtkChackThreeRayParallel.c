@@ -18,8 +18,6 @@ static inline void vecScale(void *out, void *v, float s)
                          : : "r"(v), "r"(s), "r"(out) : "memory");
 }
 
-#ifdef NONMATCHING
-/* Parked: 1 word differs (the i == 1 copy loads vD0 through the pd pointer instead of straight from the stack). */
 int SCRConditionAtkChackThreeRayParallel(void *obj, float a, float b, float c)
 {
     struct { Vec4 v10; char buf[0x50]; Vec4 v70; Vec4 v80; Vec4 v90; Vec4 vA0; Vec4 vB0; Vec4 vC0; Vec4 vD0; Vec4 vE0; } L;
@@ -28,7 +26,7 @@ int SCRConditionAtkChackThreeRayParallel(void *obj, float a, float b, float c)
     float fb;
     char *cc;
     Vec4 *pa;
-    s128 *pd;
+    register s128 *pd __asm__("$19");
 
     if (c <= 0.0f)
         c = 0.1f;
@@ -77,12 +75,12 @@ int SCRConditionAtkChackThreeRayParallel(void *obj, float a, float b, float c)
     for (i = 0; i < 3; i++) {
         if (i == 1) {
             __asm__ __volatile__("lqc2 vf5, 0x0(%0)\nlqc2 vf6, 0x0(%1)\nvadd.xyz vf5, vf5, vf6\nsqc2 vf5, 0x0(%2)\n"
-                                 : : "r"(&L.v70), "r"(&L.vE0), "r"(&L.vD0) : "memory");
-            *(s128 *)&L.v90 = *pd;
+                                 : : "r"(&L.v70), "r"(&L.vE0), "r"(pd) : "memory");
+            *(s128 *)&L.v90 = *(s128 *)&L.vD0;
         }
         if (i == 2) {
             __asm__ __volatile__("lqc2 vf5, 0x0(%0)\nlqc2 vf6, 0x0(%1)\nvsub.xyz vf5, vf5, vf6\nsqc2 vf5, 0x0(%2)\n"
-                                 : : "r"(&L.v70), "r"(&L.vE0), "r"(&L.vD0) : "memory");
+                                 : : "r"(&L.v70), "r"(&L.vE0), "r"(pd) : "memory");
             *(s128 *)&L.v90 = *(s128 *)&L.vD0;
         }
         vecScale(&L.vB0, &L.v80, fa);
@@ -94,6 +92,3 @@ int SCRConditionAtkChackThreeRayParallel(void *obj, float a, float b, float c)
     }
     return 1;
 }
-#else
-int SCRConditionAtkChackThreeRayParallel(void *obj, float a, float b, float c);
-#endif

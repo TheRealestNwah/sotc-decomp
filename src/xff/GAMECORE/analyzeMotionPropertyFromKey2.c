@@ -13,15 +13,14 @@ extern int PredictMotionOrientByScriptCtrl(int);
 extern void PredictMotionChangeState(MotionPredict *, int, int);
 extern void analyzeMotionProperty(int, int, int, int, int, float, float);
 
-#ifdef NONMATCHING /* 2 words: the original copies v with daddu and tests v0, where this masks with andi and tests a2. */
+#ifdef NONMATCHING /* 1 word: v pinned to $a2 drops the old andi mask, but the beqz tests $a2 where the original tests $v0 (the original copies v0 into a2 before the branch and fills the delay slot from the then-block). */
 int analyzeMotionPropertyFromKey2(char *obj, int a1, int a2, int a3, int t0)
 {
-  unsigned short new_var2;
   int new_var;
   MotionPredict p;
-  int v;
-  new_var2 = PredictMotionOrientByScriptCtrl(*((int *) (obj + 8)));
-  v = new_var2;
+  register int v __asm__("$6");
+  v = PredictMotionOrientByScriptCtrl(*((int *) (obj + 8)));
+
   do
   {
     if (v != 0)
