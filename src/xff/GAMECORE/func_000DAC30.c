@@ -5,18 +5,11 @@ extern int act_approach_judge_ray_check_camera_target_approach(void *, void *, v
 extern int GAMEUTIL_get_cur_status_status_manager(int);
 extern void GAMEUTIL_doit_status_manager(int, int, int, float);
 
-static inline void sub3(Vec4 *out, Vec4 *a, Vec4 *b)
-{
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
-                         "lqc2 vf6, 0x0(%2)\n"
-                         "vsub.xyz vf5, vf5, vf6\n"
-                         "sqc2 vf5, 0x0(%0)\n"
-                         : : "r"(out), "r"(a), "r"(b) : "memory");
-}
+#define SUB3(out, a, b) __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n" "lqc2 vf6, 0x0(%2)\n" "vsub.xyz vf5, vf5, vf6\n" "sqc2 vf5, 0x0(%0)\n" : : "r"(out), "r"(a), "r"(b) : "memory")
 
 static inline float dot3(Vec4 *a, Vec4 *b)
 {
-    float d;
+    register float d __asm__("$2");
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
                          "vaddw.x vf7, vf0, vf0w\n"
@@ -29,7 +22,7 @@ static inline float dot3(Vec4 *a, Vec4 *b)
     return d;
 }
 
-#ifdef NONMATCHING /* 17 diffs: register numbering only (original s3=flag, s4=arg1; a0/v1/v0 for &d1/&d2/the dot result) */
+#ifdef NONMATCHING /* 7 diffs: s2/s4 swapped (target s2=&v40, s4=arg1). flag/dot/d-pointer pins fix the rest; pinning arg1 to $20 or &v40 to $18 gives 8. SUB3 is a macro so the $4/$3 pins survive. */
 static void func_000DAC30(int arg0, char *arg1, int unused, int arg3, float fp)
 {
     Vec4 v0[3];
@@ -37,14 +30,16 @@ static void func_000DAC30(int arg0, char *arg1, int unused, int arg3, float fp)
     Vec4 v40;
     Vec4 d1;
     Vec4 d2;
-    int flag = 0;
+    register int flag __asm__("$19") = 0;
     float z;
 
     if (act_approach_judge_ray_check_camera_target_approach(v0, &v30, &v40, arg0, arg1, arg3) == 0) {
         Vec4 *p = (Vec4 *)(arg1 + 0x60);
+        register Vec4 *pd1 __asm__("$4");
+        register Vec4 *pd2 __asm__("$3");
 
         if (GAMEUTIL_get_cur_status_status_manager(arg0) == 1 || p->f[0x34 / 4] <= -0.6981317f ||
-            (sub3(&d1, p, &v30), sub3(&d2, p, &v40), z = 0.0f, d2.f[1] = z, d1.f[1] = z, dot3(&d1, &d2) <= z)) {
+            (pd1 = &d1, ({ SUB3(pd1, p, &v30); }), pd2 = &d2, ({ SUB3(pd2, p, &v40); }), z = 0.0f, d2.f[1] = z, d1.f[1] = z, dot3(pd1, pd2) <= z)) {
             flag = 1;
         }
     }
