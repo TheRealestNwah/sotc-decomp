@@ -22,27 +22,27 @@ static inline float dot3(Vec4 *a, Vec4 *b)
     return d;
 }
 
-#ifdef NONMATCHING /* 7 diffs: s2/s4 swapped (target s2=&v40, s4=arg1). flag/dot/d-pointer pins fix the rest; pinning arg1 to $20 or &v40 to $18 gives 8. SUB3 is a macro so the $4/$3 pins survive. */
 static void func_000DAC30(int arg0, char *arg1, int unused, int arg3, float fp)
 {
     Vec4 v0[3];
     Vec4 v30;
     Vec4 v40;
+    Vec4 *pd2init;
     Vec4 d1;
     Vec4 d2;
     register int flag __asm__("$19") = 0;
     float z;
 
+    pd2init = &d2;
     if (act_approach_judge_ray_check_camera_target_approach(v0, &v30, &v40, arg0, arg1, arg3) == 0) {
         Vec4 *p = (Vec4 *)(arg1 + 0x60);
         register Vec4 *pd1 __asm__("$4");
         register Vec4 *pd2 __asm__("$3");
 
         if (GAMEUTIL_get_cur_status_status_manager(arg0) == 1 || p->f[0x34 / 4] <= -0.6981317f ||
-            (pd1 = &d1, ({ SUB3(pd1, p, &v30); }), pd2 = &d2, ({ SUB3(pd2, p, &v40); }), z = 0.0f, d2.f[1] = z, d1.f[1] = z, dot3(pd1, pd2) <= z)) {
+            (pd1 = &d1, ({ SUB3(pd1, p, &v30); }), pd2 = pd2init, ({ SUB3(pd2, p, &v40); }), z = 0.0f, d2.f[1] = z, d1.f[1] = z, dot3(pd1, pd2) <= z)) {
             flag = 1;
         }
     }
     GAMEUTIL_doit_status_manager(arg0, flag, 0, fp);
 }
-#endif
