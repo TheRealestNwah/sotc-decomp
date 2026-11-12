@@ -235,3 +235,12 @@ def test_loader_function_reads_words_and_relocation_types():
 def test_loader_function_rejects_unknown_names():
     with pytest.raises(SystemExit):
         loader_function("h", LOADER_CSV, LOADER_ASM)
+
+
+def test_protect_inline_asm_keeps_register_variable_declarations():
+    decl = ' register int x __asm__("$2") = f(a, (b));'
+    out = protect_inline_asm(f'void g(void) {{{decl} register int y asm("$3"); y = x; }}')
+    encoded = [line.split()[-1] for line in out.splitlines() if "b64literal" in line]
+    assert [b64decode(e).decode("utf-8") for e in encoded] == [decl, ' register int y asm("$3");']
+    assert "asm" not in out.replace("#pragma _permuter b64literal", "")
+    assert out.rstrip().endswith("y = x; }")
