@@ -203,6 +203,26 @@ These libraries are candidates to identify by signature matching against the SDK
 - **The Loader's Game code was compiled with small data (`-G8`, gcc's default), unlike the Game modules' `-G0`.** Its globals are read through `$gp` (`_gp` = `0x141D70`): `SetHeapStartPoint` stores with `sw $a0, %gp_rel(D_00139E04)($gp)`. ee-gcc 2.96 `-O2 -G8` with an `extern int` of that size gives exactly that, so `tools/ee_cc.py` builds `src/loader/` with `-O2 -G8` and assembles with `ee-as -G 8`. `SetHeapStartPoint` and `GetHeapCurrentPoint` match this way.
 - Loader C is spliced by `tools/loader_splice.py`. The Loader is a linked executable, so its asm has no relocations, only symbolic operands (`jal`, `%hi`/`%lo`, `%gp_rel`). The splice checks each C relocation against the original operand's type and target address, then keeps the original line, so the build links as before.
 
+#### Loader matching near-misses
+
+These C drafts have the original function sizes with Sony `ee-gcc` 2.96 at
+`-O2 -G8`. Offsets are relative to the start of each function.
+
+| Function | Remaining differences |
+| --- | --- |
+| `LoaderSysDumpIopModuleIdentifiers` | One word at `+0x38`. The compiler emits `blezl` for the loop-entry guard and the original uses `blez` with the same delay-slot instruction. |
+| `ReinitDisp` | Two words at `+0xC0` and `+0xD0`. The load of the height constant (`448`) and the setup of the first `sceGsResetGraph` argument trade places. |
+| `LoaderSysGetMemoryInfo` | Four words at `+0x60`, `+0x64`, `+0x70` and `+0x74`. The compiler reverses the source-address copy and field load, then reverses two independent additions. |
+
+Per-file trials of `-O3` and `-fno-strict-aliasing` reproduced these differences.
+`-O1` and `-fno-delayed-branch` changed the function sizes. Disabling either
+scheduler pass (`-fno-schedule-insns` or `-fno-schedule-insns2`) introduced more
+differences. This version of `cc1` rejects `-mno-branch-likely`.
+
+Separate 30-minute permuter searches at `-O2 -G8` reached iterations 260,
+246 and 251, respectively. The permuter found no improvement over any of
+the three starting drafts, and all three remain unmatched.
+
 ## Counting functions in the Game modules (#2285)
 
 A Game module's functions are its `STT_FUNC` symbols in `.text` plus the static functions that have only Placeholder names. `tools/progress.py` counts both from the Original:
