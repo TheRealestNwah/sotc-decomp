@@ -1,9 +1,8 @@
-/* Parked draft: replay/pause menu state machine step. Switch on the state at ctx+4 (3..16, jump
+/* Replay/pause menu state machine step. Switch on the state at ctx+4 (3..16, jump
    table RO_00180A20, written out case by case; states 5-8, 10-12 and out of range fall to the common
    tail). State 9 is forced when the pad menu button (0x800) is pressed outside state 14. The common tail
    hides the pause layer and returns 1 when ctx+0xC has bit 4, else returns 0. Continues in func_000C72A8
    (the tail's SpriteMenuSetDispFlag call and epilogue). */
-#ifdef NONMATCHING
 extern char *g_strReplayPauseLayerDef[];
 extern char RO_00180918[];
 extern int B_0019CF40;
@@ -47,7 +46,8 @@ static int func_000C7080(int menu, PauseCtx *ctx)
         }
         break;
     case 9:
-        goto hide;
+        SpriteMenuSetDispFlag(menu, SpriteMenuGetLayerNoByHash(menu, MakeStrHashValue(layerName)), 0);
+        return 1;
     case 3:
         SpriteMenuSetDispFlag(menu, SpriteMenuGetLayerNoByHash(menu, MakeStrHashValue(layerName)), 0);
         func_000C8B68();
@@ -90,10 +90,8 @@ static int func_000C7080(int menu, PauseCtx *ctx)
     }
     if (ctx->flags & 4) {
         ctx->flags = ctx->flags & ~4U;
-    hide:
         SpriteMenuSetDispFlag(menu, SpriteMenuGetLayerNoByHash(menu, MakeStrHashValue(layerName)), 0);
         return 1;
     }
     return 0;
 }
-#endif
