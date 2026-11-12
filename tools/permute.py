@@ -218,6 +218,30 @@ C_TOKEN_RE = re.compile(
     r"|\b(?:__asm__|__asm|asm)\b|[()]",
     re.S,
 )
+DECL_TOKEN_RE = re.compile(
+    r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[(){};]',
+    re.S,
+)
+
+
+def _is_register_declarator(source: str, start: int) -> bool:
+    """Whether the asm at `start` names a register variable's register."""
+    before = re.search(r"(\w+)\s*$", source[:start])
+    return before is not None and before.group(1) not in {"else", "do", "return"}
+
+
+def _declaration_end(source: str, pos: int) -> int:
+    """The index just past the `;` ending the declaration that continues at `pos`."""
+    depth = 0
+    for match in DECL_TOKEN_RE.finditer(source, pos):
+        text = match.group()
+        if text in "({":
+            depth += 1
+        elif text in ")}":
+            depth -= 1
+        elif text == ";" and depth == 0:
+            return match.end()
+    raise ValueError("register variable declaration is missing its semicolon")
 
 
 def protect_inline_asm(source: str) -> str:
@@ -230,9 +254,10 @@ def protect_inline_asm(source: str) -> str:
     replacements = []
     start = None
     depth = 0
+    skip_until = 0
     for token in C_TOKEN_RE.finditer(source):
         text = token.group()
-        if text.startswith(('"', "'", "//", "/*")):
+        if token.start() < skip_until or text.startswith(('"', "'", "//", "/*")):
             continue
         if start is None:
             if text in {"__asm__", "__asm", "asm"}:
@@ -242,7 +267,17 @@ def protect_inline_asm(source: str) -> str:
             depth += 1
         elif text == ")":
             depth -= 1
-            if depth == 0:
+            if depth == 0 and _is_register_declarator(source, start):
+                # `register int x __asm__("$2") = init;`: keep the whole
+                # declaration verbatim, since the parser has no asm labels.
+                decl_start = max(source.rfind(c, 0, start) for c in ";{}") + 1
+                end = _declaration_end(source, token.end())
+                encoded = b64encode(source[decl_start:end].encode("utf-8")).decode("ascii")
+                literal = f"\n#pragma _permuter b64literal {encoded}\n"
+                replacements.append((decl_start, end, literal))
+                skip_until = end
+                start = None
+            elif depth == 0:
                 suffix = re.match(
                     r"\s*(?:(?:/\*.*?\*/|//[^\n]*\n)\s*)*;", source[token.end() :], re.S
                 )
