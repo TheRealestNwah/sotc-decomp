@@ -8,9 +8,8 @@ extern void iosRotMatrixY(float *, float);
 extern char ZDirVector[];
 extern int setAttainmentPosAndDirAndLock(void *, float *, float *);
 
-static const unsigned int RO_NoLimit = 0xFFFFFFFF;
-
 #ifdef NONMATCHING /* 130 diffs: saved-register assignment (orig hit=$s0 i=$s1 w=$s2 goal=$s3 lim=$s4 lim+8=$s5), frame 0xD0 vs 0xC0 */
+static const unsigned int RO_NoLimit = 0xFFFFFFFF;
 int func_000940A0(void *unused, float *lim)
 {
     float v[4] __attribute__((aligned(16)));
