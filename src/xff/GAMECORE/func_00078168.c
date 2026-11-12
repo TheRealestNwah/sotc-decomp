@@ -1,4 +1,4 @@
-/* ~11 diffs (permuter tweak) (mostly relocation addends), same length (152 words). Player-state initialiser (HP/grip reset, weapon setup, parent-judge callbacks, double-spring interp, motion IK interest, ColCont init, release/control callbacks). Remaining real diffs: store scheduling of the three small int/byte blocks (w+0x84 / w+0x30 clears, w+0x4B0 vs the quad copies) and f13/f14 load order for set_param_double_spring_interp_common. */
+/* 9 diffs, same length (152 words). Player-state initialiser (HP/grip reset, weapon setup, parent-judge callbacks, double-spring interp, motion IK interest, ColCont init, release/control callbacks). Remaining real diffs: store scheduling of the three small int/byte blocks (w+0x84 / w+0x30 clears, w+0x4B0 vs the quad copies) and f13/f14 load order for set_param_double_spring_interp_common. */
 typedef int Vec4 __attribute__((mode(TI)));
 extern int dispCompleteAlertHard;
 extern int dispCompleteAlertNormal;
@@ -107,8 +107,8 @@ void func_00078168(char *w)
   {
     char *v = w + 0x84;
     char *v1 = w + 0x30;
-    v1[0x21] = 0;
     v1[0x20] = 0;
+    v1[0x21] = 0;
     *((int *) (w + 0xE0)) = 0;
     *((int *) (v + 0xC)) = 0;
     v[0x10] = 0;
