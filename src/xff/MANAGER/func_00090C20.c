@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 2 diffs (cb reloaded into v0 instead of v1 for the jalr); flip/p1/p4 temps from the permuter, was 30 */
+/* Parked: 2 diffs (cb reloaded into v0 instead of v1 for the jalr); flip/p1/p4 temps from the permuter, was 30; a second 40-min permuter run from the 2-diff base found nothing. */
 extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, short, float *);
 extern void SetGeometryPointerNodePosState(void *, int, int, float *, void *);
 extern float XUnitVector[4];
