@@ -148,6 +148,9 @@ splat finds 1,038 functions and about 51,000 instructions in `.text`.
 - **`-O2` over `-O3`:** 41 tiny static functions (6 instructions or fewer) across the modules are still called rather than inlined, which `-O3` would have done.
 - **Float literals:** 2.96 truncates decimal float literals instead of rounding to nearest (`0.15f` gives `0x3E199999`, `0.735f` gives `0x3F3C28F5`). The original data has exactly these values, so plain literals like `0.15f` are right. A value that needs more digits, like π/180 (`0x3C8EFA35`), must be written with enough of them: `0.0174532925f`, not `0.017453292f`.
 
+- **Float spilled through memory for a sign test (VU0 dot products):** when the original stores a float result with `swc1`, reloads it with `lw` and branches with `bgez`/`bltz` (instead of `c.lt.s`), model it with a volatile slot and an integer read: `float s40; *(volatile float *)&s40 = dot(a, b); if (*(volatile int *)&s40 < 0) ...`. This also gives the original's stack frame size and float register numbering (`calcMoveQuaternion` went from 134 to 77 differing words). Pin a float result to a specific register with `register float x __asm__("$f1")` (or `"+r"` laundering) when the numbering still differs.
+- **Decompose in-place VU0 normalizes:** when the original reads one buffer and writes another (`lqc2` from `sp+0` and `sqc2` to `sp+0x30`), give the helper separate source and destination operands rather than copying first. Otherwise a stray `lq`/`sq` pair appears and shifts every later register.
+
 Running the compilers: the Linux builds are 32-bit, so they run under WSL with a private 32-bit libc, unpacked from Ubuntu's `libc6:i386` package into `~/i386libs` (no `sudo` needed). They must run from WSL's own filesystem, because old 32-bit programs can't read files on Windows-mounted drives ("Value too large for defined data type").
 
 ### Native EE declarations in m2c context (#331)
