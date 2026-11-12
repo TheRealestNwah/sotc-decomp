@@ -1,15 +1,20 @@
 static inline int is_near_zero(float x, float eps)
 {
     if (x < 0.0f) {
-        if (-x > eps) {
-            return 0;
-        }
-        return 1;
+        if (-x <= eps)
+            goto nearZero;
+        else
+            goto notNearZero;
+    } else {
+        if (x <= eps)
+            goto nearZero;
+        else
+            goto notNearZero;
     }
-    if (x > eps) {
-        return 0;
-    }
+nearZero:
     return 1;
+notNearZero:
+    return 0;
 }
 static inline float increase_pitch(int *changed, int clamp, float pitch, float add, float max, float min)
 {
@@ -43,7 +48,8 @@ static inline float increase_pitch(int *changed, int clamp, float pitch, float a
             out = pitch + add;
             if (max < out) {
                 out = max;
-            } else if (out < min) {
+            }
+            if (out < min) {
                 out = min;
             }
             r = 1;
@@ -56,7 +62,7 @@ static inline float increase_pitch(int *changed, int clamp, float pitch, float a
 }
 
 #ifdef NONMATCHING
-/* 43 diffs: inlined GAMEUTIL_increase_pitch has the same inverted branch-likely shapes as its standalone copy */
+/* 7 diffs (was 43, same fixes as GAMEUTIL_increase_pitch: goto nearlyZero idiom, two independent ifs on the unclamped path): the inlined copy keeps the same clamp-tail bnel shapes as the standalone one */
 float GAMEUTIL_increase_pitch_limit_clip(int *changed, int clamp, float pitch, float add, float max, float min)
 {
     int r;

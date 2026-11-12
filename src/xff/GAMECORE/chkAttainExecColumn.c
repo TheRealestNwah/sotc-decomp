@@ -1,7 +1,7 @@
 typedef int s128 __attribute__((mode(TI)));
 extern void StabilizeToYRotQuaternion(void *);
 
-#ifdef NONMATCHING /* 6 diffs: otherwise exact (VU blocks, pinned registers); the matrix pointer for the inverse ($v1) is derived from the earlier $v0 copy instead of a fresh addiu, the quat position load/addiu pair is swapped, and the final return flag uses the opposite branch polarity */
+#ifdef NONMATCHING /* 4 diffs: otherwise exact (VU blocks, pinned registers; the empty asm on pp fixes the load/addiu order). The matrix pointer for the inverse ($v1) is copied from $v0 instead of a fresh addiu (asm barriers on mA/m do not help), and the final return flag uses the opposite branch polarity (tried ternary, flag variable, goto and inverted forms) */
 static int chkAttainExecColumn(char *w0, float *pos0, char *cam0, char *src)
 {
     register char *w __asm__("$17") = w0;
@@ -23,6 +23,7 @@ static int chkAttainExecColumn(char *w0, float *pos0, char *cam0, char *src)
     if (*(int *)(w + 0xE8) != 0)
         StabilizeToYRotQuaternion(q);
     pp = *(char **)(cam + 0x134);
+    __asm__("" : "+r"(pp));
     mA = mtx;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"

@@ -1,16 +1,21 @@
-#ifdef NONMATCHING /* 28 diffs (permuter 40 min: only semantics-changing variants): the near-zero check and the clamp-to-limit branches come out with inverted branch-likely shapes */
+#ifdef NONMATCHING /* 7 diffs (was 28; the unclamped path is two independent ifs, not else-if, and the near-zero check uses the goto nearlyZero idiom from GAMEUTIL_act_pitch_rot_limit_clip): the clamp-to-limit tails use bnel instead of beqz + b, and the max clamp branches past the min check */
 static inline int is_near_zero(float x, float eps)
 {
     if (x < 0.0f) {
-        if (-x > eps) {
-            return 0;
-        }
-        return 1;
+        if (-x <= eps)
+            goto nearZero;
+        else
+            goto notNearZero;
+    } else {
+        if (x <= eps)
+            goto nearZero;
+        else
+            goto notNearZero;
     }
-    if (x > eps) {
-        return 0;
-    }
+nearZero:
     return 1;
+notNearZero:
+    return 0;
 }
 float GAMEUTIL_increase_pitch(int *changed, int clamp, float pitch, float add, float max, float min)
 {
@@ -44,7 +49,8 @@ float GAMEUTIL_increase_pitch(int *changed, int clamp, float pitch, float add, f
             out = pitch + add;
             if (max < out) {
                 out = max;
-            } else if (out < min) {
+            }
+            if (out < min) {
                 out = min;
             }
             r = 1;

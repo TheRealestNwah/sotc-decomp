@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 12 diffs (int return on CAM_get_warp_position, found by permuter): scheduling only. The original copies obj+0x10 into a1 before the boss-check branch and moves the riding-obj result into t2 after the float args; ours does both the other way round. */
+#ifdef NONMATCHING /* 3 diffs (int return on CAM_get_warp_position, obj+0x10 passed directly, both found by permuter): scheduling only. The original moves the two float args into f12/f13 before computing w+0x1814 into t3; ours computes t3 first. */
 typedef float Vec[4] __attribute__((aligned(16)));
 extern int GAMEUTIL_is_boss_obj(int, int);
 extern void CAM_add_plane_offset_in_position(float *, float *, float *, float);
@@ -18,13 +18,12 @@ static int func_000D5CF0(char *obj, char *w, float *base, int a3, int t0, float 
     Vec d;
     float len2;
     float off;
-    float *p = (float *)(obj + 0x10);
 
     if (GAMEUTIL_is_boss_obj(*(int *)(obj + 0x30), 1) == 1)
         off = f14;
     else
         off = f13;
-    CAM_add_plane_offset_in_position(pos, p, (float *)(obj + 0x20), -off * 1.001f);
+    CAM_add_plane_offset_in_position(pos, (float *)(obj + 0x10), (float *)(obj + 0x20), -off * 1.001f);
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                          "lqc2 vf6, 0x0(%1)\n"
                          "vsub.xyz vf5, vf5, vf6\n"
@@ -51,8 +50,8 @@ static int func_000D5CF0(char *obj, char *w, float *base, int a3, int t0, float 
                              : : "r"(base), "r"(d), "r"(pos) : "memory");
     }
     {
-                CAM_get_warp_position(p, p, pos, base, a3, t0, CAM_get_target_riding_obj(w + 0x23C), w + 0x1814, f13, f14, 1);
-        *(int *)(obj + 8) = 1;
+                CAM_get_warp_position((float *)(obj + 0x10), (float *)(obj + 0x10), pos, base, a3, t0, CAM_get_target_riding_obj(w + 0x23C), w + 0x1814, f13, f14, 1);
+        { int *nv = (int *)(obj + 8); *nv = 1; }
         *(int *)(obj + 0xC) = 1;
     }
     return 1;
