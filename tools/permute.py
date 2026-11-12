@@ -244,6 +244,31 @@ def _declaration_end(source: str, pos: int) -> int:
     raise ValueError("register variable declaration is missing its semicolon")
 
 
+def _toplevel_start(source: str, pos: int) -> int:
+    """The index where the file-scope item enclosing `pos` begins."""
+    depth = 0
+    boundary = 0
+    for match in DECL_TOKEN_RE.finditer(source, 0, pos):
+        text = match.group()
+        if text == "{":
+            depth += 1
+        elif text == "}":
+            depth -= 1
+            if depth == 0:
+                boundary = match.end()
+        elif text == ";" and depth == 0:
+            boundary = match.end()
+    return boundary
+
+
+def _type_declaration(declarator: str) -> str | None:
+    """`extern T x;` for `register T x`, so the permuter's type map knows x."""
+    text = re.sub(r"\bregister\b", "", declarator).strip()
+    if "," in text or not re.search(r"\w\s*$", text):
+        return None
+    return f"extern {text};"
+
+
 def protect_inline_asm(source: str) -> str:
     """Keep inline asm verbatim through the permuter's C parser.
 
@@ -252,6 +277,7 @@ def protect_inline_asm(source: str) -> str:
     Parentheses in strings and comments are not operand delimiters.
     """
     replacements = []
+    externs: set[str] = set()
     start = None
     depth = 0
     skip_until = 0
@@ -275,6 +301,13 @@ def protect_inline_asm(source: str) -> str:
                 encoded = b64encode(source[decl_start:end].encode("utf-8")).decode("ascii")
                 literal = f"\n#pragma _permuter b64literal {encoded}\n"
                 replacements.append((decl_start, end, literal))
+                # The parser no longer sees the variable, so declare its type
+                # at file scope for the randomizer's type map.
+                extern = _type_declaration(source[decl_start:start])
+                if extern is not None and extern not in externs:
+                    externs.add(extern)
+                    top = _toplevel_start(source, decl_start)
+                    replacements.append((top, top, f"\n{extern}\n"))
                 skip_until = end
                 start = None
             elif depth == 0:
@@ -289,7 +322,7 @@ def protect_inline_asm(source: str) -> str:
                 start = None
     if start is not None:
         raise ValueError("unterminated inline asm")
-    for start, end, literal in reversed(replacements):
+    for start, end, literal in sorted(replacements, key=lambda r: (r[0], r[1]), reverse=True):
         source = source[:start] + literal + source[end:]
     return source
 

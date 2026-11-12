@@ -244,3 +244,16 @@ def test_protect_inline_asm_keeps_register_variable_declarations():
     assert [b64decode(e).decode("utf-8") for e in encoded] == [decl, ' register int y asm("$3");']
     assert "asm" not in out.replace("#pragma _permuter b64literal", "")
     assert out.rstrip().endswith("y = x; }")
+    # The hidden variables' types stay known to the randomizer.
+    assert out.startswith("\nextern int x;\n\nextern int y;\nvoid g(void)") or out.startswith(
+        "\nextern int y;\n\nextern int x;\nvoid g(void)"
+    )
+
+
+def test_protect_inline_asm_declares_register_variables_before_their_function():
+    src = 'typedef int T;\nint h(void) { return 0; }\nvoid g(void) { register T *p __asm__("$4"); }'
+    out = protect_inline_asm(src)
+    assert out.index("extern T *p;") > out.index("return 0; }")
+    assert out.index("extern T *p;") < out.index("void g")
+    # Multiple declarators are left without a type declaration.
+    assert "extern" not in protect_inline_asm('void g(void) { register int a, b __asm__("$4"); }')
