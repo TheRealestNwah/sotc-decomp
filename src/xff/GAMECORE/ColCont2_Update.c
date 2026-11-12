@@ -23,7 +23,6 @@ extern int ClipCollisionDirect(void *, void *, void *, void *);
 extern void DeleteTwoWayLink(void *);
 extern void AddTwoWayLinkNext(void *, void *);
 
-#ifdef NONMATCHING /* 9 diffs: constant 1 lands in v0 instead of v1, and the lw 0x134 is issued before the RO vector loads */
 void ColCont2_Update(ColCont2 *c, int obj0)
 {
     float pos[4] __attribute__((aligned(16)));
@@ -53,17 +52,34 @@ void ColCont2_Update(ColCont2 *c, int obj0)
             c->linked = GetGeometryPointerObject(GetLayoutClass(obj) + 0xC0);
             if (c->linked) {
                 AddTwoWayLinkNext(GetLayoutClass(c->linked) + 0x118, c->link);
-                c->hasLink = 1;
+                {
+                    register int one __asm__("$3") = 1;
+                    c->hasLink = one;
+                }
             }
         }
     } else {
         if (chr[0x362] != 0) {
-            *(V128 *)pos = RO_0017D530;
-            __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
-                                 "lqc2 vf6, 0x0(%1)\n"
-                                 "vadd.xyz vf5, vf5, vf6\n"
-                                 "sqc2 vf5, 0x0(%0)\n"
-                                 : : "r"(pos), "r"(*(char *volatile *)(lay + 0x134)) : "memory");
+            register V128 *ro __asm__("$2") = &RO_0017D530;
+            __asm__ __volatile__("ld $3, 0x8(%0)
+"
+                                 "ld $4, 0x0(%0)
+"
+                                 "sd $3, 0x8(%1)
+"
+                                 "sd $4, 0x0(%1)
+"
+                                 "lw %0, 0x134(%2)
+"
+                                 "lqc2 vf5, 0x0(%1)
+"
+                                 "lqc2 vf6, 0x0(%0)
+"
+                                 "vadd.xyz vf5, vf5, vf6
+"
+                                 "sqc2 vf5, 0x0(%1)
+"
+                                 : "+r"(ro) : "r"(pos), "r"(lay) : "$3", "$4", "memory");
             if (ClipCollisionDirect(hit, *(char **)(lay + 0x134), pos, gcGlobalVar + 0x230) != 0)
                 c->attr = GetGeometryPointerCharColAttr(hit);
             else
@@ -81,4 +97,3 @@ void ColCont2_Update(ColCont2 *c, int obj0)
     else
         c->timer = 0.0f;
 }
-#endif
