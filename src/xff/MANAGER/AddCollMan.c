@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 10 diffs: scheduling of the group-pointer movn and the s0/s1/s4 setup before the inner loop. Permuter (5 workers, 25 min): best was a volatile char temp for pass != 0, still not a match. */
+#ifdef NONMATCHING /* 9 diffs (char copy of pass found by permuter): scheduling of the group-pointer movn and the s0/s1/s4 setup before the inner loop. Permuter (5 workers, 25 min): best was a volatile char temp for pass != 0, still not a match. */
 typedef struct FogColMan {
     char pad0[0x90];
     int flags;
@@ -27,6 +27,7 @@ static inline unsigned char *GetObjWork(unsigned char *obj, int type)
 unsigned char *AddCollMan(void *a, void *b, void *c)
 {
     unsigned char *w = 0;
+    char pc;
     int found;
     int pass;
 
@@ -38,8 +39,9 @@ unsigned char *AddCollMan(void *a, void *b, void *c)
         if (found) {
             continue;
         }
+        pc = pass;
         last = 0;
-        for (node = isysGroupForFirst(pass != 0 ? B_00148AD8 : B_00148ADC, 0); node != 0;
+        for (node = isysGroupForFirst(pc != 0 ? B_00148AD8 : B_00148ADC, 0); node != 0;
              node = isysGroupForNext(node, 0)) {
             last = *node;
             w = GetObjWork(last, 0x18);
