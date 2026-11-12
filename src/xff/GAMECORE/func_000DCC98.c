@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 25 words differ (prologue saves s0 before s2/f20, and gcc threads the st!=1 branch past the dispatch's first test). */
+/* Parked: 9 words differ (prologue saves s0 before s2/f20, and gcc threads the st!=1 branch past the dispatch's first test). */
 typedef struct {
     int mode;
     int state;
@@ -27,7 +27,7 @@ static int func_000DCC98(float *out, AimCtl *s, float from, float step, float ai
             st = 1;
         } else {
             st = s->state;
-            if (st == 1) {
+            if (s->state == 1) {
                 int dir = GAMEUTIL_inc_or_dec_for_near_to_aim_yaw(0, from, 1.0f, aim);
                 if (dir == st) {
                     s->state = 2;

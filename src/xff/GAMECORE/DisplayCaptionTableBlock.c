@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 7 words differ (register allocation of the hoisted addresses) */
+/* Parked: 7 words differ (register allocation of the hoisted addresses); permuter (40 min) found nothing below 7, and reordering the name/cb/fn temps gives 20+. */
 extern int rootPtn;
 extern char *D_00179FF4;
 extern int D_00179FF8;

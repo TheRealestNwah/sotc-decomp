@@ -1,4 +1,5 @@
 #ifdef NONMATCHING
+/* Parked: 23 diffs (shared found block, bnel store for value < 2). Permuter (40 min) best was an r temp that try_compilers scores 32. */
 typedef struct { int a; int hash; } LayerDef;
 typedef struct { LayerDef *def; char *parts; unsigned int flags; char pad[0x38]; } Layer;
 typedef struct { int a; int hash; char pad[4]; unsigned int value; } PartDef;

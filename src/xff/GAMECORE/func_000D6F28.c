@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 25 words differ (register allocation: original keeps o in s4, a in s1, b in s3, c in s2) */
+/* Parked: 25 words differ (register allocation: original keeps o in s4, a in s1, b in s3, c in s2); permuter (40 min) found only semantics-changing variants */
 extern void func_000D70B8(char *cam, void *unused, int arg, float yaw, float pitch, float rate);
 extern void func_000D7138(char *cam, void *a, void *c, int mode, float rate);
 extern void doit_camera_target_visible_angle_manager(void *mgr, void *a, void *b, void *c, float rate);
