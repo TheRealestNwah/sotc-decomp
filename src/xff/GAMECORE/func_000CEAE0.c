@@ -20,15 +20,17 @@ static void func_000CEAE0(IconSet *icons, char *cam)
 {
     int *sh = DldSysUndefSymbol != (int)SH_BossStatusDEFAULT ? SH_BossStatusDEFAULT : 0;
     char *bosses = (char *)sh[4];
-    int count = sh[3];
     int active = bossStatGetActiveBoss();
+    int count = sh[3];
     int booting = 0;
-    int show[count];
     int i;
     char *b;
 
     if (active != 0)
         booting = bossStatBootChk() > 0;
+    {
+    int show[count];
+
     b = bosses;
     for (i = 0; i < count; i++, b += 0xEC) {
         int v = 0;
@@ -42,7 +44,7 @@ static void func_000CEAE0(IconSet *icons, char *cam)
             char *group = icons->groups + *(int *)(b + 0x14) * 0x44;
             unsigned int n = (*(unsigned int *)(group + 8) >> 4) & 0x3FF;
             unsigned int k;
-            char sprite[0x40] __attribute__((aligned(16)));
+            char sprite[0x50] __attribute__((aligned(16)));
 
             for (k = 0; k < n; k++) {
                 char *entry = *(char **)(group + 4) + k * 0x1C;
@@ -57,5 +59,6 @@ static void func_000CEAE0(IconSet *icons, char *cam)
             }
         }
     }
+}
 }
 #endif

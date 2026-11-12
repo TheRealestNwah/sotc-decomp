@@ -14,11 +14,14 @@ extern struct { char pad[4]; int ctrl; } *ScriptCtrlDef_SCRFall;
 extern int AI_OptFloatFrameSample(int, int);
 extern void CharaCtrlResetAllScriptCtrlStatus(int);
 extern void CharaCtrlSetScriptCtrlStatus(int, int);
-extern int ClipCollisionDirectCallBack(void *, Vec4 *, Vec4 *, void *, int);
+extern int ClipCollisionDirectCallBack(void *, Vec4 *, Vec4 *, void *, int (*)(), int, int, int (*)(), void *);
+extern int AI_JudgeNotCharaObjFunc();
+extern int AI_JudgeColAttrFunc();
+extern Vec4 YUnitVectorInv;
 extern char *GetCharacterClass(int);
 extern char *GetLayoutClass(int);
 extern void ParentLayoutObj(int, void *);
-extern void SCRCharaTurnDirectInput(int, int);
+extern void SCRCharaTurnDirectInput(int, float);
 extern void SCRSetRootScaleRatio(int, float);
 extern int StageManagerCheckAreaExist(int);
 extern void func_000AEAD0(int);
@@ -75,7 +78,7 @@ static inline void addXYZ(Vec4 *out, Vec4 *a, Vec4 *b)
 
 static void func_000B1D88(int self)
 {
-    Vec4 hit[4] __attribute__((aligned(16)));
+    Vec4 hit[5];
     Vec4 offset __attribute__((aligned(16)));
     Vec4 end __attribute__((aligned(16)));
     Vec4 from __attribute__((aligned(16)));
@@ -88,19 +91,17 @@ static void func_000B1D88(int self)
         int t = isysGetThisSubThread();
 
         CharaCtrlResetAllScriptCtrlStatus(t);
-        SCRCharaTurnDirectInput(t, 0);
+        SCRCharaTurnDirectInput(t, 0.0f);
         SCRSetRootScaleRatio(t, 1.0f);
-        if (StageManagerCheckAreaExist(*(int *)(layout + 0x134)) == 0) {
-            inArea = 0;
-        } else {
+        if (StageManagerCheckAreaExist(*(int *)(layout + 0x134)) != 0) {
             if (inArea == 0) {
                 int t2 = isysGetThisSubThread();
                 char *l2 = GetLayoutClass(t2);
 
-                rotateByQuat(&offset, (Vec4 *)(l2 + 0x10), &offset);
+                rotateByQuat(&offset, *(Vec4 **)(l2 + 0x13C), &YUnitVectorInv);
                 from.q = **(s128 **)(l2 + 0x134);
                 addXYZ(&end, &from, &offset);
-                if (ClipCollisionDirectCallBack(hit, &from, &end, gcGlobalVar + 0x230, 0) != 0)
+                if (ClipCollisionDirectCallBack(hit, &from, &end, gcGlobalVar + 0x230, AI_JudgeNotCharaObjFunc, 0, 0, AI_JudgeColAttrFunc, 0) != 0)
                     ParentLayoutObj(t2, hit);
                 else
                     CharaCtrlSetScriptCtrlStatus(t2, ScriptCtrlDef_SCRFall->ctrl);
@@ -123,6 +124,8 @@ static void func_000B1D88(int self)
                 func_000B1BC8(self);
                 inArea = 1;
             }
+        } else {
+            inArea = 0;
         }
         isysGetThisSubThread();
         scrRunM(1);
