@@ -1,4 +1,5 @@
 typedef int s128 __attribute__((mode(TI)));
+typedef union { s128 q; float f[4]; } U;
 
 extern char gcGlobalVar[];
 extern int isysGetThisSubThread(void);
@@ -15,17 +16,15 @@ extern int nico_GetCharacterAttackedGPAttr(int, int);
 extern void func_000CC4C0(int);
 extern void scrRunM(int);
 
-#ifdef NONMATCHING /* 29 diffs: stack slots of thr/base/b ($sp+0x34/0x38/0x30 in the original), a[1] load order, sqrt operand register */
+#ifdef NONMATCHING /* 4 diffs: the reload of base + 0x5AA0 (spilled at $sp+0x38) lands after the three per-frame calls instead of before SCRExecBossPreProcess. A plain s5 = base + 0x5AA0 with s5 += 4 lets gcc fold base into o + 0x5AA4 (143 diffs); volatile base gives the wrong stack slots. */
 void func_000CB658(char *o)
 {
-    float pos[4] __attribute__((aligned(16)));
-    float c[4] __attribute__((aligned(16)));
-    float a[4] __attribute__((aligned(16)));
+    U pos, c, a;
     float b;
     int thr;
-    char *volatile base;
+    char *base;
     int s6, s0, i, n, found, type, entry;
-    char *s5, *anim, *tbl;
+    char *anim, *tbl;
     float ratio, d;
 
     thr = isysGetThisSubThread();
@@ -33,7 +32,7 @@ void func_000CB658(char *o)
     for (;;) {
         s6 = 0;
         s0 = isysGetThisSubThread();
-        s5 = (char *)base + 0x5AA0;
+
         SCRExecBossPreProcess(*(int *)o);
         CharaCtrlResetAllScriptCtrlStatus(s0);
         updateScriptDataSystem(s0);
@@ -51,26 +50,26 @@ void func_000CB658(char *o)
                 found = 0;
                 for (i = 0; i < n; i++) {
                     entry = *(int *)(*(char **)(anim + 0x338) + i * 8);
-                    if (entry == 0)
-                        continue;
+                    if (entry != 0) {
                     type = *(int *)(*(char **)(tbl + 0x18) + i * 12);
                     switch (type) {
                     case 3:
                     case 10:
                     case 13:
                     case 0x2B:
-                        *(s128 *)pos = **(s128 **)(GetLayoutClass(entry) + 0x134);
+                        pos.q = **(s128 **)(GetLayoutClass(entry) + 0x134);
                         found = 1;
                         break;
+                    }
                     }
                     if (found)
                         break;
                 }
-                *(s128 *)a = *(s128 *)pos;
-                *(s128 *)c = *(s128 *)pos;
-                if (GetWaterSurfacePositionY(&b, a, gcGlobalVar + 0x230, a[1] + 6.0f, a[1] - 6.0f)) {
-                    c[1] = b;
-                    d = __builtin_fabsf(b - a[1]);
+                a.q = pos.q;
+                c.q = pos.q;
+                if (GetWaterSurfacePositionY(&b, a.f, gcGlobalVar + 0x230, a.f[1] + 6.0f, a.f[1] - 6.0f)) {
+                    c.f[1] = b;
+                    d = __builtin_fabsf(b - a.f[1]);
                     if (6.0f < d)
                         ratio = 0.0f;
                     else
@@ -78,13 +77,13 @@ void func_000CB658(char *o)
                 } else {
                     ratio = 0.0f;
                 }
-                __asm__("sqrt.s %0, %1" : "=f"(ratio) : "f"(ratio));
-                setDischargeParam(*(int *)s5, c, 6.0f, ratio);
+                __asm__ volatile("sqrt.s %0, %0" : "+f"(ratio));
+                setDischargeParam(((int *)(base + 0x5AA0))[s6], c.f, 6.0f, ratio);
             } else {
-                setDischargeParam(*(int *)s5, pos, 0.0f, 0.0f);
+                setDischargeParam(((int *)(base + 0x5AA0))[s6], pos.f, 0.0f, 0.0f);
             }
             s6++;
-            s5 += 4;
+
         } while (s6 < 3);
         if (GetDamageClass(thr)) {
             int g = nico_GetCharacterAttackedGPAttr(thr, 0x3F0);
