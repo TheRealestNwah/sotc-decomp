@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 11 words differ (a2=0 argument setup order; the original recomputes sp+0x50 for the second GetGeometryPointerPosition). */
+/* Parked: 8 diffs (the original recomputes sp+0x50 for the second GetGeometryPointerPosition and sets s0 afterwards). Reusing pos or an asm-barriered pointer was worse; permuter (25 min) found nothing. */
 typedef struct Vec4 {
     float x, y, z, w;
 } Vec4;
