@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 5 diffs: the delay-slot argument copy for the first func_000E5EA0 call is hoisted from the wrong branch */
+#ifdef NONMATCHING /* 3 diffs: the delay-slot argument copy for the first func_000E5EA0 call is hoisted from the wrong branch */
 typedef int s128 __attribute__((mode(TI)));
 
 extern int GetAnimationClassObjectAnimation(void *, float *, void *, int);
@@ -45,7 +45,7 @@ static void func_000E74B8(char *out, int **anim, int a, int b)
     }
     { register int w __asm__("$2") = *(int *)(buf + 0x48);
     *(int *)(out + 0x80) = w; }
-    { register int one __asm__("$4") = 1;
+    { register int one __asm__("$4") = 1; do { } while (0);
     if (flagBit(*anim) == one) {
         *(float *)(out + 0x84) = *(float *)(buf + 0x30);
         *(float *)(out + 0x88) = *(float *)(buf + 0x34);
