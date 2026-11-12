@@ -44,7 +44,7 @@ static inline void mulCurrentMatrix(Matrix *src)
 }
 
 #ifdef NONMATCHING
-/* 3 diffs: the 1.0f store to m[5] is scheduled after the row 2 stores */
+/* 3 diffs: the 1.0f store to m[5] is scheduled after the row 2 stores. Permuter (5 workers, 25 min): no improvement from 15. */
 void glRotatey(float angle)
 {
     float sc[4];
