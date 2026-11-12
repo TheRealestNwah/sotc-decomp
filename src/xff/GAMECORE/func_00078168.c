@@ -1,4 +1,4 @@
-/* ~12 diffs (permuter tweak) (mostly relocation addends), same length (152 words). Player-state initialiser (HP/grip reset, weapon setup, parent-judge callbacks, double-spring interp, motion IK interest, ColCont init, release/control callbacks). Remaining real diffs: store scheduling of the three small int/byte blocks (w+0x84 / w+0x30 clears, w+0x4B0 vs the quad copies) and f13/f14 load order for set_param_double_spring_interp_common. */
+/* ~11 diffs (permuter tweak) (mostly relocation addends), same length (152 words). Player-state initialiser (HP/grip reset, weapon setup, parent-judge callbacks, double-spring interp, motion IK interest, ColCont init, release/control callbacks). Remaining real diffs: store scheduling of the three small int/byte blocks (w+0x84 / w+0x30 clears, w+0x4B0 vs the quad copies) and f13/f14 load order for set_param_double_spring_interp_common. */
 typedef int Vec4 __attribute__((mode(TI)));
 extern int dispCompleteAlertHard;
 extern int dispCompleteAlertNormal;
@@ -40,7 +40,7 @@ extern void T_00077088(void);
 #ifdef NONMATCHING
 void func_00078168(char *w)
 {
-  char *new_var;
+  int new_var;
   void *th = isysGetThisSubThread();
   char *c;
   setPlayerHp(getPlayerMaxHp());
@@ -83,8 +83,7 @@ void func_00078168(char *w)
   *((int *) (w + 0x6C)) = 0;
   initWeapon();
   SCRPlayerGetWeapon(1);
-  new_var = GetScriptClass(th);
-  *((int *) (w + 0x184)) = getEditWorkInitData(*((int *) (new_var + 0x40)));
+  *((int *) (w + 0x184)) = getEditWorkInitData(*((int *) (GetScriptClass(th) + 0x40)));
   *((int *) (w + 0x188)) = 0;
   constructor_nico_sight_on(w + 0x190);
   constructor_double_spring_interp_cntrl(w + 0x470, 0.0001f);
@@ -111,13 +110,12 @@ void func_00078168(char *w)
     v1[0x21] = 0;
     v1[0x20] = 0;
     *((int *) (w + 0xE0)) = 0;
-    *((int *) ((w + 0x84) + 0xC)) = 0;
+    *((int *) (v + 0xC)) = 0;
     v[0x10] = 0;
     *((int *) (v + 0x4)) = 0;
     *((int *) (v + 0x0)) = 0;
-    c = v;
-    (w + 0x84)[0x11] = 0;
-    *((int *) (c + 0x8)) = 0;
+    v[new_var = 0x11] = 0;
+    *((int *) (v + 0x8)) = 0;
   }
   D_0017AE8C = 0;
   initPowerWork();
