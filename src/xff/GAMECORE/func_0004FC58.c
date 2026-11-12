@@ -1,9 +1,9 @@
-/* func_0004FC58: ending demo teardown (23 diffs: a0 hoist for fadeWhiteOut, v0/v1 reload reg) */
+/* func_0004FC58: ending demo teardown (5 diffs: li a0,1 for fadeWhiteOut is scheduled before the 0.4f constant instead of into the delay slot) */
 extern void FinishDemoCameraOrient(int);
 extern char *GetScriptCharacterClass(int);
 extern void PauseGame(int);
 extern void ReleaseGame(int);
-extern void SetCharacterObjDemoMotionMode(int, int, int, float);
+extern int SetCharacterObjDemoMotionMode(int, int, int, float);
 extern void demoManEnd(int);
 extern void end_stream_lws_movie_playing_game_camera(int);
 extern void endingflowDemoEnd(void);
