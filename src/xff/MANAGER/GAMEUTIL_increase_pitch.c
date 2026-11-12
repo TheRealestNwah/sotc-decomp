@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 30 instruction diffs: the near-zero check and the clamp-to-limit branches come out with inverted branch-likely shapes */
+#ifdef NONMATCHING /* 28 diffs (permuter 40 min: only semantics-changing variants): the near-zero check and the clamp-to-limit branches come out with inverted branch-likely shapes */
 static inline int is_near_zero(float x, float eps)
 {
     if (x < 0.0f) {
