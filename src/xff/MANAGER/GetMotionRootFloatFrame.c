@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 14 diffs: animation pointer held in a1 instead of reloaded into v0, and &v1 kept in s0 across the second call */
 extern int DldSysUndefSymbol;
 extern int _AnimObjDef;
 extern int _BlendMotionDef;
@@ -55,7 +54,7 @@ typedef union Vector {
     s128 quad;
     float v[4];
 } Vector;
-extern int func_00031DB8(Vector *, void *, int);
+extern void func_00031DB8(Vector *, void *, int);
 
 static inline void lerpVec(Vector *out, Vector *a, Vector *b, float t)
 {
@@ -74,6 +73,7 @@ static inline void lerpVec(Vector *out, Vector *a, Vector *b, float t)
 
 int GetMotionRootFloatFrame(Vector *out, unsigned int *h, float frame)
 {
+    char **animp;
     if ((int *)dldObj(h)[2] == &_AnimObjDef) {
         AnimationDefinition *def = resourceData(h);
         int i, next;
@@ -82,14 +82,14 @@ int GetMotionRootFloatFrame(Vector *out, unsigned int *h, float frame)
         if (def->animation == 0)
             iosJumpRecoverPoint(RO_0013E670, def->name);
         i = (int)frame;
-        res = *(void **)(def->animation + 0x20);
+        res = *(void **)((*(animp = &def->animation)) + 0x20);
         next = i + 1;
         frame -= (float)i;
         if (frame == 0.0f) {
             func_00031DB8(out, res, i);
         } else {
             func_00031DB8(&v0, res, i);
-            func_00031DB8(&v1, res, next);
+            { Vector *p = &v1; func_00031DB8(p, res, next); __asm__("" : "+r"(p)); }
             lerpVec(out, &v1, &v0, frame);
         }
         out->v[3] = 1.0f;
@@ -97,4 +97,3 @@ int GetMotionRootFloatFrame(Vector *out, unsigned int *h, float frame)
         GetMotionRootFloatFrame(out, getBlendBaseMotion(h), frame);
     }
 }
-#endif
