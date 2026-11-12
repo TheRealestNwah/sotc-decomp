@@ -1,5 +1,6 @@
 #ifdef NONMATCHING
-/* Parked: 3 words differ (original schedules the store to max after loading offset into f12) */
+/* Parked: 2 words differ. The volatile load/store force offset to load before the store to max (was 3);
+   the original also sets up f14 before that store. */
 extern float GAMEUTIL_increase_pitch(int, int, float, float, float, float);
 extern void GAMEUTIL_set_parameter_move_angle(float *, float, float, float, float, float, float);
 
@@ -15,8 +16,12 @@ void set_offset_pitch_parameter_nico_yaw_pitch_cntrl(YawPitchCntrl *p, float a, 
 {
     float k = 0.017453293f;
     p->offset = a * k;
-    p->max = GAMEUTIL_increase_pitch(0, 0, p->offset, b * k, 1.483529806137085f, -1.483529806137085f);
-    p->min = GAMEUTIL_increase_pitch(0, 0, p->offset, c * k, 1.483529806137085f, -1.483529806137085f);
+    {
+        float r = GAMEUTIL_increase_pitch(0, 0, p->offset, b * k, 1.483529806137085f, -1.483529806137085f);
+        float o = *(volatile float *)&p->offset;
+        *(volatile float *)&p->max = r;
+        p->min = GAMEUTIL_increase_pitch(0, 0, o, c * k, 1.483529806137085f, -1.483529806137085f);
+    }
     GAMEUTIL_set_parameter_move_angle(p->move, d, e, f, g, h, i);
 }
 #endif
