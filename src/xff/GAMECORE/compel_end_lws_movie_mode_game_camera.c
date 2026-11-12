@@ -4,11 +4,11 @@ extern int get_camera_lws_animation_param(int);
 extern void end_camera_lws_animation_by_paramID(int);
 
 #ifdef NONMATCHING
-/* Parked: 8 words differ (register allocation/scheduling); permuter found no zero. */
+/* Parked: 5 diffs with hit pinned to v1; target keeps the constants 8 and 1 in v0, ours uses a0. Pinning a v0 temp for 8 scores 24. */
 int compel_end_lws_movie_mode_game_camera(int id)
 {
     char *base = get_game_camera(id) + 0x34E0;
-    int hit;
+    register int hit __asm__("$3");
 
     if (*(int *)(get_game_camera(id) + 0x1360) == 8 || get_main_type_camera_lws_animation() != 0)
         hit = 1;
