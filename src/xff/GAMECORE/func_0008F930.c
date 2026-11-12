@@ -12,9 +12,11 @@ extern float powf(float, float);
 static void func_0008F930(int ctx, float x, float y, float zx, float zy)
 {
     float v[2];
-    float dzx = zx * 0.08726646f;
-    float dzy = zy * 0.08726646f;
+    float *p = v;
+    float dzx = zx * 0.0872664601f;
+    float dzy = zy * 0.0872664601f;
     float ndz = -dzx;
+    float ndzy = -dzy;
     float xmax = 1.2f;
     float xmin = -1.2f;
     float ymax = 1.0f;
@@ -23,8 +25,8 @@ static void func_0008F930(int ctx, float x, float y, float zx, float zy)
     float rx;
     float shaped;
 
-    v[0] = x;
     v[1] = y;
+    v[0] = x;
     if (x > 1.2f)
         xmax = x;
     if (x < -1.2f)
@@ -33,24 +35,24 @@ static void func_0008F930(int ctx, float x, float y, float zx, float zy)
         ymax = y;
     if (y < -1.0f)
         ymin = y;
-    if (!(y >= 0.0f))
-        ry = 1.0f - GAMEUTIL_get_dist_ratio(y, ymin, -dzy);
-    else
+    if (y >= 0.0f)
         ry = GAMEUTIL_get_dist_ratio(y, dzy, ymax);
-    shaped = powf(ry, 1.5f);
-    if (!(x >= 0.0f))
-        rx = GAMEUTIL_get_dist_ratio(x, xmin, ndz);
     else
+        ry = 1.0f - GAMEUTIL_get_dist_ratio(y, ymin, ndzy);
+    shaped = powf(ry, 1.5f);
+    if (x >= 0.0f)
         rx = 1.0f - GAMEUTIL_get_dist_ratio(x, dzx, xmax);
-    if (!(rx < shaped)) {
-        v[0] = x;
-    } else {
+    else
+        rx = GAMEUTIL_get_dist_ratio(x, xmin, ndz);
+    if (rx < shaped) {
         float edge;
-        if (!(x >= 0.0f))
-            edge = ndz;
-        else
+        if (x >= 0.0f)
             edge = dzx;
-        v[0] = GAMEUTIL_get_interp_value(edge, x, shaped - rx);
+        else
+            edge = ndz;
+        p[0] = GAMEUTIL_get_interp_value(edge, x, shaped - rx);
+    } else {
+        p[0] = x;
     }
     v[1] = y;
     func_0008E918(ctx, v[0], y, zx, zy);
