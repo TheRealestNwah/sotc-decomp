@@ -1,5 +1,6 @@
 /* Parked: 65 differing words (c/d and s0/s1 register swaps, float scheduling).
-   Siblings func_0008F748 and func_0008F930 have identical bodies. */
+   Siblings func_0008F748 and func_0008F930 have identical bodies.
+   Permuter (40 min) found only semantics-changing variants. */
 #ifdef NONMATCHING
 extern float GAMEUTIL_get_dist_ratio(float, float, float);
 extern float GAMEUTIL_get_interp_value(float, float, float);
