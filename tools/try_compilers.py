@@ -26,8 +26,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-
-from elftools.elf.elffile import ELFFile
+from typing import TYPE_CHECKING
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.ee_asm import (  # noqa: E402
@@ -46,7 +45,9 @@ from tools.ee_asm import (
 from tools.ee_asm import (
     volatile_barriers as volatile_barriers,
 )
-from tools.functions import Function, compare, function, functions, open_module  # noqa: E402
+
+if TYPE_CHECKING:
+    from tools.functions import Function
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_COMPILERS = Path(os.environ.get("SOTC_COMPILERS", "D:/Modding/compilers"))
@@ -148,6 +149,8 @@ def assemble(asm: Path, obj: Path, package_as: Path | None = None, gp: int = 0) 
 def verdict(target: Function, built: Function) -> tuple[str, int]:
     """(cell text, number of differing words): MATCH, MATCH? when only
     section-relative targets are left unchecked, or the count."""
+    from tools.functions import compare
+
     mismatches = compare(target, built)
     count = sum(m.verified for m in mismatches)
     if count:
@@ -164,6 +167,8 @@ def disassemble(word: int) -> str:
 def show_diff(name: str, target: Function, built: Function) -> None:
     """Side-by-side listing, original on the left. `*` marks a differing word,
     `?` one whose section-relative target isn't checked here."""
+    from tools.functions import compare
+
     marks = {}
     for m in compare(target, built):
         if m.kind == "length":
@@ -198,6 +203,10 @@ def main(argv: list[str] | None = None) -> int:
         help="always use modern binutils, even when the package ships ee-as",
     )  # fmt: skip
     args = parser.parse_args(argv)
+
+    from elftools.elf.elffile import ELFFile
+
+    from tools.functions import function, functions, open_module
 
     original = open_module(args.module, ROOT / "iso")
     targets = functions(original)
