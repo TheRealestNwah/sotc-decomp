@@ -26,7 +26,7 @@ static inline void quatMul(void *dst, void *a, void *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-#ifdef NONMATCHING /* 136 diffs: original keeps q0 (sp) in $s2 and Identity in $s0, q1 address in $a0 hoisted above the early-out branch */
+#ifdef NONMATCHING /* 26 diffs, 150 vs 149 words: the pinned Identity pointer ($s4 here) costs one extra saved register; the original keeps it in $s0 and &q0 in $s2 */
 void nico_player_colfit_SetLower(char *c)
 {
     float q0[4] __attribute__((aligned(16)));
@@ -37,8 +37,8 @@ void nico_player_colfit_SetLower(char *c)
     float q5[4] __attribute__((aligned(16)));
     float q6[4] __attribute__((aligned(16)));
     char *bone;
-    register char *iq __asm__("$16");
-    register float *d0 __asm__("$18");
+    register char *iq __asm__("$20");
+    register float *d0 __asm__("$16");
 
     if (B_0018B804 == 0)
         return;
@@ -58,13 +58,13 @@ void nico_player_colfit_SetLower(char *c)
                          "sqc2 vf5, 0x0(%1)\n"
                          : : "r"(B_0018B7E0), "r"(q3) : "memory");
     GetDifferencialQuaternionWithNoRegularize(q2, (float *)ZUnitVectorInv, q3, YUnitVector);
-    quatMul(q0, q0, q2);
+    quatMul(d0, d0, q2);
     __asm__ __volatile__("lqc2 vf11, 0x0(%1)\n"
                          "vsubw.x vf5, vf0, vf0w\n"
                          "vmulx.xyz vf11, vf11, vf5x\n"
                          "sqc2 vf11, 0x0(%0)\n"
                          : : "r"(q5), "r"(bone) : "memory");
-    quatMul(q5, q5, q0);
+    quatMul(q5, q5, d0);
     __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmul.xyzw vf5, vf4, vf4\n"
                          "vmr32.xyzw vf6, vf4\n"
