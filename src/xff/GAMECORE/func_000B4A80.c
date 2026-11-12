@@ -27,8 +27,8 @@ static void func_000B4A80(char *p)
 {
     int self = isysGetThisSubThread();
     char *pos = p + 0x30;
-    int frame = (int)(p + 0x14);
     char *aux = p + 0x40;
+    int frame = (int)(p + 0x14);
 
     for (;;) {
         char *layout;
@@ -49,8 +49,9 @@ static void func_000B4A80(char *p)
                 if (cc != 0) {
                     int *sub = *(int **)(cc + 0x10);
                     if (sub != 0) {
-                        armed = 1;
-                        if (*sub == 0)
+                        if (*sub != 0)
+                            armed = 1;
+                        else
                             armed = 0;
                     }
                 }

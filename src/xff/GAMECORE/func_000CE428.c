@@ -37,12 +37,12 @@ static void func_000CE428(float *v, char *obj)
     b = a;
     f0 = b.f[2] / 600.0f;
     f1 = b.f[0] / 600.0f;
-    f2 = b.f[1] * -0.06702f;
+    f2 = b.f[1] * -0.067f;
     b.f[1] = f2;
     tex = *(int *)(obj + 0x58) - 0x18;
     data = *(int *)(obj + 0x74);
     b.f[0] = ((f1 * *(float *)(obj + 0x40)) * 0.1f) * scale;
-    b.f[2] = (-((f0 * *(float *)(obj + 0x40)) * 0.1f + f2) * scale) * 0.857142f;
+    b.f[2] = (-((f0 * *(float *)(obj + 0x40)) * 0.1f + f2) * scale) * 0.857142866f;
     x = b.f[0];
     z = b.f[2];
     if (data != 0) {
