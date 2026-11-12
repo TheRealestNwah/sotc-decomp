@@ -34,20 +34,18 @@ static inline void lerp3(Vec4 *out, Vec4 *a, Vec4 *b, float t)
 static inline void scaleAdd(Vec4 *out, Vec4 *base, Vec4 *dir, float s, Vec4 *tmp)
 {
     register Vec4 *tp __asm__("$2") = tmp;
-    register int si __asm__("$3");
-    __asm__("mfc1 %0, %1" : "=r"(si) : "f"(s));
-    __asm__ __volatile__("lqc2 vf5, 0x0(%2)\n"
-                         "qmtc2.ni %4, vf6\n"
+    __asm__ __volatile__("mfc1 $3, %4\n"
+                         "lqc2 vf5, 0x0(%2)\n"
+                         "qmtc2.ni $3, vf6\n"
                          "vmulx.xyz vf5, vf5, vf6x\n"
                          "sqc2 vf5, 0x0(%3)\n"
                          "lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%3)\n"
                          "vadd.xyz vf5, vf5, vf6\n"
                          "sqc2 vf5, 0x0(%0)\n"
-                         : : "r"(out), "r"(base), "r"(dir), "r"(tp), "r"(si) : "memory");
+                         : : "r"(out), "r"(base), "r"(dir), "r"(tp), "f"(s) : "$3", "memory");
 }
 
-#ifdef NONMATCHING /* 2 diffs: neg path orders mfc1 before the tmp address setup */
 void CAM_get_interp_cam_and_look_at_posi(Vec4 *outCam, Vec4 *outLook, Vec4 *cam0, Vec4 *cam1,
                                          Vec4 *look0, Vec4 *look1, int flag, float ra, float rb)
 {
@@ -82,4 +80,3 @@ void CAM_get_interp_cam_and_look_at_posi(Vec4 *outCam, Vec4 *outLook, Vec4 *cam0
         scaleAdd(outCam, outLook, &dir, -len, &t1);
     }
 }
-#endif
