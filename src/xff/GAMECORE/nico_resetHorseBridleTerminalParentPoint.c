@@ -1,4 +1,4 @@
-/* nico_resetHorseBridleTerminalParentPoint: ~72 diffs (reg alloc of loop vars / vec build) */
+/* nico_resetHorseBridleTerminalParentPoint: ~55 diffs. Holding buf0 in a pointer for the second loop gives the original layout of that loop. Remaining: the original rematerialises &vec and &buf1 (sp+0x80, sp+0x40) at each call where we keep them in saved registers, which shifts the s-register allocation of the first loop and the 0.0f load. */
 typedef int s128 __attribute__((mode(TI)));
 extern unsigned char RO_0017D4F0[];
 extern char RO_0017D500[];
@@ -42,11 +42,12 @@ void nico_resetHorseBridleTerminalParentPoint(int obj)
     SetGeometryPointerNodePosState(buf0, geo, 0, IdentityQuaternion, vec);
     vec[0] = RO_0017D510[0] + zero;
     SetGeometryPointerNodePosState(buf1, geo, 0, IdentityQuaternion, vec);
+    p = buf0;
     cloth = *(char **)(GetLayoutClass(obj) + 0x178);
     n = *(short *)(cloth + 4);
     w = *(char **)cloth;
     for (g = 0; g < n; g++) {
-        SetClothSingleFixedChainLeafFixGeometryPointer((int)w, (g & 1) ? buf0 : buf1);
+        SetClothSingleFixedChainLeafFixGeometryPointer((int)w, (g & 1) ? p : buf1);
         w += 0x90;
     }
     ParentLayoutObj(obj, buf0);
