@@ -1,5 +1,4 @@
-#ifdef NONMATCHING
-/* 7 diffs, same length (165 words): only the register holding the three flag loads differs. Draft from the asm; the system script thread: registers the 14 pause/continue/ending/jump/time-attack interrupts with scriptIntrEntryChildThread (ScrIntrDef_* with the static entry tables D_0017A098 + 0x18 * n), then loops forever: fade tick, player status switch from D_0017A07C == 0, and two flag/sound pairs (D_0017A05C/A060 and A064/A06C/A068) that start or stop SE depending on the flag state, then func_00018A58 and scrRun. Must be `static` (func_ label). The Original loads the first operand of each flag test into $a0 (lw $a0, 0($s2); bnez $a0) where ours uses $v0; unsigned/pointer typings, int-returning callees and -fno-* flag variants did not change it. Permuter (12 workers, 10 min): no improvement from the base. */
+/* System script thread: registers the pause/continue/ending/jump/time-attack interrupts, then loops forever running the fade tick, the player status switch and two sound flag pairs (seStop takes the SE handle) before func_00018A58 and scrRun. */
 extern int ScrIntrDef_SYSTEM_PAUSE;
 extern int ScrIntrDef_SYSTEM_CONTINUE;
 extern int ScrIntrDef_DEMO_PAUSE;
@@ -39,7 +38,7 @@ extern void scrInit(void *);
 extern void scriptIntrEntryChildThread(int, void *, void *, void *);
 extern void fadeTickProc(void);
 extern void setPlayerStatusSwitch(int);
-extern void seStop(void);
+extern void seStop(int);
 extern void scrRun(void);
 extern void func_00018B08(void);
 extern void func_00018B38(void);
@@ -71,16 +70,16 @@ static void func_000167B8(void *arg)
             if (D_0017A060 != 0)
                 func_00018B08();
         } else if (D_0017A060 == 0) {
-            seStop();
+            seStop(D_0017A05C);
             D_0017A05C = 0;
         }
         if (D_0017A064 == 0) {
             if (D_0017A06C != 0)
                 func_00018B38();
         } else if (D_0017A06C == 0) {
-            seStop();
+            seStop(D_0017A064);
             if (D_0017A068 != 0)
-                seStop();
+                seStop(D_0017A068);
             D_0017A064 = 0;
             D_0017A068 = 0;
         }
@@ -88,4 +87,3 @@ static void func_000167B8(void *arg)
         scrRun();
     }
 }
-#endif
