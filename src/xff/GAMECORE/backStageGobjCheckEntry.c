@@ -1,4 +1,4 @@
-/* ~47 diffs, 1 word short (115 vs 116). Companion of backStageGobjSave / backStageGobjLoad: decodes the stage object type from the dld ref at o+0x10 (0x303 only when the boss test passes) and answers whether the checkpoint record for that type is filled: 0x103 -> B_00183B58 id != -1, 0x203 -> B_00183B7C id != -1, 0x303 -> flag set and the boss record id equals the object id at o+0xE. The `((int)cp - K) ^ -K) != 0` expressions reproduce the Original pointer-minus-constant compare it emits for the last two cases. The remaining diffs are the case dispatch order / the address register ($v0 vs $a1) in each case. */
+/* 2 diffs: in the 0x203 case the Original fills the beq delay slot with li $v1,-0x24 and does addiu $v0,-0x24 in the b delay slot; ours swaps the two. Companion of backStageGobjSave / backStageGobjLoad: decodes the stage object type from the dld ref at o+0x10 (0x303 only when the boss test passes) and answers whether the checkpoint record for that type is filled: 0x103 -> B_00183B58 id != -1, 0x203 -> B_00183B7C id != -1, 0x303 -> flag set and the boss record id equals the object id at o+0xE. The `((int)p - K) ^ -K) != 0` expressions reproduce the Original pointer-minus-constant compare it emits for the last two cases; holding the record address in a local p and returning from inside the if gives the Original case layout. */
 extern int *DldSysUndefSymbol;
 static inline char *dldResolve(unsigned int *h)
 {
@@ -40,15 +40,21 @@ int backStageGobjCheckEntry(unsigned char *o, int flag)
     case 0x103:
         return B_00183B58.v[0] != -1;
     case 0x203:
-        if (B_00183B7C.v[0] == -1)
-            return 0;
-        return (((int)&B_00183B7C - 0x24) ^ -0x24) != 0;
+        {
+            int *p = B_00183B7C.v;
+            if (*p != -1)
+                return (((int)p - 0x24) ^ -0x24) != 0;
+        }
+        return 0;
     case 0x303:
         if (flag == 0)
             return 0;
-        if (*(int *)B_00183BA0 != *(unsigned short *)(o + 0xE))
-            return 0;
-        return (((int)B_00183BA0 - 0x48) ^ -0x48) != 0;
+        {
+            int *p = (int *)B_00183BA0;
+            if (*p == *(unsigned short *)(o + 0xE))
+                return (((int)p - 0x48) ^ -0x48) != 0;
+        }
+        return 0;
     default:
         return 0;
     }
