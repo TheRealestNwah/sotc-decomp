@@ -9,7 +9,7 @@ extern void isysGroupForExit(int *, int);
 extern char *GetScriptCharacterClass(int);
 extern int AI_CheckSightOn(int, float);
 
-#ifdef NONMATCHING /* 77 diffs: impact/arrow result flow ($v1 merge), weapon-range test and group-loop layout */
+#ifdef NONMATCHING /* 37 diffs: result flag ($v1 vs $v0) in the damage/arrow check, the final boolean materialization and branch-likely forms at the exits */
 int func_0009F470(char *o)
 {
     char buf[16] __attribute__((aligned(16)));
@@ -67,27 +67,19 @@ int func_0009F470(char *o)
     if (w >= 4) {
         found = 0;
         ent = 0;
-        for (e = isysGroupForFirst(gcGlobalVar + 0x2BC, 0); e; e = isysGroupForNext(e, 0)) {
+        e = isysGroupForFirst(gcGlobalVar + 0x2BC, 0);
+        while (e) {
             char *c, *t;
             ent = *e;
             c = GetScriptCharacterClass(ent);
             t = *(char **)(c + 0x1200);
-            if (t == 0)
-                continue;
-            if (*(int *)t != 1)
-                continue;
-            if (*(int *)(t + 8) != *(int *)(o + 8))
-                continue;
-            if (*(int *)(t + 4) != *(int *)(o + 4))
-                continue;
-            if (*(int *)(t + 0x26C) == 0x12)
-                continue;
-            if (*(int *)(t + 0x260) != 0x1C)
-                continue;
-            if (AI_CheckSightOn(ent, *(float *)(o + 0x7C0)) == 0)
-                continue;
-            found = 1;
-            break;
+            if (t != 0 && *(int *)t == 1 && *(int *)(t + 8) == *(int *)(o + 8) && *(int *)(t + 4) == *(int *)(o + 4)
+                && *(int *)(t + 0x26C) != 0x12 && *(int *)(t + 0x260) == 0x1C
+                && AI_CheckSightOn(ent, *(float *)(o + 0x7C0)) != 0) {
+                found = 1;
+                break;
+            }
+            e = isysGroupForNext(e, 0);
         }
         if (ent != 0)
             isysGroupForExit((int *)ent, 0);
