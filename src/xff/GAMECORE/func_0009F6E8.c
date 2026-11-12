@@ -1,6 +1,6 @@
 typedef struct { char pad[0xD0]; float d0; float d4; float d8; } Range;
 
-#ifdef NONMATCHING /* 9 diffs: gcc folds the final a0 ? 1 : 0 (a0 is known 0/1) into a move instead of the original bnez/li 1/li 0, which shifts branch offsets and puts the 0x38 load in $v1 */
+#ifdef NONMATCHING /* 7 diffs: even with the barrier, gcc turns the final a0 ? 1 : 0 into sltu instead of the original bnez/li 1/li 0, which shifts branch offsets and puts the 0x38 load in $v1 */
 static int func_0009F6E8(char *c)
 {
     float f1;
@@ -40,6 +40,7 @@ static int func_0009F6E8(char *c)
         if (st == 8 && *(int *)(c + 0x798) == 0)
             a0 = *(float *)(c + 0x90) < 50.0f;
     }
+    __asm__("" : "+r"(a0));
     return a0 ? 1 : 0;
 }
 #endif
