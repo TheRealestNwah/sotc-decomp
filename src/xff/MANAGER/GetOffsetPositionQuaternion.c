@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 14 diffs: the axis pointers and the float scale temporaries take different registers */
 typedef struct {
     float x, y, z, w;
 } __attribute__((aligned(16))) Vec4;
@@ -89,16 +88,20 @@ void GetOffsetPositionQuaternion(Vec4 *out, Vec4 *pos, Vec4 *offset, Vec4 *quat)
     Vec4 m[3];
     VecQ off;
     Vec4 tmp;
+    Vec4 *m1;
+    Vec4 *m2;
+    Vec4 *t;
 
     QuatAxisX(&m[0], quat);
     QuatAxisY(&m[1], quat);
     QuatAxisZ(&m[2], quat);
     off.q = *(u_long128 *)offset;
+    m1 = &m[1];
+    m2 = &m[2];
     VecScale(&tmp, &m[0], off.f[0]);
     VecAdd(out, pos, &tmp);
-    VecScale(&tmp, &m[1], off.f[1]);
-    VecAdd(out, out, &tmp);
-    VecScale(&tmp, &m[2], off.f[2]);
-    VecAdd(out, out, &tmp);
+    VecScale(&tmp, m1, off.f[1]);
+    VecAdd(out, out, t = &tmp);
+    VecScale(t, m2, off.f[2]);
+    VecAdd(out, out, t);
 }
-#endif
