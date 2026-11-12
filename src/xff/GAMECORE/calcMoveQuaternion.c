@@ -6,7 +6,7 @@ extern float getRatioFromInterp(float, float);
 
 static inline float dot4(Vec4 *a, Vec4 *b)
 {
-    float r;
+    register float r __asm__("$f1");
     __asm__ __volatile__("lqc2 vf14, 0x0(%1)\n"
                          "lqc2 vf15, 0x0(%2)\n"
                          "vmul.xyzw vf15, vf14, vf15\n"
@@ -68,11 +68,12 @@ static inline void quatMul(Vec4 *out, Vec4 *b)
                          : : "r"(out), "r"(b) : "memory");
 }
 
-#ifdef NONMATCHING /* 134 diffs: frame 0x70 vs 0x80 (orig spills dot result to stack for sign test), reg numbering */
+#ifdef NONMATCHING /* 77 diffs: address-register CSE of the sp+0x20/0x30 slots and Identity pointer ($t1-$t5 in the original) */
 void calcMoveQuaternion(Vec4 *out, Vec4 *cur, Vec4 *tgt, float rate)
 {
     Vec4 a, b, c, d;
-    float ratio;
+    register float ratio __asm__("$f0");
+    float s40, s44;
 
     ratio = getRatioFromInterp(rate, 0.06666667f);
     a.q = tgt->q;
@@ -80,11 +81,13 @@ void calcMoveQuaternion(Vec4 *out, Vec4 *cur, Vec4 *tgt, float rate)
     if (rate >= 0.06666667f && dot4(cur, &a) < 0.9993908f) {
         do {
             c.q = *(s128 *)IdentityQuaternion;
-            if (dot4(&a, &c) < 0.0f) negate4(&c);
+            *(volatile float *)&s40 = dot4(&a, &c);
+            if (*(volatile int *)&s40 < 0) negate4(&c);
             lerpNorm(&b, &a, &c, 0.06666667f);
             quatMul(out, &b);
             d.q = a.q;
-            if (dot4(cur, &d) < 0.0f) negate4(&d);
+            *(volatile float *)&s44 = dot4(cur, &d);
+            if (*(volatile int *)&s44 < 0) negate4(&d);
             lerpNorm(&a, cur, &d, ratio);
         } while (dot4(cur, &a) < 0.9993908f);
     }
