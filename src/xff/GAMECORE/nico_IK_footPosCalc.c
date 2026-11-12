@@ -5,8 +5,8 @@ typedef struct {
     Vec4 dir;
     Vec4 target;
     int node;
-    float time;
     float weight;
+    float time;
     int flag;
 } PinAttackIK;
 typedef struct {
@@ -24,7 +24,7 @@ extern void GetMotionNodeQuaternionPosToolCoord(void *, void *, int, int);
 extern char *GetCharacterClass(int);
 extern void func_00038238(void *, int, void *, void *, void *);
 
-#ifdef NONMATCHING /* 98 diffs, one word over: ik pointer/saved-register numbering and dld lookup shape */
+#ifdef NONMATCHING /* 97 diffs, one word over: ik pointer/saved-register numbering and dld lookup shape */
 void nico_IK_footPosCalc(FootIK *f)
 {
     float qv[4] __attribute__((aligned(16)));
