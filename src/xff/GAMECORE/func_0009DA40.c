@@ -15,7 +15,7 @@ static inline float distSq(char *a, char *b)
     return d;
 }
 
-#ifdef NONMATCHING /* 33 diffs: 6-entry jump table and the near3 int materialization match; the struct/vector pointer registers are allocated a1/v1/a0 in the original and v1/a1/a0 here */
+#ifdef NONMATCHING /* 17 diffs: layout matches; near3 operand pointers are allocated a1/a0/v1 in the original and v1/a1/a0 here, and the original re-reads c+0x40/c+0x4F0 by offset where ours reuses the near3 address registers */
 static inline int near3(char *c)
 {
     float r = *(float *)(*(char **)(c + 0x20) + 0x2C);
@@ -53,13 +53,12 @@ static void func_0009DA40(char *c, char *out0)
             *(int *)(c + 0x270) = 1;
             *(s128 *)out = *(s128 *)(c + 0x40);
             off = 1.0f;
-            goto add;
+        add:
+            *(float *)(out + 4) = *(float *)(out + 4) + off;
+            return;
         }
         break;
     }
     *(s128 *)out = *(s128 *)(c + 0x4A0);
-    return;
-add:
-    *(float *)(out + 4) = *(float *)(out + 4) + off;
 }
 #endif
