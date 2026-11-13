@@ -23,8 +23,6 @@ typedef struct {
 extern int D_00040908;
 extern void func_0000A748(RelInfo *, char *, int);
 
-/* Parked: 6 diffs (needs -fno-strict-aliasing): the return expression puts rel, size and data in different temporaries */
-#ifdef NONMATCHING
 int isysDisposeModuleObjRelocationElement(RelObj *obj)
 {
     RelInfo *info = obj->info;
@@ -45,9 +43,13 @@ int isysDisposeModuleObjRelocationElement(RelObj *obj)
     for (i = 0; i < n; i++) {
         info->rel[n + i].count = 0;
     }
-    e = info->rel + n;
-    return info->size - (e->data - (char *)info);
+    {
+        register int sz __asm__("$5") = info->size;
+        register RelElem *rl __asm__("$4") = info->rel;
+        register int off __asm__("$2") = n * 28;
+        register RelElem *e2 __asm__("$2") = (RelElem *)(off + (int)rl);
+        register char *dt __asm__("$3") = e2->data;
+        register int dd __asm__("$3") = dt - (char *)info;
+        return sz - dd;
+    }
 }
-#else
-extern int isysDisposeModuleObjRelocationElement(RelObj *obj);
-#endif
