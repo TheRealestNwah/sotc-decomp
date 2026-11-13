@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* 23 diffs: scheduling of the 0x114-0x144 field stores around the vector copies and of the 0x190 store */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; int i[4]; } Vec4;
 extern Vec4 ZeroVector;
@@ -31,15 +29,15 @@ static void func_000C5A50(char *e, int g, int a2, int a3, int t0, char *d)
     *(int *)(e + 0x11C) = 0;
     *(int *)(e + 0x120) = 0;
     v = (int *)(e + 0x124);
-    v[2] = 0;
     v[0] = 0;
     v[1] = 0;
-    *(float *)(e + 0x144) = 1.0f;
+    v[2] = 0;
     *(int *)(e + 0x130) = 0;
     *(int *)(e + 0x134) = 0;
     *(float *)(e + 0x138) = 1.0f;
     *(float *)(e + 0x13C) = 1.0f;
     *(float *)(e + 0x140) = 1.0f;
+    *(float *)(e + 0x144) = 1.0f;
     *(int *)(e + 0x148) = func_000C5CC0(e + 0x14C, e, s, d);
     if (*(int *)(d + 0xCC) == 0 && func_000C5D48(e, s) == 0) {
         *(int *)(e + 0x114) = 1;
@@ -54,9 +52,8 @@ static void func_000C5A50(char *e, int g, int a2, int a3, int t0, char *d)
     CopyCollisionFinder(e + 0x170, InitialCollisionFinder);
     *(int *)(e + 0x184) = 0;
     *(int *)(e + 0x188) = 0;
-    *(int *)(e + 0x190) = 1;
     *(int *)(e + 0x18C) = *(int *)(d + 0xD8);
-    *(int *)(e + 0x198) = 0;
+    *(int *)(e + 0x190) = 1;
     *(int *)(e + 0x194) = 0;
+    *(int *)(e + 0x198) = 0;
 }
-#endif
