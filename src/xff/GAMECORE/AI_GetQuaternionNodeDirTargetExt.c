@@ -4,7 +4,7 @@ typedef union { s128 q; float f[4]; } Vec4;
 extern char ZUnitVector[];
 extern char YUnitVector[];
 extern char YUnitVectorInv[];
-extern void SetQuaternionByCosineAxisRotateVWithNoRegularize(void *, void *, float);
+extern void SetQuaternionByCosineAxisRotateVWithNoRegularize(float, void *, void *);
 extern int AI_GetQuaternionNodeDirTarget(void *, void *, int, int, void *);
 
 static inline void quatRotateVector(Vec4 *out0, float *quat0, Vec4 *vec0)
@@ -85,7 +85,7 @@ static inline void quatRotateVector2(Vec4 *out0, float *quat0, Vec4 *vec0)
 }
 
 
-#ifdef NONMATCHING /* 2 diffs: otherwise exact (pinned $s0..$s4, quat rotate/mul VU blocks); the SetQuaternion f12 arg move and the addiu of the axis lo-address are in opposite order in the first-branch setup */
+
 int AI_GetQuaternionNodeDirTargetExt(char *outq0, char *pos0, int a20, int a30, char *dir)
 {
     register char *pos __asm__("$16") = pos0;
@@ -154,9 +154,9 @@ int AI_GetQuaternionNodeDirTargetExt(char *outq0, char *pos0, int a20, int a30, 
 "
                          : "=f"(d) : "r"(sp + 0x40), "r"(ZUnitVector) : "$2");
     if (*(float *)(sp + 0x40) <= 0.0f)
-        SetQuaternionByCosineAxisRotateVWithNoRegularize(sp, YUnitVector, d);
+        SetQuaternionByCosineAxisRotateVWithNoRegularize(d, sp, YUnitVector);
     else
-        SetQuaternionByCosineAxisRotateVWithNoRegularize(sp, YUnitVectorInv, d);
+        SetQuaternionByCosineAxisRotateVWithNoRegularize(d, sp, YUnitVectorInv);
     __asm__ __volatile__("lqc2 vf11, 0x0(%0)
 "
                          "vsubw.x vf5, vf0, vf0w
@@ -209,4 +209,4 @@ int AI_GetQuaternionNodeDirTargetExt(char *outq0, char *pos0, int a20, int a30, 
     }
     return 0;
 }
-#endif
+

@@ -1,9 +1,9 @@
-#ifdef NONMATCHING /* 3 diffs (int return on CAM_get_warp_position, obj+0x10 passed directly, both found by permuter): scheduling only. The original moves the two float args into f12/f13 before computing w+0x1814 into t3; ours computes t3 first. A further 40-min permuter run from 3 diffs found nothing. */
+/* Matched with the CAM_get_warp_position prototype reordered (tools/proto_perm.py). */
 typedef float Vec[4] __attribute__((aligned(16)));
 extern int GAMEUTIL_is_boss_obj(int, int);
 extern void CAM_add_plane_offset_in_position(float *, float *, float *, float);
 extern int CAM_get_target_riding_obj(void *);
-extern int CAM_get_warp_position(float *, float *, float *, float *, int, int, int, void *, float, float, int);
+extern int CAM_get_warp_position(float *, float *, float *, float *, int, int, float, float, int, void *, int);
 
 static inline float sqrtf_(float x)
 {
@@ -50,10 +50,9 @@ static int func_000D5CF0(char *obj, char *w, float *base, int a3, int t0, float 
                              : : "r"(base), "r"(d), "r"(pos) : "memory");
     }
     {
-                CAM_get_warp_position((float *)(obj + 0x10), (float *)(obj + 0x10), pos, base, a3, t0, CAM_get_target_riding_obj(w + 0x23C), w + 0x1814, f13, f14, 1);
+                CAM_get_warp_position((float *)(obj + 0x10), (float *)(obj + 0x10), pos, base, a3, t0, f13, f14, CAM_get_target_riding_obj(w + 0x23C), w + 0x1814, 1);
         { int *nv = (int *)(obj + 8); *nv = 1; }
         *(int *)(obj + 0xC) = 1;
     }
     return 1;
 }
-#endif
