@@ -1,13 +1,16 @@
-float GetPlaneDistance(float *point, float *plane)
+float GetPlaneDistance(void *point, void *plane)
 {
-    float d;
-    __asm__ __volatile__("lqc2 vf05, 0x0(%1)\n"
-                         "lqc2 vf06, 0x0(%2)\n"
-                         "vmul.xyz vf07, vf05, vf06\n"
-                         "vaddy.x vf07, vf07, vf07y\n"
-                         "vaddz.x vf07, vf07, vf07z\n"
-                         "vaddw.x vf07, vf07, vf06w\n"
-                         "qmfc2 %0, vf07\n"
-                         : "=r"(d) : "r"(point), "r"(plane));
-    return d;
+    float distance;
+
+    __asm__ __volatile__(".set noreorder\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vmul.xyz vf7, vf5, vf6\n"
+                         "vaddy.x vf7, vf7, vf7y\n"
+                         "vaddz.x vf7, vf7, vf7z\n"
+                         "vaddw.x vf7, vf7, vf6w\n"
+                         "qmfc2.ni %0, vf7\n"
+                         ".set reorder\n"
+                         : "=r"(distance) : "r"(point), "r"(plane));
+    return distance;
 }
