@@ -1,3 +1,6 @@
+/* Parked: 59 differing words (was 65: pinning c/d/p/arg0 to $f28/$f27/$s0/$s1 with `register ... asm` fixes the callee-saved assignment; remaining is float temp numbering and prologue scheduling) (c/d and s0/s1 register swaps, float scheduling).
+   Siblings func_0008F748 and func_0008F930 have identical bodies.
+   Permuter (40 min) found only semantics-changing variants. */
 /* Parked: 65 differing words (c/d and s0/s1 register swaps, float scheduling).
    Siblings func_0008F748 and func_0008F930 have identical bodies.
    Permuter (40 min) found only semantics-changing variants. */
@@ -10,9 +13,12 @@ extern float powf(float, float);
 void func_0008F560(int arg0, float a, float b, float c, float d)
 {
     float v[2];
-    float *p = v;
-    float rc = c * 0.0872664626f;
-    float rd = d * 0.0872664626f;
+    register float *p __asm__("$16") = v;
+    register float cc __asm__("$f28") = c;
+    register float dd __asm__("$f27") = d;
+    register int ar __asm__("$17") = arg0;
+    float rc = cc * 0.0872664626f;
+    float rd = dd * 0.0872664626f;
     float maxA = 1.2f, minA = -1.2f, maxB = 1.0f, minB = -1.0f;
     float rb, ra;
     float nc = -rc, nd = -rd;
@@ -37,6 +43,6 @@ void func_0008F560(int arg0, float a, float b, float c, float d)
     else
         *p = a;
     v[1] = b;
-    func_0008E918(arg0, v[0], v[1], c, d);
+    func_0008E918(ar, v[0], v[1], cc, dd);
 }
 #endif
