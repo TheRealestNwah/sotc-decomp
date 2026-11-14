@@ -7,7 +7,7 @@ extern void get_snipe_position_nico_sight_on(void *, int);
 extern void get_radiate_direction_nico_sight_on(void *, int);
 extern int get_predict_hit_position_nico_sight_on(void *, int);
 
-#ifdef NONMATCHING /* 50 diffs: VU blocks, call order and pinned pointer registers match; early-exit shape (original returns 0 from branch delay slots) and the float register numbering ($f0/$f1 vs ours $f3) differ */
+#ifdef NONMATCHING /* 45 diffs (pinned $f0/$f1 for the two dot results fixes the float numbering; remaining: v40 goes through an a2 temp instead of straight into s1, and the early-exit shape). Earlier note (50 diffs): VU blocks, call order and pinned pointer registers match; early-exit shape (original returns 0 from branch delay slots) and the float register numbering ($f0/$f1 vs ours $f3) differ */
 int AI_CheckSightOn(int obj, float rad)
 {
     char sp[0x60] __attribute__((aligned(16)));
@@ -24,7 +24,8 @@ int AI_CheckSightOn(int obj, float rad)
     float b;
     float c;
     float len;
-    float dot;
+    register float dot __asm__("$f0");
+    register float dot2 __asm__("$f1");
 
     if (o == 0)
         return 0;
@@ -41,7 +42,7 @@ int AI_CheckSightOn(int obj, float rad)
                          "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(p10), "r"(sp), "r"(dir) : "memory");
     p0 = sp;
-    v40 = sp + 0x40;
+    v40 = p0 + 0x40;
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
                          "vsub.xyz vf5, vf5, vf6\n"
@@ -111,8 +112,8 @@ int AI_CheckSightOn(int obj, float rad)
                          "vmaddz.x vf6, vf7, vf6z\n"
                          "qmfc2.ni $2, vf6\n"
                          "mtc1 $2, %0\n"
-                         : "=f"(dot) : "r"(dir), "r"(sp + 0x30) : "$2");
-    if (!(0.0f < dot))
+                         : "=f"(dot2) : "r"(dir), "r"(sp + 0x30) : "$2");
+    if (!(0.0f < dot2))
         return 0;
     if (get_predict_hit_position_nico_sight_on(v40, sight) == 0)
         return 1;
