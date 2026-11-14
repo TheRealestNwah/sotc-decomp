@@ -1,4 +1,4 @@
-/* Parked: 47 differing words; the original sets the constant 2 once and reuses it for the compare and the call argument. */
+/* Parked: 4 diffs (was 47). The Original sets the constant 2 once in $a2 and reuses it for the compare and the call argument; pinning it with `register int two asm("$6")` assigned right before `v = src` gets that. Remaining: the 16-byte `v = src` copy loads v1/v0 in the opposite order (ld v1,0x10 first in the Original). Permuter queued. */
 #ifdef NONMATCHING
 extern struct { char pad[0x180]; float f; } gcGlobalVar;
 extern float get_base_yaw_nico_yaw_pitch_cntrl(void *);
@@ -16,13 +16,15 @@ typedef int s128 __attribute__((mode(TI)));
 static void func_000707B0(char *obj, int mode, int flag)
 {
     Vec4f v, src;
+    register int two __asm__("$6");
     src.f[0] = get_base_yaw_nico_yaw_pitch_cntrl(obj + 0xC);
     src.f[1] = get_base_pitch_nico_yaw_pitch_cntrl(obj + 0xC);
     src.f[2] = 0;
     src.f[3] = 0;
+    two = 2;
     v = src;
-    if (mode != 2) {
-        reset_double_spring_interp_cntrl3D(obj + 0x160, &v, 2);
+    if (mode != two) {
+        reset_double_spring_interp_cntrl3D(obj + 0x160, &v, two);
     } else {
         *(s128 *)(obj + 0x190) = *(s128 *)&v;
     }
