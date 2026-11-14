@@ -132,4 +132,3 @@ void sheetMgrResolve(int all)
         isysResolveAllProgramModule();
 }
 #endif
-#endif
