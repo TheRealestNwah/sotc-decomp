@@ -1,5 +1,4 @@
 /* Parked: 25 diffs, same size (79 words). `ents` is an unsigned int field so the reload per iteration matches; `res` is loaded before `q`. Remaining: the header mask ops (ori/and order at 0x48) and the count temp register (original keeps a0 free), plus the first-branch store order. */
-/* Parked: 44 diffs. Loop reloads ents each iteration; i/off in t1/a2 in the original. */
 #ifdef NONMATCHING
 typedef struct {
     unsigned int w0;
