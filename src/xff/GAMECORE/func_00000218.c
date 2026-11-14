@@ -1,4 +1,4 @@
-/* Parked: 156 diffs, same size (207 words). Debug character reset: collision DB probe, line draw, then ~20 Reset and Set calls. All logic matches; remaining diffs are stack slot placement (original: ClipCollisionFinder result at sp+0 with hit at +0x40, end at +0x50, matrix +0x60, slide +0xA0, debug +0xC0, frame 0x160 vs 0x150) and the s3 = &c->x1C0 base kept across the first calls. */
+/* Parked: 82 diffs with per-file -fno-strict-aliasing (156 without; flag set in config/ee_cflags.json), 207 words. Earlier note: 156 diffs, same size (207 words). Debug character reset: collision DB probe, line draw, then ~20 Reset and Set calls. All logic matches; remaining diffs are stack slot placement (original: ClipCollisionFinder result at sp+0 with hit at +0x40, end at +0x50, matrix +0x60, slide +0xA0, debug +0xC0, frame 0x160 vs 0x150) and the s3 = &c->x1C0 base kept across the first calls. */
 #ifdef NONMATCHING
 typedef int Vec4 __attribute__((mode(TI)));
 
