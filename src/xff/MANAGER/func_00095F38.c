@@ -1,4 +1,4 @@
-/* Parked: 44 diffs. Loop reloads ents each iteration; i/off in t1/a2 in the original. */
+/* Parked: 25 diffs, same size (79 words). `ents` is an unsigned int field so the reload per iteration matches; `res` is loaded before `q`. Remaining: the header mask ops (ori/and order at 0x48) and the count temp register (original keeps a0 free), plus the first-branch store order. */
 #ifdef NONMATCHING
 typedef struct {
     unsigned int w0;
@@ -37,7 +37,7 @@ typedef struct {
 
 typedef struct {
     char pad0[4];
-    Ent *ents;
+    unsigned int ents;
     unsigned int w8;
     char padC[0x28];
     Hdr34 h34;
@@ -59,25 +59,30 @@ static void func_00095F38(Obj *o, int n)
     h->b = 0;
     h->c = 0;
     h->d = 0;
-    for (i = 0; i < CNT(o); i++) {
-        Ent *e = &o->ents[i];
-        Val *p = e->val;
-        if (p != 0) {
-            Q *q = p->q;
-            if (q != 0 && !(e->res->flags & 4)) {
-                p->wC = 0;
-                p->w8 = (p->w8 & 0x87FFFFFF) | 0x08000000;
-                p->f10 = q->f4;
+    i = 0;
+    if (CNT(o) != 0) {
+        do {
+            Ent *e = (Ent *)o->ents + i;
+            Val *p = e->val;
+            Res *r = e->res;
+            if (p != 0) {
+                Q *q = p->q;
+                if (q != 0 && !(r->flags & 4)) {
+                    p->wC = 0;
+                    p->w8 = (p->w8 & 0x87FFFFFF) | 0x08000000;
+                    p->f10 = q->f4;
+                } else {
+                    float f = 0.0f;
+                    if (q != 0) f = q->f4;
+                    p->f10 = f;
+                    p->wC = 0;
+                    p->w8 = (p->w8 & 0x87FFFFFF) | 0x08000000;
+                }
             } else {
-                float f = 0.0f;
-                if (q != 0) f = q->f4;
-                p->f10 = f;
-                p->wC = 0;
-                p->w8 = (p->w8 & 0x87FFFFFF) | 0x08000000;
+                e->f10 = 1.0f;
             }
-        } else {
-            e->f10 = 1.0f;
-        }
+            i++;
+        } while (i < CNT(o));
     }
 }
 #endif
