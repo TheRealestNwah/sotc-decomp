@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 9 diffs (register allocation: original keeps the layout pointer in v1 and the priority in a0; ours swaps them, and the qmfc2 result goes to a0 instead of v0). */
+/* Parked: 3 diffs (was 9): layout pinned to $3, priority to $4, and the layout+0x134 load done in place by an asm lw on a $3-pinned copy. Left: the order of the a0 (pos) / a1 / a2 argument moves before is_clear_camera_region_condition. Earlier 9 diffs (register allocation: original keeps the layout pointer in v1 and the priority in a0; ours swaps them, and the qmfc2 result goes to a0 instead of v0). */
 typedef int s128 __attribute__((mode(TI)));
 extern char *GetLayoutClass(int);
 extern int is_clear_camera_region_condition(float *pos, void *region, void *arg, void *camera,
@@ -37,8 +37,8 @@ void *get_apply_camera_region(int layoutId, int type, unsigned long key, void *a
     for (i = 0x31; i >= 0; i--) {
         char *region = B_0015E350[0x31 - i];
         char *entry;
-        char *layout;
-        int priority;
+        register char *layout __asm__("$3");
+        register int priority __asm__("$4");
         float dist;
         if (!region)
             continue;
@@ -47,7 +47,11 @@ void *get_apply_camera_region(int layoutId, int type, unsigned long key, void *a
         priority = *(int *)(entry + 0x10);
         if (priority < bestPriority)
             continue;
-        dist = distanceSquare(pos, *(float **)(layout + 0x134));
+        {
+            register char *l2 __asm__("$3") = layout;
+            __asm__("lw %0, 0x134(%0)" : "+r"(l2));
+            dist = distanceSquare(pos, (float *)l2);
+        }
         if (region == arg) {
             dist -= 1.0f;
             if (dist < 0.0f)
