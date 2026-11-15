@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 3 diffs, same as initLayoutObj (t0 = D_00136C10 + 0x1C before the second handle resolve, then s1 = t0 + 4). */
 extern int DldSysUndefSymbol;
 extern char *D_00136C10;
 typedef struct { char pad0[0xC]; int size; } DldType;
@@ -29,9 +27,10 @@ int initLayoutObjVU0Secure(int a0, int a1, char *a2, int a3)
         if (*(int *)(param + 0xC) != 0 && CheckLayoutObjChainExist(obj) != 0)
             isysAddGroupWithLinkParam(obj, D_00136C10 + 0x18, 0, 0);
         if (a2 != 0 && dldElement((int *)(a2 + 0x14)) != 0) {
-            link = D_00136C10 + 0x1C;
-            slot = (int *)((char *)dldElement((int *)(a2 + 0x14)) + 0x34);
-            link += 4;
+            char *base = D_00136C10 + 0x1C;
+            char *dp = dldElement((int *)(a2 + 0x14));
+            link = base + 4;
+            slot = (int *)(dp + 0x34);
             for (i = 0xF; i >= 0; i--) {
                 int v = *slot++;
                 if (v != 0)
@@ -42,6 +41,3 @@ int initLayoutObjVU0Secure(int a0, int a1, char *a2, int a3)
     }
     return obj;
 }
-#else
-extern int initLayoutObjVU0Secure(int, int, char *, int);
-#endif
