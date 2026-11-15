@@ -227,5 +227,8 @@
   ],
   "src/xff/MANAGER/func_000E4A90.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/getFallenLeafSize.c": [
+    "-fno-strict-aliasing"
   ]
 }
