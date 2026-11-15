@@ -1,4 +1,4 @@
-/* Parked: 14 diffs, same size (167 words) (162 before). Fixes: rand() is evaluated before acc/share are initialised (they no longer live across the call, so only f20 is saved), the first walk uses its own pointer `p` (so `e` can share s0 with `unset`), and an empty memory asm keeps `e = first` out of the beqz delay slot. Remaining: ordering of the walk-pointer/count/unset initialisation moves at 0x94, and the e = first move placement after blez. */
+/* Parked: 9 diffs, same size (167 words) (14 before). p, count and unset are initialised as statements before the first walk and the walk advances p before count, which fixes the init move order. rand() is evaluated before acc/share are initialised, the first walk uses its own pointer `p`, and an empty memory asm keeps `e = first` out of the beqz delay slot. Remaining: `i = 0` is hoisted above the blez with `e = first` in its delay slot (the Original has i = 0 there and moves e = first after the constant loads); other placements of e/acc were worse. */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern unsigned char RO_00141E70[];
@@ -39,15 +39,19 @@ static void func_000EC410(unsigned int *list, void *ctx)
     float share;
     float acc;
     float r;
-    int count = 0;
-    int unset = 0;
+    int count;
+    int unset;
     int i;
 
-    for (p = first; dldEntry(&p->ref) != 0; p++) {
+    p = first;
+    count = 0;
+    unset = 0;
+    for (; dldEntry(&p->ref) != 0;) {
         if (p->weight < 0.0f)
             unset++;
         else
             remaining -= p->weight;
+        p++;
         count++;
     }
     r = (float)(rand() & 0xFFFF) * 0.0000152587890625f;
