@@ -1,4 +1,4 @@
-/* Parked: 162 diffs. Weighted random pick over a DLD entry list. Original saves only f20 (remaining weight); share/acc/r stay in caller-saved FPRs, and the walk pointer is a2 with first kept in s2. */
+/* Parked: 14 diffs, same size (167 words) (162 before). Fixes: rand() is evaluated before acc/share are initialised (they no longer live across the call, so only f20 is saved), the first walk uses its own pointer `p` (so `e` can share s0 with `unset`), and an empty memory asm keeps `e = first` out of the beqz delay slot. Remaining: ordering of the walk-pointer/count/unset initialisation moves at 0x94, and the e = first move placement after blez. */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern unsigned char RO_00141E70[];
@@ -33,6 +33,7 @@ static inline char *dldEntry(unsigned int *reference)
 static void func_000EC410(unsigned int *list, void *ctx)
 {
     Entry *first = (Entry *)dldEntry(list);
+    Entry *p;
     Entry *e;
     float remaining = 100.0f;
     float share;
@@ -42,18 +43,19 @@ static void func_000EC410(unsigned int *list, void *ctx)
     int unset = 0;
     int i;
 
-    for (e = first; dldEntry(&e->ref) != 0; e++) {
-        if (e->weight < 0.0f)
+    for (p = first; dldEntry(&p->ref) != 0; p++) {
+        if (p->weight < 0.0f)
             unset++;
         else
-            remaining -= e->weight;
+            remaining -= p->weight;
         count++;
     }
+    r = (float)(rand() & 0xFFFF) * 0.0000152587890625f;
     acc = 0.0f;
     share = 0.0f;
-    r = (float)(rand() & 0xFFFF) * 0.0000152587890625f;
     if (remaining >= 0.0f && unset != 0 && !(remaining < 0.0f))
         share = remaining / (float)unset;
+    __asm__ volatile("" ::: "memory");
     e = first;
     for (i = 0; i < count; i++, e++) {
         float w = share;
