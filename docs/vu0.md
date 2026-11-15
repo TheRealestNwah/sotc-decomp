@@ -63,3 +63,8 @@ the scalar code around it in plain C.
   scalar comparisons.
 - `ExecScriptLwsOrientClass` (MANAGER): the distance-squared test is a
   seven-instruction run that `vu0_lift.py` produces verbatim.
+
+- Float values handed to `qmtc2` (a scale in `vf6`): don't read them back with `*(int *)&f` or a union, which gcc 2.96 turns into a store/reload through the stack (func_000479F0: 125 -> 58 diffs). Move the bits in a separate asm output: `__asm__("mfc1 %0, %1" : "=r"(bits) : "f"(f));`, then pass `bits` as an `"r"` input to the VU0 statement. Float results read with `cfc2.ni`/`mtc1` use an `"=f"` output the same way.
+- A 16-byte struct copy emits `ldl/ldr/sdl/sdr` unless the type is 8-byte aligned; use a union with a `long l[2]` view (or an aligned `s128`) to get `ld/sd` or `lq/sq` (bossStatStartDemo). A 12-byte `float[3]` struct copy gives the `ldl/ldr` + `lw` pair the Original uses for Vec3.
+- Put the locals a function shares with VU0 asm in one struct (`struct { Vec a; Vec b; ... } L __attribute__((aligned(16)))`): it pins the frame layout, which gcc 2.96 otherwise decides by size (func_0005BB30, func_000C1BA8, func_00037A38).
+- The `vrsqrt Q, vf0w, vf7x` form is not in the assembler's table: emit `.word 0x4BA703BD` and the following `vwaitq` / `cfc2.ni $2, $vi22` as in AI_CheckSightOn.
