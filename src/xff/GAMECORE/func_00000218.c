@@ -48,7 +48,7 @@ extern char UnitMatrix[];
 #define I(c, o) (*(int *)((c) + (o)))
 #define P(c, o) (*(char **)((c) + (o)))
 
-static void func_00000218(int obj)
+static void func_00000218(int obj, int unused)
 {
     Vec4 *sp;
     register int f358 __asm__("$3");
