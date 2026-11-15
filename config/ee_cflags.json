@@ -217,5 +217,9 @@
   ],
   "src/xff/GAMECORE/func_00000218.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/func_0004A3D0.c": [
+    "-fno-strict-aliasing",
+    "-fno-gcse"
   ]
 }
