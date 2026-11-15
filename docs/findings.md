@@ -441,3 +441,15 @@ result alongside the nine supported classes and their saved-stack-pointer
 contract. This is static binary and relocation evidence, without a runtime
 reproduction. [Issue #1240](https://github.com/TheRealestNwah/sotc-decomp/issues/1240)
 remains open for reachability and the deliberate port-stage behavior change.
+
+## Signature and variable audit for parks
+
+Large register-rotation diffs in a park often come from the C, not the compiler. Check these against the Original's register use before running the permuter (2026-11 parks went from 82-238 diffs to 2-23 this way):
+
+- **Extra or missing arguments.** An argument the Original passes but never reads (an unused leading or trailing parameter, e.g. `func_00000218(obj, unused)`, `func_0004A3D0(unused, a1, a2)`) changes register assignment. A callee called with fewer arguments than its prototype claims leaves the rest as junk (`isysSearchSymbol(e, name)`, `iosJumpRecoverPoint(str, idx)`, one-argument `GetMeshClass`); a third register loaded by a `ld`/`sd` pair may only be the copy of a local, not an argument.
+- **Float arguments.** `mtc1 $zero, $f12` before a call means a float parameter (`ForceAcceptMotion(c, i, 0.0f)`); a trailing `daddu $t0, $zero, $zero` before a `jal` is an integer argument.
+- **Implicit zero variables.** A float held in a register through a loop (`+ 0.0f` y offset, shared `mov.s` of zero) needs a real local (`float y = x;`), not a literal.
+- **Evaluate order.** `rand()` before locals are initialised (they then stay caller-saved); conditional expression as the last call argument instead of an `if`; `int e = hasA == 1;` before a call whose result is reused.
+- **Frame layout.** Declare locals in one struct (`struct { plane; state; } L;`) to pin their order and offsets; drop pointer locals the Original does not keep in a saved register.
+- **Loop-invariant hoisting.** `__asm__("" : "+r"(k))` on a constant, a `volatile` cast on a loop-condition field, or `-fno-gcse`/`-fno-strict-aliasing` per file.
+- A trailing unused parameter or `-fno-strict-aliasing` alone matched func_00000218 and func_00095F38.
