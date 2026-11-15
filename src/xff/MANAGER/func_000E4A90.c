@@ -1,5 +1,3 @@
-/* Parked: 11 diffs (60 -> 11 by declaring iosJumpRecoverPoint with two arguments, which frees a2 for the table base). Remaining: tail ordering (original loads f44 into a0, hoists the B_00151844 lui, and stores the global after f44). */
-#ifdef NONMATCHING
 typedef struct IsysObj {
     char pad0[0x3C];
     int f3C;
@@ -40,8 +38,13 @@ static IsysObj *func_000E4A90(int a0, int a1, int a2) {
     if (a0 != 0) func_000E2808(a0, a1, o);
     else o->f40 = 0;
     isysResolveAllModuleObjHasUndefSymbol();
-    o->f44 = o->f44 | 0x80000;
-    B_00151844 = o;
+    {
+        register unsigned u __asm__("$4") = o->f44;
+        register IsysObj **g __asm__("$5");
+        u |= 0x80000;
+        g = &B_00151844;
+        o->f44 = u;
+        *g = o;
+    }
     return o;
 }
-#endif
