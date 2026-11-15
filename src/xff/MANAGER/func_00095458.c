@@ -1,4 +1,4 @@
-/* Parked: 193 diffs, same size (209 words). Right-aligned numeric text via the glyph table; control flow matches. Original: text in s7, glyphs in s6, &buf in fp (ours rotates s6/s7/fp); the 11-byte glyph-order table is copied from rodata with ldl/ldr. */
+/* Parked: 23 diffs, same size (209 words) (193 before; flag -fno-strict-aliasing). Fixes: a real float `y` (zero, copied from x) for the `+ 0.0f` y offset (original keeps it in f23), alpha as the last call argument in a conditional (`cond ? alpha * 0.6f : alpha`), `fdy` converted before the layout loads, 0.6f, and the missing-glyph branch as `if (i > 0) x += w; else x += w * 0.5f`. Register roles (text s7, glyphs s6, buf fp) now come out naturally. Remaining: the string address setup order before the first iosSPrintf, and flags/alpha scheduling around spriteDrawSprite. */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern char RO_00140670[];
@@ -27,18 +27,23 @@ static inline char *dldData(unsigned int *h)
 
 void func_00095458(int *spr, char *layout, char *text, int width, float alpha)
 {
-    char *glyphs = dldData((unsigned int *)(text + 0x60));
+    char *glyphs;
+    char *g0;
     Table11 table;
     char buf[16];
     char pad[16];
     int i, j;
     float x;
+    float y;
     float f;
 
+    g0 = dldData((unsigned int *)(text + 0x60));
+    glyphs = g0;
     if (width > 0 && glyphs != 0) {
         table = *(Table11 *)RO_00140670;
         iosSPrintf(buf, RO_00140680, *(int *)(text + 0xC));
         x = 0.0f;
+        y = x;
         if (strlen(buf) < (unsigned int)width) {
             char n = strlen(buf);
             strcpy(pad, buf);
@@ -57,29 +62,28 @@ void func_00095458(int *spr, char *layout, char *text, int width, float alpha)
                 if (i > 0)
                     x += *(float *)(g + 0x34) * 0.5f;
                 *spr = *(int *)(dldData((unsigned int *)g) + 0xC);
-                spriteSetPosition(spr, *(float *)(text + 0x1C) + x, *(float *)(text + 0x20) + 0.0f);
+                spriteSetPosition(spr, *(float *)(text + 0x1C) + x, *(float *)(text + 0x20) + y);
                 spriteSetScale(spr, *(float *)(g + 0x24), *(float *)(g + 0x28));
                 spriteSetTextureCoordinateUV(spr, *(float *)(g + 0x2C), *(float *)(g + 0x30), *(float *)(g + 0x34),
                                              *(float *)(g + 0x38));
                 {
                     int dy = getDrawScreenHeight() >= 0x1C0 ? 0 : *(int *)(*(char **)layout + 8);
+                    float fdy = (float)dy;
                     unsigned int flags = *(unsigned int *)(layout + 8);
-                    float a = alpha;
-                    if (!((flags >> 20) & 1) && (*(unsigned int *)(layout + 0x38) & 0x1FF))
-                        a *= 0.59999996f;
                     spriteDrawSprite(spr, *(int *)(layout + 0x24), (flags >> 14) & 0xF, *(int *)(text + 0x70),
-                                     *(float *)(layout + 0x1C), *(float *)(layout + 0x20) + (float)dy,
+                                     *(float *)(layout + 0x1C), *(float *)(layout + 0x20) + fdy,
                                      *(float *)(layout + 0x28), *(float *)(layout + 0x2C),
-                                     *(float *)(layout + 0x30), a);
+                                     *(float *)(layout + 0x30),
+                                     (!((flags >> 20) & 1) && (*(unsigned int *)(layout + 0x38) & 0x1FF)) ? alpha * 0.6f : alpha);
                 }
                 f = *(float *)(g + 0x34);
                 f *= 0.5f;
                 x += f;
             } else {
-                f = *(float *)(glyphs + 0x34);
-                if (!(i > 0))
-                    f *= 0.5f;
-                x += f;
+                if (i > 0)
+                    x += *(float *)(glyphs + 0x34);
+                else
+                    x += *(float *)(glyphs + 0x34) * 0.5f;
             }
         }
     }
