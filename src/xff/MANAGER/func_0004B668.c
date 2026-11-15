@@ -1,10 +1,9 @@
-#ifdef NONMATCHING
 /* Parked: 2 diffs (same length). Recursive skeleton matrix pass: out = m1 * (m0 * out) via a 4x4 VU multiply twice, then sibling and child. Only the operand order of the two address adds (off + tree[8], off + mats) differs. */
 static int func_0004B668(char *mats, char *flags, char *tree, int i, float *m0, float *m1)
 {
     int off = i * 64;
-    char *node = off + *(char **)(tree + 8);
-    char *m = off + mats;
+    char *node = (char *)(off + *(int *)(tree + 8));
+    char *m = (char *)(off + (int)mats);
     int sibling = *(int *)(node + 0x34);
     int child = *(int *)(node + 0x30);
     float tmp[16] __attribute__((aligned(16)));
@@ -73,4 +72,3 @@ static int func_0004B668(char *mats, char *flags, char *tree, int i, float *m0, 
     if (child >= 0)
         return func_0004B668(mats, flags, tree, child, m0, m1);
 }
-#endif
