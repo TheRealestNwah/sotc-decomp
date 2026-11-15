@@ -1,4 +1,4 @@
-/* Parked: 25 diffs, same size (79 words). `ents` is an unsigned int field so the reload per iteration matches; `res` is loaded before `q`. Remaining: the header mask ops (ori/and order at 0x48) and the count temp register (original keeps a0 free), plus the first-branch store order. */
+/* Parked: 5 diffs, same size (79 words). Loop condition reads w8 through a volatile cast, which keeps the count temp in v0 (25 -> 5). Remaining: first branch order (original stores wC, w8, then loads q->f4 and stores f10 in the delay slot; gcc hoists the lwc1 first). */
 #ifdef NONMATCHING
 typedef struct {
     unsigned int w0;
@@ -82,7 +82,7 @@ static void func_00095F38(Obj *o, int n)
                 e->f10 = 1.0f;
             }
             i++;
-        } while (i < CNT(o));
+        } while (i < (int)(((volatile Obj *)o)->w8 >> 4 & 0x3FF));
     }
 }
 #endif
