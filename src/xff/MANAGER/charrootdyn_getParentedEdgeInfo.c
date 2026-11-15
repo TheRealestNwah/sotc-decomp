@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 3 diffs: addiu v0,1 scheduled before the swc1 of 0x624 */
 typedef struct {
     char pad0[0xC0];
     char edge[0x124 - 0xC0];
@@ -22,6 +21,7 @@ void charrootdyn_getParentedEdgeInfo(char *obj, float *plane)
     int *p0, *p1;
     float deg, y, ang;
     float *pl;
+    register int one __asm__("$2");
 
     *(int *)(obj + 0x610) = 0;
     if (*(int *)(obj + 0x124) != 0)
@@ -51,8 +51,11 @@ void charrootdyn_getParentedEdgeInfo(char *obj, float *plane)
         else
             ang = 90.0f - deg;
         *(float *)(obj + 0x624) = ang;
-        *(int *)(obj + 0x610) = 1;
+        __asm__ __volatile__("" ::: "memory");
+        one = 1;
+        __asm__ __volatile__("" : "+r"(one));
         pl = plane;
+        *(int *)(obj + 0x610) = one;
         if (pl == 0)
             pl = GetCollisionDBPlane(edge);
         y = pl[1];
@@ -80,4 +83,3 @@ void charrootdyn_getParentedEdgeInfo(char *obj, float *plane)
         }
     }
 }
-#endif
