@@ -1,4 +1,4 @@
-/* Parked: 137 diffs, same size (173 words). GS ring effect: 44 points on an ellipse via iosFTOI4Vector, then gsReg packets. Original keeps the buffer in s2 and does not hold 0x8000 in a callee-saved register; sin/cos call setup shares one f12 move. */
+/* Parked: 102 diffs (137 before). The empty-asm launder on the 0x8000 constant stops it being hoisted into a register (original adds it inline via $at). Remaining: v[2]/v[3] stores scheduled after FTOI4 setup in the original, hi parts of B_0019CCD0/D_0017AFFC kept in s0/s1 with reloads, and callee-saved register numbering. */
 #ifdef NONMATCHING
 extern float D_0017AFF0;
 extern float D_0017AFFC;
@@ -33,13 +33,10 @@ void func_000BD7A0(int *buf)
         v[2] = 0;
         v[3] = 1.0f;
         iosFTOI4Vector(p, v);
-        p[0] += 0x8000;
-        p[1] += 0x8000;
+        { int k = 0x8000; __asm__("" : "+r"(k)); p[0] = k + p[0]; k = 0x8000; __asm__("" : "+r"(k)); p[1] = k + p[1]; }
         p += 4;
     }
-    mode = 0x42;
-    if (B_0019CCD0.f4 * D_0017AFFC == 1.0f)
-        mode = 2;
+    mode = B_0019CCD0.f4 * D_0017AFFC == 1.0f ? 2 : 0x42;
     if (B_0019CCD0.f4 * D_0017AFFC == 1.0f)
         mode |= 0x80;
     gsReg(0, mode);
