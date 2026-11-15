@@ -49,6 +49,10 @@ the scalar code around it in plain C.
   argument in its register class: `f(int, float, float, void *)` and `f(int, void *, float, float)` emit
   the moves in different orders. Try all permutations (4 parameters = 24 builds). This matched
   `ExecScriptLwsOrientClass`.
+- **Quad zero store: use an `sq $0` helper.** A plain `*(s128 *)p = 0` (or a union/`memset` form) emits `por $v0, $zero, $zero; sq $v0, 0($p)` instead of `sq $zero, 0($p)`. `static inline void zero(s128 *v) { __asm__ __volatile__("sq $0, 0(%0)" : : "r"(v) : "memory"); }` gives the Original store (`motrootdyn_startchainhang`, `charrootdyn_setLandingStatus` draft).
+- **Swap which operand the `lqc2` text reads.** When the Original loads the two addresses in one order but into the opposite vector registers (`lqc2 $vf5, ($a0)` after `lw $v1, 0x134($v0)`), keep the asm operand order (it decides the load order) and swap the register numbers in the text: `lqc2 vf5, 0x0(%1)` / `lqc2 vf6, 0x0(%0)` (`func_000764B0`).
+- **Put the short path in the `else` branch.** `if (x == 0) { call; return; } body` puts the short path first. The Original places it last, so write `if (x != 0) { body } else { call }` (`func_000764B0`).
+- **Whole-function asm with C glue (`clipByMinMaxCube`):** a function that is VU0 runs separated by `cfc2`/`and`/`beqz` flag tests becomes one asm statement per run, `r &= t` after each `cfc2` output, and the next run nested in `if (r != 0)`. gcc 2.96 emits the `and` operands as `$v1, $v0`; a one-line `__asm__("and %0, %0, %1" : "+r"(r) : "r"(t))` gives the Original order. Use `"+r"` and `"=r"`/`"=f"` outputs, never a read of an asm result through an `"r"` input.
 - The permuter parses files with `__asm__` statements; run it on the C around
   the asm when only scheduling or register choice differs.
 
