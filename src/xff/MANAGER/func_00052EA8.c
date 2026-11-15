@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 13 words differ (register allocation) */
+/* Parked: 4 words differ (was 13; permuter: call arg via pointer to e, register allocation) */
 extern int DldSysUndefSymbol;
 typedef struct { char pad0[0xC]; int size; } DldType;
 typedef struct { char pad0[8]; DldType *type; char padC[4]; char *data; } DldTable;
@@ -52,6 +52,7 @@ static void func_00052EA8(void *w, unsigned char *o, unsigned char *m)
     int i;
     int ok;
     float t;
+    void **new_var;
     float a;
     float b;
     float len;
@@ -79,9 +80,10 @@ static void func_00052EA8(void *w, unsigned char *o, unsigned char *m)
             b = 0.0f;
         }
     }
+    new_var = &e;
     if (ok) {
         r = &s[i];
-        func_00051A60(w, o, i, e);
+        func_00051A60(w, o, i, *new_var);
         r->a = a;
         r->b = b;
     }
