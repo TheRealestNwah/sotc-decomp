@@ -1,5 +1,4 @@
-/* Parked: 2 diffs with per-file -fno-strict-aliasing, same size (209 words) (82 before; 156 without the flag). Fixes: one local struct pins the frame (res +0, hit +0x40, end +0x50, mtx +0x60, slide +0xA0, dbg +0xC0), ForceAcceptMotion takes a float third argument, SlideCollisionFinder4D has an extra int argument (t0), 0x9C4 is a byte store, pi/2 is 1.5707963f, and a pointer to slide keeps it in s0. Remaining: the 0x358 test loads into v1 in the original (ours v0), and the first slide load addressing ordering at the final if. */
-#ifdef NONMATCHING
+/* Matched with per-file -fno-strict-aliasing. A pin on $3 for the 0x358 test (the Original loads it into v1), a local struct for the frame layout, a float third arg for ForceAcceptMotion, an extra int arg for SlideCollisionFinder4D. */
 typedef int Vec4 __attribute__((mode(TI)));
 
 extern char *GetCharacterClass();
@@ -49,9 +48,10 @@ extern char UnitMatrix[];
 #define I(c, o) (*(int *)((c) + (o)))
 #define P(c, o) (*(char **)((c) + (o)))
 
-void func_00000218(int obj)
+static void func_00000218(int obj)
 {
     Vec4 *sp;
+    register int f358 __asm__("$3");
     char *c = GetCharacterClass();
     int dmg = GetDamageClass(obj);
     char *db;
@@ -59,7 +59,8 @@ void func_00000218(int obj)
     struct { char res[0x40]; Vec4 hit; Vec4 end; char mtx[0x40]; Vec4 slide; Vec4 pad; char dbg[0x60]; } L;
 
     FlushCollisionWork(obj);
-    if (*(int *)(c + 0x358)) {
+    f358 = *(int *)(c + 0x358);
+    if (f358) {
         char *pos = c + 0x4C0;
         db = c + 0xE20;
         charrootdyn_getRegularColFinderPosition(pos, c, P(c, 0x13C), P(c, 0x134));
@@ -121,4 +122,3 @@ void func_00000218(int obj)
     GetCharaVCollisionStatus(c);
     charrootdyn_getChainStatus(obj);
 }
-#endif
