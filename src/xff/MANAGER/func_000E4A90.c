@@ -1,4 +1,4 @@
-/* Parked: 60 diffs (a3/a2 register choice for the table base). */
+/* Parked: 11 diffs (60 -> 11 by declaring iosJumpRecoverPoint with two arguments, which frees a2 for the table base). Remaining: tail ordering (original loads f44 into a0, hoists the B_00151844 lui, and stores the global after f44). */
 #ifdef NONMATCHING
 typedef struct IsysObj {
     char pad0[0x3C];
@@ -16,7 +16,7 @@ extern char RO_00141CD8[];
 extern char rootPtn[];
 extern IsysObj *_isysCreateObj(char *, int, int, int, int, int);
 extern void func_000E2808(int, int, IsysObj *);
-extern void iosJumpRecoverPoint(char *, int, int);
+extern void iosJumpRecoverPoint(char *, int);
 extern int isysGetXffWorkSize(int);
 extern void isysInitGroup(void *);
 extern void isysResolveAllModuleObjHasUndefSymbol(void);
@@ -28,7 +28,7 @@ static IsysObj *func_000E4A90(int a0, int a1, int a2) {
     int *d;
     d = (int *)D_00139F10;
     s2 = d[a2];
-    if (s2 == 0) iosJumpRecoverPoint(RO_00141CD8, a2, (int)d);
+    if (s2 == 0) iosJumpRecoverPoint(RO_00141CD8, a2);
     o = _isysCreateObj(rootPtn, 5, 0x60, isysGetXffWorkSize(a0), 0, 8);
     o->f3C = s2;
     t = o->f44 & 0xC00FFFFF;
