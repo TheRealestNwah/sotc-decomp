@@ -1,8 +1,8 @@
 typedef int s128 __attribute__((mode(TI)));
 
-extern int func_0001E778(char *, char *, int, int);
+static int func_0001E778(char *, char *, int, int);
 
-int func_0001E778(char *tree, char *node, int flag, int depth)
+static int func_0001E778(char *tree, char *node, int flag, int depth)
 {
     register int m_and __asm__("$4");
     register int m_or __asm__("$5");
