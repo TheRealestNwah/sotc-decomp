@@ -1,4 +1,4 @@
-/* Parked: 159 diffs (words shifted by two). Structure matches; original computes the sheetFsLanguageCode address once (lui a2) and keeps next-sheet in a2. */
+/* Parked: 79 diffs, same size (187 words) (159 before). isysSearchSymbol takes two arguments (the original leaves a2 as the lui left it), and the list unlinks test `head != node` first (the equal case is the branch target). Remaining: original keeps the entry table base in s0 with the walk pointer copied to s2 (ours uses s2 directly, nop in the blez slot), and the unlink store order / delay-slot filling. */
 #ifdef NONMATCHING
 extern void *DldSysUndefSymbol;
 extern int sheetFsLanguageCode;
@@ -6,7 +6,7 @@ extern void *D_00139F14;
 extern void *D_00139F18;
 extern long iosGetTCount(void);
 extern void iosGetSecondFromTCount(long);
-extern int isysSearchSymbol(void *, int, void *);
+extern int isysSearchSymbol(void *, int);
 extern void *isysGroupForFirst(void *, int);
 extern void *isysGroupForNext(void *, int);
 extern void isysGroupForExit(void *, int);
@@ -68,7 +68,7 @@ void sheetMgrResolve(int all)
 
             for (i = 0; i < t->count; i++, e++) {
                 if (e->name != 0 && (e->lang == 0 || e->lang == sheetFsLanguageCode)) {
-                    if (isysSearchSymbol(e, e->name, &sheetFsLanguageCode) == 0) {
+                    if (isysSearchSymbol(e, e->name) == 0) {
                         e->target = DldSysUndefSymbol;
                         unresolved++;
                         if (!s->always && !e->once)
@@ -94,14 +94,14 @@ void sheetMgrResolve(int all)
                 }
             }
             if (unresolved == 0 && s->prev != 0) {
-                if (D_00139F18 == s) {
-                    D_00139F18 = s->next;
-                    if (s->next != 0)
-                        s->next->prev = (Sheet *)-1;
-                } else {
+                if (D_00139F18 != s) {
                     s->prev->next = s->next;
                     if (s->next != 0)
                         s->next->prev = s->prev;
+                } else {
+                    D_00139F18 = s->next;
+                    if (s->next != 0)
+                        s->next->prev = (Sheet *)-1;
                 }
                 s->prev = 0;
                 s->next = 0;
@@ -114,14 +114,14 @@ void sheetMgrResolve(int all)
     while (m != 0) {
         Module *nm = m->next;
         if (isysResolveOneModuleObj(m) == 0 && m->prev != 0) {
-            if (D_00139F14 == m) {
-                D_00139F14 = m->next;
-                if (m->next != 0)
-                    m->next->prev = (Module *)-1;
-            } else {
+            if (D_00139F14 != m) {
                 m->prev->next = m->next;
                 if (m->next != 0)
                     m->next->prev = m->prev;
+            } else {
+                D_00139F14 = m->next;
+                if (m->next != 0)
+                    m->next->prev = (Module *)-1;
             }
             m->prev = 0;
             m->next = 0;
