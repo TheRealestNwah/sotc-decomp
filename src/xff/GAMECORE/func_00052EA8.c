@@ -1,5 +1,3 @@
-/* Parked: 11 diffs, same size (107 words). Edit-work initialiser: DLD-resolved entry d (count/ref/float params), 7 zeroed VU0 quad slots (sqc2 vf0 of the constant (0,0,0,1)), then count/ref/float constants and a second sqc2 vf0 at +0x130. Remaining: the mask constant load order before `lw v1, 0(s1)` and the store order of ref/f2/f1 (scheduling). */
-#ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern int getEditWorkInitData(int);
 
@@ -45,12 +43,19 @@ static inline char *dldData(unsigned int *h)
 
 static inline int dldRef(unsigned int *h)
 {
-    unsigned int off = *h & 0x3FFFF;
-    char *t = off != 0 ? *(char **)((char *)h - off) : 0;
+    unsigned int enc = *h;
+    register unsigned int m __asm__("$2");
+    unsigned int off;
+    char *t;
+
+    __asm__ __volatile__("" : : "r"(enc));
+    m = 0x3FFFF;
+    off = enc & m;
+    t = off != 0 ? *(char **)((char *)h - off) : 0;
     return (t != 0 && t != (char *)DldSysUndefSymbol) ? *(int *)(t + 0xC) : 0;
 }
 
-void func_00052EA8(EditWork *w, char *obj)
+static void func_00052EA8(EditWork *w, char *obj)
 {
     char *p = *(char **)(obj + 0x1C);
     char *d = dldData((unsigned int *)(p + 0x1C));
@@ -87,4 +92,3 @@ void func_00052EA8(EditWork *w, char *obj)
     zp[0] = *(int *)(d + 8);
     w->z150 = 0;
 }
-#endif
