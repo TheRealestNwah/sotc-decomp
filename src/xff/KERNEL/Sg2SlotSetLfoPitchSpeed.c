@@ -63,10 +63,10 @@ typedef struct {
 extern Sg2Slot B_000DE370[];
 
 #ifdef NONMATCHING
-/* Parked: 4 words differ (slot*7 lands in $v1 not $a1; base materialized via $v1 instead of lui $v0/addiu $v1) */
+/* Parked: 2 words differ (base materialized via lui $v1 instead of lui $v0/addiu $v1) */
 void Sg2SlotSetLfoPitchSpeed(int slot, int speed)
 {
-    int off = slot * (int)sizeof(Sg2Slot);
+    int off = ({ register int s7 __asm__("$5") = slot * 7; __asm__("" : "+r"(s7)); s7 << 5; });
     register int offc __asm__("$9") = off;
     register int o70 __asm__("$7");
     __asm__("" : "+r"(offc));
