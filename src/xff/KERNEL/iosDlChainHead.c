@@ -4,7 +4,7 @@ typedef struct { int a, b; int adrs[2]; char *ptr; int e; int cur; } DlBufs;
 
 extern DlBufs B_00065018;
 
-/* Parked: 1 word differs (operand order of the and that masks node << 32). */
+/* Parked: 1 word differs (operand order of the and that masks node << 32). A 25-minute permuter run found nothing better. */
 #ifdef NONMATCHING
 void iosDlChainHead(int layer, int tag)
 {

@@ -31,7 +31,7 @@ static inline void filterReset(Filter *f)
 #ifdef NONMATCHING
 /*
  * Parked: 1 word differs. The original computes the filter pointer as
- * `addu $a1, $s1, $a0` (base first); this emits `addu $a1, $a0, $s1`.
+ * `addu $a1, $s1, $a0` (base first); this emits `addu $a1, $a0, $s1`. A 25-minute permuter run found nothing better.
  */
 void Sg2ExPcmOutputSetAutoFilterDirect(int ch, int arg1, int arg2, float f0, float f1)
 {

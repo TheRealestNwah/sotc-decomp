@@ -13,7 +13,7 @@ extern int PredictMotionOrientByScriptCtrl(int);
 extern void PredictMotionChangeState(MotionPredict *, int, int);
 extern void analyzeMotionProperty(int, int, int, int, int, float, float);
 
-#ifdef NONMATCHING /* 1 word: v pinned to $a2 drops the old andi mask, but the beqz tests $a2 where the original tests $v0 (the original copies v0 into a2 before the branch and fills the delay slot from the then-block). */
+#ifdef NONMATCHING /* 1 word: v pinned to $a2 drops the old andi mask, but the beqz tests $a2 where the original tests $v0 (the original copies v0 into a2 before the branch and fills the delay slot from the then-block). A 25-minute permuter run found nothing better. */
 int analyzeMotionPropertyFromKey2(char *obj, int a1, int a2, int a3, int t0)
 {
   int new_var;
