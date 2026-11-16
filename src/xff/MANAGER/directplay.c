@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 21 diffs: s5/s6 swapped for 0x13C/0x138 pointers, lqc2 operand register order, mfc1 temp, late v1 */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -32,10 +31,21 @@ void directplay(int obj, float *vec, float t, float pad, float scale)
     s128 *q70;
     float *q60;
     float *p134;
-    float *p13c;
-    float *p138;
+    register float *p13c __asm__("$21");
+    register float *p138 __asm__("$22");
     float *v1;
     float *bp;
+    register s128 qq __asm__("$2");
+    register void *a0r __asm__("$4");
+    register void *a1r __asm__("$5");
+    register void *a2r __asm__("$6");
+    register void *a3r __asm__("$7");
+    register int tb __asm__("$8");
+    register float *pb2 __asm__("$2");
+    float onef;
+    register float *pv30 __asm__("$3");
+    register float *pb1 __asm__("$5");
+    register float *pva __asm__("$2");
     union { float f; int i; } ti, si;
 
     p13c = *(float **)((char *)c + 0x13C);
@@ -48,23 +58,25 @@ void directplay(int obj, float *vec, float t, float pad, float scale)
                          "sqc2 vf0, 0x0(%1)\n"
                          : : "r"(p13c), "r"(q60) : "memory");
     zero(q70);
+    __asm__ __volatile__("addiu %0, $29, 0x10" : "=r"(pb1));
+    __asm__ __volatile__("addiu %0, %1, 0xA0" : "=r"(pva) : "r"(c));
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                          "lqc2 vf6, 0x0(%1)\n"
                          "vmul.xyz vf5, vf5, vf6\n"
                          "sqc2 vf5, 0x0(%2)\n"
-                         : : "r"(vec), "r"(c->vA0), "r"(&buf[1]) : "memory");
+                         : : "r"(vec), "r"(pva), "r"(pb1) : "memory");
     if (c->mode == 1) {
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "lqc2 vf6, 0x0(%1)\n"
                              "vadd.xyz vf5, vf5, vf6\n"
                              "sqc2 vf5, 0x0(%2)\n"
-                             : : "r"(c->v1080), "r"(&buf[1]), "r"(buf) : "memory");
+                             : : "r"(c->v1080), "r"(pb1), "r"(buf) : "memory");
     } else {
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "lqc2 vf6, 0x0(%1)\n"
                              "vadd.xyz vf5, vf5, vf6\n"
                              "sqc2 vf5, 0x0(%2)\n"
-                             : : "r"(c), "r"(&buf[1]), "r"(buf) : "memory");
+                             : : "r"(c), "r"(pb1), "r"(buf) : "memory");
     }
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                          "lqc2 vf6, 0x0(%1)\n"
@@ -75,7 +87,7 @@ void directplay(int obj, float *vec, float t, float pad, float scale)
     if (t >= 1.0f) {
         *(s128 *)p134 = buf[0];
     } else {
-        ti.f = t;
+        __asm__ __volatile__("mfc1 %0, %1" : "=r"(tb) : "f"(t));
         __asm__ __volatile__("qmtc2.ni %0, vf7\n"
                              "lqc2 vf5, 0x0(%1)\n"
                              "lqc2 vf6, 0x0(%2)\n"
@@ -83,25 +95,36 @@ void directplay(int obj, float *vec, float t, float pad, float scale)
                              "vmulax.xyzw ACC, vf5, vf7x\n"
                              "vmaddw.xyzw vf9, vf6, vf8w\n"
                              "sqc2 vf9, 0x0(%2)\n"
-                             : : "r"(ti.i), "r"(bp), "r"(p134) : "memory");
+                             : : "r"(tb), "r"(bp), "r"(p134) : "memory");
     }
-    p134[3] = 1.0f;
+    onef = 1.0f;
+    __asm__ __volatile__("" : "+f"(onef));
+    pv30 = c->v30;
+    __asm__ __volatile__("" : "+r"(pv30));
+    __asm__ __volatile__("addiu %0, $29, 0x20" : "=r"(pb2));
+    p134[3] = onef;
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                          "lqc2 vf6, 0x0(%1)\n"
                          "vsub.xyzw vf7, vf5, vf6\n"
                          "sqc2 vf7, 0x0(%2)\n"
-                         : : "r"(p134), "r"(p138), "r"(&buf[2]) : "memory");
+                         : : "r"(p134), "r"(p138), "r"(pb2) : "memory");
     si.f = scale;
-    v1 = c->v30;
+    v1 = pv30;
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                          "qmtc2.ni %1, vf6\n"
                          "vmulx.xyz vf5, vf5, vf6x\n"
                          "sqc2 vf5, 0x0(%2)\n"
-                         : : "r"(&buf[2]), "r"(si.i), "r"(v1) : "memory");
+                         : : "r"(pb2), "r"(si.i), "r"(v1) : "memory");
     v1[3] = 0;
-    *(s128 *)p138 = *(s128 *)p134;
-    charrootdyn_getRegularColFinderPosition((char *)c + 0x4C0, c, p13c, p134);
+    a2r = p13c;
+    a3r = p134;
+    __asm__ __volatile__("" : "+r"(a3r));
+    a0r = (char *)c + 0x4C0;
+    __asm__ __volatile__("lq %0, 0x0(%1)" : "=r"(qq) : "r"(p134));
+    a1r = c;
+    __asm__ __volatile__("" : "+r"(a1r) : : "memory");
+    *(s128 *)p138 = qq;
+    charrootdyn_getRegularColFinderPosition(a0r, a1r, a2r, a3r);
     if (*(char **)((char *)c + 0x19C))
         *(*(char **)((char *)c + 0x19C) + 0x8C) = 1;
 }
-#endif

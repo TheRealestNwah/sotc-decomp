@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 23 diffs: zero-store pointer in a0 not v0; sibling call args hoisted above the beq */
+#ifdef NONMATCHING /* 3 diffs (was 23; permuter: sib = sibling after the return): zero-store pointer in a0 not v0; sibling call args hoisted above the beq */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -95,9 +95,10 @@ void func_0003D508(int idx, Vec4 *out, Tree *tree, Vec4 *quats, Vec4 *scale)
     if (child != -1)
         func_0003D508(child, out, tree, quats, scale);
     iosPopCurrentMatrix();
-    sib = sibling;
-    if (sib == -1)
+    if (sib == -1) {
         return;
+        sib = sibling;
+    }
     func_0003D508(sib, out, tree, quats, scale);
 }
 #endif

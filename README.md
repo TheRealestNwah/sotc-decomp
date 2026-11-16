@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/logo.png" alt="Shadow of the Colossus Decomp" width="500">
+</p>
+
 # Shadow of the Colossus Decompilation
 
 A work-in-progress matching decompilation of **Shadow of the Colossus** (PlayStation 2, NTSC-U, `SCUS-97472`), with the long-term goal of a Native port to PC.
