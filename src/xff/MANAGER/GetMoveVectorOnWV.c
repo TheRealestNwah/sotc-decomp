@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 2 diffs: neg.s scheduled before the lwc1 of v[2]; explicit asm addiu for the matrix pointer after iosCopyMatrix keeps it out of a saved reg */
+/* The explicit addiu after iosCopyMatrix keeps the matrix pointer out of a saved register; the empty asm on vx/vz orders the v[2] load before the neg.s. */
 typedef float Vec4[4] __attribute__((aligned(16)));
 
 extern float ZUnitVector[4];
@@ -122,12 +122,12 @@ void GetMoveVectorOnWV(float *out, float *vec, float *v2, float *matrix, float s
     vx = v[0];
     __asm__ __volatile__("addiu %0, $29, 0x10" : "=r"(mp) : "f"(vx));
     vz = v[2];
+    __asm__("" : : "f"(vz), "f"(vx));
+    m[0][2] = -vx;
     m[2][0] = vx;
     m[2][2] = vz;
     m[0][0] = vz;
-    m[0][2] = -vx;
     matApply(out, mp, vec);
     scaleXYZ(out, speed);
     out[1] = tmp[1];
 }
-#endif
