@@ -4,7 +4,7 @@ extern int get_camera_lws_animation_param(int);
 extern void end_camera_lws_animation_by_paramID(int);
 
 #ifdef NONMATCHING
-/* Parked: 5 diffs with hit pinned to v1; target keeps the constants 8 and 1 in v0, ours uses a0. Pinning a v0 temp for 8 scores 24. */
+/* Parked: 5 diffs with hit pinned to v1; target keeps the constants 8 and 1 in v0, ours uses a0. Pinning a v0 temp for 8 scores 24. A 25-minute permuter run found nothing better. */
 int compel_end_lws_movie_mode_game_camera(int id)
 {
     char *base = get_game_camera(id) + 0x34E0;

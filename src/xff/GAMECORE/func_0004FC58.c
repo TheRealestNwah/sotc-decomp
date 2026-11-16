@@ -1,4 +1,4 @@
-/* func_0004FC58: ending demo teardown (5 diffs: li a0,1 for fadeWhiteOut is scheduled before the 0.4f constant instead of into the delay slot) */
+/* func_0004FC58: ending demo teardown (5 diffs: li a0,1 for fadeWhiteOut is scheduled before the 0.4f constant instead of into the delay slot). A 25-minute permuter run found nothing better. */
 extern void FinishDemoCameraOrient(int);
 extern char *GetScriptCharacterClass(int);
 extern void PauseGame(int);
