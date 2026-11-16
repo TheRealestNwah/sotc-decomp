@@ -13,16 +13,17 @@ extern void WaitSema(int);
 extern void SignalSema(int);
 extern void *func_00001910(GarbageNode *, GarbageNode *, GarbageNode *);
 
-#ifdef NONMATCHING
-/* Parked: 4 words differ (v1/s1 for gbPtn in the first node load) */
+/* The $3 pin keeps gbPtn out of a saved register for the first node load. */
 void iosMallocGarbageTickProc(int (*fn)(void *), void *arg)
 {
     GarbageNode *n;
     GarbageNode *next;
 
     WaitSema(B_0004F5F8);
-    n = gbPtn;
-    n = (GarbageNode *)((n->next & 0xFFFFFF) << 2);
+    {
+        register GarbageNode *g __asm__("$3") = gbPtn;
+        n = (GarbageNode *)((g->next & 0xFFFFFF) << 2);
+    }
     while (n != 0 && fn(arg)) {
         next = (GarbageNode *)((n->next & 0xFFFFFF) << 2);
         if (!(n->flag & 1) && next != 0 && (next->flag & 1)) {
@@ -39,4 +40,3 @@ void iosMallocGarbageTickProc(int (*fn)(void *), void *arg)
     }
     SignalSema(B_0004F5F8);
 }
-#endif
