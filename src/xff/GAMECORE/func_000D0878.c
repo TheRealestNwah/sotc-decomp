@@ -1,4 +1,4 @@
-typedef struct { char pad[0x170]; float dt; } GcGlobal;
+typedef struct { char pad[0x168]; float time; int pad16C; float dt; } GcGlobal;
 typedef struct { char pad[0x20]; float f20; float f24; } Obj2;
 extern GcGlobal gcGlobalVar;
 extern float D_0017B3A8;
@@ -43,4 +43,55 @@ static void func_000D0878(int arg0, void *arg1, Obj2 *arg2, int arg3)
         screenBlur(0x1C, 0x200, 0x200, (n < 0x11) ? n : 0x10, zero, ((D_0017B3A8 - 1.0f) * 0.15f) + 1.0f, 0, 0, (int)(fade * 64.0f / 128.0f));
     }
     scrRun();
+}
+
+extern void *get_main_cameraman(void);
+extern void *get_game_camera(void *);
+extern int gStatSaveDataGameFlagChk(int);
+extern void fadeOut(int, float, int);
+extern void setNowLoadingMessageDisplayFlag(int);
+extern void SetLayoutDisplayFlag(int);
+extern void begin_pause_rise_game_camera(void *, void *);
+extern float get_begin_interp_finish_time_camera_pause_rise(void);
+extern void SpriteMenuSetDispFlagAll(int, int);
+extern void request_end_pause_rise_game_camera(void *, void *);
+extern void feedbackBlur2(int, float, float);
+extern int SpriteMenuIsFadeCheckAllLayer(int);
+extern int is_end_pause_rise_game_camera(void *, void *);
+
+static void func_000D0A78(int arg0, void *arg1, Obj2 *arg2, int *state)
+{
+    void *cm = get_main_cameraman();
+    void *cam = get_game_camera(cm);
+    float start;
+    float t;
+
+    while (*state != 2) {
+        func_000D0878(arg0, arg1, arg2, 1);
+    }
+    if (gStatSaveDataGameFlagChk(0x1B)) {
+        t = 1.0f;
+        start = gcGlobalVar.time;
+        fadeOut(0, t, 0);
+        while (gcGlobalVar.time - start < t) {
+            func_000D0878(arg0, arg1, arg2, 1);
+        }
+        setNowLoadingMessageDisplayFlag(1);
+        SetLayoutDisplayFlag(1);
+        return;
+    }
+    arg2->f24 = 1.2f;
+    begin_pause_rise_game_camera(cam, cm);
+    t = get_begin_interp_finish_time_camera_pause_rise();
+    start = gcGlobalVar.time;
+    while (gcGlobalVar.time - start < t * 0.5f) {
+        func_000D0878(arg0, arg1, arg2, 1);
+    }
+    SetLayoutDisplayFlag(1);
+    SpriteMenuSetDispFlagAll(arg0, 0);
+    request_end_pause_rise_game_camera(cam, cm);
+    while (SpriteMenuIsFadeCheckAllLayer(arg0) || !is_end_pause_rise_game_camera(cam, cm)) {
+        func_000D0878(arg0, arg1, arg2, 1);
+        feedbackBlur2(0x50, 1.1f, 0.0f);
+    }
 }
