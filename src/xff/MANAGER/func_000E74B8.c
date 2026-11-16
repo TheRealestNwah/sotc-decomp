@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 3 diffs: the delay-slot argument copy for the first func_000E5EA0 call is hoisted from the wrong branch */
+#ifdef NONMATCHING /* 3 diffs: the delay-slot argument copy for the first func_000E5EA0 call is hoisted from the wrong branch; a 25-minute permuter run found nothing better */
 typedef int s128 __attribute__((mode(TI)));
 
 extern int GetAnimationClassObjectAnimation(void *, float *, void *, int);
