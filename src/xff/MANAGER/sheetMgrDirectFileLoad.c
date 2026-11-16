@@ -1,4 +1,4 @@
-/* Parked: 2 diffs (same store-order problem as sheetMgrAdpcmIntLoad: the original stores flags at +4 before the first argument at +0x10; gcc schedules the argument first). Uses the popReq/getSheetMgrReqEmpty helpers from sheetMgrAdpcmIntLoad; the earlier hand-inlined draft was 54 diffs. */
+/* Parked: 2 diffs (same store-order problem as sheetMgrAdpcmIntLoad: the original stores flags at +4 before the first argument at +0x10; gcc schedules the argument first). Uses the popReq/getSheetMgrReqEmpty helpers from sheetMgrAdpcmIntLoad; the earlier hand-inlined draft was 54 diffs. A 25-minute permuter run found nothing better. */
 #ifdef NONMATCHING
 typedef struct Req {
     int type;
