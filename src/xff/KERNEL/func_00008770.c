@@ -46,9 +46,8 @@ extern void func_00007F80(void *, void *, ModInfo *);
 extern void *iosMallocAlign(void *, int, int);
 extern int func_0000A1A8(void *, void *, int);
 
-/* Parked: 3 diffs: n=2 branch order inverted */
-#ifdef NONMATCHING
-ModObj *func_00008770(void *name, int size, void *heap, int sym, int res, int link)
+/* Creates a module object for an XFF image: sizes its work area from the symbol counts, links it and adds it to the symbol groups. */
+static ModObj *func_00008770(void *name, int size, void *heap, int sym, int res, int link)
 {
     int saved;
     ModObj *obj;
@@ -60,9 +59,14 @@ ModObj *func_00008770(void *name, int size, void *heap, int sym, int res, int li
 
     mod = iosMallocAlign(rootPtn, size, 0x10);
     func_0000A1A8(mod, name, size);
-    n = 2;
-    if (mod->first != 0) {
-        n = mod->first + 1;
+    {
+        register int f __asm__("$2");
+        f = mod->first;
+        n = f + 1;
+        if (f == 0) {
+            n = 2;
+            __asm__ volatile("");
+        }
     }
     d = mod->unk24 - mod->unk1C - n;
     x = d ? d * 16 + 0x33 : 0;
@@ -99,6 +103,3 @@ ModObj *func_00008770(void *name, int size, void *heap, int sym, int res, int li
     }
     return obj;
 }
-#else
-extern ModObj *func_00008770(void *name, int size, void *heap, int sym, int res, int link);
-#endif

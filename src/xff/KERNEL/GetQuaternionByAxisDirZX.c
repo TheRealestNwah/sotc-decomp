@@ -7,8 +7,7 @@ extern void GetDifferencialQuaternionWithNoRegularize(float *, float *, float *,
 extern float iosGetATan2fExact(float, float);
 extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, short, float *);
 
-/* Parked: 2 words off, only the order of the final `addiu $a2` and `addiu $a0` before the SetQuaternion call. The launder recipe (see asm("" : "+r"(p)) on each stack pointer) fixed everything else. */
-#ifdef NONMATCHING
+/* Each stack pointer goes through asm("" : "+r"(p)) and the ZUnitVector argument is pinned to $a2, so the argument setup matches the original order. */
 void GetQuaternionByAxisDirZX(float *out, float *dir, float *v)
 {
     struct { Vec4 mat[4]; Vec4 t; Vec4 neg; Vec4 rot; } L;
@@ -77,9 +76,12 @@ void GetQuaternionByAxisDirZX(float *out, float *dir, float *v)
                          "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(L.t) : "memory");
     ang = (short)(iosGetATan2fExact(L.t[1], L.t[0]) * 32768.0f / 3.14159274f);
-    r1 = L.rot;
-    __asm__("" : "+r"(r1));
-    SetQuaternionByAxisRotateVWithNoRegularize(r1, -ang, ZUnitVector2);
+    {
+        register float *zv __asm__("$6") = ZUnitVector2;
+        r1 = L.rot;
+        __asm__("" : "+r"(r1) : "r"(zv));
+        SetQuaternionByAxisRotateVWithNoRegularize(r1, -ang, zv);
+    }
     r2 = L.rot;
     __asm__("" : "+r"(r2));
     __asm__ __volatile__("lqc2 vf11, 0x0(%0)\n"
@@ -97,6 +99,3 @@ void GetQuaternionByAxisDirZX(float *out, float *dir, float *v)
                          "sqc2 vf13, 0x0(%0)\n"
                          : : "r"(out), "r"(r2) : "memory");
 }
-#else
-extern void GetQuaternionByAxisDirZX(float *out, float *dir, float *v);
-#endif
