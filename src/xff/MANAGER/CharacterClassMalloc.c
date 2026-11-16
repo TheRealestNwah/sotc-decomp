@@ -1,5 +1,4 @@
-#ifdef NONMATCHING
-/* 4 diffs, same length (138 words): only the temp pair for the config pointer differs. Draft from the asm: carves the per-character arrays out of one iosMallocAlign block (n entries of 0x108 bytes: n * 16-byte and n * 64-byte slices, zeroing the 0x2D0 vectors with sqc2 vf0), copies three of the pointers to +0x340..0x348, then allocates the m-entry block (size depends on bit 6 of cls[0x1140]+0x38, reused in the `n` register as the Original does) and zeroes the 0x2EC / 0x2F0 vectors from ZeroPoint. Needed to get here: the n > 0 do/while with --i, reading b before a, and reusing n for the flag. The Original loads cls[0x1140] into $v0 and the flag word into $v1; ours has them swapped. Permuter (12 workers, 15 min): no improvement. */
+/* Carves the per-character arrays out of one iosMallocAlign block (n entries of 0x108 bytes, zeroing the 0x2D0 vectors with sqc2 vf0), copies three of the pointers to +0x340..0x348, then allocates the m-entry block (size depends on bit 6 of cls[0x1140]+0x38, kept in the n register) and zeroes the 0x2EC / 0x2F0 vectors from ZeroPoint. The Original reuses q's register for the n * 4 slice size. */
 typedef int s128 __attribute__((mode(TI)));
 
 extern s128 ZeroPoint;
@@ -41,7 +40,8 @@ int CharacterClassMalloc(void *ptn, char *c, int n, int m)
         *(char **)(c + 0x328) = p;
         p += n * 16;
         *(char **)(c + 0x320) = p;
-        p += n * 4;
+        q = (char *)(n * 4);
+        p += (int)q;
         *(char **)(c + 0x324) = p;
     }
     *(int *)(c + 0x340) = *(int *)(c + 0x2E0);
@@ -53,7 +53,8 @@ int CharacterClassMalloc(void *ptn, char *c, int n, int m)
         char *b;
         int i;
 
-        n = (*(unsigned int *)(*(char **)(c + 0x1140) + 0x38) >> 6) & 1;
+        n = *(unsigned int *)(*(char **)(c + 0x1140) + 0x38) >> 6;
+        n &= 1;
         p = iosMallocAlign(ptn, (n ? m * 47 : m * 37) * 8, 0x10);
 
         *(char **)(c + 0x31C) = p;
@@ -90,4 +91,3 @@ int CharacterClassMalloc(void *ptn, char *c, int n, int m)
     }
     return 1;
 }
-#endif
