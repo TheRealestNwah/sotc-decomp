@@ -9,14 +9,14 @@ static inline char *dldResolve(unsigned int *h)
     return (t != 0 && t != DldSysUndefSymbol) ? (char *)t[4] + ((v >> 18) & 0xFFF) * ((int *)t[2])[3] : 0;
 }
 
-#ifdef NONMATCHING
-/* Parked: 11 words differ (register allocation/scheduling); permuter found no zero. */
 int getFallenLeafSize(int *obj)
 {
     int *res = (int *)dldResolve((unsigned int *)&obj[7]);
-    int n = obj[12] != 0 ? obj[15] : obj[11] * obj[10];
-    return 0x170 + (n << 7) + (res[2] << 6);
+    register int base __asm__("$5");
+    int n;
+    base = 0x170;
+    n = obj[12] != 0 ? obj[15] : obj[10] * obj[11];
+    base = (n << 7) + base;
+    __asm__ volatile("" : "+r"(base));
+    return base + (res[2] << 6);
 }
-#else
-int getFallenLeafSize(int *obj);
-#endif

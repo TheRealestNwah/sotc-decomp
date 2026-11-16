@@ -1,4 +1,4 @@
-/* Parked: 162 diffs. Weighted random pick over a DLD entry list. Original saves only f20 (remaining weight); share/acc/r stay in caller-saved FPRs, and the walk pointer is a2 with first kept in s2. */
+/* Parked: 9 diffs, same size (167 words) (14 before). p, count and unset are initialised as statements before the first walk and the walk advances p before count, which fixes the init move order. rand() is evaluated before acc/share are initialised, the first walk uses its own pointer `p`, and an empty memory asm keeps `e = first` out of the beqz delay slot. Remaining: `i = 0` is hoisted above the blez with `e = first` in its delay slot (the Original has i = 0 there and moves e = first after the constant loads); other placements of e/acc were worse. */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern unsigned char RO_00141E70[];
@@ -33,27 +33,33 @@ static inline char *dldEntry(unsigned int *reference)
 static void func_000EC410(unsigned int *list, void *ctx)
 {
     Entry *first = (Entry *)dldEntry(list);
+    Entry *p;
     Entry *e;
     float remaining = 100.0f;
     float share;
     float acc;
     float r;
-    int count = 0;
-    int unset = 0;
+    int count;
+    int unset;
     int i;
 
-    for (e = first; dldEntry(&e->ref) != 0; e++) {
-        if (e->weight < 0.0f)
+    p = first;
+    count = 0;
+    unset = 0;
+    for (; dldEntry(&p->ref) != 0;) {
+        if (p->weight < 0.0f)
             unset++;
         else
-            remaining -= e->weight;
+            remaining -= p->weight;
+        p++;
         count++;
     }
+    r = (float)(rand() & 0xFFFF) * 0.0000152587890625f;
     acc = 0.0f;
     share = 0.0f;
-    r = (float)(rand() & 0xFFFF) * 0.0000152587890625f;
     if (remaining >= 0.0f && unset != 0 && !(remaining < 0.0f))
         share = remaining / (float)unset;
+    __asm__ volatile("" ::: "memory");
     e = first;
     for (i = 0; i < count; i++, e++) {
         float w = share;

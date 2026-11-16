@@ -1,4 +1,4 @@
-/* Parked: 238 diffs, same size (248 words). Mesh cell initialiser (two passes over rows x cols; each field store re-fetches GetMeshClass). Original keeps the arg regs in a1/s1/s7 and spills the RO_0017D210 pair to sp+0/+8 after the first call; loop variable registers rotate. */
+/* Parked: 182 diffs with per-file -fno-gcse (210 without), same size (229 words). Fresh re-draft: the function takes three arguments (the first, in $a0, is unused; a1/a2 arrive in $a1/$a2), GetMeshClass takes one argument (the old draft passed the pair's low word; the ld/sd of RO_0017D210 is just the 16-byte copy to sp+0), and the pair is copied high word first. Body structure now lines up. Remaining: original keeps pass at sp+0x10 starting from 0 (ours folds it to start at 1), per-row copy of off in s2, and register numbering (a1/a2/m/c/cb in s1/s7/s6/s5/s4). */
 #ifdef NONMATCHING
 typedef int Vec4 __attribute__((mode(TI)));
 typedef struct {
@@ -12,21 +12,25 @@ typedef struct {
     long hi;
 } Pair;
 
-extern Mesh *GetMeshClass(int, long);
+extern Mesh *GetMeshClass(int);
 extern Pair RO_0017D210;
 extern Vec4 ZUnitVector;
 
-#define MESH(a) ((char *)GetMeshClass(a, v.lo))
+#define MESH(a) ((char *)GetMeshClass(a))
 #define ROWS(a) (*(char **)(MESH(a) + off))
-#define PITCH(a) ((GetMeshClass(a, v.lo)->cols << 6) + 0x10)
+#define PITCH(a) ((GetMeshClass(a)->cols << 6) + 0x10)
 #define CELL(a, r, c) (ROWS(a) + (r) * PITCH(a) + (c))
 
-void func_0004A3D0(int a1, int a2)
+void func_0004A3D0(int unused, int a1, int a2)
 {
-    Pair v = RO_0017D210;
-    Mesh *m = GetMeshClass(a1, v.lo);
+    Pair v;
+    Mesh *m;
     int pass = 0;
     int off = 0;
+
+    v.hi = RO_0017D210.hi;
+    v.lo = RO_0017D210.lo;
+    m = GetMeshClass(a1);
 
     do {
         int r;
