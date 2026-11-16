@@ -11,7 +11,7 @@ extern float get_upper_limit_clip_default_pitch_camera_target_approach(void *, f
 extern int get_yaw_pitch_camera_target_lost_angle(void *, void *, void *, void *, float, float);
 extern int is_must_reach_normal_default_angle(void *, int);
 
-#ifdef NONMATCHING /* 6 diffs: scheduling only; the a0=0 setup and the second cfg load swap around the yaw store, and mov.s $f13 vs the arg4 copy before func_000D6F28 */
+#ifdef NONMATCHING /* 6 diffs: scheduling only; the a0=0 setup and the second cfg load swap around the yaw store, and mov.s $f13 vs the arg4 copy before func_000D6F28. A 25-minute permuter run found nothing better. */
 static void func_000D6410(char *c, char *m, int arg2, int arg3, int arg4, float fparg0)
 {
     float dir[4];

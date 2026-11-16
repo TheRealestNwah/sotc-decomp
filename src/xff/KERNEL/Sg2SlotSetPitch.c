@@ -18,7 +18,7 @@ typedef struct {
 extern Sg2Slot B_000DE370[];
 
 #ifdef NONMATCHING
-/* Parked: 1 word differs (addu $t6 operands swapped: original adds $v0,$a0, gcc emits $a0,$v0); pinned locals with "+r" barriers fix everything else */
+/* Parked: 1 word differs (addu $t6 operands swapped: original adds $v0,$a0, gcc emits $a0,$v0); pinned locals with "+r" barriers fix everything else. A 25-minute permuter run found nothing better. */
 void Sg2SlotSetPitch(int s, int a, int b, int c, int d, int e)
 {
     register int off __asm__("$3") = s * (int)sizeof(Sg2Slot);
