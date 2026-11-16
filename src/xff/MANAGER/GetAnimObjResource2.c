@@ -1,4 +1,4 @@
-/* Parked: 1 diff (branch-likely `bnel` where the original has `bne` with the result=0 slot). */
+/* Parked: 1 diff (branch-likely `bnel` where the original has `bne` with the result=0 slot). A 25-minute permuter run found nothing better. */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern int _AnimObjDef;
