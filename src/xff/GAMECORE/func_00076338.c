@@ -1,5 +1,3 @@
-/* Parked: 18 diffs, same length. Remaining: gcc swaps $s0 and $s1 (the Original keeps the thread in $s0 and the hit position address in $s1), and the Original sets the hit position address in the delay slot of the CheckUnderVariableXZSurface result branch. */
-#ifdef NONMATCHING
 extern void *isysGetThisSubThread(void);
 extern char *GetCharacterClass(void *);
 extern char *GetLayoutClass(void *);
@@ -66,7 +64,9 @@ static void func_00076338(char *obj)
     char col[0x40] __attribute__((aligned(16)));
     void *th;
     int mode;
-    float len, r;
+    float len;
+    float *pos;
+    float r;
 
     th = isysGetThisSubThread();
     mode = *(int *)(GetCharacterClass(th) + 0x750);
@@ -75,7 +75,8 @@ static void func_00076338(char *obj)
         vecAdd(v, v, *(float **)(GetLayoutClass(th) + 0x134));
         v[3] = 1.0f;
         if (CheckUnderVariableXZSurface(&hit, *(void **)(GetLayoutClass(th) + 0x134), v, gcGlobalVar + 0x230)) {
-            vecSub(d, hit.pos, *(float **)(GetLayoutClass(th) + 0x134));
+            pos = hit.pos;
+            vecSub(d, pos, *(float **)(GetLayoutClass(th) + 0x134));
             len = vecLength(d);
             r = *(float *)(*(char **)(obj + 0x184) + 0x38);
             if (r * r < len) {
@@ -85,4 +86,3 @@ static void func_00076338(char *obj)
         }
     }
 }
-#endif
