@@ -2,8 +2,8 @@ typedef int s128 __attribute__((mode(TI)));
 typedef union { long words[2]; int i[4]; s128 q; } IVector;
 typedef struct { unsigned char r, g, b, a; } Col;
 
-/* iosMulMvec: component-wise integer-vector multiplication. */
-static void func_0000D548(IVector *dst, const IVector *a, const IVector *b)
+/* component-wise integer-vector multiplication. */
+static void iosMulMvec(IVector *dst, const IVector *a, const IVector *b)
 {
     IVector x;
     IVector y;
@@ -66,12 +66,12 @@ int iosCalcIcolorToBrightness(unsigned int color)
     channels.i[3] = color >> 24;
     {
         IVector factors = { .i = {0x266666, 0x4B851E, 0xE147A, 0x7FFFFFFF} };
-        func_0000D548(&channels, &channels, &factors);
+        iosMulMvec(&channels, &channels, &factors);
     }
     return ((channels.i[0] + channels.i[1] + channels.i[2]) >> 23) & 0xFF;
 }
 
-static void func_0000D778(IVector *dst);
+static void iosSwClip255Mvec(IVector *dst);
 
 void iosIColScale(Col *out, unsigned int color, float scale)
 {
@@ -87,9 +87,9 @@ void iosIColScale(Col *out, unsigned int color, float scale)
     c.i[1] = (color >> 8) & 0xFF;
     c.i[2] = (color >> 16) & 0xFF;
     c.i[3] = color >> 24;
-    func_0000D548(&c, &c, &f);
+    iosMulMvec(&c, &c, &f);
     __asm__ __volatile__("psrlw %0, %1, 12" : "=r"(c.q) : "r"(c.q));
-    func_0000D778(&c);
+    iosSwClip255Mvec(&c);
     out->r = c.i[0];
     out->g = c.i[1];
     out->b = c.i[2];
@@ -110,8 +110,8 @@ void iosIColAddVec(Col *out, int a, int b)
     *(int *)out = z.i;
 }
 
-/* iosSwClip255Mvec: clamps each word of $v0 to 0..255 and stores it. */
-static void func_0000D778(IVector *dst)
+/* clamps each word of $v0 to 0..255 and stores it. */
+static void iosSwClip255Mvec(IVector *dst)
 {
     register s128 r __asm__("$2");
 
