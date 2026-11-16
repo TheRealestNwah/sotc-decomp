@@ -1,15 +1,14 @@
-#ifdef NONMATCHING
-/* Parked: 1 word differs (taken branch: original has daddu a1,zero,zero in the beqz
-   delay slot; f == 0 gives sltiu. Constant 0 instead scores 3, epilogue order.) */
+/* Relocates a module object once; bit 0x20000000 at +0x2C marks it done.
+   The register pin keeps the 0 argument in the beqz delay slot. */
 extern void func_00007810(void *, int);
 void isysRelocateModuleObj(char *object)
 {
-    int f = *(int *)(object + 0x2C) & 0x20000000;
-    if (f) {
-        func_00007810(object, f == 0);
+    int flag = 0x20000000;
+    register int arg asm("$5") = 0;
+    if (*(int *)(object + 0x2C) & flag) {
+        func_00007810(object, arg);
         return;
     }
     func_00007810(object, 1);
-    *(int *)(object + 0x2C) |= 0x20000000;
+    *(int *)(object + 0x2C) |= flag;
 }
-#endif
