@@ -1,6 +1,6 @@
-/* doit_expression: interp-value update for an expression controller (2 diffs: a3/t0 order before
- * _setRootXYZHPB. Declaring the two class pointers after the floats (same EABI registers) puts
- * f12-f17 first like the original. The volatile stores keep the zero-clear order.) */
+/* doit_expression: interp-value update for an expression controller. cls + 0x470 is written
+ * at both call sites rather than kept in a local, which gives the original a3/t0 order. The
+ * volatile stores keep the zero-clear order. */
 extern char *GetCharacterClass(int);
 extern int GAMEUTIL_is_status_change_status_manager(void *);
 extern void GAMEUTIL_reset_interp_ratio_cntrl(void *);
@@ -11,7 +11,6 @@ extern float GAMEUTIL_get_interp_value_interp_value_cntrl(void *);
 extern void _setRootXYZHPB(int, int, int, float, float, float, float, float, float, int, int);
 extern void _setNodeHPB(int, int, int, int, int, float, float, float);
 
-#ifdef NONMATCHING
 void doit_expression(char *o, float a, float b)
 {
     int i;
@@ -27,7 +26,6 @@ void doit_expression(char *o, float a, float b)
     char *u;
     char *w;
     char *m;
-    int sp10;
     float f0, f1, f2, f3, f4;
 
     if (GAMEUTIL_is_status_change_status_manager(o + 4) == 1)
@@ -42,7 +40,6 @@ void doit_expression(char *o, float a, float b)
     q = o + 0x78;
     r = o + 0x84;
     GAMEUTIL_doit_interp_value_cntrl(t, ic, *(float *)(p + 8));
-    sp10 = (int)(cls + 0x470);
     i = 0;
     GAMEUTIL_doit_interp_value_cntrl(u, ic, *(float *)(p + 0xC));
     w = o + 0x90;
@@ -54,7 +51,7 @@ void doit_expression(char *o, float a, float b)
     f2 = GAMEUTIL_get_interp_value_interp_value_cntrl(w);
     f3 = GAMEUTIL_get_interp_value_interp_value_cntrl(p44);
     f4 = GAMEUTIL_get_interp_value_interp_value_cntrl(t);
-    _setRootXYZHPB(s4, s8, sp10, f0, f1, f2, f3, f4,
+    _setRootXYZHPB(s4, s8, (int)(cls + 0x470), f0, f1, f2, f3, f4,
                    GAMEUTIL_get_interp_value_interp_value_cntrl(u), (int)(cls + 0x40), (int)(cls + 0x90));
     *(volatile float *)(p + 4) = 0.0f;
     *(volatile float *)(p + 0x40) = 0.0f;
@@ -73,7 +70,7 @@ void doit_expression(char *o, float a, float b)
             GAMEUTIL_doit_interp_value_cntrl(m + 0xC8, ic, *(float *)(m + 0xAC));
             g0 = GAMEUTIL_get_interp_value_interp_value_cntrl(m + 0xB0);
             g1 = GAMEUTIL_get_interp_value_interp_value_cntrl(m + 0xBC);
-            _setNodeHPB(*(int *)(*(int *)(m + 0xA0) + 8), s4, s8, sp10, *(int *)(m + 0xD4), g0, g1,
+            _setNodeHPB(*(int *)(*(int *)(m + 0xA0) + 8), s4, s8, (int)(cls + 0x470), *(int *)(m + 0xD4), g0, g1,
                         GAMEUTIL_get_interp_value_interp_value_cntrl(m + 0xC8));
             *(int *)(m + 0xA4) = 0;
             *(int *)(m + 0xA8) = 0;
@@ -82,4 +79,3 @@ void doit_expression(char *o, float a, float b)
         } while (i < *(int *)(o + 0x9C));
     }
 }
-#endif
