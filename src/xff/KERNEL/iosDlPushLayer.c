@@ -12,7 +12,7 @@ extern char RO_00042FB8[];
 extern char RO_00042FA0[];
 extern void LoaderSysPrintf(const char *, ...);
 
-/* Parked: 1 word differs. The original passes layer to the printf from $a0 rather than its $s0 copy. */
+/* Parked: 1 word differs. The original passes layer to the printf from $a0 rather than its $s0 copy. A 25-minute permuter run found nothing better. */
 #ifdef NONMATCHING
 void iosDlPushLayer(int layer)
 {

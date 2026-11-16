@@ -1,6 +1,6 @@
 #ifdef NONMATCHING
 /* Parked: 1 word differs (at 0xAC the original has movz v0,$s1,v1; this has
-   movz v0,$zero,v1 for the sg2err(x) result). */
+   movz v0,$zero,v1 for the sg2err(x) result). A 25-minute permuter run found nothing better. */
 typedef struct SepData { int pad0; int id; } SepData;
 typedef struct SepEntry SepEntry;
 struct SepEntry {
