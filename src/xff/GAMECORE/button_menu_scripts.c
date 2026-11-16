@@ -39,3 +39,8 @@ static void func_0001D9F8(void)
     for (;;)
         scrRun();
 }
+
+static void T_0001DA58(int a0, int a1, int a2, int a3, int *done)
+{
+    *done = 1;
+}
