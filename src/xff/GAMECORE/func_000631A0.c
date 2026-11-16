@@ -1,5 +1,4 @@
-/* Parked: 5 diffs, same size (124 words). Knight arm/neck break: starts the PARTS LWS, rebuilds each break part's geometry from the node quaternion (15-instruction VU0 run turning the quaternion into a basis, `vmr32`/`vmul` chain, run twice) and starts the BREAK LWS, then sets the game flags. One local struct {pos, rot, q} pins the frame (pos +0, rot +0x10, q +0x20). Remaining: v0/v1 choice for the SkelFocusDef_KNIGHT_NECK load and the last two GameObject lookups (hi/lo register swap). */
-#ifdef NONMATCHING
+/* Knight arm/neck break: starts the PARTS LWS, rebuilds each break part's geometry from the node quaternion (VU0 basis from the quaternion, run twice) and starts the BREAK LWS, then sets the game flags. One local struct {pos, rot, q} pins the frame (pos +0, rot +0x10, q +0x20). */
 typedef struct {
     char p0[8];
     int id;
@@ -21,9 +20,9 @@ extern int setGameFlagForGameObj(int);
 extern void _SCRStartLWS(int, int, int, int);
 extern void GetMotionNodeQuaternionPos(void *, void *, void *, int, int);
 extern void StabilizeToYRotQuaternion(void *);
-extern void SCRSetLWSGeometryWithZY(int, int, void *, void *, void *);
+extern int SCRSetLWSGeometryWithZY(int, int, void *, void *, void *);
 
-void func_000631A0(void *character)
+static void func_000631A0(void *character)
 {
     struct {
         Vec pos;
@@ -112,4 +111,3 @@ void func_000631A0(void *character)
         setGameFlagForGameObj(GameObject_KNIGHT_NECK_BREAK->id);
     }
 }
-#endif
