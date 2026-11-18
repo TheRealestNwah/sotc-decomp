@@ -12,29 +12,21 @@ Parked attempts (marked *parked*) come first, then fresh functions,
 smallest first. A group is named after its Original source file when a
 string gives one, otherwise after its first and last functions.
 
-## KERNEL (121)
+## KERNEL (96)
 
-46 Source groups to go, 292 fully matched.
+39 Source groups to go, 299 fully matched.
+
+### _iosAssert .. iosCdStRead: 1 of 6 unmatched
+
+- `iosCdStRead` 272 *parked*
 
 ### iosMcInit .. iosMcGetDir: 1 of 12 unmatched
 
 - `iosMcGetInfo` 296 *parked*
 
-### iosPadTickProc: 1 of 1 unmatched
-
-- `iosPadTickProc` 484 *parked*
-
 ### iosCreateThread .. iosCreateThreadS: 1 of 5 unmatched
 
 - `iosCreateThread` 436 *parked*
-
-### ioskernel .. iosResetKernel: 1 of 4 unmatched
-
-- `ioskernel` 368 *parked*
-
-### InitMath .. iosInverseMatrixPerfect: 1 of 39 unmatched
-
-- `func_0000B438` 2100
 
 ### iosScaleColorToONE .. iosGetDCGroup: 1 of 20 unmatched
 
@@ -60,21 +52,9 @@ string gives one, otherwise after its first and last functions.
 
 - `isysInitObjSystem` 184 *parked*
 
-### isysObjSignalSema .. GetGarbageTime: 1 of 21 unmatched
-
-- `func_0001B180` 696
-
-### Sg2ExStAdpcmWorkClear .. Sg2ExStAdpcmOpen: 1 of 4 unmatched
-
-- `func_000200F0` 660
-
-### Sg2RemoteSend .. Sg2SepSetParam: 1 of 22 unmatched
-
-- `Sg2SepPlaySelectCore` 536
-
 ### Sg2SepTickProc .. Sg2SepInit: 1 of 2 unmatched
 
-- `Sg2SepTickProc` 668
+- `Sg2SepTickProc` 668 *parked*
 
 ### Sg2SlotFreeSearch: 1 of 1 unmatched
 
@@ -114,20 +94,15 @@ string gives one, otherwise after its first and last functions.
 
 ### Sg2SlotEnvTbl .. Sg2SmfpOpenSelCore: 1 of 5 unmatched
 
-- `Sg2SmfpOpenSelCore` 532
+- `Sg2SmfpOpenSelCore` 532 *parked*
 
 ### Sg2SmfpTickProc .. Sg2SmfpInit: 1 of 2 unmatched
 
 - `Sg2SmfpTickProc` 752
 
-### debug_smfp_mod_config: 1 of 1 unmatched
+### debug_set_smfp_time_count_delta_per: 1 of 6 unmatched
 
-- `debug_smfp_mod_config` 740
-
-### _iosAssert .. iosCdStRead: 2 of 6 unmatched
-
-- `iosCdStRead` 272 *parked*
-- `func_00000068` 580
+- `func_0002CF10` 936
 
 ### initDldSys .. isysCreateExceptionThread: 2 of 7 unmatched
 
@@ -149,6 +124,16 @@ string gives one, otherwise after its first and last functions.
 - `sndSepTickProc` 528 *parked*
 - `func_0001DC58` 580 *parked*
 
+### debug_sep_config: 2 of 5 unmatched
+
+- `func_00026AD0` 172 *parked*
+- `func_00026B80` 1384 *parked*
+
+### Sg2SlotSetBasicParam .. Sg2SlotSetNoiseOffBit: 2 of 43 unmatched
+
+- `Sg2SlotSetPitch` 120 *parked*
+- `Sg2SlotSetLfoPitchSpeed` 180 *parked*
+
 ### Sg2SlotTickProc .. Sg2SlotInit: 2 of 2 unmatched
 
 - `Sg2SlotInit` 428
@@ -156,13 +141,8 @@ string gives one, otherwise after its first and last functions.
 
 ### Sg2SmfpClose .. Sg2SmfpSetParam: 2 of 10 unmatched
 
-- `Sg2SmfpPlay` 492
+- `Sg2SmfpPlay` 492 *parked*
 - `Sg2SmfpSetParam` 952
-
-### debug_set_smfp_time_count_delta_per: 2 of 6 unmatched
-
-- `debug_set_smfp_time_count_delta_per` 224 *parked*
-- `func_0002CF10` 936
 
 ### iosSendMsg .. iosNetOpen: 3 of 15 unmatched
 
@@ -176,12 +156,6 @@ string gives one, otherwise after its first and last functions.
 - `gsBoxLine` 1304 *parked*
 - `gsBox2` 1436 *parked*
 
-### debug_sep_config: 3 of 5 unmatched
-
-- `func_00026AD0` 172 *parked*
-- `func_00026B80` 1384 *parked*
-- `debug_sep_config` 476
-
 ### iosPushDCWithClear .. InitDL: 4 of 26 unmatched
 
 - `iosDlPushLayer` 184 *parked*
@@ -189,99 +163,79 @@ string gives one, otherwise after its first and last functions.
 - `iosDlChainHeadCurrent` 200 *parked*
 - `func_00012C30` 812
 
-### Sg2SlotSetBasicParam .. Sg2SlotSetNoiseOffBit: 4 of 43 unmatched
-
-- `Sg2SlotSetPitch` 120 *parked*
-- `Sg2SlotSetLfoPitchSpeed` 180 *parked*
-- `Sg2SlotSetLfoVolDepth` 328 *parked*
-- `Sg2SlotSetLfoVolSpeed` 336 *parked*
-
-### GetDifferencialQuaternionWithNoRegularize .. GetQuaternionByDegEulerYXZ: 6 of 52 unmatched
-
-- `GetDifferencialQuaternionWithNoRegularize` 448 *parked*
-- `GetQuaternionByAxisDirZYExact` 496 *parked*
-- `GetEulerYXZFromQuaternion` 784 *parked*
-- `GetLimitationQuaternionWithBaseAxis` 824 *parked*
-- `GetRotLimitationQuaternion` 880 *parked*
-- `func_0000DD30` 440
-
-### iosDumpDMAStatus .. iFinish: 7 of 72 unmatched
+### iosDumpDMAStatus .. iFinish: 5 of 72 unmatched
 
 - `set_nowloadingflag` 620 *parked*
 - `iosDumpVIF1Status` 928 *parked*
 - `iosDumpGIFStatus` 1012 *parked*
 - `func_00014948` 600
-- `iosSyncPath` 708
-- `func_00016380` 952
 - `iosCopyFrameBuffer` 1256
 
-### iosCreateIopMgr .. getMemorySafetyLockFlag: 9 of 34 unmatched
+### GetDifferencialQuaternionWithNoRegularize .. GetQuaternionByDegEulerYXZ: 6 of 52 unmatched
+
+- `func_0000DD30` 440 *parked*
+- `GetDifferencialQuaternionWithNoRegularize` 448 *parked*
+- `GetQuaternionByAxisDirZYExact` 496 *parked*
+- `GetEulerYXZFromQuaternion` 784 *parked*
+- `GetLimitationQuaternionWithBaseAxis` 824 *parked*
+- `GetRotLimitationQuaternion` 880 *parked*
+
+### iosCreateIopMgr .. getMemorySafetyLockFlag: 7 of 34 unmatched
 
 - `func_00001260` 452 *parked*
-- `func_00003330` 480
-- `func_00002868` 536
-- `func_00003028` 720
+- `func_00003330` 480 *parked*
+- `func_00003028` 720 *parked*
 - `func_000024E0` 848
 - `func_00002050` 1112
 - `func_00001460` 1144
-- `func_00002AB8` 1168
 - `func_00001910` 1800
 
-### Sg2ExStAdpcmGetUserParam .. debug_mod_config: 12 of 85 unmatched
+### get_vabid .. IirParam: 7 of 73 unmatched
+
+- `func_0002E068` 176 *parked*
+- `Sg2VabHdClose` 192 *parked*
+- `Sg2ExPcmOutputSetAutoFilterDirect` 200 *parked*
+- `func_0002E1B0` 208 *parked*
+- `Sg2ExPcmInputSetAutoFilterDirect` 240 *parked*
+- `func_0002E5A0` 336 *parked*
+- `func_0002E8D8` 344 *parked*
+
+### Sg2ExStAdpcmGetUserParam .. debug_mod_config: 10 of 85 unmatched
 
 - `Sg2ExStAdpcmTrkVolumePercent` 156 *parked*
-- `Sg2ModGetParam` 200 *parked*
 - `func_000215D8` 248 *parked*
 - `func_00021488` 280 *parked*
 - `Sg2ExStAdpcmTrkVolumeDirect` 292 *parked*
 - `func_00020FD0` 400
-- `debug_mod_config` 736
 - `Sg2ModTickProc` 932
 - `func_00025028` 1408
 - `func_00023DD0` 1608
 - `Sg2ModSetParam` 2632
 - `T_00023200` 3024
 
-### get_vabid .. IirParam: 13 of 73 unmatched
-
-- `func_0002F0D8` 80 *parked*
-- `func_0002E068` 176 *parked*
-- `Sg2VabHdClose` 192 *parked*
-- `Sg2ExPcmOutputSetAutoFilterDirect` 200 *parked*
-- `func_0002E1B0` 208 *parked*
-- `Sg2ExPcmInputSetAutoFilterDirect` 240 *parked*
-- `func_0002E5A0` 336
-- `func_0002E8D8` 344
-- `func_0002E2F0` 368
-- `func_0002E728` 376
-- `func_0002FD38` 400
-- `func_0002FF00` 452
-- `func_0002EAE0` 512
-
-### endSCEDemo .. loadtest: 14 of 67 unmatched
+### endSCEDemo .. loadtest: 13 of 67 unmatched
 
 - `Shock_Request` 156 *parked*
 - `readEModule` 200 *parked*
 - `func_00007F80` 336 *parked*
 - `Shock_SetMotor` 348 *parked*
 - `isysMoveModuleObj` 380 *parked*
+- `func_00007968` 472 *parked*
+- `isysLaunchModule` 520 *parked*
 - `isysCreateModuleObjExisted` 564 *parked*
-- `func_00008108` 440
 - `func_000070F0` 452
-- `func_00007968` 472
-- `isysLaunchModule` 520
 - `func_00007B78` 592
 - `func_00006B98` 600
 - `func_00006E28` 656
 - `IosCdvdManagerSimulation` 716
 
-## MANAGER (682)
+## MANAGER (635)
 
-98 Source groups to go, 492 fully matched.
+95 Source groups to go, 495 fully matched.
 
 ### DEBUG_update_direction: 1 of 1 unmatched
 
-- `DEBUG_update_direction` 1064
+- `DEBUG_update_direction` 1064 *parked*
 
 ### bgEnd: 1 of 1 unmatched
 
@@ -315,9 +269,9 @@ string gives one, otherwise after its first and last functions.
 
 - `feedbackBlur` 600 *parked*
 
-### feedbackBlur2: 1 of 1 unmatched
+### getFontBoard .. rotLightVector: 1 of 35 unmatched
 
-- `feedbackBlur2` 652
+- `getAmbientColorC` 1596
 
 ### debugLineObjectCreateAndSetAttributreIfChange: 1 of 1 unmatched
 
@@ -342,10 +296,6 @@ string gives one, otherwise after its first and last functions.
 ### reflectionBegin: 1 of 1 unmatched
 
 - `reflectionBegin` 4352
-
-### refractionBegin: 1 of 1 unmatched
-
-- `refractionBegin` 612
 
 ### shadowReset: 1 of 1 unmatched
 
@@ -407,10 +357,6 @@ string gives one, otherwise after its first and last functions.
 
 - `GetTargetLookAtQuaternionOnBase` 1500
 
-### GetTurnYAngleFromGlobalDir: 1 of 1 unmatched
-
-- `GetTurnYAngleFromGlobalDir` 372
-
 ### GetTurnYLimitAngleFromGlobalDir: 1 of 1 unmatched
 
 - `GetTurnYLimitAngleFromGlobalDir` 588 *parked*
@@ -467,16 +413,20 @@ string gives one, otherwise after its first and last functions.
 - `func_000920F0` 388 *parked*
 - `func_00092388` 592
 
+### CreateEndAutoModFile .. sheetFsInit: 2 of 23 unmatched
+
+- `func_000DEE30` 464
+- `func_000DFEB0` 2100
+
+### sheetFsLoadSegmentIndex .. sheetFsSetSpecialFs: 2 of 8 unmatched
+
+- `sheetFsLoadSegmentIndex` 416 *parked*
+- `sheetFsLoadStageTex` 416 *parked*
+
 ### toggleDebPcWinWindow .. pop_camera_context: 2 of 14 unmatched
 
 - `func_000E4F38` 936
 - `update_camera_context` 1420
-
-### getFontBoard .. rotLightVector: 3 of 35 unmatched
-
-- `setLight` 388
-- `func_00016710` 440
-- `getAmbientColorC` 1596
 
 ### waterRefractionBegin .. refractionEnd: 3 of 4 unmatched
 
@@ -486,7 +436,7 @@ string gives one, otherwise after its first and last functions.
 
 ### getShadowDispFlag .. solarFlare: 3 of 5 unmatched
 
-- `solarFlareReset` 432
+- `solarFlareReset` 432 *parked*
 - `func_00023010` 6192
 - `func_00024878` 6672
 
@@ -501,6 +451,12 @@ string gives one, otherwise after its first and last functions.
 - `func_0003EF60` 864 *parked*
 - `doit_motion_ik_interest` 708
 - `func_0003E918` 1132
+
+### charrootdyn_debugDispParentGeometryStatus .. CalcRootFitting: 3 of 11 unmatched
+
+- `func_00065AA8` 760
+- `func_000652C8` 1960
+- `func_00065DD8` 3664
 
 ### LoopExecPreLightColMan .. SetGeoDispClassLightColMan: 3 of 9 unmatched
 
@@ -528,8 +484,8 @@ string gives one, otherwise after its first and last functions.
 
 ### sound3DCalc .. seUnloadBDFile: 3 of 24 unmatched
 
-- `sePlay3D` 472
-- `sound3DCalc` 488
+- `sePlay3D` 472 *parked*
+- `sound3DCalc` 488 *parked*
 - `func_000DCEF0` 616
 
 ### dsysInit .. _dsysOpen: 3 of 11 unmatched
@@ -537,12 +493,6 @@ string gives one, otherwise after its first and last functions.
 - `CreateCsvModChkTempFileIppatu` 548 *parked*
 - `WriteMemberCsvModChkTempFile` 464
 - `AddSegmentCsvModChkTempFile` 836
-
-### sheetFsLoadSegmentIndex .. sheetFsSetSpecialFs: 3 of 8 unmatched
-
-- `sheetFsLoadSegmentIndex` 416 *parked*
-- `sheetFsLoadStageTex` 416
-- `sheetFsLoadMap` 464
 
 ### DEBUG_get_cur_using_anb_file_name .. DEBUG_disp_collision_attribute_info_extend: 4 of 22 unmatched
 
@@ -560,17 +510,17 @@ string gives one, otherwise after its first and last functions.
 
 ### texTransResolve .. texScaleClutByName: 4 of 27 unmatched
 
-- `texScaleClut` 432
+- `texScaleClut` 432 *parked*
 - `func_0002DBA8` 668
 - `func_0002EC18` 2204
 - `texTransResolve` 14664
 
-### charrootdyn_debugDispParentGeometryStatus .. CalcRootFitting: 4 of 11 unmatched
+### charrootdyn_parentpointxzfitstab .. motrootdyn_startpendulum_with_VCOL: 4 of 14 unmatched
 
-- `GetCharacterClassOptionNodeBasePos` 632
-- `func_00065AA8` 760
-- `func_000652C8` 1960
-- `func_00065DD8` 3664
+- `func_00069300` 804
+- `parentpointxzfit` 880
+- `charrootdyn_parentpointxzfitstab` 1388
+- `pendulum` 6560
 
 ### NewCreateFogColClass .. AddCollMan: 4 of 5 unmatched
 
@@ -593,14 +543,6 @@ string gives one, otherwise after its first and last functions.
 - `T_000E1870` 608 *parked*
 - `func_000E1270` 2592
 
-### charrootdyn_parentpointxzfitstab .. motrootdyn_startpendulum_with_VCOL: 5 of 14 unmatched
-
-- `func_00069B70` 488
-- `func_00069300` 804
-- `parentpointxzfit` 880
-- `charrootdyn_parentpointxzfitstab` 1388
-- `pendulum` 6560
-
 ### GetColLightDebugSts .. AddGaLightMan: 5 of 11 unmatched
 
 - `AddGaLightMan` 324 *parked*
@@ -609,13 +551,21 @@ string gives one, otherwise after its first and last functions.
 - `func_0007B300` 876
 - `ExecGameLight` 1512
 
-### CreateEndAutoModFile .. sheetFsInit: 5 of 23 unmatched
+### get_particle_parameter_blend_doit .. free_wind_segment: 5 of 38 unmatched
 
-- `func_000DF038` 320
-- `func_000DF1B0` 368
-- `nicosysdRebootRequest` 416
-- `func_000DEE30` 464
-- `func_000DFEB0` 2100
+- `func_000CBDE0` 168 *parked*
+- `func_000CBB18` 216 *parked*
+- `func_000CACE8` 584 *parked*
+- `func_000CAA98` 536
+- `get_particle_parameter_blend_doit` 3132
+
+### get_cur_camera_context .. free_camera_lws_animation_segment: 5 of 44 unmatched
+
+- `get_camera_lws_animation_data` 380 *parked*
+- `boot_camera_lws_animation` 428 *parked*
+- `disp_camera_lws_animation_debug_info` 512 *parked*
+- `func_000E5EA0` 552
+- `get_blend_sub_camera_lws_animation` 768
 
 ### InitGazeAddChannelDef .. CharaCtrlAIControl: 6 of 18 unmatched
 
@@ -653,11 +603,10 @@ string gives one, otherwise after its first and last functions.
 - `func_000CCCF0` 1424
 - `func_000CD2B8` 1976
 
-### windowSetTex .. createAdpcmTest: 7 of 38 unmatched
+### windowSetTex .. createAdpcmTest: 6 of 38 unmatched
 
+- `func_000DC448` 408 *parked*
 - `func_000DB530` 528 *parked*
-- `func_000DC448` 408
-- `func_000DB778` 448
 - `func_000DB0B8` 732
 - `_adpcmOpenReq` 792
 - `T_000DBFC0` 1104
@@ -674,17 +623,6 @@ string gives one, otherwise after its first and last functions.
 - `func_000E2358` 840
 - `T_000E3230` 1640
 
-### get_cur_camera_context .. free_camera_lws_animation_segment: 8 of 44 unmatched
-
-- `func_000E74B8` 264 *parked*
-- `get_camera_lws_animation_data` 380 *parked*
-- `disp_camera_lws_animation_debug_info` 512 *parked*
-- `func_000E5CF8` 368
-- `boot_camera_lws_animation` 428
-- `func_000E6100` 456
-- `func_000E5EA0` 552
-- `get_blend_sub_camera_lws_animation` 768
-
 ### GAMEUTIL_get_spring_interpolate_value3D_extend .. set_interp_param_aim_angle_interp_cntrl: 9 of 44 unmatched
 
 - `GAMEUTIL_get_spring_interpolate_offset` 356 *parked*
@@ -692,10 +630,10 @@ string gives one, otherwise after its first and last functions.
 - `GAMEUTIL_get_spring_damp_offset` 412 *parked*
 - `GAMEUTIL_get_spring_interpolate_offset3D` 504 *parked*
 - `GAMEUTIL_get_spring_interpolate_value3D` 556 *parked*
+- `doit_double_spring_interp_cntrl` 796 *parked*
 - `func_000097E0` 392
 - `func_000099A0` 440
 - `GAMEUTIL_get_spring_interpolate_value3D_extend` 696
-- `doit_double_spring_interp_cntrl` 796
 
 ### spriteInitObject .. spriteCreateObject: 9 of 13 unmatched
 
@@ -708,18 +646,6 @@ string gives one, otherwise after its first and last functions.
 - `spriteDrawSpriteST2` 924
 - `spriteDrawSpriteTexNoSet` 3572
 - `spriteDrawSprite` 3688
-
-### get_particle_parameter_blend_doit .. free_wind_segment: 9 of 38 unmatched
-
-- `func_000CBDE0` 168 *parked*
-- `func_000CBB18` 216 *parked*
-- `func_000CACE8` 584 *parked*
-- `boot_wind_emitter_by_judge_volume` 356
-- `boot_wind_emitter` 388
-- `func_000CC018` 388
-- `boot_wind_emitter_by_box` 428
-- `func_000CAA98` 536
-- `get_particle_parameter_blend_doit` 3132
 
 ### GetAnimationFogDefByName .. ExecEff: 9 of 11 unmatched
 
@@ -753,7 +679,7 @@ string gives one, otherwise after its first and last functions.
 - `func_000EA590` 296 *parked*
 - `SendDamageCylinderLetter` 412 *parked*
 - `SendDamageBoxLetter` 428 *parked*
-- `SendVolumeShapeDamageLetter` 496
+- `SendVolumeShapeDamageLetter` 496 *parked*
 - `func_000E9E50` 616
 - `func_000EA6F0` 776
 - `update_transform_matrix_set` 876
@@ -775,12 +701,11 @@ string gives one, otherwise after its first and last functions.
 - `glRotatef` 1072
 - `func_000121E8` 2572
 
-### GetRateInOutCubeVolume .. getClothDynamics: 13 of 28 unmatched
+### GetRateInOutCubeVolume .. getClothDynamics: 12 of 28 unmatched
 
 - `getClothDynamics` 332 *parked*
-- `GetRateInOutCubeVolumeWithInverseMatrix` 440
-- `func_000BC1B8` 448
-- `func_000BC3B0` 480
+- `func_000BC1B8` 448 *parked*
+- `func_000BC3B0` 480 *parked*
 - `CreateClothChildLayoutObj` 508
 - `func_000BC5C8` 524
 - `func_000BCA98` 536
@@ -790,6 +715,22 @@ string gives one, otherwise after its first and last functions.
 - `func_000BBE58` 808
 - `func_000BCCE8` 816
 - `func_000BD050` 1480
+
+### CalcNodeInterp .. ReleaseCharacterClassAddMotSyncAnimAll: 13 of 105 unmatched
+
+- `PredictMotionGeometryPotential` 376 *parked*
+- `PredictMotionGeometryPotentialWithScaleElem` 404 *parked*
+- `func_00041488` 432 *parked*
+- `func_00041068` 448 *parked*
+- `func_00041260` 496 *parked*
+- `FlushCharacterObjImmediate` 728
+- `GetCharacterObjWorkSize` 772
+- `GetCharacterClassOptionNodeGeo` 1332
+- `func_00041670` 1424
+- `CalcNodeQuaternionWithIK` 1904
+- `CalcNodeInterp` 2052
+- `ExecCharaGeometry` 3944
+- `InitCharacterObj` 6372
 
 ### usbdevInit .. createStringInputDialog: 13 of 37 unmatched
 
@@ -806,23 +747,6 @@ string gives one, otherwise after its first and last functions.
 - `func_000D2368` 1404
 - `func_000D06D8` 1692
 - `func_000D1478` 3824
-
-### CalcNodeInterp .. ReleaseCharacterClassAddMotSyncAnimAll: 14 of 105 unmatched
-
-- `PredictMotionGeometryPotential` 376 *parked*
-- `PredictMotionGeometryPotentialWithScaleElem` 404 *parked*
-- `func_00041068` 448 *parked*
-- `func_00041260` 496 *parked*
-- `func_00041488` 432
-- `FlushCharacterObjImmediate` 728
-- `GetCharacterObjWorkSize` 772
-- `fittingwithrot` 780
-- `GetCharacterClassOptionNodeGeo` 1332
-- `func_00041670` 1424
-- `CalcNodeQuaternionWithIK` 1904
-- `CalcNodeInterp` 2052
-- `ExecCharaGeometry` 3944
-- `InitCharacterObj` 6372
 
 ### DebugTestWideAreaSearch .. ClipCollisionDirectExceptObj: 15 of 19 unmatched
 
@@ -841,6 +765,25 @@ string gives one, otherwise after its first and last functions.
 - `ClipCollisionDirectCallBack` 3056
 - `ClipCollisionDirectCallBackObjAryDoubleSide` 3136
 - `ClipCollisionDirectCallBackDoubleSide` 3168
+
+### GAMEUTIL_increase_yaw_limit_extend .. GAMEUTIL_is_inside: 16 of 112 unmatched
+
+- `GAMEUTIL_get_cross_position_coefficient_t_by_dist_factor` 236 *parked*
+- `GAMEUTIL_near_to_aim_yaw_dir` 260 *parked*
+- `GAMEUTIL_is_pitch_dir_sandwich` 280 *parked*
+- `GAMEUTIL_is_between_yaw_and_yaw_extend_abs` 304 *parked*
+- `GAMEUTIL_get_rot_dir_for_near_to_aim_pitch_dir` 308 *parked*
+- `GAMEUTIL_increase_pitch` 308 *parked*
+- `GAMEUTIL_get_direction_by_yaw_pitch` 316 *parked*
+- `GAMEUTIL_is_reach_aim_pitch_dir` 348 *parked*
+- `GAMEUTIL_increase_pitch_limit_clip` 392 *parked*
+- `GAMEUTIL_is_inside_of_region_ratio` 424 *parked*
+- `GAMEUTIL_is_pitch_dir_inside_of_region` 480 *parked*
+- `GAMEUTIL_act_pitch_rot_limit_clip` 516 *parked*
+- `GAMEUTIL_act_yaw_rot_region_check` 536 *parked*
+- `GAMEUTIL_near_to_aim_pitch_dir` 636
+- `GAMEUTIL_inc_or_dec_for_near_to_aim_pitch` 856
+- `GAMEUTIL_act_pitch_rot` 1296
 
 ### DeleteSortList .. ExecScriptSpriteObj: 19 of 94 unmatched
 
@@ -886,28 +829,28 @@ string gives one, otherwise after its first and last functions.
 - `func_000D93F0` 3564
 - `func_000D5F00` 5304
 
-### GAMEUTIL_increase_yaw_limit_extend .. GAMEUTIL_is_inside: 20 of 112 unmatched
+### UpdateLayoutClassSimpleGeometry .. GetAmbientBrightnessOfLayoutObject: 20 of 83 unmatched
 
-- `GAMEUTIL_get_cross_position_coefficient_t_by_dist_factor` 236 *parked*
-- `GAMEUTIL_near_to_aim_yaw_dir` 260 *parked*
-- `GAMEUTIL_is_pitch_dir_sandwich` 280 *parked*
-- `GAMEUTIL_is_between_yaw_and_yaw_extend_abs` 304 *parked*
-- `GAMEUTIL_get_rot_dir_for_near_to_aim_pitch_dir` 308 *parked*
-- `GAMEUTIL_increase_pitch` 308 *parked*
-- `GAMEUTIL_get_direction_by_yaw_pitch` 316 *parked*
-- `GAMEUTIL_is_reach_aim_pitch_dir` 348 *parked*
-- `GAMEUTIL_increase_pitch_limit_clip` 392 *parked*
-- `GAMEUTIL_is_inside_of_region_ratio` 424 *parked*
-- `GAMEUTIL_is_pitch_dir_inside_of_region` 480 *parked*
-- `GAMEUTIL_act_pitch_rot_limit_clip` 516 *parked*
-- `GAMEUTIL_act_yaw_rot_region_check` 536 *parked*
-- `GAMEUTIL_get_rot_dir_for_near_to_aim_yaw_dir` 436
-- `GAMEUTIL_inc_or_dec_for_near_to_aim_yaw` 476
-- `GAMEUTIL_is_yaw_dir_inside_of_region` 524
-- `GAMEUTIL_increase_yaw_limit_extend` 596
-- `GAMEUTIL_near_to_aim_pitch_dir` 636
-- `GAMEUTIL_inc_or_dec_for_near_to_aim_pitch` 856
-- `GAMEUTIL_act_pitch_rot` 1296
+- `func_00074270` 296 *parked*
+- `func_000748C0` 384 *parked*
+- `ClipLayoutObjModel` 392 *parked*
+- `UpdateLayoutClassParentSimpleGeometry` 412 *parked*
+- `UpdateLayoutClassParentGeometry` 472 *parked*
+- `UnparentLayoutObj` 524 *parked*
+- `func_000746A0` 540 *parked*
+- `CalcLightLayoutObj` 624 *parked*
+- `func_000743D0` 664 *parked*
+- `FlushLayoutObjImmediate` 500
+- `func_000755D0` 656
+- `func_00078778` 688
+- `InitAliasLayoutObj` 732
+- `func_00079D28` 780
+- `func_00079788` 816
+- `UpdateLayoutClassGeometry` 1152
+- `DispDispObjGroupModel` 1316
+- `UpdateLayoutClassSimpleGeometry` 1428
+- `func_00078C28` 2520
+- `func_00074A78` 2848
 
 ### GetLwsDemoOrientManagerObjWorkSize .. initLwsOriDefSeg: 21 of 87 unmatched
 
@@ -933,30 +876,33 @@ string gives one, otherwise after its first and last functions.
 - `func_0007FD80` 2488
 - `initScriptCharObj` 3400
 
-### UpdateLayoutClassSimpleGeometry .. GetAmbientBrightnessOfLayoutObject: 22 of 83 unmatched
+### create_particle_texture_and_get_id .. ClipCollisionDirectForParticle: 25 of 128 unmatched
 
-- `func_00074270` 296 *parked*
-- `func_000748C0` 384 *parked*
-- `ClipLayoutObjModel` 392 *parked*
-- `UpdateLayoutClassParentSimpleGeometry` 412 *parked*
-- `UnparentLayoutObj` 524 *parked*
-- `func_000746A0` 540 *parked*
-- `CalcLightLayoutObj` 624 *parked*
-- `func_000743D0` 664 *parked*
-- `GetLayoutClassWindGeometry` 308
-- `func_00078A60` 400
-- `UpdateLayoutClassParentGeometry` 472
-- `FlushLayoutObjImmediate` 500
-- `func_000755D0` 656
-- `func_00078778` 688
-- `InitAliasLayoutObj` 732
-- `func_00079D28` 780
-- `func_00079788` 816
-- `UpdateLayoutClassGeometry` 1152
-- `DispDispObjGroupModel` 1316
-- `UpdateLayoutClassSimpleGeometry` 1428
-- `func_00078C28` 2520
-- `func_00074A78` 2848
+- `func_000C6F08` 96 *parked*
+- `func_000C1638` 344 *parked*
+- `init_particle_manager` 344 *parked*
+- `func_000C2360` 392 *parked*
+- `func_000C5718` 400 *parked*
+- `func_000C5FA0` 408 *parked*
+- `func_000BF318` 472 *parked*
+- `doit_particle_manager` 612 *parked*
+- `func_000C2968` 624 *parked*
+- `func_000C0178` 464
+- `func_000BFF48` 504
+- `func_000C3438` 576
+- `disp_particle_emitter` 620
+- `func_000BFC68` 680
+- `func_000C36B0` 712
+- `func_000BEC80` 728
+- `func_000C0380` 736
+- `func_000C1FF0` 824
+- `func_000C2C10` 832
+- `func_000C2F88` 1144
+- `func_000BF688` 1448
+- `func_000C39B0` 1504
+- `func_000C0F18` 1768
+- `func_000C17C8` 2032
+- `func_000C0698` 2120
 
 ### lineObjectCreatef .. ModelDispGetWorkSize: 26 of 58 unmatched
 
@@ -987,39 +933,7 @@ string gives one, otherwise after its first and last functions.
 - `func_0001DA30` 1800
 - `modelDisp` 3692
 
-### create_particle_texture_and_get_id .. ClipCollisionDirectForParticle: 29 of 128 unmatched
-
-- `func_000C6F08` 96 *parked*
-- `func_000C1638` 344 *parked*
-- `func_000C2360` 392 *parked*
-- `func_000C5718` 400 *parked*
-- `func_000C5FA0` 408 *parked*
-- `func_000BF318` 472 *parked*
-- `doit_particle_manager` 612 *parked*
-- `func_000C2968` 624 *parked*
-- `func_000BF528` 296
-- `init_particle_manager` 344
-- `func_000C54B8` 352
-- `create_and_init_particle_effect_lod` 388
-- `get_polygon_scale_rotation_matrix` 388
-- `func_000C0178` 464
-- `func_000BFF48` 504
-- `func_000C3438` 576
-- `disp_particle_emitter` 620
-- `func_000BFC68` 680
-- `func_000C36B0` 712
-- `func_000BEC80` 728
-- `func_000C0380` 736
-- `func_000C1FF0` 824
-- `func_000C2C10` 832
-- `func_000C2F88` 1144
-- `func_000BF688` 1448
-- `func_000C39B0` 1504
-- `func_000C0F18` 1768
-- `func_000C17C8` 2032
-- `func_000C0698` 2120
-
-### scriptIntrAllDeleteJump .. ReparentChildObjects: 32 of 92 unmatched
+### scriptIntrAllDeleteJump .. ReparentChildObjects: 30 of 92 unmatched
 
 - `func_00090C20` 208 *parked*
 - `func_0008BE00` 344 *parked*
@@ -1028,8 +942,6 @@ string gives one, otherwise after its first and last functions.
 - `func_0008BF90` 456 *parked*
 - `updateLightGeo` 472 *parked*
 - `StartAnimationSubObjInfinitePart` 780 *parked*
-- `DebugDispVolumeShapeColor` 408
-- `SetScriptAnimationObjAccessSwitch` 428
 - `updateCamVibGeo` 560
 - `updateLayoutGeo` 560
 - `update_camera_region_geometry` 604
@@ -1054,7 +966,7 @@ string gives one, otherwise after its first and last functions.
 - `func_0008A6A8` 3720
 - `func_0008D6D0` 6096
 
-### getZFogNear .. GetMotionOptionNodeBooleanInfoFloatFrameDirectResource: 56 of 120 unmatched
+### getZFogNear .. GetMotionOptionNodeBooleanInfoFloatFrameDirectResource: 48 of 120 unmatched
 
 - `GetMotionNS_RootShiftInfo` 304 *parked*
 - `func_0003DB80` 320 *parked*
@@ -1064,8 +976,11 @@ string gives one, otherwise after its first and last functions.
 - `GetAnimObjResource` 384 *parked*
 - `func_0003D508` 392 *parked*
 - `func_0003D300` 464 *parked*
+- `func_00033DE0` 504 *parked*
 - `GetMotionIntFrame` 508 *parked*
+- `func_00034010` 512 *parked*
 - `func_0003D828` 536 *parked*
+- `func_00035C78` 552 *parked*
 - `GetInitialInverseMatrix` 560 *parked*
 - `resourceRot` 584 *parked*
 - `GetMotionMatrixOfTargetFromParent` 592 *parked*
@@ -1073,35 +988,24 @@ string gives one, otherwise after its first and last functions.
 - `GetMotionFloatFrame` 608 *parked*
 - `DebugDispMotion` 652 *parked*
 - `InterPOrObjectAnimation` 672 *parked*
+- `func_00035120` 704 *parked*
+- `func_00035710` 728 *parked*
 - `GetMotionMatrixOfTargetFromRoot` 748 *parked*
 - `GetMotionMatrix` 900 *parked*
-- `func_00034530` 320
-- `func_000346A8` 368
-- `func_00032B78` 384
-- `func_00039FA8` 392
-- `GetMotionOptionNodeBooleanInfoFloatFrame` 448
-- `GetMotionMatrixOfChildsFromTarget` 452
 - `func_00031210` 496
-- `func_00033DE0` 504
 - `func_00032940` 512
-- `func_00034010` 512
 - `func_00033B88` 544
 - `func_00035A20` 544
-- `func_00035C78` 552
 - `func_0003A4A8` 592
 - `GetMotionStretchRatio` 596
 - `GetMotionFloatFrameNoCaribration` 612
 - `GetMotionOptionNodeNextSwitchFrameDirectResource` 668
-- `func_00034850` 680
-- `func_00034248` 688
 - `func_00034B30` 688
 - `func_00032188` 696
 - `func_00035ED8` 696
-- `func_00035120` 704
 - `func_00035418` 704
 - `GetMotionRootShiftInfo` 712
 - `func_00034E18` 720
-- `func_00035710` 728
 - `func_00033868` 744
 - `func_0003A168` 776
 - `GetMotionDirectResourceNodeQuaternionPosFloatFrame` 968
@@ -1113,7 +1017,7 @@ string gives one, otherwise after its first and last functions.
 - `GetObjectAnimationFloatFrame` 2308
 - `func_00031438` 2376
 
-### SendCharaNodeParentSetMsg .. directplay: 62 of 184 unmatched
+### SendCharaNodeParentSetMsg .. directplay: 56 of 184 unmatched
 
 - `charrootdyn_slideExceptionJudgeCB` 144 *parked*
 - `PredictMotionChangeState` 284 *parked*
@@ -1122,21 +1026,18 @@ string gives one, otherwise after its first and last functions.
 - `func_00052EA8` 376 *parked*
 - `charrootdyn_restoreposition` 384 *parked*
 - `charrootdyn_checkSlopeLimit` 388 *parked*
+- `charrootdyn_getCompleteFittingYQFromStabGPWithSlopeLimit` 400 *parked*
 - `charrootdyn_checkParentGPPlaneDir` 428 *parked*
 - `charrootdyn_getCompleteFittingPlaneFromStabGPWithSlopeLimit` 428 *parked*
+- `func_00051CA0` 432 *parked*
+- `charrootdyn_getLocalYGlobalXZOffsetFromParentGP` 452 *parked*
 - `charrootdyn_memoryposition` 468 *parked*
 - `func_00052C88` 488 *parked*
 - `OptimizeMotionOrient` 496 *parked*
 - `charrootdyn_addSlideElement` 516 *parked*
 - `func_00053058` 568 *parked*
 - `charrootdyn_setkeepcolhitstatus` 596 *parked*
-- `charrootdyn_getLocalOffsetFromParentGP` 364
 - `func_0005CD18` 376
-- `charrootdyn_getCompleteFittingYQFromStabGPWithSlopeLimit` 400
-- `func_00051CA0` 432
-- `charrootdyn_getLocalYGlobalXZOffsetFromParentGP` 452
-- `func_00052A80` 460
-- `func_00058F50` 464
 - `ForceAcceptMotion` 496
 - `func_00051A60` 520
 - `ReparentCharacterObj` 528
@@ -1145,9 +1046,6 @@ string gives one, otherwise after its first and last functions.
 - `func_00056780` 704
 - `func_00056C50` 724
 - `func_0005DB18` 736
-- `charrootdyn_updateParentPointGPInfo` 748
-- `charrootdyn_parentHColGp` 756
-- `charrootdyn_getCollisionDB` 760
 - `func_0005BF30` 776
 - `func_000532C8` 800
 - `charrootdyn_getCyclicCollisionDetectZYOneWay` 836
@@ -1182,15 +1080,18 @@ string gives one, otherwise after its first and last functions.
 
 - `ConstructorCollisionDynamics` 112 *parked*
 - `NippingCheckCollisionFindetWithKeep4D` 316 *parked*
+- `getLayoutClassCollisionIndepSurfBoundary` 380 *parked*
 - `GetCollisionDBSurfBoundary` 416 *parked*
 - `GetCollisionDBGroupCallBack` 424 *parked*
 - `DebugDispCollisionDBEdgeAngle` 432 *parked*
+- `ClipCollisionFinderWithVariableKeepCB` 484 *parked*
 - `GetCollisionDBEdgeInfo` 484 *parked*
 - `ClipCollisionVariableXZSurface` 500 *parked*
 - `ClipCollisionVariableXZSurfaceNoBottomCheck` 500 *parked*
 - `CollisionPlaneJudgeCallbackArrow` 508 *parked*
 - `CollisionPlaneJudgeCallbackCameraMove` 516 *parked*
 - `CollisionPlaneJudgeCallbackCameraVisibility` 516 *parked*
+- `ClipCollisionFinderWithVariableKeep4DCB` 532 *parked*
 - `ClipCollisionFinderWithKeep4DSlopeLimit` 540 *parked*
 - `SlideCollisionFinder4D` 540 *parked*
 - `ClipCollisionVariableXZSurfaceCB` 552 *parked*
@@ -1211,13 +1112,10 @@ string gives one, otherwise after its first and last functions.
 - `func_0009A508` 692 *parked*
 - `GetGeometryPointerWithCollisionEdgeGlobalPoint` 788 *parked*
 - `DebugDispCollisionEdge` 820 *parked*
-- `getLayoutClassCollisionIndepSurfBoundary` 380
 - `DebugDispManualEdgeCollisionDB` 428
-- `ClipCollisionFinderWithVariableKeepCB` 484
 - `CheckUnderVariableXZSurface` 500
 - `ClipCollisionFinderWithKeepSlopeLimit` 508
 - `GetCollisionEdgePointerOtherSideDBData` 512
-- `ClipCollisionFinderWithVariableKeep4DCB` 532
 - `func_000A41A0` 544
 - `RelocateCollisionWork` 568
 - `DebugDispCollisionDBEdge` 572
@@ -1254,33 +1152,21 @@ string gives one, otherwise after its first and last functions.
 - `func_000A2B30` 3832
 - `func_000A1580` 5496
 
-## GAMECORE (650)
+## GAMECORE (607)
 
-131 Source groups to go, 642 fully matched.
+113 Source groups to go, 660 fully matched.
 
 ### initgcmain: 1 of 2 unmatched
 
 - `func_0000C668` 40
 
-### dispVuColiDispWork: 1 of 1 unmatched
-
-- `dispVuColiDispWork` 428
-
 ### backStageGobjSave: 1 of 1 unmatched
 
 - `backStageGobjSave` 524 *parked*
 
-### backStageGobjCheckEntry: 1 of 1 unmatched
-
-- `backStageGobjCheckEntry` 464 *parked*
-
 ### backStageGobjLoad: 1 of 1 unmatched
 
 - `backStageGobjLoad` 720 *parked*
-
-### gameModeInit .. gStatInitNotOmakeInit: 1 of 37 unmatched
-
-- `gStatLoadPlayerAccessories` 572
 
 ### st_opflow .. opflowCompareOptionData: 1 of 15 unmatched
 
@@ -1290,49 +1176,25 @@ string gives one, otherwise after its first and last functions.
 
 - `updatePowerWork` 2320
 
-### st_stageboundary .. CreateStageBoundaryManager: 1 of 5 unmatched
-
-- `st_stageboundary` 512
-
-### deleteAdpcmOrient .. CreateBgmThread: 1 of 15 unmatched
-
-- `func_000306C0` 616
-
 ### nico_birdBossStart .. SCRFuncBirdSetAttainPosForPathData: 1 of 3 unmatched
 
 - `SCRFuncBirdSetAttainPosForPathData` 512 *parked*
-
-### SCRFuncBirdInputRotateMotionKey: 1 of 1 unmatched
-
-- `SCRFuncBirdInputRotateMotionKey` 760
 
 ### SCRBirdStartBreath .. st_mcBootChk: 1 of 12 unmatched
 
 - `st_mcBootChk` 992
 
-### bootmccheck: 1 of 1 unmatched
-
-- `bootmccheck` 1332
-
 ### nico_cerberusEye: 1 of 1 unmatched
 
 - `nico_cerberusEye` 1152
 
-### dischargeMain: 1 of 1 unmatched
-
-- `dischargeMain` 1100
-
 ### nico_balltest: 1 of 1 unmatched
 
-- `nico_balltest` 1012
+- `nico_balltest` 1012 *parked*
 
 ### nico_pendulumtest: 1 of 1 unmatched
 
 - `nico_pendulumtest` 1816
-
-### gameover: 1 of 3 unmatched
-
-- `gameover` 1180
 
 ### drawbar: 1 of 1 unmatched
 
@@ -1348,15 +1210,11 @@ string gives one, otherwise after its first and last functions.
 
 ### nico_KnightBossStart .. SCRKnightBossPartsBroken: 1 of 5 unmatched
 
-- `SCRFuncKnightParentMoveControlScriptKey` 1164
+- `SCRFuncKnightParentMoveControlScriptKey` 1164 *parked*
 
 ### SCRLeoTorch0_Disp .. setNowLoadingEffectDisplayFlagHokoraBack: 1 of 25 unmatched
 
 - `func_00064798` 684
-
-### nico_BossMinotaurStart .. SCRFuncMinoBCanossaWallBreak: 1 of 6 unmatched
-
-- `SCRFuncMinoBCanossaWallBreak` 804
 
 ### nico_nargaBossStart .. SCRConditionNaragaBodyRot: 1 of 6 unmatched
 
@@ -1365,10 +1223,6 @@ string gives one, otherwise after its first and last functions.
 ### SCRFuncNargaWallCheckMain: 1 of 1 unmatched
 
 - `SCRFuncNargaWallCheckMain` 720 *parked*
-
-### nico_getOmakeItem: 1 of 1 unmatched
-
-- `nico_getOmakeItem` 524
 
 ### nico_delOmakeItem .. demo_op1: 1 of 3 unmatched
 
@@ -1386,17 +1240,13 @@ string gives one, otherwise after its first and last functions.
 
 - `player_updateSlipEffect` 516 *parked*
 
+### SCRGetPlayerTiredParam .. SCRFuncPoseidonModifyGP2AttainPos: 1 of 18 unmatched
+
+- `func_000940A0` 616 *parked*
+
 ### nico_sheathScript: 1 of 1 unmatched
 
 - `nico_sheathScript` 4016
-
-### AI_CalcIntersectionCircleXZ: 1 of 1 unmatched
-
-- `AI_CalcIntersectionCircleXZ` 904
-
-### spriteweaponsight: 1 of 1 unmatched
-
-- `spriteweaponsight` 788
 
 ### setIsWeapon: 1 of 1 unmatched
 
@@ -1406,9 +1256,9 @@ string gives one, otherwise after its first and last functions.
 
 - `get_nearest_camera_vs_ofst_cntrl_position` 452 *parked*
 
-### doit_cameraman .. check_free_cameraman: 1 of 26 unmatched
+### doit_debug_camera .. DebugGetCameraWithManual: 1 of 4 unmatched
 
-- `doit_cameraman` 212 *parked*
+- `doit_debug_camera` 1720
 
 ### initISysPathObj: 1 of 1 unmatched
 
@@ -1418,13 +1268,9 @@ string gives one, otherwise after its first and last functions.
 
 - `updateUserPathWorkEx` 1920
 
-### _sendProgramRotInput: 1 of 1 unmatched
+### updateHumanCtrlWork .. setDashHumanCtrlWork: 1 of 9 unmatched
 
-- `_sendProgramRotInput` 684 *parked*
-
-### updateGazeCtrlWork: 1 of 1 unmatched
-
-- `updateGazeCtrlWork` 1160
+- `updateHumanCtrlWork` 1048
 
 ### calcMoveQuaternion: 1 of 1 unmatched
 
@@ -1442,17 +1288,9 @@ string gives one, otherwise after its first and last functions.
 
 - `SCRFuncProgramRotInputForGP` 1304
 
-### SCRFuncCheckBoneColAndSendDamage: 1 of 1 unmatched
-
-- `SCRFuncCheckBoneColAndSendDamage` 1152
-
-### SCRFuncDamageSendFunc: 1 of 1 unmatched
-
-- `SCRFuncDamageSendFunc` 1000
-
 ### SCRFuncRegressFromPlayer: 1 of 1 unmatched
 
-- `SCRFuncRegressFromPlayer` 772
+- `SCRFuncRegressFromPlayer` 772 *parked*
 
 ### updateEyeWork: 1 of 1 unmatched
 
@@ -1483,9 +1321,19 @@ string gives one, otherwise after its first and last functions.
 - `func_00012A40` 752
 - `st_endingflow` 2756
 
+### st_menupause .. gameflowJumpOp2DemoNoSkip: 2 of 40 unmatched
+
+- `func_00016450` 872
+- `st_gameflow` 6064
+
+### parseHydeObject .. st_jumphokoraflow: 2 of 3 unmatched
+
+- `func_0001A418` 628 *parked*
+- `parseHydeObject` 712
+
 ### nico_IK_targetAiming .. nico_IK_setTargetQFromSkeletonRestWithLimit: 2 of 3 unmatched
 
-- `nico_IK_setTargetQFromSkeletonRestWithLimit` 788
+- `nico_IK_setTargetQFromSkeletonRestWithLimit` 788 *parked*
 - `nico_IK_targetAiming` 1036
 
 ### guardDamageMain .. nico_guardEStart: 2 of 6 unmatched
@@ -1502,11 +1350,6 @@ string gives one, otherwise after its first and last functions.
 
 - `leoTorch` 600 *parked*
 - `func_00063C70` 856 *parked*
-
-### SCRGetPlayerTiredParam .. SCRFuncPoseidonModifyGP2AttainPos: 2 of 18 unmatched
-
-- `func_000940A0` 616 *parked*
-- `SCRFuncPoseidonParallelTrans` 1100
 
 ### st_boss_dead .. nico_shamanStart: 2 of 11 unmatched
 
@@ -1545,7 +1388,7 @@ string gives one, otherwise after its first and last functions.
 
 ### updatePerceptionWork .. equipmentInvisibilityCloak: 2 of 9 unmatched
 
-- `updatePerceptionWork` 788
+- `updatePerceptionWork` 788 *parked*
 - `perceptionExec` 1236
 
 ### nico_calcTailGenealogicalNodeNext .. nico_calcTailGenealogicalNodeTail: 2 of 4 unmatched
@@ -1559,35 +1402,23 @@ string gives one, otherwise after its first and last functions.
 - `gameFlagCheckPointLoad` 1008
 - `gameFlagCheckPointSave` 1552
 
-### st_menupause .. gameflowJumpOp2DemoNoSkip: 3 of 40 unmatched
+### demo_PlayerDeathEffectEnd .. demo_end3: 3 of 5 unmatched
 
-- `func_000160E0` 824
-- `func_00016450` 872
-- `st_gameflow` 6064
-
-### parseHydeObject .. st_jumphokoraflow: 3 of 3 unmatched
-
-- `func_0001A418` 628 *parked*
-- `parseHydeObject` 712
-- `st_jumphokoraflow` 1244
+- `func_00050678` 1316
+- `demo_end2` 1952
+- `demo_end3` 3440
 
 ### nico_kirinBossStart .. SCRFuncKirinSlopeFallRockLWSLoad: 3 of 7 unmatched
 
-- `nico_kirinBodyExpression` 1212
+- `nico_kirinBodyExpression` 1212 *parked*
 - `SCRFuncKirinCaveFallRockLWSLoad` 1680
 - `SCRFuncKirinSlopeFallRockLWSLoad` 1928
 
-### doit_debug_camera .. DebugGetCameraWithManual: 3 of 4 unmatched
+### constructor_nico_sight_on .. nico_setOmakeItemFlag: 3 of 35 unmatched
 
-- `func_000E41A0` 1016
-- `DebugGetCameraWithManual` 1056
-- `doit_debug_camera` 1720
-
-### updateHumanCtrlWork .. setDashHumanCtrlWork: 3 of 9 unmatched
-
-- `func_0010B200` 856
-- `func_0010AE08` 960
-- `updateHumanCtrlWork` 1048
+- `func_0006EF28` 720 *parked*
+- `func_0006F230` 784
+- `func_0006F8E0` 832
 
 ### updateAttackWork .. setAttackHeadDataFormNowMode: 3 of 14 unmatched
 
@@ -1649,13 +1480,6 @@ string gives one, otherwise after its first and last functions.
 - `func_0002F770` 1696
 - `func_0002E7A8` 3188
 
-### demo_PlayerDeathEffectEnd .. demo_end3: 4 of 5 unmatched
-
-- `func_0004FC58` 636 *parked*
-- `func_00050678` 1316
-- `demo_end2` 1952
-- `demo_end3` 3440
-
 ### SCRFuncMinoCSetTemporaryTarget .. nico_missile1start: 4 of 32 unmatched
 
 - `SCRConditionMinoCBridgeRayChack` 724 *parked*
@@ -1687,8 +1511,8 @@ string gives one, otherwise after its first and last functions.
 ### AI_GetGeometryPointerOfLayout .. AI_GetQuaternionNodeDirTargetExt: 4 of 66 unmatched
 
 - `AI_CheckSightOn` 608 *parked*
+- `AI_CheckNoAngleVec` 768 *parked*
 - `AI_GetGeometryPointerOfLayout` 644
-- `AI_CheckNoAngleVec` 768
 - `AI_GetQuaternionNodeDirTarget` 1368
 
 ### constructor_camera_default_angle .. is_leave_camera_dist_to_look_at: 4 of 30 unmatched
@@ -1698,19 +1522,33 @@ string gives one, otherwise after its first and last functions.
 - `func_000D6410` 488 *parked*
 - `get_base_default_direction` 1124
 
+### createHorseCtrlWork .. setFreezeHorseCtrlWork: 4 of 20 unmatched
+
+- `func_0010A040` 896 *parked*
+- `createHorseCtrlWork` 1540
+- `func_00109420` 3048
+- `updateHorseCtrlWork` 3332
+
+### createWormCtrlWork .. getBuryingWormCtrlWork: 4 of 31 unmatched
+
+- `func_001106D0` 896 *parked*
+- `func_00110DD8` 1032
+- `updateWormCtrlWork` 2016
+- `func_00111218` 6328
+
 ### SCRFuncAttackCancelForTwoBoneRay .. SCRFuncSetCreateTempAttain: 4 of 68 unmatched
 
 - `SCRFuncStartEventDemoGameModeCheck` 468 *parked*
 - `SCRFuncStartEventDemo` 492 *parked*
 - `SCRFuncAttackCancelForOneBoneRay` 632 *parked*
-- `SCRFuncSetAttainPosForEscapeToPlayer` 800
+- `SCRFuncSetAttainPosForEscapeToPlayer` 800 *parked*
 
 ### getSpecialEffectObjWork .. StaffRollStart: 5 of 7 unmatched
 
 - `func_00025188` 368 *parked*
 - `func_00025BA8` 596 *parked*
+- `func_00025330` 776 *parked*
 - `func_00025E00` 576
-- `func_00025330` 776
 - `func_00025670` 1280
 
 ### nico_cerberusRStart .. SCRFuncCerberusSetPlayerParentObj: 5 of 14 unmatched
@@ -1721,19 +1559,19 @@ string gives one, otherwise after its first and last functions.
 - `SCRConditionSendDamageToCollisionObject3` 1224
 - `SCRConditionSendDamageToCollisionObject2` 2072
 
-### constructor_nico_sight_on .. nico_setOmakeItemFlag: 5 of 35 unmatched
+### mc_save_scr_begin .. memoryCardLoadScript: 5 of 15 unmatched
 
-- `func_000707B0` 216 *parked*
-- `func_0006EF28` 720 *parked*
-- `func_0006F230` 784
-- `func_0006F8E0` 832
-- `set_parameter_nico_sight_on` 844
+- `func_00065C70` 448 *parked*
+- `memoryCardSaveScript` 928 *parked*
+- `func_00065640` 1528
+- `func_000685E0` 6432
+- `func_000661D0` 6832
 
 ### tryToCheckCollision6Dir .. attrStatusUpdate: 5 of 12 unmatched
 
 - `func_00090560` 320 *parked*
+- `player_updateAttrStatusAndFindHangPosWithFallDown` 1148 *parked*
 - `func_000910B0` 760
-- `player_updateAttrStatusAndFindHangPosWithFallDown` 1148
 - `tryToCheckCollision6Dir` 1796
 - `func_000906D8` 2072
 
@@ -1761,14 +1599,6 @@ string gives one, otherwise after its first and last functions.
 - `doit_camera_pause_rise` 732
 - `func_000D9B30` 1824
 
-### createHorseCtrlWork .. setFreezeHorseCtrlWork: 5 of 20 unmatched
-
-- `func_0010A040` 896
-- `func_00109028` 960
-- `createHorseCtrlWork` 1540
-- `func_00109420` 3048
-- `updateHorseCtrlWork` 3332
-
 ### createSlowLegCtrlWork .. deleteSlowLegCtrlWork: 5 of 19 unmatched
 
 - `func_0010F338` 928 *parked*
@@ -1776,14 +1606,6 @@ string gives one, otherwise after its first and last functions.
 - `func_0010DF90` 1504
 - `createSlowLegCtrlWork` 2032
 - `func_0010E5A8` 2864
-
-### createWormCtrlWork .. getBuryingWormCtrlWork: 5 of 31 unmatched
-
-- `func_00112B08` 800
-- `func_001106D0` 896
-- `func_00110DD8` 1032
-- `updateWormCtrlWork` 2016
-- `func_00111218` 6328
 
 ### constructor_nico_yaw_pitch_cntrl .. get_merge_pitch_nico_yaw_pitch_cntrl: 6 of 55 unmatched
 
@@ -1794,14 +1616,23 @@ string gives one, otherwise after its first and last functions.
 - `func_0000DB18` 424
 - `is_predict_to_acting_base_yaw_rot_nico_yaw_pitch_cntrl` 616
 
-### mc_save_scr_begin .. memoryCardLoadScript: 6 of 15 unmatched
+### getSkeletonGlobalGeo .. GetBossPartsDamagePerParts: 6 of 40 unmatched
 
-- `func_00065C70` 448 *parked*
-- `memoryCardSaveScript` 928
-- `func_000650F0` 1112
-- `func_00065640` 1528
-- `func_000685E0` 6432
-- `func_000661D0` 6832
+- `SCRJumpNearestDeadGeometry` 484 *parked*
+- `SCRJumpNearestPointUsingDeadGeometry` 484 *parked*
+- `func_0003D650` 636 *parked*
+- `func_0003D0D8` 888
+- `SCRCharaInitBossWork` 1380
+- `SCRExecBossPreProcess` 2532
+
+### AI_GetYRotQuaternionFromVector .. nico_SmallBatStart: 6 of 23 unmatched
+
+- `func_0009DA40` 256 *parked*
+- `func_0009D208` 392 *parked*
+- `func_0009BFA0` 440 *parked*
+- `func_0009C820` 1012
+- `func_0009DB78` 1252
+- `func_0009E060` 1576
 
 ### createFastLegCtrlWork .. setRunStopTurnAngleFastLegCtrlWork: 6 of 26 unmatched
 
@@ -1815,22 +1646,12 @@ string gives one, otherwise after its first and last functions.
 ### st_activedemo .. getArrowObjParent: 7 of 31 unmatched
 
 - `arrowManagerInit` 580 *parked*
+- `func_00033680` 1112 *parked*
 - `func_000317C8` 280
-- `func_00033680` 1112
 - `func_00033C48` 1380
 - `st_activedemo` 1696
 - `SCRSetupArrow1ByPlayer2` 1744
 - `func_000318E0` 5252
-
-### getSkeletonGlobalGeo .. GetBossPartsDamagePerParts: 7 of 40 unmatched
-
-- `SCRJumpNearestDeadGeometry` 484 *parked*
-- `SCRJumpNearestPointUsingDeadGeometry` 484 *parked*
-- `func_0003D650` 636 *parked*
-- `func_0003D0D8` 888
-- `func_0003C3B8` 904
-- `SCRCharaInitBossWork` 1380
-- `SCRExecBossPreProcess` 2532
 
 ### _SCRGetCollisionTwoBoneRay .. nico_parentSync: 7 of 78 unmatched
 
@@ -1841,16 +1662,6 @@ string gives one, otherwise after its first and last functions.
 - `_setNodeHPBIllegal` 600 *parked*
 - `_setRootXYZHPB` 880
 - `_SCRGetCollisionTwoBoneRay` 996
-
-### AI_GetYRotQuaternionFromVector .. nico_SmallBatStart: 7 of 23 unmatched
-
-- `func_0009DA40` 256 *parked*
-- `func_0009D208` 392 *parked*
-- `func_0009BFA0` 440 *parked*
-- `func_0009D3C8` 712
-- `func_0009C820` 1012
-- `func_0009DB78` 1252
-- `func_0009E060` 1576
 
 ### calcAttainPosForAttainRange .. moveCtrlWallJudgeFunc: 8 of 28 unmatched
 
@@ -1863,20 +1674,18 @@ string gives one, otherwise after its first and last functions.
 - `chkEstimatCollisionCore` 1324
 - `calcAttainPosForAttainRange` 1628
 
-### SCRBossDebugDeath .. nico_neckFitToParentInvDirIKBankReverse: 10 of 34 unmatched
+### createBirdCtrlWork .. setHoverAttackBirdCtrlWork: 8 of 24 unmatched
 
-- `nico_IK_footPosCalc` 468 *parked*
-- `nico_IK_footPosCalcLeafDirectConnect` 468 *parked*
-- `GetVolumeClippedTargetPos` 448
-- `func_00036200` 904
-- `nico_IK_legCalcAndSetUpper` 1204
-- `func_00037C90` 1392
-- `func_000396F0` 1724
-- `func_000372D8` 1884
-- `character_ikcolsearch` 3348
-- `func_00038238` 5248
+- `func_000FFB80` 656 *parked*
+- `getCalcAttackPassagePoint2` 1080
+- `func_00100198` 1088
+- `func_00103030` 1772
+- `createBirdCtrlWork` 2064
+- `func_001010F8` 2600
+- `updateBirdCtrlWork` 3376
+- `func_00101B58` 5280
 
-### dynamicstest .. demo_end: 10 of 45 unmatched
+### dynamicstest .. demo_end: 9 of 45 unmatched
 
 - `func_0004D0C8` 352
 - `func_0004D260` 424
@@ -1886,21 +1695,33 @@ string gives one, otherwise after its first and last functions.
 - `func_0004C940` 1008
 - `func_0004C4D8` 1072
 - `func_0004D440` 1080
-- `func_0004EB18` 1188
 - `demo_end` 2624
 
-### createBirdCtrlWork .. setHoverAttackBirdCtrlWork: 10 of 24 unmatched
+### SCRBossDebugDeath .. nico_neckFitToParentInvDirIKBankReverse: 10 of 34 unmatched
 
-- `func_000FFB80` 656 *parked*
-- `func_00100A48` 760
-- `func_00100D78` 840
-- `getCalcAttackPassagePoint2` 1080
-- `func_00100198` 1088
-- `func_00103030` 1772
-- `createBirdCtrlWork` 2064
-- `func_001010F8` 2600
-- `updateBirdCtrlWork` 3376
-- `func_00101B58` 5280
+- `nico_IK_footPosCalc` 468 *parked*
+- `nico_IK_footPosCalcLeafDirectConnect` 468 *parked*
+- `nico_IK_legCalcAndSetUpper` 1204 *parked*
+- `GetVolumeClippedTargetPos` 448
+- `func_00036200` 904
+- `func_00037C90` 1392
+- `func_000396F0` 1724
+- `func_000372D8` 1884
+- `character_ikcolsearch` 3348
+- `func_00038238` 5248
+
+### SCRHorseUnLoad .. nico_initHorseBriddle: 10 of 25 unmatched
+
+- `nico_resetHorseBridleTerminalParentPoint` 396 *parked*
+- `func_0005E108` 432 *parked*
+- `nico_execHorseBriddle` 476 *parked*
+- `nico_execMinotaurA_Cloth` 712 *parked*
+- `nico_execMinotaurC_Cloth` 712 *parked*
+- `func_0005E848` 524
+- `nico_execGuardACloth` 784
+- `nico_execHorseCloth` 836
+- `func_0005D2C8` 1072
+- `func_0005D888` 1336
 
 ### ReflectIK_initWormDynamics .. nico_calcWormGenealogicalNodeDownNextLast: 10 of 25 unmatched
 
@@ -1915,25 +1736,10 @@ string gives one, otherwise after its first and last functions.
 - `nico_calcWormGenealogicalNodeHeadBase` 1336
 - `func_00129E10` 1956
 
-### SCRHorseUnLoad .. nico_initHorseBriddle: 11 of 25 unmatched
-
-- `nico_resetHorseBridleTerminalParentPoint` 396 *parked*
-- `func_0005E108` 432 *parked*
-- `nico_execHorseBriddle` 476 *parked*
-- `nico_execMinotaurA_Cloth` 712 *parked*
-- `nico_execMinotaurC_Cloth` 712 *parked*
-- `func_0005E848` 524
-- `T_0005DAB8` 776
-- `nico_execGuardACloth` 784
-- `nico_execHorseCloth` 836
-- `func_0005D2C8` 1072
-- `func_0005D888` 1336
-
-### home_sound .. nico_blankHorseStart: 12 of 23 unmatched
+### home_sound .. nico_blankHorseStart: 11 of 23 unmatched
 
 - `func_0005BB30` 560 *parked*
 - `func_0005A028` 704 *parked*
-- `SCRFuncHorseEscapeFromBossMain` 828
 - `SCRFuncHorseBossCircumferenceMain` 860
 - `func_0005A320` 1016
 - `SCRFuncHorseStandRundmSendkey` 1048
@@ -1943,6 +1749,21 @@ string gives one, otherwise after its first and last functions.
 - `func_0005B0E8` 1276
 - `nico_horseBodyExpression` 1624
 - `func_00058000` 8176
+
+### Kite_SucceedKitePathWork .. lizard_tail: 12 of 36 unmatched
+
+- `func_000B0D08` 232 *parked*
+- `func_000AE8C0` 472 *parked*
+- `func_000B1D88` 544 *parked*
+- `func_000B0A90` 576 *parked*
+- `func_000B1FE0` 272
+- `GetInitWallFunc` 932
+- `GexInitCommonFunc` 956
+- `func_000AFCE8` 1088
+- `func_000B0350` 1800
+- `func_000B1378` 2072
+- `func_000AEAD0` 4576
+- `func_000B2FC0` 5752
 
 ### SCRRockFall .. arrowWaterMain: 13 of 20 unmatched
 
@@ -1959,22 +1780,6 @@ string gives one, otherwise after its first and last functions.
 - `func_00054388` 472
 - `fallenLeafInit` 852
 - `func_00053650` 1112
-
-### Kite_SucceedKitePathWork .. lizard_tail: 13 of 36 unmatched
-
-- `func_000B0D08` 232 *parked*
-- `func_000AE8C0` 472 *parked*
-- `func_000B1128` 536 *parked*
-- `func_000B1D88` 544 *parked*
-- `func_000B0A90` 576 *parked*
-- `func_000B1FE0` 272
-- `GetInitWallFunc` 932
-- `GexInitCommonFunc` 956
-- `func_000AFCE8` 1088
-- `func_000B0350` 1800
-- `func_000B1378` 2072
-- `func_000AEAD0` 4576
-- `func_000B2FC0` 5752
 
 ### spritemenudisplaytriggerpad_group .. bosslifebar_sethp: 13 of 32 unmatched
 
@@ -2046,10 +1851,8 @@ string gives one, otherwise after its first and last functions.
 - `func_00021020` 1776
 - `func_0001FF70` 2216
 
-### getstagenumber .. deleteGameObject: 19 of 79 unmatched
+### getstagenumber .. deleteGameObject: 17 of 79 unmatched
 
-- `func_000272A8` 312 *parked*
-- `func_00027418` 312 *parked*
 - `func_00027EB8` 360 *parked*
 - `func_000281F0` 432 *parked*
 - `func_00027968` 464 *parked*
@@ -2092,6 +1895,31 @@ string gives one, otherwise after its first and last functions.
 - `func_000CD810` 1640
 - `func_000D1A80` 1668
 
+### CAM_get_base_space_posi_and_axisXYZ .. CAM_doit_follow_rot: 22 of 127 unmatched
+
+- `func_000E1AD0` 64 *parked*
+- `func_000E26E8` 208 *parked*
+- `func_000DCC98` 344 *parked*
+- `func_000DD1C8` 424 *parked*
+- `func_000DD3A8` 480 *parked*
+- `CAM_doit_target_offset` 520 *parked*
+- `CAM_doit_view_cut_avoid_cntrl` 528 *parked*
+- `CAM_doit_subjective_target_visibility_and_update_cam_data` 564 *parked*
+- `CAM_get_warp_position` 580 *parked*
+- `CAM_doit_obstacle_avoid_cntrl` 608 *parked*
+- `func_000E1D58` 312
+- `func_000E1FA8` 312
+- `func_000DF418` 328
+- `func_000DCE28` 360
+- `func_000DF598` 528
+- `func_000DDAC0` 584
+- `CAM_doit_aim_angle_rot` 756
+- `func_000DDD40` 816
+- `func_000DF090` 848
+- `CAM_get_safety_cam_and_look_at_posi` 888
+- `CAM_doit_post_update_new_camera_data_target_offset` 996
+- `func_000DE0A8` 1144
+
 ### createUserPathWork .. getColiGroupByUserPathWork: 22 of 133 unmatched
 
 - `func_000F6418` 352 *parked*
@@ -2116,32 +1944,6 @@ string gives one, otherwise after its first and last functions.
 - `func_000F4148` 1336
 - `updateUserPathWork` 2068
 - `func_000F69B8` 2240
-
-### CAM_get_base_space_posi_and_axisXYZ .. CAM_doit_follow_rot: 23 of 127 unmatched
-
-- `func_000E1AD0` 64 *parked*
-- `func_000E26E8` 208 *parked*
-- `func_000DCC98` 344 *parked*
-- `func_000DD1C8` 424 *parked*
-- `func_000DD3A8` 480 *parked*
-- `CAM_doit_target_offset` 520 *parked*
-- `CAM_doit_view_cut_avoid_cntrl` 528 *parked*
-- `CAM_doit_subjective_target_visibility_and_update_cam_data` 564 *parked*
-- `CAM_get_warp_position` 580 *parked*
-- `CAM_doit_obstacle_avoid_cntrl` 608 *parked*
-- `func_000E1D58` 312
-- `func_000E1FA8` 312
-- `func_000DF418` 328
-- `func_000DCE28` 360
-- `func_000DF598` 528
-- `func_000DDAC0` 584
-- `CAM_doit_aim_angle_rot` 756
-- `CAM_get_base_space_posi_and_axisXYZ` 760
-- `func_000DDD40` 816
-- `func_000DF090` 848
-- `CAM_get_safety_cam_and_look_at_posi` 888
-- `CAM_doit_post_update_new_camera_data_target_offset` 996
-- `func_000DE0A8` 1144
 
 ### is_LwsOrientObj .. AI_GetBaseWorkSize: 25 of 39 unmatched
 
@@ -2178,6 +1980,7 @@ string gives one, otherwise after its first and last functions.
 - `is_base_default_dir_attr_change_game_camera_param_manager` 168 *parked*
 - `doit_game_camera_param_manager` 432 *parked*
 - `func_000EA258` 632 *parked*
+- `check_and_boot_boss_subjective_camera_lws_animation` 784 *parked*
 - `func_000E97A0` 296
 - `func_000E6B00` 360
 - `func_000F27A0` 408
@@ -2186,7 +1989,6 @@ string gives one, otherwise after its first and last functions.
 - `func_000E6140` 656
 - `func_000EEA28` 672
 - `func_000EAAC0` 760
-- `check_and_boot_boss_subjective_camera_lws_animation` 784
 - `get_best_mode_manager` 820
 - `func_000F1B38` 876
 - `func_000E4EC0` 880
@@ -2249,9 +2051,8 @@ string gives one, otherwise after its first and last functions.
 - `func_000860A0` 9720
 - `func_000886D0` 11528
 
-### BatInitFunc .. nico_SmallKiteMinoStart: 49 of 71 unmatched
+### BatInitFunc .. nico_SmallKiteMinoStart: 48 of 71 unmatched
 
-- `func_0009F6E8` 272 *parked*
 - `func_000A0058` 320 *parked*
 - `func_0009EB78` 344 *parked*
 - `nico_SmallKiteSpecialStart` 348 *parked*
@@ -2270,9 +2071,9 @@ string gives one, otherwise after its first and last functions.
 - `nico_SmallKiteMinoStart` 640 *parked*
 - `func_000A70A0` 648 *parked*
 - `func_000A7360` 664 *parked*
+- `func_000A1AC0` 728 *parked*
 - `func_000A7908` 848 *parked*
 - `func_000A9D40` 560
-- `func_000A1AC0` 728
 - `func_000A9A10` 760
 - `func_000AAC20` 792
 - `func_000AB478` 792
