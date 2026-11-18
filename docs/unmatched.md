@@ -275,7 +275,7 @@ string gives one, otherwise after its first and last functions.
 - `func_00006E28` 656
 - `IosCdvdManagerSimulation` 716
 
-## MANAGER (684)
+## MANAGER (682)
 
 98 Source groups to go, 492 fully matched.
 
@@ -958,7 +958,7 @@ string gives one, otherwise after its first and last functions.
 - `func_00078C28` 2520
 - `func_00074A78` 2848
 
-### lineObjectCreatef .. ModelDispGetWorkSize: 27 of 59 unmatched
+### lineObjectCreatef .. ModelDispGetWorkSize: 26 of 58 unmatched
 
 - `modelSetMatrixTransTag` 296 *parked*
 - `func_000185B8` 448 *parked*
@@ -970,7 +970,6 @@ string gives one, otherwise after its first and last functions.
 - `func_000189B0` 524 *parked*
 - `func_00018778` 564 *parked*
 - `func_00019B78` 616 *parked*
-- `func_0001E9C0` 428
 - `func_0001B340` 568
 - `func_00019900` 632
 - `lineObjectDispImmediatef` 720
@@ -1114,7 +1113,7 @@ string gives one, otherwise after its first and last functions.
 - `GetObjectAnimationFloatFrame` 2308
 - `func_00031438` 2376
 
-### SendCharaNodeParentSetMsg .. directplay: 63 of 184 unmatched
+### SendCharaNodeParentSetMsg .. directplay: 62 of 184 unmatched
 
 - `charrootdyn_slideExceptionJudgeCB` 144 *parked*
 - `PredictMotionChangeState` 284 *parked*
@@ -1138,7 +1137,6 @@ string gives one, otherwise after its first and last functions.
 - `charrootdyn_getLocalYGlobalXZOffsetFromParentGP` 452
 - `func_00052A80` 460
 - `func_00058F50` 464
-- `charrootdyn_setLandingStatus` 488
 - `ForceAcceptMotion` 496
 - `func_00051A60` 520
 - `ReparentCharacterObj` 528

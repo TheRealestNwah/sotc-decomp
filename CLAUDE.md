@@ -147,6 +147,7 @@ Starts per Source group as soon as every function in it is matched (ADR 0004). O
   - `progress.py`: refreshes the README progress table from each Game module's symbol table, relocations and the matching C (needs `iso/` and `asm/`)
     `--unmatched docs/unmatched.md` lists the real unmatched functions per module (tails split off by spimdisasm excluded)
   - `sdk_routines.py`: checks `config/sdk_routines.txt`, the SDK routines identified in the Game modules by signature, and prints entries for new ones
+  - `handwritten_asm.py`: the same for `config/handwritten_asm.txt`, the Handwritten asm in the Loader and the Game modules (ADR 0017)
   - `m2c.py`, `permute.py`: run m2c and decomp-permuter on an XFF function
   - `refrun.py`: records and diffs Reference runs from PCSX2 (`docs/reference-runs.md`), with `pine.py` (PCSX2 PINE client), `p2m2.py` (Input Recording files) and `disc.py` (reads files from a Disc image)
 - `asm/xff/<MODULE>/`: generated Game module assembly (gitignored like all asm)
@@ -167,6 +168,7 @@ Starts per Source group as soon as every function in it is matched (ADR 0004). O
 - `config/refrun/state.toml`: the state map, listing the game state each Reference run frame records
 - `refruns/`: local Reference runs (gitignored: they need the disc)
 - `config/sdk_routines.txt`: SDK routines identified in the Game modules (name, library, size, signature)
+- `config/handwritten_asm.txt`: Handwritten asm (module, name, size, signature, evidence), left out of the totals
 - `config/loader_functions.csv`: every Loader function with its Original or Placeholder name, class (Game code / SDK routine) and library
 
 ## Gotchas

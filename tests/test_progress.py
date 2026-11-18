@@ -322,3 +322,34 @@ def test_render_unmatched_with_groups():
     assert "### d: 1 of 1 unmatched" in text
     assert "- `d` 16 *parked*" in text
     assert "- `d` 16\n" in render_unmatched(rows)
+
+
+def test_count_leaves_out_handwritten_asm():
+    functions = {"real", "vu_blit", "rand"}
+    progress = count(functions, {"real"}, set(), sdk={"rand"}, handwritten={"vu_blit"})
+
+    assert progress == Progress(matched=1, total=1, sdk=1, handwritten=1)
+
+
+def test_loader_progress_leaves_out_handwritten_asm(tmp_path):
+    path = tmp_path / "loader.csv"
+    path.write_text(
+        "address,size,name,class,library,evidence\n"
+        "0x00100000,0x10,func_00100000,game,loader,x\n"
+        "0x001021D0,0xC,setCop0Epc,game,loader,y\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "loader").mkdir()
+
+    progress = loader_progress(path, tmp_path / "loader", {"setCop0Epc"})
+
+    assert progress == Progress(matched=0, total=1, sdk=0, handwritten=1)
+
+
+def test_render_sdk_adds_handwritten_asm_when_listed():
+    progress = {"A": Progress(1, 4, 0), "B": Progress(5, 10, 2, handwritten=1)}
+
+    plain = {"A": Progress(1, 4, 0), "B": Progress(5, 10, 2)}
+    assert render_sdk(plain, Progress(0, 3, 0)).endswith("A 0, B 2.")
+    line = render_sdk(progress, Progress(0, 3, 0, handwritten=1))
+    assert line.endswith("Handwritten asm, classified and left out too: Loader 1, B 1.")

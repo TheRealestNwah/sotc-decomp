@@ -1,0 +1,13 @@
+# Handwritten asm: Original functions written in assembly by hand, whose shape
+# gcc 2.96 never emits (ADR 0017). They're classified rather than matched from
+# C, stay in the build as generated asm, and tools/progress.py leaves them out
+# of the Game code totals. The Native port reimplements them.
+#
+# Columns: module (KERNEL, MANAGER, GAMECORE or LOADER), function name, size,
+# signature, evidence. The signature is computed as for config/sdk_routines.txt
+# (SHA-1 of the code with relocated fields zeroed, first 16 hex digits);
+# tools/handwritten_asm.py checks every entry against the Original and prints
+# lines for new ones. Names and evidence only, never code.
+
+MANAGER func_0001E9C0 0x1b0 6bbaa869df029314 hand-laid di/ei around VU0 macro code, no prologue, input in $t0
+LOADER setCop0Epc 0xc 4cd66a4120bb8ab4 a lone mtc0 to the EPC register; gcc emits no coprocessor 0 moves

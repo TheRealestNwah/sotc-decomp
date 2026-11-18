@@ -17,7 +17,7 @@ whose symbol tables and relocations define what a function is:
 A Matched function is one of those defined in C outside NONMATCHING blocks. SDK
 routines listed in config/sdk_routines.txt are identified by signature rather
 than decompiled, so they're reported on their own and left out of the Game code
-totals.
+totals, and so is Handwritten asm listed in config/handwritten_asm.txt.
 
 The Loader's Game code functions are the `game` rows of
 config/loader_functions.csv, and its Matched functions are those the C in
@@ -45,6 +45,7 @@ sys.path.insert(0, str(REPO))
 
 README = REPO / "README.md"
 SDK_ROUTINES = REPO / "config" / "sdk_routines.txt"
+HANDWRITTEN_ASM = REPO / "config" / "handwritten_asm.txt"
 START = "<!-- progress:start -->"
 END = "<!-- progress:end -->"
 
@@ -65,11 +66,13 @@ NONMATCHING_BRANCH = {"nonmatching": "matching", "matching": "nonmatching", "oth
 
 @dataclass(frozen=True)
 class Progress:
-    """One Game module's counts. Game code excludes the listed SDK routines."""
+    """One Game module's counts. Game code excludes the listed SDK routines and
+    Handwritten asm."""
 
     matched: int  # Matched functions in Game code
     total: int  # Game code functions
     sdk: int  # SDK routines identified by signature
+    handwritten: int = 0  # Handwritten asm, classified (ADR 0017)
 
 
 def strip_nonmatching(source: str) -> str:
@@ -156,17 +159,30 @@ def module_functions(named: dict[str, int], labels: dict[str, int], targets: set
     return functions
 
 
-def count(functions: set[str], defined: set[str], statics: set[str], sdk: set[str]) -> Progress:
-    """Matched and total Game code functions, with SDK routines counted apart.
-    Statics the C defines that the module scan didn't find count as functions too."""
+def count(
+    functions: set[str],
+    defined: set[str],
+    statics: set[str],
+    sdk: set[str],
+    handwritten: set[str] = frozenset(),
+) -> Progress:
+    """Matched and total Game code functions, with SDK routines and Handwritten
+    asm counted apart. Statics the C defines that the module scan didn't find
+    count as functions too."""
     everything = functions | statics
     matched = (defined & functions) | statics
-    game = everything - sdk
-    return Progress(matched=len(matched & game), total=len(game), sdk=len(everything & sdk))
+    game = everything - sdk - handwritten
+    return Progress(
+        matched=len(matched & game),
+        total=len(game),
+        sdk=len(everything & sdk),
+        handwritten=len(everything & handwritten),
+    )
 
 
 def read_sdk_routines(path: Path) -> dict[str, set[str]]:
-    """Module name -> SDK routine names, from config/sdk_routines.txt."""
+    """Module name -> function names, from config/sdk_routines.txt or any list
+    in its layout (module and name first), such as config/handwritten_asm.txt."""
     routines: dict[str, set[str]] = {}
     if not path.exists():
         return routines
@@ -184,12 +200,19 @@ def loader_game_functions(path: Path) -> set[str]:
         return {row["name"] for row in csv.DictReader(f) if row["class"] == "game"}
 
 
-def loader_progress(path: Path, src_dir: Path) -> Progress:
+def loader_progress(path: Path, src_dir: Path, handwritten: set[str] = frozenset()) -> Progress:
     """Matched and total Game code functions in the Loader. Its SDK routines
-    aren't in the Game code list, so none are counted."""
-    functions = loader_game_functions(path)
+    aren't in the Game code list, so none are counted; Handwritten asm is
+    taken out of it."""
+    listed = loader_game_functions(path)
+    functions = listed - handwritten
     defined, _ = c_functions(src_dir)
-    return Progress(matched=len(defined & functions), total=len(functions), sdk=0)
+    return Progress(
+        matched=len(defined & functions),
+        total=len(functions),
+        sdk=0,
+        handwritten=len(listed & handwritten),
+    )
 
 
 def read_module(xff: Path) -> tuple[dict[str, int], set[int]]:
@@ -259,10 +282,17 @@ def render_table(progress: dict[str, Progress], loader: Progress) -> str:
     return "\n".join(lines)
 
 
-def render_sdk(progress: dict[str, Progress]) -> str:
-    """One line on the SDK routines left out of the table."""
+def render_sdk(progress: dict[str, Progress], loader: Progress | None = None) -> str:
+    """One line on the SDK routines (and Handwritten asm) left out of the table."""
     parts = ", ".join(f"{module} {p.sdk:,}" for module, p in progress.items())
-    return f"SDK routines identified by signature and left out of the totals: {parts}."
+    text = f"SDK routines identified by signature and left out of the totals: {parts}."
+    handwritten = {m: p.handwritten for m, p in progress.items()}
+    if loader is not None:
+        handwritten = {"Loader": loader.handwritten, **handwritten}
+    if any(handwritten.values()):
+        listed = ", ".join(f"{m} {n:,}" for m, n in handwritten.items() if n)
+        text += f" Handwritten asm, classified and left out too: {listed}."
+    return text
 
 
 def render_bars(progress: dict[str, Progress], loader: Progress) -> str:
@@ -475,6 +505,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     sdk = read_sdk_routines(SDK_ROUTINES)
+    handwritten = read_sdk_routines(HANDWRITTEN_ASM)
     progress = {}
     unmatched = {}
     groups: dict[str, tuple[list[GroupRow], int]] = {}
@@ -490,7 +521,7 @@ def main(argv: list[str] | None = None) -> int:
         defined, statics = c_functions(REPO / "src" / "xff" / module)
         if args.unmatched:
             functions = module_functions(named, labels, targets)
-            module_sdk = sdk.get(module, set())
+            module_sdk = sdk.get(module, set()) | handwritten.get(module, set())
             unmatched[module] = unmatched_functions(
                 asm_path.read_text(encoding="latin-1"),
                 labels,
@@ -510,25 +541,31 @@ def main(argv: list[str] | None = None) -> int:
             )
             continue
         progress[module] = count(
-            module_functions(named, labels, targets), defined, statics, sdk.get(module, set())
+            module_functions(named, labels, targets),
+            defined,
+            statics,
+            sdk.get(module, set()),
+            handwritten.get(module, set()),
         )
     if args.unmatched:
         args.unmatched.write_text(render_unmatched(unmatched, groups), encoding="utf-8")
         print(f"wrote {args.unmatched}")
         return 0
-    loader = loader_progress(LOADER_FUNCTIONS_CSV, REPO / "src" / "loader")
+    loader = loader_progress(
+        LOADER_FUNCTIONS_CSV, REPO / "src" / "loader", handwritten.get("LOADER", set())
+    )
     table = render_table(progress, loader)
     README.write_text(
         update_readme(
             README.read_text(encoding="utf-8"),
             table,
             render_bars(progress, loader),
-            render_sdk(progress),
+            render_sdk(progress, loader),
         ),
         encoding="utf-8",
     )
     print(table)
-    print(render_sdk(progress))
+    print(render_sdk(progress, loader))
     return 0
 
 

@@ -42,9 +42,9 @@ before retrying it.
 
 - [ ] Report matched, parked and fresh counts per Source group in
   `docs/unmatched.md`, sorted in work order.
-- [ ] Add the Handwritten asm class ([ADR 0017](docs/adr/0017-handwritten-asm-class.md)):
-  `config/handwritten_asm.txt`, splice support and exclusion from the totals,
-  starting with MANAGER `func_0001E9C0` and the Loader's `setCop0Epc`.
+- [x] Add the Handwritten asm class ([ADR 0017](docs/adr/0017-handwritten-asm-class.md)):
+  `config/handwritten_asm.txt`, checked by `tools/handwritten_asm.py` and left
+  out of the totals, starting with MANAGER `func_0001E9C0` and the Loader's `setCop0Epc`.
 - [ ] Sort MANAGER's and GAMECORE's functions into SDK routines, Handwritten asm
   and Game code (`config/sdk_routines.txt`; MANAGER's `rand` and `srand` are identified).
 - [ ] Match the Loader's remaining Game code. C data isn't supported by the
