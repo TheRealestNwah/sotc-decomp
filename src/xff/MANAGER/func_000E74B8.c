@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 3 diffs: the delay-slot argument copy for the first func_000E5EA0 call is hoisted from the wrong branch; a 25-minute permuter run found nothing better */
 typedef int s128 __attribute__((mode(TI)));
 
 extern int GetAnimationClassObjectAnimation(void *, float *, void *, int);
@@ -30,10 +29,16 @@ static void func_000E74B8(char *out, int **anim, int a, int b)
     float scale;
     register char *o10 __asm__("$17") = out + 0x10;
 
-    if ((*anim)[0x17] == 0)
-        scale = func_000E5EA0(anim, a);
-    else
-        scale = func_000E5EA0(anim, b);
+    {
+        /* Pinned so the first call's argument copy fills the branch delay slot. */
+        register int arg __asm__("$5") = a;
+        register int t __asm__("$3") = (*anim)[0x17];
+
+        if (t == 0)
+            scale = func_000E5EA0(anim, arg);
+        else
+            scale = func_000E5EA0(anim, b);
+    }
     GetAnimationClassObjectAnimation(buf, (float *)(anim + 1), (void *)anim[0x11], 0);
     *(int *)(out + 8) = *(int *)(buf + 0x40);
     quat = *(s128 *)(buf + 0x20);
@@ -56,4 +61,3 @@ static void func_000E74B8(char *out, int **anim, int a, int b)
     }
     *(float *)(out + 0x8C) = *(float *)(buf + 0x38);
 }
-#endif
