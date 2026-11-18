@@ -1,4 +1,10 @@
 {
+  "src/xff/KERNEL/func_0002FD38.c": [
+    "--asm-fill-delay-slots"
+  ],
+  "src/xff/KERNEL/func_0002FF00.c": [
+    "--asm-fill-delay-slots"
+  ],
   "src/xff/KERNEL/Sg2SlotSetLfoVolDepth.c": [
     "--asm-fill-delay-slots"
   ],
