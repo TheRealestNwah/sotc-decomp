@@ -1,5 +1,4 @@
-/* Parked: 4 diffs (was 47). The Original sets the constant 2 once in $a2 and reuses it for the compare and the call argument; pinning it with `register int two asm("$6")` assigned right before `v = src` gets that. Remaining: the 16-byte `v = src` copy loads v1/v0 in the opposite order (ld v1,0x10 first in the Original). Permuter queued. */
-#ifdef NONMATCHING
+/* Sets the camera spring target from the base yaw and pitch (resetting the spring unless mode is 2, else storing the target directly), steps it, then moves the base yaw (when flag is 1) and pitch toward it. The pinned `two` in a2 is reused for the compare and the call argument; the target copy goes through two 64-bit halves pinned to v1 and v0, as in the Original. */
 extern struct { char pad[0x180]; float f; } gcGlobalVar;
 extern float get_base_yaw_nico_yaw_pitch_cntrl(void *);
 extern float get_base_pitch_nico_yaw_pitch_cntrl(void *);
@@ -10,7 +9,7 @@ extern void doit_double_spring_interp_cntrl3D(void *, void *, int, float);
 extern float GAMEUTIL_get_move_radi_from_yaw1_to_yaw2(float, float);
 extern float GAMEUTIL_get_move_radi_from_pitch1_to_pitch2(float, float);
 
-typedef struct { float f[4]; } __attribute__((aligned(8))) Vec4f;
+typedef union { float f[4]; long l[2]; } Vec4f;
 typedef int s128 __attribute__((mode(TI)));
 
 static void func_000707B0(char *obj, int mode, int flag)
@@ -22,7 +21,7 @@ static void func_000707B0(char *obj, int mode, int flag)
     src.f[2] = 0;
     src.f[3] = 0;
     two = 2;
-    v = src;
+    { register long a asm("$3") = src.l[0]; register long b asm("$2") = src.l[1]; v.l[0] = a; v.l[1] = b; }
     if (mode != two) {
         reset_double_spring_interp_cntrl3D(obj + 0x160, &v, two);
     } else {
@@ -34,4 +33,3 @@ static void func_000707B0(char *obj, int mode, int flag)
     }
     update_base_pitch_nico_yaw_pitch_cntrl(obj + 0xC, GAMEUTIL_get_move_radi_from_pitch1_to_pitch2(get_base_pitch_nico_yaw_pitch_cntrl(obj + 0xC), *(float *)(obj + 0x194)));
 }
-#endif
