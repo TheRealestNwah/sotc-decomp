@@ -267,6 +267,9 @@
   "src/xff/KERNEL/debug_sep_config.c": [
     "--asm-fill-delay-slots"
   ],
+  "src/xff/KERNEL/debug_smfp_mod_config.c": [
+    "--asm-fill-delay-slots"
+  ],
   "src/xff/KERNEL/debug_set_smfp_time_count_delta_per.c": [
     "--asm-fill-delay-slots"
   ],
