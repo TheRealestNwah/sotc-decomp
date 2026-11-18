@@ -48,7 +48,7 @@ static inline void quatRotateVector(Vec4 *out0, float *quat0, Vec4 *vec0)
 }
 
 
-#ifdef NONMATCHING /* 7 diffs: the ndir copy goes through $s1 base instead of base+0x170($s5), and the length/divide pair uses $f0/$f1 swapped */
+/* The copy into m+0x170 comes before ndir's address so the sq keeps the m+0x170 form; len and g are pinned to $f1 as in the Original. */
 static void func_000B1128(char *m)
 {
     char sp[0x10] __attribute__((aligned(16)));
@@ -59,16 +59,16 @@ static void func_000B1128(char *m)
     char *ndir;
     char *conj;
     char *dirq;
-    float g;
-    float len;
+    register float g __asm__("$f1");
+    register float len __asm__("$f1");
     char *gp;
 
     func_000B0F90(m);
     *(int *)(m + 0x1D8) = 0;
     *(int *)(m + 0x1A0) = 0x27;
     quatRotateVector((Vec4 *)(m + 0x160), (float *)*(char **)(lc + 0x13C), (Vec4 *)ZUnitVectorInv);
-    ndir = m + 0x170;
     *(s128 *)(m + 0x170) = *(s128 *)(m + 0x160);
+    ndir = m + 0x170;
     __asm__ __volatile__("" : : : "memory");
     *(int *)(m + 0x174) = 0;
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
@@ -119,4 +119,3 @@ static void func_000B1128(char *m)
     }
     *(float *)(m + 0x1A4) = *(float *)(*(char **)(cc + 0x1140) + 0x44);
 }
-#endif
