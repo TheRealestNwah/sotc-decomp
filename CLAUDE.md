@@ -8,6 +8,8 @@ Matching decompilation of Shadow of the Colossus (PS2, NTSC-U `SCUS-97472`), wit
 
 Unless the owner specifies a task or another stopping condition, a request to work autonomously means to continue through the backlog until usage is exhausted. Follow any requested issue order, record phase or evidence blockers before advancing, and continue to the next actionable item after each investigation or merge. An arbitrary batch boundary is not a stopping condition.
 
+Autonomous work means matching and Source cleanup, never port work unless the owner asks for it. Pick work by Source group, in the order `docs/unmatched.md` lists them: the groups with the fewest unmatched functions first, then the groups the port needs first to boot. Within a group, start with the Parked attempts with the fewest diffs. Once every function in a group is matched, its Source cleanup PR comes next (see "Source cleanup").
+
 At usage exhaustion, save a resumable handoff. Resume automatically when the five-hour usage window resets, provided no successor agent is active; do not track or self-limit against weekly usage totals.
 
 ## Goals
@@ -15,6 +17,8 @@ At usage exhaustion, save a resumable handoff. Resume automatically when the fiv
 1. Rebuild the Original byte-for-byte from source in this repo.
 2. Replace assembly with C, one Matched function at a time, keeping the build matching at every step.
 3. Once all Game code is Matched functions, build the Native port on top of the matched source.
+
+1.0 is a playable Native port on Windows x64, reached through milestones M1 to M5 (ADR 0019, `roadmap.md`). Platform layer work (no Game code compiled) may run alongside matching when the owner asks for it (ADR 0003).
 
 Current phase:
 - The Loader `SCUS_974.72` splits with splat and rebuilds byte-for-byte from assembly.
@@ -29,6 +33,7 @@ Current phase:
 - **C must compile to identical bytes.** A function counts as a Matched function only when the compiled output matches the Original exactly, with no hand-written asm patching around it.
 - **No game files in git.** Everything from the disc (`iso/`), everything splat generates (`asm/`, `*.ld`, `undefined_*_auto.txt`) and all build output stay gitignored.
 - **Compiler: Sony `ee-gcc` 2.96 (`2.96-ee-001003-1`), `-O2 -G0`, assembled with that package's own `ee-as`.** Chosen by evidence (with the user's OK), recorded in `docs/findings.md`. The Loader's Game code is the exception: it uses `-O2 -G8` (globals through `$gp`, see "Loader function map" in `docs/findings.md`). Don't switch compilers or flags without new evidence. Modern binutils expands `move` and jump-table loads differently from the original assembler, so C must go through the package's `ee-as`.
+- Handwritten asm (functions gcc 2.96 couldn't have shaped: nonstandard prologue/epilogue, registers against gcc's conventions, hand-laid `di`/`ei` or `sync.p`, delay slots gcc never fills) is classified, not matched from C. Record it in `config/handwritten_asm.txt` with its evidence (ADR 0017). VU0 instructions through inline asm in a gcc-shaped function don't qualify.
 - SDK routines (from the Sony SDK 3.0.x libraries listed in `docs/findings.md`) get identified by signature, not decompiled by hand. Record each one in `config/sdk_routines.txt` (names and signatures only, never SDK library files or code); `tools/progress.py` leaves them out of the Game code totals.
 
 ## Toolchain (native Windows)
@@ -97,6 +102,12 @@ C data (string literals, `switch` jump tables, constants and statics in `.rodata
 
 Splice limitations:
 - Whether a reference is section-relative (same Original source file) or by name is taken from the original relocation at that spot, until the C files mirror the Original source files.
+
+## Source cleanup
+
+Starts per Source group as soon as every function in it is matched (ADR 0004). One PR per group, with no matching changes mixed in, and `ninja check` byte-identical.
+- The group becomes one C file, named after the Original source file where `tools/xff_tus.py` or strings give one, otherwise descriptively.
+- `include/common.h` holds base types; `include/<module>/<group>.h` holds a group's structs and prototypes; a struct moves to `include/<topic>.h` once two groups need it.
 
 ## Matching a function (Loader)
 

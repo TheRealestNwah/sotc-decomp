@@ -25,6 +25,10 @@ Code written by the game's developers, as opposed to SDK routines. The part of t
 Code from Sony's SDK libraries linked into the Loader or a Game module. Identified by signature, never decompiled by hand.
 _Avoid_: Library function (unqualified)
 
+**Handwritten asm**:
+A function in the Original that was written in assembly by hand, so gcc 2.96 couldn't have produced its shape. Classified with evidence in `config/handwritten_asm.txt` and left out of the matching totals, like SDK routines ([ADR 0017](docs/adr/0017-handwritten-asm-class.md)). A function that only uses VU0 instructions through inline asm is still Game code.
+_Avoid_: Assembly function (unqualified)
+
 ### Matching progress
 
 **Matched function**:
@@ -62,7 +66,7 @@ The PS2 build of the source, checked byte-for-byte against the Original. It stay
 _Avoid_: PS2 port, original build
 
 **Source cleanup**:
-The phase between finished matching and the Native port in which the source is reorganized into Original source files with shared headers while the Matching build keeps matching.
+The phase, started per Source group once the group is fully matched, in which the source is reorganized into Original source files with shared headers while the Matching build keeps matching.
 _Avoid_: Refactor (for this phase), port prep
 
 **Port feature**:

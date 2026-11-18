@@ -106,6 +106,28 @@ python -m tools.refrun check-disc <disc image>
 `python -m tools.refrun locate` shows where the Game modules are loaded right now,
 which helps when adding fields.
 
+## Runs that gate 1.0
+
+These 20 runs are the acceptance set for 1.0 ([ADR 0019](adr/0019-one-point-zero-is-a-playable-port.md)).
+Only the inputs (and, for the fights, a memory card save) need the owner at
+PCSX2. State is re-recorded later by replaying the same inputs whenever
+`config/refrun/state.toml` grows. Integer and state fields must match exactly;
+floats are compared with per-field tolerances ([ADR 0018](adr/0018-native-floats-compared-with-tolerances.md)).
+
+| # | Name | Start | Covers |
+| ---: | --- | --- | --- |
+| 1 | `boot-title` | power-on | boot to the title screen (gates M3) |
+| 2 | `newgame-first` | power-on | new game, intro, ride to the first colossus |
+| 3-18 | `colossus-01` ... `colossus-16` | memory card save at the colossus | the whole fight, through the cutscene back at the shrine |
+| 19 | `save-load` | memory card save | save at a shrine, power off, load the save, move a few steps |
+| 20 | `menu-options` | power-on | title menu, every options screen, back out |
+
+- [ ] 1 `boot-title`
+- [ ] 2 `newgame-first`
+- [ ] 3-18 `colossus-01` to `colossus-16` (one save per fight; keep the cards)
+- [ ] 19 `save-load`
+- [ ] 20 `menu-options`
+
 ## Comparing
 
 ```
