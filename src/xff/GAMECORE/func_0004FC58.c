@@ -1,4 +1,3 @@
-/* func_0004FC58: ending demo teardown (5 diffs: li a0,1 for fadeWhiteOut is scheduled before the 0.4f constant instead of into the delay slot). A 25-minute permuter run found nothing better. */
 extern void FinishDemoCameraOrient(int);
 extern char *GetScriptCharacterClass(int);
 extern void PauseGame(int);
@@ -8,7 +7,7 @@ extern void demoManEnd(int);
 extern void end_stream_lws_movie_playing_game_camera(int);
 extern void endingflowDemoEnd(void);
 extern void endingflowEndAdpcmSeq(int);
-extern void fadeWhiteOut(int, int, float);
+extern void fadeWhiteOut(float, int, int);
 extern int get_game_camera(int);
 extern int get_main_cameraman(void);
 extern void isysRequestDeleteObj(int);
@@ -23,16 +22,15 @@ extern int *GameObject_GUARD_E;
 extern int *GameObject_PLAYER_A_DEMO_MORPH;
 extern int *GameObject_SHARMAN;
 
-#ifdef NONMATCHING
 #define STOP(o, f) \
     SetCharacterObjDemoMotionMode((o)[2], 0, 0, f); \
     *(int *)(GetScriptCharacterClass((o)[2]) + 0x1204) = 0
 
-void func_0004FC58(int unused, int *a)
+static void func_0004FC58(int unused, int *a)
 {
     endingflowEndAdpcmSeq(a[3]);
     PauseGame(1);
-    fadeWhiteOut(1, 0, 0.4f);
+    fadeWhiteOut(0.4f, 1, 0);
     ReleaseGame(1);
     STOP(GameObject_GIRL_END, 0);
     STOP(GameObject_DORMIN, 0);
@@ -50,4 +48,3 @@ void func_0004FC58(int unused, int *a)
     demoManEnd(GameObject_DEMO_END2_STARTER[2]);
     endingflowDemoEnd();
 }
-#endif
