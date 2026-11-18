@@ -1,5 +1,4 @@
-/* Parked: 2 diffs, same length (92 words). Same body as func_000272A8 with func_0002D388 as the callback, and the same remaining difference: the Original computes h before the loop counter. */
-#ifdef NONMATCHING
+/* Same body as func_000272A8 with func_0002D388 as the callback; the empty asm on h keeps its addu ahead of the loop counter, as in the Original. */
 typedef struct {
     unsigned int ref[2];
     int pad8[37];
@@ -51,6 +50,7 @@ static void func_00027418(int id)
     int key = area << 5;
     int i;
 
+    __asm__("" : "+r"(h));
     for (i = 1; i >= 0; i--, h++) {
         int n = stageIndex((StageData *)dldResolve(h));
         if (n >= 0) {
@@ -62,4 +62,3 @@ static void func_00027418(int id)
         }
     }
 }
-#endif
