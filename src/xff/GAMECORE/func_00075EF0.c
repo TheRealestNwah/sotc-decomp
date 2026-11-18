@@ -1,4 +1,4 @@
-/* Parked: 9 diffs, same size (168 words incl. the split tail func_00076148). Picks the nearest pickup within squared range 1.0 of the player: first over the item group (gcGlobalVar + 0x2A4), then, when none was found, over fruit-group members whose control mode is FRUIT_LAND or GEX_TAIL_DEATH (+0x2A0). The loops must be `for (; g; g = next(g)) { cur = *g; ... }` (the exit loads the last cur for isysGroupForExit); the iterator/layout pointers are pinned to s1/s0 in the first loop and s0/s1 in the second, as in the Original. The distance is a VU0 asm with an early-clobber output. Remaining: operand load order and register naming of the two position loads. */
+/* Parked: 2 diffs, same size (168 words incl. the split tail func_00076148). Picks the nearest pickup within squared range 1.0 of the player: first over the item group (gcGlobalVar + 0x2A4), then, when none was found, over fruit-group members whose control mode is FRUIT_LAND or GEX_TAIL_DEATH (+0x2A0). The loops must be `for (; g; g = next(g)) { cur = *g; ... }` (the exit loads the last cur for isysGroupForExit); the iterator/layout pointers are pinned to s1/s0 in the first loop and s0/s1 in the second, as in the Original. The distance is a VU0 asm with an early-clobber output. The distance helper comes in two copies whose operands are pinned to a0/v1 and v1/a0, matching the two call sites. Remaining: the Original puts c.lt.s before daddu $a0,$s1 after the second distance. */
 #ifdef NONMATCHING
 typedef struct {
     char pad0[0x134];
@@ -31,8 +31,10 @@ extern Layout *GetLayoutClass(int);
 extern CharaClass *GetCharacterClass(int);
 extern void CharaCtrlSetScriptCtrlStatus(int, int);
 
-static inline float distSq(float *a, float *b)
+static inline float distSq1(float *a, float *b)
 {
+    register float *pa_ __asm__("$4") = a;
+    register float *pb_ __asm__("$3") = b;
     int bits;
     float f;
 
@@ -44,7 +46,28 @@ static inline float distSq(float *a, float *b)
                          "vaddz.x vf7, vf7, vf7z\n"
                          "qmfc2.ni %0, vf7\n"
                          : "=&r"(bits)
-                         : "r"(b), "r"(a)
+                         : "r"(pa_), "r"(pb_)
+                         : "memory");
+    __asm__("mtc1 %1, %0" : "=f"(f) : "r"(bits));
+    return f;
+}
+
+static inline float distSq2(float *a, float *b)
+{
+    register float *pa_ __asm__("$3") = a;
+    register float *pb_ __asm__("$4") = b;
+    int bits;
+    float f;
+
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsub.xyzw vf7, vf5, vf6\n"
+                         "vmul.xyz vf7, vf7, vf7\n"
+                         "vaddy.x vf7, vf7, vf7y\n"
+                         "vaddz.x vf7, vf7, vf7z\n"
+                         "qmfc2.ni %0, vf7\n"
+                         : "=&r"(bits)
+                         : "r"(pa_), "r"(pb_)
                          : "memory");
     __asm__("mtc1 %1, %0" : "=f"(f) : "r"(bits));
     return f;
@@ -73,7 +96,7 @@ static void func_00075EF0(char *o)
             l = GetLayoutClass(cur);
             pb = GetLayoutClass(self)->pos;
             pa = l->pos;
-            d = distSq(pa, pb);
+            d = distSq1(pa, pb);
             if (d < 1.0f && d < bd) {
                 bd = d;
                 best = cur;
@@ -94,7 +117,7 @@ static void func_00075EF0(char *o)
             cur = *g2;
             l2 = GetLayoutClass(cur);
             if (l2->flag != 0 && (ControlMode_FRUIT_LAND == GetCharacterClass(cur)->mode || ControlMode_GEX_TAIL_DEATH == GetCharacterClass(cur)->mode)) {
-                d = distSq(l2->pos, GetLayoutClass(self)->pos);
+                d = distSq2(l2->pos, GetLayoutClass(self)->pos);
                 if (d < 1.0f && d < bd) {
                     bd = d;
                     best = cur;
