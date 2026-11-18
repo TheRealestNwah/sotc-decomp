@@ -2,6 +2,9 @@
   "src/xff/KERNEL/func_00002AB8.c": [
     "-fno-strict-aliasing"
   ],
+  "src/xff/KERNEL/func_0002CF10.c": [
+    "--asm-fill-delay-slots"
+  ],
   "src/xff/KERNEL/func_0002FD38.c": [
     "--asm-fill-delay-slots"
   ],
