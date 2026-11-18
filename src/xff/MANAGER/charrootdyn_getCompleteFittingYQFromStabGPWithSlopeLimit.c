@@ -1,4 +1,4 @@
-/* Parked: 14 diffs, same size (100 words). The YQ-from-Y-dir tail is the inlined body of charrootdyn_getCompleteFittingYQFromYDir; a clobber-free asm after GetGeometryPointerPosition makes gcc recompute sp+0x10 for getAverageNormal like the Original. Remaining: out and gp/r swap s1/s2 (the Original has out in s1, gp then r in s2). */
+/* Parked: 7 diffs, same size (100 words). Calling GetGeometryPointerSurfacePlane before the barrier (a permuter hint) fixed the s1/s2 swap. The YQ-from-Y-dir tail is the inlined body of charrootdyn_getCompleteFittingYQFromYDir; a clobber-free asm after GetGeometryPointerPosition makes gcc recompute sp+0x10 for getAverageNormal like the Original. Remaining: the argument setup order for getAverageNormal (the Original sets a2 and a0 before the float moves). */
 #ifdef NONMATCHING
 extern void GetDifferencialQuaternionWithNoRegularize(float *, float *, float *, float *);
 
@@ -99,10 +99,12 @@ int charrootdyn_getCompleteFittingYQFromStabGPWithSlopeLimit(float *out, void *g
 {
     struct { Vec4 dir; Vec4 pos; Vec4 n[4]; } L;
     int r;
+    float *plane;
 
     GetGeometryPointerPosition(L.pos, gp);
+    plane = GetGeometryPointerSurfacePlane(gp);
     __asm__ __volatile__("" : : );
-    r = getAverageNormal(L.dir, lim0, L.n[0], q, L.pos, lim0, lim1, p2, p4, GetGeometryPointerSurfacePlane(gp));
+    r = getAverageNormal(L.dir, lim0, L.n[0], q, L.pos, lim0, lim1, p2, p4, plane);
     yqFromYDir(out, L.dir, q);
     return r;
 }
