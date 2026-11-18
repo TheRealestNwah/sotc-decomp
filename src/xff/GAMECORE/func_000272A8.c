@@ -1,5 +1,4 @@
-/* Parked: 2 diffs, same length (92 words). Remaining: the Original computes h (addu $s0) before the loop counter (li $s1, 1); gcc emits them the other way round. The odd `area = 0; z = area;` zero and the `g` temporary came from the permuter: without them gcc swaps the gcGlobalVar and func_0002D260 address registers (16 diffs). */
-#ifdef NONMATCHING
+/* An empty asm on h keeps its addu ahead of the loop counter, as in the Original. The odd `area = 0; z = area;` zero and the `g` temporary came from the permuter: without them gcc swaps the gcGlobalVar and func_0002D260 address registers (16 diffs). */
 typedef struct {
     unsigned int ref[2];
     int pad8[37];
@@ -51,6 +50,7 @@ static void func_000272A8(int id)
     int key = area << 5;
     int i;
 
+    __asm__("" : "+r"(h));
     for (i = 1; i >= 0; i--, h++) {
         int n = stageIndex((StageData *)dldResolve(h));
         if (n >= 0) {
@@ -62,4 +62,3 @@ static void func_000272A8(int id)
         }
     }
 }
-#endif
