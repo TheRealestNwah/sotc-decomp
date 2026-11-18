@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 4 diffs: the xA4 float copied to xD0, x104 and x100 lives in $f12 in the Original, $f0 here. func_000CBEC0 reads $f12 as a float argument (it adds it to xA4), but passing e->xA4 or a float local adds a mov.s instead. */
 typedef union { int q __attribute__((mode(TI))); float v[4]; } s128;
 
 typedef struct {
@@ -49,6 +48,8 @@ static inline int findFreeEmitter(void)
 int boot_wind_emitter(void *volume, void *geometry, int a2, int a3)
 {
     WindEmitter *e;
+    /* The callee func_000CBEC0 reads $f12 as a float argument; the Original keeps xA4 there. */
+    register float t asm("$f12");
     int slot;
 
     if (volume != 0) {
@@ -69,13 +70,14 @@ int boot_wind_emitter(void *volume, void *geometry, int a2, int a3)
             e->xA4 = 0.0f;
             e->pos.q = ZeroPoint.q;
             e->dir.q = ZUnitVector.q;
-            e->xD0 = e->xA4;
+            t = e->xA4;
+            e->xD0 = t;
             e->up.q = ZUnitVector.q;
             e->xF0 = 1;
             e->xF4 = a2;
             e->xF8 = a3;
-            e->x100 = e->xA4;
-            e->x104 = e->xA4;
+            e->x100 = t;
+            e->x104 = t;
             func_000CBEC0(e, 1);
             B_00149AB0[slot] = e;
             return slot;
@@ -83,4 +85,3 @@ int boot_wind_emitter(void *volume, void *geometry, int a2, int a3)
     }
     return -1;
 }
-#endif

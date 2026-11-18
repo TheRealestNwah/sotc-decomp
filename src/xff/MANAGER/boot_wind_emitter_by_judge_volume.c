@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 2 diffs: the xA4 -> xD0 float copy uses $f12 in the Original, $f0 here. Tried a float local, a reused float parameter, an inline setter and other statement placements. */
 typedef union { int q __attribute__((mode(TI))); float v[4]; } s128;
 
 typedef struct {
@@ -63,7 +62,13 @@ int boot_wind_emitter_by_judge_volume(void *volume, int a1, int a2, int a3)
             e->xA4 = 0.0f;
             e->pos.q = ZeroPoint.q;
             e->dir.q = ZUnitVector.q;
-            e->xD0 = e->xA4;
+            {
+                /* The Original keeps the copy in $f12. */
+                register float t asm("$f12");
+
+                t = e->xA4;
+                e->xD0 = t;
+            }
             e->up.q = ZUnitVector.q;
             e->xF0 = 1;
             e->xF4 = a2;
@@ -76,4 +81,3 @@ int boot_wind_emitter_by_judge_volume(void *volume, int a1, int a2, int a3)
     }
     return -1;
 }
-#endif
