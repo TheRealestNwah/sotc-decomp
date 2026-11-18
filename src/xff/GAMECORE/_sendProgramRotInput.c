@@ -1,5 +1,4 @@
-/* Parked: 11 diffs, same size. Scripted turn input: when the character's turn setup (cc+0x1C0, int +0x74 degrees) is nonzero and the work struct's +4 flag is clear, builds the layout's matrix (quaternion +0x13C, position +0x134), inverts it in place, transforms the input vector, flattens y, normalises, takes atan2(x, z) and asks calcProgRotRatio for the turn rate; with a nonzero rate and |angle| above the threshold it switches to ScriptCtrlDef_SCRGoR / SCRGoL and feeds SCRCharaTurnDirectInput (+/- rate). The zero in the first compare is laundered through an asm barrier (otherwise gcc hoists it into a saved float register, 129 diffs), v.y is cleared with an integer store, and the quatPosToMatrix operands are numbered quat=%0, out=%1. Remaining: register naming only (the Original puts the matrix address in v1 and the quaternion in v0, and loads the zero before the int-to-float conversion). */
-#ifdef NONMATCHING
+/* Scripted turn input: when the character's turn setup (cc+0x1C0, int +0x74 degrees) is nonzero and the work struct's +4 flag is clear, builds the layout's matrix (quaternion +0x13C, position +0x134), inverts it in place, transforms the input vector, flattens y, normalises, takes atan2(x, z) and asks calcProgRotRatio for the turn rate; with a nonzero rate and |angle| above the threshold it switches to ScriptCtrlDef_SCRGoR / SCRGoL and feeds SCRCharaTurnDirectInput (+/- rate). The register pins give the Original's allocation (zero in $f1, layout in a1, position and quaternion loaded into a0 and v0, matrix in v1). */
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef unsigned int u_long128 __attribute__((mode(TI)));
 
@@ -34,6 +33,8 @@ static inline void vecNormalize(float *dst, float *src)
 
 static inline void quatPosToMatrix(float *out, float *quat, float *pos)
 {
+    register float *q asm("$2") = quat;
+    register float *o asm("$3") = out;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%0)\n"
                          "vmr32.w vf14, vf0\n"
@@ -61,11 +62,11 @@ static inline void quatPosToMatrix(float *out, float *quat, float *pos)
                          "sqc2 vf14, 0x0(%1)\n"
                          "sqc2 vf15, 0x10(%1)\n"
                          "sqc2 vf16, 0x20(%1)\n"
-                         : : "r"(quat), "r"(out) : "memory");
+                         : : "r"(q), "r"(o) : "memory");
     __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
-                         : : "r"(out), "r"(pos) : "memory");
+                         : : "r"(o), "r"(pos) : "memory");
 }
 
 
@@ -123,7 +124,7 @@ int _sendProgramRotInput(int obj, char *w, float *vin, float thr)
     Vec4 m[4];
     Vec4 v;
     char *cc;
-    char *lay;
+    register char *lay asm("$5");
     char *p;
     float ang;
     float r;
@@ -132,15 +133,14 @@ int _sendProgramRotInput(int obj, char *w, float *vin, float thr)
     lay = GetLayoutClass(obj);
     p = *(char **)(cc + 0x1C0);
     {
-        float z = 0.0f;
+        register float z asm("$f1") = 0.0f;
 
-        __asm__("" : "+f"(z));
-        if (z == (float)*(int *)(p + 0x74))
+        if ((float)*(int *)(p + 0x74) == z)
             return 0;
     }
     if (*(int *)(w + 4) != 0)
         return 0;
-    quatPosToMatrix(m[0], *(float **)(lay + 0x13C), *(float **)(lay + 0x134));
+    { register float *pp asm("$4") = *(float **)(lay + 0x134); register float *qq asm("$2") = *(float **)(lay + 0x13C); quatPosToMatrix(m[0], qq, pp); }
     matInverse(m[0], m[0]);
     matApply(v, m[0], vin);
     *(int *)&v[1] = 0;
@@ -158,4 +158,3 @@ int _sendProgramRotInput(int obj, char *w, float *vin, float thr)
     }
     return 1;
 }
-#endif
