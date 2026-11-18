@@ -19,6 +19,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tools.ee_asm import FILL_DELAY_SLOTS, split_asm_options  # noqa: E402
 from tools.try_compilers import (  # noqa: E402
     DEFAULT_COMPILERS,
     I386_LIBS,
@@ -67,8 +68,9 @@ source=$3
 output=$4
 preprocess=$5
 libs=$6
-gp=$7
-shift 7
+asm_options=$7
+gp=$8
+shift 8
 case "$libs" in
     "~/"*) libs="$HOME/${libs:2}" ;;
 esac
@@ -82,7 +84,7 @@ if [ ! -s "$work/out.s" ]; then
     echo "error: compiler produced no assembly" >&2
     exit 1
 fi
-python3 "$preprocess" "$work/out.s" --gp "$gp"
+python3 "$preprocess" "$work/out.s" --gp "$gp" $asm_options
 "$ld" --library-path "$libs" "$assembler" -EL -G "$gp" -o "$work/out.o" "$work/out.s"
 cp "$work/out.o" "$output"
 """
@@ -91,20 +93,23 @@ cp "$work/out.o" "$output"
 def compile_and_assemble(
     compiler_dir: Path, source: Path, flags: list[str], output: Path, package_as: Path
 ) -> str | None:
-    """Use one WSL process for the Original Linux compiler, preparation and assembler."""
+    """Use one WSL process for the Original Linux compiler, preparation and assembler.
+    `flags` may include the assembler options of tools/ee_asm.py, which never reach cc1."""
+    flags, fill_delay_slots = split_asm_options(flags)
     cc1 = find_cc1(compiler_dir)
     output.unlink(missing_ok=True)
     if cc1.suffix == ".exe":
         with tempfile.TemporaryDirectory() as tmp:
             asm = Path(tmp) / "out.s"
             return compile_c(compiler_dir, source, flags, asm) or assemble(
-                asm, output, package_as, small_data_limit(flags)
+                asm, output, package_as, small_data_limit(flags), fill_delay_slots=fill_delay_slots
             )
     result = subprocess.run(
         [
             "wsl", "-e", "bash", "-c", LINUX_PIPELINE, "ee-cc",
             wsl_path(cc1), wsl_path(package_as), wsl_path(source), wsl_path(output),
-            wsl_path(ROOT / "tools/ee_asm.py"), I386_LIBS, str(small_data_limit(flags)),
+            wsl_path(ROOT / "tools/ee_asm.py"), I386_LIBS,
+            FILL_DELAY_SLOTS if fill_delay_slots else "", str(small_data_limit(flags)),
             *flags,
         ],
         capture_output=True, text=True, errors="replace",

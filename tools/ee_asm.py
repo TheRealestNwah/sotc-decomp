@@ -106,20 +106,39 @@ def jump_barriers(asm: Path) -> None:
     asm.write_text("\n".join(out), encoding="latin-1")
 
 
-def prepare_asm(asm: Path, gp: int = 0) -> None:
+# Not a compiler flag: a per-file option in config/ee_cflags.json (or a
+# --flags/--flag value) for C whose Original was assembled with delay-slot
+# filling, the KERNEL Sg2 sound code (issue #3068, docs/findings.md).
+# split_asm_options() takes it out before the flags reach cc1.
+FILL_DELAY_SLOTS = "--asm-fill-delay-slots"
+
+
+def split_asm_options(flags: list[str]) -> tuple[list[str], bool]:
+    """(compiler flags, whether the assembler may fill delay slots)."""
+    return [f for f in flags if f != FILL_DELAY_SLOTS], FILL_DELAY_SLOTS in flags
+
+
+def prepare_asm(asm: Path, gp: int = 0, fill_delay_slots: bool = False) -> None:
+    """`fill_delay_slots` leaves out only the jump barriers: volatile accesses
+    and indexed `la` stay out of delay slots either way."""
     volatile_barriers(asm)
     indexed_la_barriers(asm)
     if gp == 0:
         expand_indexed_loads(asm)
-    jump_barriers(asm)
+    if not fill_delay_slots:
+        jump_barriers(asm)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("assembly", type=Path)
     parser.add_argument("--gp", type=int, default=0)
+    parser.add_argument(
+        FILL_DELAY_SLOTS, dest="fill_delay_slots", action="store_true",
+        help="skip the jump barriers, for code assembled with delay-slot filling",
+    )  # fmt: skip
     args = parser.parse_args(argv)
-    prepare_asm(args.assembly, args.gp)
+    prepare_asm(args.assembly, args.gp, args.fill_delay_slots)
     return 0
 
 

@@ -48,3 +48,12 @@ def test_loader_sources_use_small_data(tmp_path, monkeypatch):
     assert ee_cc.small_data_limit(flags) == 8
     assert ee_cc.small_data_limit(["-O2", "-G0", "-G4"]) == 4
     assert ee_cc.small_data_limit(["-O2"]) == 0
+
+
+def test_assembler_option_comes_from_the_same_config(tmp_path):
+    configure_flags(tmp_path, {"src/xff/KERNEL/sg.c": ["--asm-fill-delay-slots"]})
+    assert ee_cc.source_cflags(tmp_path / "src/xff/KERNEL/sg.c", tmp_path) == [
+        "-O2",
+        "-G0",
+        "--asm-fill-delay-slots",
+    ]
