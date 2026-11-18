@@ -1,4 +1,0 @@
-void bgmEndGameOver(void)
-{
-
-}
