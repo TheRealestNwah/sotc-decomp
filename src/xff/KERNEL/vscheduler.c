@@ -61,7 +61,8 @@ extern void iosWaitIdleThread(void);
 extern int iosSendMsg(void *, int, int);
 extern int getIntrGpCount(void);
 extern void iosGPFrameInit(void);
-static void func_0001B718(void);
+static int func_0001B718(void);
+extern int iosRecvMsg(void *, int, int);
 static int func_0001B850(int);
 extern char B_000C0710[];
 extern void iosPadInit(void);
@@ -93,7 +94,7 @@ static void func_0001B180(void)
     B_000BF6E0 = 0;
     iosCdSetErrorCallback(ischedStop, ischedRestart);
     iosCreateMsgQueue(B_000BF6E8, 0, 0);
-    bootGPThread(func_0001B718);
+    bootGPThread((void (*)(void))func_0001B718);
     memset(B_000C0730, 0, sizeof(B_000C0730));
     init_letter_manager(rootPtn, 0x4CCCC);
     for (;;) {
@@ -249,4 +250,23 @@ void vschedSetNextFrameForceGarbage(void)
 long GetGarbageTime(void)
 {
     return B_000BF6D8;
+}
+
+static int func_0001B718(void)
+{
+    return iosRecvMsg(B_000BF6E8, 0, 0);
+}
+
+static int func_0001B850(int cnt)
+{
+    int r;
+
+    if (D_00040D6C == 0) {
+        r = 0;
+        if (cnt == D_00040D64 && (float)(iosGetTCountExtension() - B_000BF6D0) < 2124999.75f)
+            r = 1;
+    } else {
+        r = 1;
+    }
+    return r;
 }
