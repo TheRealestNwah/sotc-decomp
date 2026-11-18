@@ -1,3 +1,8 @@
+typedef char *va_list;
+#define va_start(ap, last) (ap = (char *)__builtin_next_arg(last) - (__builtin_args_info(2) < 8 ? (8 - __builtin_args_info(2)) * 8 : 0))
+extern int vsprintf(char *, const char *, va_list);
+extern void LoaderSysJumpRecoverPoint(char *);
+
 typedef struct {
     char pad0[0x18];
     int start;
@@ -14,6 +19,7 @@ extern char RO_00042840[];
 extern char RO_000428A0[];
 extern char rootPtn[];
 extern int B_00053F08;
+extern char B_00053B08[];
 
 extern double atof(const char *);
 extern void LoaderSysGetMemoryInfo(MemoryInfo *);
@@ -28,9 +34,20 @@ extern void isysInitObjSystem(void);
 extern void InitDld(void);
 extern void InitIopDev(void);
 extern void InitSubThread(void);
-extern void func_00006B40(void);
+static void func_00006B40(void);
 extern int iosCreateThreadS(void (*)(void), int, void *, int, int, int);
 extern void iosStartThread(int, int);
+
+extern int LoaderSysResetSystem();
+
+extern void IosLoadIrxSimulation(void);
+extern void initSound(void);
+extern void iosMcInit(void);
+extern void bootSchedulerThread(void);
+extern void iosMouseInit(void);
+extern void iosKeybdInit(void);
+extern void IosCdvdManagerSimulation(void);
+extern void iosDeleteThread(int);
 
 typedef void (*PrintFn)(const char *, ...);
 
@@ -78,4 +95,29 @@ int ioskernel(int verbose, char *version)
     B_00053F08 = iosCreateThreadS(func_00006B40, 0, rootPtn, 0x10000, 0x2D, 0);
     iosStartThread(B_00053F08, 0);
     return 0;
+}
+
+void iosJumpRecoverPoint(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    vsprintf(B_00053B08, fmt, ap);
+    LoaderSysJumpRecoverPoint(B_00053B08);
+}
+
+int iosResetKernel(int a, int b, int c, int d)
+{
+    return LoaderSysResetSystem(a, b, c, d);
+}
+
+static void func_00006B40(void)
+{
+    IosLoadIrxSimulation();
+    initSound();
+    iosMcInit();
+    bootSchedulerThread();
+    iosMouseInit();
+    iosKeybdInit();
+    IosCdvdManagerSimulation();
+    iosDeleteThread(0);
 }
