@@ -179,6 +179,9 @@
   "src/xff/GAMECORE/GAMEUTIL_doit_col_plane_info_filter.c": [
     "-fno-strict-aliasing"
   ],
+  "src/xff/KERNEL/Sg2SlotSetLfoVolSpeed.c": [
+    "--asm-fill-delay-slots"
+  ],
   "src/xff/KERNEL/gsRegBegin.c": [
     "-fno-strict-aliasing"
   ],

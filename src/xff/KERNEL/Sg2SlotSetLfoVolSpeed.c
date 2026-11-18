@@ -62,8 +62,6 @@ typedef struct {
 
 extern Sg2Slot B_000DE370[];
 
-/* Parked: 44 words differ (the dpcmp call and unsigned-to-float conversion miss their delay slots, shifting the tail by one word). */
-#ifdef NONMATCHING
 void Sg2SlotSetLfoVolSpeed(int slot, int val)
 {
     float f;
@@ -78,6 +76,3 @@ void Sg2SlotSetLfoVolSpeed(int slot, int val)
     else
         B_000DE370[slot].flags &= ~0x800;
 }
-#else
-extern void Sg2SlotSetLfoVolSpeed(int slot, int val);
-#endif
