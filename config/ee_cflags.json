@@ -284,5 +284,8 @@
   ],
   "src/xff/KERNEL/func_00016380.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/func_00025028.c": [
+    "--asm-fill-delay-slots"
   ]
 }
