@@ -6,1605 +6,2299 @@ Original references. Tails of larger functions that spimdisasm split off are
 left out. Parked drafts (`#ifdef NONMATCHING`) still count as unmatched.
 Size is in bytes, from the asm; 0 means unknown.
 
-## KERNEL (136)
+Functions are sorted into Source groups (`tools/xff_tus.py`) in work order:
+the groups with the fewest unmatched functions first. Within a group,
+Parked attempts (marked *parked*) come first, then fresh functions,
+smallest first. A group is named after its Original source file when a
+string gives one, otherwise after its first and last functions.
 
-- `T_000256A8` 8
-- `func_00003D68` 44
-- `iosSwClip255Mvec` 48
-- `func_0002F0D8` 80
-- `iosMulMvec` 88
-- `isysRelocateModuleObj` 104
-- `Sg2SlotBlock` 108
-- `Sg2SlotSetPitch` 120
-- `isysStartSubThread` 132
-- `func_00014BD8` 136
-- `Sg2ExStAdpcmTrkVolumePercent` 156
-- `Shock_Request` 156
-- `func_00024C58` 160
-- `Sg2SepInit` 168
-- `func_00026AD0` 172
-- `func_0002E068` 176
-- `Sg2SlotSetLfoPitchSpeed` 180
-- `iosDlPushLayer` 184
-- `isysInitObjSystem` 184
-- `Sg2VabHdClose` 192
-- `func_000270E8` 192
-- `iosDlChainHead` 196
-- `Sg2ExPcmOutputSetAutoFilterDirect` 200
-- `Sg2ModGetParam` 200
-- `iosDlChainHeadCurrent` 200
-- `readEModule` 200
-- `func_0002E1B0` 208
-- `debug_set_smfp_time_count_delta_per` 224
-- `Sg2ExPcmInputSetAutoFilterDirect` 240
-- `isysDisposeModuleObjRelocationElement` 244
-- `func_000215D8` 248
-- `iosCdStRead` 272
-- `func_00021488` 280
-- `Sg2ExStAdpcmTrkVolumeDirect` 292
-- `iosMallocGarbageTickProc` 296
-- `iosMcGetInfo` 296
-- `iosConvertStringSJIStoEUC` 316
-- `Sg2SlotSetLfoVolDepth` 328
-- `Sg2SlotSetLfoVolSpeed` 336
-- `func_00007F80` 336
-- `func_0002E5A0` 336
-- `func_0002E8D8` 344
-- `Sg2DspEffectChange` 348
-- `Shock_SetMotor` 348
-- `func_0000AF78` 360
-- `func_0002E2F0` 368
-- `ioskernel` 368
-- `func_0002E728` 376
-- `isysMoveModuleObj` 380
-- `func_00020FD0` 400
-- `func_0002FD38` 400
-- `func_0002ED18` 416
-- `iosNetRecvMsg` 420
-- `GetQuaternionByAxisDirZY` 424
-- `GetQuaternionByAxisDirZX` 428
-- `Sg2SlotInit` 428
-- `iosCreateThread` 436
-- `func_00008108` 440
-- `func_0000DD30` 440
-- `GetDifferencialQuaternionWithNoRegularize` 448
-- `func_00001260` 452
-- `func_000070F0` 452
-- `func_0002FF00` 452
-- `iosNetRecvMsgWithStateCallback` 456
-- `func_00004A20` 472
-- `func_00007968` 472
-- `debug_sep_config` 476
-- `func_00003330` 480
-- `iosPadTickProc` 484
-- `Sg2SmfpPlay` 492
-- `func_0001C238` 492
-- `GetQuaternionByAxisDirZYExact` 496
-- `func_0002EAE0` 512
-- `isysLaunchModule` 520
-- `sndSepTickProc` 528
-- `Sg2SmfpOpenSelCore` 532
-- `Sg2SepPlaySelectCore` 536
-- `func_00002868` 536
-- `isysCreateModuleObjExisted` 564
-- `func_00000068` 580
-- `func_0001DC58` 580
-- `func_00007B78` 592
-- `func_00006B98` 600
-- `func_00014948` 600
-- `set_nowloadingflag` 620
-- `func_00006E28` 656
-- `func_000200F0` 660
-- `Sg2SepTickProc` 668
-- `iosTransTex` 668
-- `func_0001B180` 696
-- `iosSyncPath` 708
-- `IosCdvdManagerSimulation` 716
-- `func_00003028` 720
-- `debug_mod_config` 736
-- `debug_smfp_mod_config` 740
-- `Sg2SmfpTickProc` 752
+## KERNEL (121)
+
+46 Source groups to go, 292 fully matched.
+
+### iosMcInit .. iosMcGetDir: 1 of 12 unmatched
+
+- `iosMcGetInfo` 296 *parked*
+
+### iosPadTickProc: 1 of 1 unmatched
+
+- `iosPadTickProc` 484 *parked*
+
+### iosCreateThread .. iosCreateThreadS: 1 of 5 unmatched
+
+- `iosCreateThread` 436 *parked*
+
+### ioskernel .. iosResetKernel: 1 of 4 unmatched
+
+- `ioskernel` 368 *parked*
+
+### InitMath .. iosInverseMatrixPerfect: 1 of 39 unmatched
+
+- `func_0000B438` 2100
+
+### iosScaleColorToONE .. iosGetDCGroup: 1 of 20 unmatched
+
 - `func_000122B8` 780
-- `GetEulerYXZFromQuaternion` 784
-- `func_0000AC30` 784
-- `isysDeleteObjManager` 800
-- `func_00012C30` 812
-- `GetLimitationQuaternionWithBaseAxis` 824
-- `func_000024E0` 848
-- `GetRotLimitationQuaternion` 880
-- `iosDumpVIF1Status` 928
-- `Sg2ModTickProc` 932
-- `func_0002CF10` 936
-- `Sg2SmfpSetParam` 952
-- `func_00016380` 952
-- `Sg2SlotFreeSearchTerm` 956
-- `Sg2SlotSearchPriority` 1012
-- `Sg2SlotSearchTypeOlder` 1012
-- `iosDumpGIFStatus` 1012
+
+### spriteNoTexFast: 1 of 1 unmatched
+
+- `spriteNoTexFast` 1076 *parked*
+
+### spriteTexFast: 1 of 1 unmatched
+
+- `spriteTexFast` 1464 *parked*
+
+### iosTransTex: 1 of 1 unmatched
+
+- `iosTransTex` 668 *parked*
+
+### isysDeleteObjManager .. isysAddGroupWithLinkParamNoWait: 1 of 17 unmatched
+
+- `isysDeleteObjManager` 800 *parked*
+
+### isysInitObjSystem: 1 of 1 unmatched
+
+- `isysInitObjSystem` 184 *parked*
+
+### isysObjSignalSema .. GetGarbageTime: 1 of 21 unmatched
+
+- `func_0001B180` 696
+
+### Sg2ExStAdpcmWorkClear .. Sg2ExStAdpcmOpen: 1 of 4 unmatched
+
+- `func_000200F0` 660
+
+### Sg2RemoteSend .. Sg2SepSetParam: 1 of 22 unmatched
+
+- `Sg2SepPlaySelectCore` 536
+
+### Sg2SepTickProc .. Sg2SepInit: 1 of 2 unmatched
+
+- `Sg2SepTickProc` 668
+
+### Sg2SlotFreeSearch: 1 of 1 unmatched
+
 - `Sg2SlotFreeSearch` 1028
+
+### Sg2SlotFreeSearchTerm: 1 of 1 unmatched
+
+- `Sg2SlotFreeSearchTerm` 956
+
+### Sg2SlotSearchPriority: 1 of 1 unmatched
+
+- `Sg2SlotSearchPriority` 1012
+
+### Sg2SlotSearchPriorityOlder: 1 of 1 unmatched
+
 - `Sg2SlotSearchPriorityOlder` 1028
-- `spriteNoTexFast` 1076
-- `gsBox` 1092
+
+### Sg2SlotSearchParam: 1 of 1 unmatched
+
+- `Sg2SlotSearchParam` 1208
+
+### Sg2SlotSearchParamOlder0: 1 of 1 unmatched
+
+- `Sg2SlotSearchParamOlder0` 1216
+
+### Sg2SlotSearchParamOlder1: 1 of 1 unmatched
+
 - `Sg2SlotSearchParamOlder1` 1112
+
+### Sg2SlotSearchTypeOlder: 1 of 1 unmatched
+
+- `Sg2SlotSearchTypeOlder` 1012
+
+### Sg2SlotBlock: 1 of 1 unmatched
+
+- `Sg2SlotBlock` 108 *parked*
+
+### Sg2SlotEnvTbl .. Sg2SmfpOpenSelCore: 1 of 5 unmatched
+
+- `Sg2SmfpOpenSelCore` 532
+
+### Sg2SmfpTickProc .. Sg2SmfpInit: 1 of 2 unmatched
+
+- `Sg2SmfpTickProc` 752
+
+### debug_smfp_mod_config: 1 of 1 unmatched
+
+- `debug_smfp_mod_config` 740
+
+### _iosAssert .. iosCdStRead: 2 of 6 unmatched
+
+- `iosCdStRead` 272 *parked*
+- `func_00000068` 580
+
+### initDldSys .. isysCreateExceptionThread: 2 of 7 unmatched
+
+- `func_0000AF78` 360 *parked*
+- `func_0000AC30` 784
+
+### get_letter_type .. iosGetFontIDWithEUC: 2 of 13 unmatched
+
+- `iosConvertStringSJIStoEUC` 316 *parked*
+- `func_0001C238` 492
+
+### isysStartSubThread .. isysJumpSubThread: 2 of 9 unmatched
+
+- `isysStartSubThread` 132 *parked*
+- `isysWakeupSubThread` 1900
+
+### isysDebugSetSubThreadSleepProtection .. sndSepTickProc: 2 of 3 unmatched
+
+- `sndSepTickProc` 528 *parked*
+- `func_0001DC58` 580 *parked*
+
+### Sg2SlotTickProc .. Sg2SlotInit: 2 of 2 unmatched
+
+- `Sg2SlotInit` 428
+- `Sg2SlotTickProc` 2488
+
+### Sg2SmfpClose .. Sg2SmfpSetParam: 2 of 10 unmatched
+
+- `Sg2SmfpPlay` 492
+- `Sg2SmfpSetParam` 952
+
+### debug_set_smfp_time_count_delta_per: 2 of 6 unmatched
+
+- `debug_set_smfp_time_count_delta_per` 224 *parked*
+- `func_0002CF10` 936
+
+### iosSendMsg .. iosNetOpen: 3 of 15 unmatched
+
+- `iosNetRecvMsg` 420 *parked*
+- `iosNetRecvMsgWithStateCallback` 456 *parked*
+- `func_00004A20` 472
+
+### gsRegBegin .. gsBoxLine: 3 of 8 unmatched
+
+- `gsBox` 1092 *parked*
+- `gsBoxLine` 1304 *parked*
+- `gsBox2` 1436 *parked*
+
+### debug_sep_config: 3 of 5 unmatched
+
+- `func_00026AD0` 172 *parked*
+- `func_00026B80` 1384 *parked*
+- `debug_sep_config` 476
+
+### iosPushDCWithClear .. InitDL: 4 of 26 unmatched
+
+- `iosDlPushLayer` 184 *parked*
+- `iosDlChainHead` 196 *parked*
+- `iosDlChainHeadCurrent` 200 *parked*
+- `func_00012C30` 812
+
+### Sg2SlotSetBasicParam .. Sg2SlotSetNoiseOffBit: 4 of 43 unmatched
+
+- `Sg2SlotSetPitch` 120 *parked*
+- `Sg2SlotSetLfoPitchSpeed` 180 *parked*
+- `Sg2SlotSetLfoVolDepth` 328 *parked*
+- `Sg2SlotSetLfoVolSpeed` 336 *parked*
+
+### GetDifferencialQuaternionWithNoRegularize .. GetQuaternionByDegEulerYXZ: 6 of 52 unmatched
+
+- `GetDifferencialQuaternionWithNoRegularize` 448 *parked*
+- `GetQuaternionByAxisDirZYExact` 496 *parked*
+- `GetEulerYXZFromQuaternion` 784 *parked*
+- `GetLimitationQuaternionWithBaseAxis` 824 *parked*
+- `GetRotLimitationQuaternion` 880 *parked*
+- `func_0000DD30` 440
+
+### iosDumpDMAStatus .. iFinish: 7 of 72 unmatched
+
+- `set_nowloadingflag` 620 *parked*
+- `iosDumpVIF1Status` 928 *parked*
+- `iosDumpGIFStatus` 1012 *parked*
+- `func_00014948` 600
+- `iosSyncPath` 708
+- `func_00016380` 952
+- `iosCopyFrameBuffer` 1256
+
+### iosCreateIopMgr .. getMemorySafetyLockFlag: 9 of 34 unmatched
+
+- `func_00001260` 452 *parked*
+- `func_00003330` 480
+- `func_00002868` 536
+- `func_00003028` 720
+- `func_000024E0` 848
 - `func_00002050` 1112
 - `func_00001460` 1144
 - `func_00002AB8` 1168
-- `Sg2SlotSearchParam` 1208
-- `Sg2SlotSearchParamOlder0` 1216
-- `iosCopyFrameBuffer` 1256
-- `gsBoxLine` 1304
-- `func_00026B80` 1384
-- `func_00025028` 1408
-- `gsBox2` 1436
-- `spriteTexFast` 1464
-- `func_00023DD0` 1608
 - `func_00001910` 1800
-- `isysWakeupSubThread` 1900
-- `func_0000B438` 2100
-- `Sg2SlotTickProc` 2488
+
+### Sg2ExStAdpcmGetUserParam .. debug_mod_config: 12 of 85 unmatched
+
+- `Sg2ExStAdpcmTrkVolumePercent` 156 *parked*
+- `Sg2ModGetParam` 200 *parked*
+- `func_000215D8` 248 *parked*
+- `func_00021488` 280 *parked*
+- `Sg2ExStAdpcmTrkVolumeDirect` 292 *parked*
+- `func_00020FD0` 400
+- `debug_mod_config` 736
+- `Sg2ModTickProc` 932
+- `func_00025028` 1408
+- `func_00023DD0` 1608
 - `Sg2ModSetParam` 2632
 - `T_00023200` 3024
 
-## MANAGER (730)
+### get_vabid .. IirParam: 13 of 73 unmatched
 
-- `T_0007E978` 8
-- `func_000CBAD0` 16
-- `func_000C7048` 64
-- `vramFree` 64
-- `func_000C53A0` 72
-- `func_000C6F08` 96
-- `getBootParent` 96
-- `ConstructorCollisionDynamics` 112
-- `SpriteMenuGetLayerNoByHash` 124
-- `charrootdyn_slideExceptionJudgeCB` 144
-- `func_000CBDE0` 168
-- `GetNextSortObj` 172
-- `sheetMgrSpecialFsEnd` 196
-- `func_00093E40` 200
-- `func_000CBC28` 200
-- `func_00090C20` 208
-- `func_000CBB18` 216
-- `UpdateGlobalLightDistant` 232
-- `func_000120C8` 232
-- `GAMEUTIL_get_cross_position_coefficient_t_by_dist_factor` 236
-- `SpriteMenuSetCheckBoxByHash` 240
-- `func_000309B8` 240
-- `SpriteMenuSetDispFlagByHash` 248
-- `func_000E26D8` 248
-- `func_00095F38` 256
-- `sheetMgrDirectFileLoad` 256
-- `AddSortObj` 260
-- `GAMEUTIL_near_to_aim_yaw_dir` 260
-- `func_000E74B8` 264
-- `func_000E4A90` 268
-- `func_000D8380` 272
-- `func_000EA9F8` 272
-- `GAMEUTIL_is_pitch_dir_sandwich` 280
-- `PredictMotionChangeState` 284
-- `func_000305B8` 288
-- `sheetMgrAdpcmIntLoad` 288
-- `func_00074270` 296
-- `func_000783D8` 296
-- `func_000BF528` 296
-- `func_000CDC38` 296
-- `func_000EA0B8` 296
-- `func_000EA590` 296
-- `func_000EAED8` 296
-- `modelSetMatrixTransTag` 296
-- `initLightObj` 300
-- `GAMEUTIL_is_between_yaw_and_yaw_extend_abs` 304
-- `GetMotionNS_RootShiftInfo` 304
-- `GAMEUTIL_get_rot_dir_for_near_to_aim_pitch_dir` 308
-- `GAMEUTIL_increase_pitch` 308
-- `GetLayoutClassWindGeometry` 308
-- `sheetFileUnloadCallBack` 308
-- `func_00093CD0` 312
-- `ptclmanBuildMatPacket` 312
-- `GAMEUTIL_get_direction_by_yaw_pitch` 316
-- `NippingCheckCollisionFindetWithKeep4D` 316
-- `createSheetMenu` 316
-- `func_00034530` 320
-- `func_0003DB80` 320
-- `func_000B1208` 320
-- `func_000DF038` 320
-- `AddCollMan` 324
-- `AddGaLightMan` 324
-- `func_00016038` 324
-- `windowAddControl` 324
-- `getClothDynamics` 332
-- `glRotatex` 332
-- `ExecEff` 336
-- `GetOffsetPositionQuaternion` 336
-- `charrootdyn_checkZplane` 340
-- `glRotatey` 340
-- `glRotatez` 340
-- `ptclmanBuildEnvPacket` 340
-- `GetPlaneCrossPos` 344
-- `InitSpriteObj` 344
-- `func_0008BE00` 344
-- `func_000C1638` 344
-- `func_000CDAA8` 344
-- `initScriptSpriteObj` 344
-- `init_particle_manager` 344
-- `GAMEUTIL_is_reach_aim_pitch_dir` 348
-- `GetGeometryPointerVirtualSurfacePlane` 348
-- `GetMotionFloatFrameWithLimitCaribration` 348
-- `motrootdyn_startcharnodeparent` 348
-- `func_000C54B8` 352
-- `func_000DCAF0` 352
-- `func_000DD6C0` 352
-- `DEBUG_disp_center_collision_attribute_info` 356
-- `GAMEUTIL_get_spring_interpolate_offset` 356
-- `GetMotionBasePos` 356
-- `GetMotionColSphereInfoIntFrame` 356
-- `boot_wind_emitter_by_judge_volume` 356
-- `charrootdyn_getLocalOffsetFromParentGP` 364
-- `clothmath_doubleTensionMove` 364
-- `func_000346A8` 368
-- `func_000B1380` 368
-- `func_000DF1B0` 368
-- `func_000E5CF8` 368
-- `initScriptSpriteMenuObj` 368
-- `GetTurnYAngleFromGlobalDir` 372
-- `PredictMotionGeometryPotential` 376
-- `func_00052EA8` 376
-- `func_0005CD18` 376
-- `func_000D0D78` 376
-- `getLayoutClassCollisionIndepSurfBoundary` 380
-- `get_camera_lws_animation_data` 380
-- `GetAnimObjResource` 384
-- `charrootdyn_restoreposition` 384
-- `func_00032B78` 384
-- `func_000748C0` 384
-- `boot_wind_emitter` 388
-- `charrootdyn_checkSlopeLimit` 388
-- `create_and_init_particle_effect_lod` 388
-- `func_000920F0` 388
-- `func_000CC018` 388
-- `get_polygon_scale_rotation_matrix` 388
-- `setLight` 388
-- `ClipLayoutObjModel` 392
-- `GAMEUTIL_get_yaw_pitch_merge_dir` 392
-- `GAMEUTIL_increase_pitch_limit_clip` 392
-- `createStringInputDialog` 392
-- `func_000097E0` 392
-- `func_00039FA8` 392
-- `func_0003D508` 392
-- `func_000C2360` 392
-- `func_0004B668` 396
-- `CreateScriptAnimationSequence` 400
-- `charrootdyn_getCompleteFittingYQFromStabGPWithSlopeLimit` 400
-- `func_00078A60` 400
-- `func_000C5718` 400
-- `PredictMotionGeometryPotentialWithScaleElem` 404
-- `UpdateAliasLayoutObjClothGeometry` 404
-- `clipByMinMaxCube` 404
-- `DebugDispVolumeShapeColor` 408
-- `GAMEUTIL_get_spring_interpolate_value_extend` 408
-- `func_000C5FA0` 408
-- `func_000DC448` 408
-- `GAMEUTIL_get_spring_damp_offset` 412
-- `SendDamageCylinderLetter` 412
-- `UpdateLayoutClassParentSimpleGeometry` 412
-- `GetCollisionDBSurfBoundary` 416
-- `func_0008D058` 416
-- `func_000936A8` 416
-- `nicosysdRebootRequest` 416
-- `sheetFsLoadSegmentIndex` 416
-- `sheetFsLoadStageTex` 416
-- `ExecLwsDemoOrientManagerObj` 420
-- `initScriptAnimationObj` 420
-- `kbGetStatus` 420
-- `GAMEUTIL_is_inside_of_region_ratio` 424
-- `GetCollisionDBGroupCallBack` 424
-- `directplay` 424
-- `func_00081388` 424
-- `get_apply_camera_region` 424
-- `DebugDispManualEdgeCollisionDB` 428
-- `NewCreateGameLightClass` 428
-- `SendDamageBoxLetter` 428
-- `SetScriptAnimationObjAccessSwitch` 428
-- `boot_camera_lws_animation` 428
-- `boot_wind_emitter_by_box` 428
-- `charrootdyn_checkParentGPPlaneDir` 428
-- `charrootdyn_getCompleteFittingPlaneFromStabGPWithSlopeLimit` 428
-- `func_0001E9C0` 428
-- `DebugDispCollisionDBEdgeAngle` 432
-- `func_00041488` 432
-- `func_00051CA0` 432
-- `solarFlareReset` 432
-- `texScaleClut` 432
-- `GAMEUTIL_get_rot_dir_for_near_to_aim_yaw_dir` 436
-- `GAMEUTIL_is_inside_of_region_yaw` 436
-- `GetWindVector` 436
-- `initLayoutObj` 436
-- `initLayoutObjVU0Secure` 436
-- `mouseDrawCursor` 436
-- `GetRateInOutCubeVolumeWithInverseMatrix` 440
-- `func_000099A0` 440
-- `func_00016710` 440
-- `func_00081198` 440
-- `spriteInitObject` 444
-- `DEBUG_disp_ray` 448
-- `GetMotionOptionNodeBooleanInfoFloatFrame` 448
-- `T_000E1AD0` 448
-- `func_000185B8` 448
-- `func_00041068` 448
-- `func_000BC1B8` 448
-- `func_000DB778` 448
-- `GetMotionMatrixOfChildsFromTarget` 452
-- `charrootdyn_getLocalYGlobalXZOffsetFromParentGP` 452
-- `func_00018228` 452
-- `func_000183F0` 452
-- `func_0008BF90` 456
-- `func_000E6100` 456
-- `shadowReset` 456
-- `func_00052A80` 460
-- `WriteMemberCsvModChkTempFile` 464
-- `func_0003D300` 464
-- `func_00058F50` 464
-- `func_000C0178` 464
-- `func_000C66D8` 464
-- `func_000DEE30` 464
-- `sheetFsLoadMap` 464
-- `charrootdyn_getParentedEdgeInfo` 468
-- `charrootdyn_memoryposition` 468
-- `func_0006D2D0` 468
-- `func_00096530` 468
-- `UpdateLayoutClassParentGeometry` 472
-- `charrootdyn_edgepointstab` 472
-- `func_00019DE0` 472
-- `func_00019FB8` 472
-- `func_0001A190` 472
-- `func_000BF318` 472
-- `sePlay3D` 472
-- `updateLightGeo` 472
-- `GAMEUTIL_inc_or_dec_for_near_to_aim_yaw` 476
-- `func_00000038` 476
-- `GAMEUTIL_is_pitch_dir_inside_of_region` 480
-- `func_000BC3B0` 480
-- `func_000D5CE8` 480
-- `ClipCollisionFinderWithVariableKeepCB` 484
-- `GetCollisionDBEdgeInfo` 484
-- `InitStageLightColMan` 488
-- `charrootdyn_setLandingStatus` 488
-- `func_00052C88` 488
-- `func_00069B70` 488
-- `func_0007B8D0` 488
-- `sound3DCalc` 488
-- `GetMotionRootFloatFrame` 492
-- `ForceAcceptMotion` 496
-- `OptimizeMotionOrient` 496
-- `SendVolumeShapeDamageLetter` 496
-- `func_00031210` 496
-- `func_00041260` 496
-- `AddCharacterClassSubGeometriesOfMatrix` 500
-- `CheckUnderVariableXZSurface` 500
-- `ClipCollisionVariableXZSurface` 500
-- `ClipCollisionVariableXZSurfaceNoBottomCheck` 500
-- `FlushLayoutObjImmediate` 500
-- `GAMEUTIL_get_spring_interpolate_offset3D` 504
-- `func_00033DE0` 504
-- `func_000BFF48` 504
-- `ClipCollisionFinderWithKeepSlopeLimit` 508
-- `CollisionPlaneJudgeCallbackArrow` 508
-- `CreateClothChildLayoutObj` 508
-- `GetArbitraryDirectionInverseMatrix` 508
-- `GetMotionIntFrame` 508
-- `GetCollisionEdgePointerOtherSideDBData` 512
-- `disp_camera_lws_animation_debug_info` 512
-- `func_00032940` 512
-- `func_00034010` 512
-- `func_0007EF00` 512
-- `func_000E2808` 512
-- `CollisionPlaneJudgeCallbackCameraMove` 516
-- `CollisionPlaneJudgeCallbackCameraVisibility` 516
-- `GAMEUTIL_act_pitch_rot_limit_clip` 516
-- `charrootdyn_addSlideElement` 516
-- `NewCreateFogColClass` 520
-- `func_00051A60` 520
-- `func_00078538` 520
-- `func_00095218` 520
-- `GAMEUTIL_is_yaw_dir_inside_of_region` 524
-- `UnparentLayoutObj` 524
-- `func_000189B0` 524
-- `func_0007ACD0` 524
-- `func_000BC5C8` 524
-- `ReparentCharacterObj` 528
-- `func_00014CD0` 528
-- `func_0001E778` 528
-- `func_00048D48` 528
-- `func_000DB530` 528
-- `func_000E7930` 528
-- `ClipCollisionFinderWithVariableKeep4DCB` 532
-- `GAMEUTIL_act_yaw_rot_region_check` 536
-- `func_0003D828` 536
-- `func_000BCA98` 536
-- `func_000CAA98` 536
-- `getClothGeometry` 536
-- `ClipCollisionFinderWithKeep4DSlopeLimit` 540
-- `SlideCollisionFinder4D` 540
-- `func_000746A0` 540
-- `GetXZVectorOnWV` 544
-- `func_00033B88` 544
-- `func_00035A20` 544
-- `func_000A41A0` 544
-- `func_000D5A90` 544
-- `func_000ED3C0` 544
-- `CreateCsvModChkTempFileIppatu` 548
-- `setVertexPos` 548
-- `CharacterClassMalloc` 552
-- `ClipCollisionVariableXZSurfaceCB` 552
-- `func_00035C78` 552
-- `func_000E5EA0` 552
-- `func_000ED160` 552
-- `GAMEUTIL_get_spring_interpolate_value3D` 556
-- `GetInitialInverseMatrix` 560
-- `func_00055610` 560
-- `updateCamVibGeo` 560
-- `updateLayoutGeo` 560
-- `GetClothQuaternion` 564
-- `func_00018778` 564
-- `get_temp_parameter_motion_ik_base` 564
-- `ptclmanBuildVtxPacket` 564
-- `InitLwsOrientObj` 568
-- `IsWaterSurfaceExistAround` 568
-- `RelocateCollisionWork` 568
-- `func_0001B340` 568
-- `func_00053058` 568
-- `func_00053D10` 568
-- `DebugDispCollisionDBEdge` 572
-- `setBossEffectTexture` 572
-- `SpriteMenuSetSpriteObjectParam` 576
-- `func_000C3438` 576
-- `windowSpriteMenuArrow` 576
-- `AddCharacterClassSubGeometries` 580
-- `GetCollisionDBNext3Direct` 580
-- `GetCollisionCameraAttributeShareArray` 584
-- `GetSpaceTransformRotMatrix` 584
-- `createParamMenu` 584
-- `func_000CACE8` 584
-- `resourceRot` 584
-- `GetTurnYLimitAngleFromGlobalDir` 588
-- `ClipCollisionFinderWithKeepSlopeLimitCB` 592
-- `GetCollisionDBNext3` 592
-- `GetMotionMatrixOfTargetFromParent` 592
-- `T_000D2F18` 592
-- `func_0003A4A8` 592
-- `func_00092388` 592
-- `func_000E2A40` 592
-- `func_000EC410` 592
-- `GAMEUTIL_increase_yaw_limit_extend` 596
-- `GetMotionStretchRatio` 596
-- `charrootdyn_setkeepcolhitstatus` 596
-- `SlideCollisionFinder4DCB` 600
-- `feedbackBlur` 600
-- `mcManager` 600
-- `GetMotionOptionNodeIntFrame` 604
-- `GetWaterSurfacePositionYExtend` 604
-- `update_camera_region_geometry` 604
-- `GetMotionFloatFrame` 608
-- `T_000E1870` 608
-- `func_00071AF0` 608
-- `GetCollisionDB` 612
-- `GetMotionFloatFrameNoCaribration` 612
-- `GetMoveVectorOnWV` 612
-- `GetSTPositionOfCollisionDB` 612
-- `doit_particle_manager` 612
-- `glBeginWithDlLayerNo` 612
-- `refractionBegin` 612
-- `FlushModifiedManagerCB` 616
-- `GetCollisionDBPlane` 616
-- `GetSpaceTransformMatrix` 616
-- `LoopExecPreLightColMan` 616
-- `func_00019B78` 616
-- `func_000A3F00` 616
-- `func_000DCEF0` 616
-- `func_000E9E50` 616
-- `AddCollisionDBCallBack` 620
-- `disp_particle_emitter` 620
-- `windowReInit` 620
-- `CalcLightLayoutObj` 624
-- `CreateScriptAnimationObj` 624
-- `func_00028E90` 624
-- `func_00030710` 624
-- `func_000C2968` 624
-- `AddCollisionDB` 628
-- `GetCharacterClassOptionNodeBasePos` 632
-- `func_00019900` 632
-- `func_0009A7C0` 632
-- `GAMEUTIL_near_to_aim_pitch_dir` 636
-- `GetCollisionDBCallBack` 636
-- `ClipCollisionFinderWithKeep4DSlopeLimitCB` 640
-- `GAMEUTIL_is_inside_of_region_pitch` 640
-- `func_0008CDA0` 640
-- `ExecAnimeTableInfo` 644
-- `debugLineObjectCreateAttributre` 644
-- `func_0009B408` 648
-- `DebugDispMotion` 652
+- `func_0002F0D8` 80 *parked*
+- `func_0002E068` 176 *parked*
+- `Sg2VabHdClose` 192 *parked*
+- `Sg2ExPcmOutputSetAutoFilterDirect` 200 *parked*
+- `func_0002E1B0` 208 *parked*
+- `Sg2ExPcmInputSetAutoFilterDirect` 240 *parked*
+- `func_0002E5A0` 336
+- `func_0002E8D8` 344
+- `func_0002E2F0` 368
+- `func_0002E728` 376
+- `func_0002FD38` 400
+- `func_0002FF00` 452
+- `func_0002EAE0` 512
+
+### endSCEDemo .. loadtest: 14 of 67 unmatched
+
+- `Shock_Request` 156 *parked*
+- `readEModule` 200 *parked*
+- `func_00007F80` 336 *parked*
+- `Shock_SetMotor` 348 *parked*
+- `isysMoveModuleObj` 380 *parked*
+- `isysCreateModuleObjExisted` 564 *parked*
+- `func_00008108` 440
+- `func_000070F0` 452
+- `func_00007968` 472
+- `isysLaunchModule` 520
+- `func_00007B78` 592
+- `func_00006B98` 600
+- `func_00006E28` 656
+- `IosCdvdManagerSimulation` 716
+
+## MANAGER (684)
+
+98 Source groups to go, 492 fully matched.
+
+### DEBUG_update_direction: 1 of 1 unmatched
+
+- `DEBUG_update_direction` 1064
+
+### bgEnd: 1 of 1 unmatched
+
+- `bgEnd` 1132
+
+### setBossEffectTexture: 1 of 1 unmatched
+
+- `setBossEffectTexture` 572 *parked*
+
+### bossDeathEffectBegin: 1 of 1 unmatched
+
+- `bossDeathEffectBegin` 2044
+
+### bossDeathEffectEnd: 1 of 1 unmatched
+
+- `bossDeathEffectEnd` 4804
+
+### depthOfField: 1 of 1 unmatched
+
+- `depthOfField` 3240
+
+### getDepthOfFieldNearZ .. effectSet: 1 of 3 unmatched
+
+- `func_0000CF40` 1752
+
+### foginterp: 1 of 1 unmatched
+
+- `foginterp` 816 *parked*
+
+### feedbackBlur: 1 of 1 unmatched
+
+- `feedbackBlur` 600 *parked*
+
+### feedbackBlur2: 1 of 1 unmatched
+
 - `feedbackBlur2` 652
-- `ExecObjectAnimation` 656
-- `func_000755D0` 656
-- `func_0009E2D8` 660
-- `AddCharacterClassOptionNodeSubGeometry` 664
-- `InitCollisionWork` 664
-- `ViewIntervalClip` 664
-- `func_000743D0` 664
-- `GetMotionOptionNodeNextSwitchFrameDirectResource` 668
-- `func_0002DBA8` 668
-- `InterPOrObjectAnimation` 672
-- `func_0008C988` 672
-- `func_000D2B30` 672
-- `spriteDrawSpriteUV` 672
-- `func_00011AF0` 680
-- `func_00034850` 680
-- `func_0005DE30` 680
-- `func_000BFC68` 680
-- `spriteDrawSpriteST` 680
-- `CheckCollisionInsideOfSurfaceXZ` 684
-- `func_0009A258` 684
-- `ExecMotionSyncAnimation` 688
-- `func_00034248` 688
-- `func_00034B30` 688
-- `func_00078778` 688
-- `func_000CF510` 688
-- `func_0009A508` 692
-- `windowPrintf` 692
-- `GAMEUTIL_get_spring_interpolate_value3D_extend` 696
-- `func_00032188` 696
-- `func_00035ED8` 696
-- `func_0004BC58` 696
-- `func_000EC698` 696
-- `GetClothDynamics` 704
-- `func_00035120` 704
-- `func_00035418` 704
-- `func_00056780` 704
-- `GetGeometryPointerWithCollisionDBDataGlobalPoint` 708
-- `doit_motion_ik_interest` 708
-- `windowPrintfScale` 708
-- `GetMotionRootShiftInfo` 712
-- `SetCharacterObjDemoMotionMode` 712
-- `func_00072858` 712
-- `func_00098A88` 712
-- `func_000C36B0` 712
-- `func_00034E18` 720
-- `lineObjectDispImmediatef` 720
-- `func_00056C50` 724
-- `FlushCharacterObjImmediate` 728
-- `func_00035710` 728
-- `func_0004E880` 728
-- `func_000BEC80` 728
-- `func_000E2CC8` 728
-- `InitAliasLayoutObj` 732
-- `func_000677B8` 732
-- `func_000DB0B8` 732
-- `inWaterEffectInit` 732
-- `func_00048A30` 736
-- `func_0005DB18` 736
-- `func_0006DFD0` 736
-- `func_000C0380` 736
-- `updateLWSTriggerGeo` 736
-- `kInit` 740
-- `mouseGetStatus` 740
-- `func_00033868` 744
-- `func_00081D08` 744
-- `func_00082838` 744
-- `motrootdyn_parent_from_falldown` 744
-- `GetMotionMatrixOfTargetFromRoot` 748
-- `charrootdyn_updateParentPointGPInfo` 748
-- `func_0007E2D0` 748
-- `func_000D3890` 748
-- `sheetMgrResolve` 748
-- `CheckClothChainDetect` 752
-- `ClipJudgeVolumeInfo` 752
-- `DEBUG_disp_collision_attribute_info` 756
-- `charrootdyn_parentHColGp` 756
-- `charrootdyn_getCollisionDB` 760
-- `func_00065AA8` 760
-- `func_00089910` 760
-- `func_00095C08` 760
-- `lineObjectCreate` 760
-- `GetLayoutObjCollisionDBWithTargetAttributeJudgeFunc` 768
-- `GetVirtualVerticalPlane` 768
-- `func_000895D8` 768
-- `get_blend_sub_camera_lws_animation` 768
-- `GetCharacterObjWorkSize` 772
-- `updateVolumeShapePQSGeo` 772
-- `func_0003A168` 776
-- `func_0005BF30` 776
-- `func_000EA6F0` 776
-- `StartAnimationSubObjInfinitePart` 780
-- `fittingwithrot` 780
-- `func_00079D28` 780
-- `func_0009C8C8` 784
-- `GetGeometryPointerPosition` 788
-- `GetGeometryPointerWithCollisionEdgeGlobalPoint` 788
-- `_adpcmOpenReq` 792
-- `updateSEGeo` 792
-- `doit_double_spring_interp_cntrl` 796
-- `func_000532C8` 800
-- `func_00095458` 800
-- `lineObjectFlip` 800
-- `FlushPadHistory` 804
-- `func_00069300` 804
-- `func_000BBE58` 808
-- `lineObjectCreatef` 808
-- `foginterp` 816
-- `func_00079788` 816
-- `func_000A6240` 816
-- `func_000BCCE8` 816
-- `CheckPositionInsideOfJudgeVolumeInfo` 820
-- `DebugDispCollisionEdge` 820
-- `func_000EC988` 820
-- `initAliasLayoutObj` 820
-- `func_000C1FF0` 824
-- `func_00072B58` 832
-- `func_000C2C10` 832
-- `windowSetMouseStatus` 832
-- `AddSegmentCsvModChkTempFile` 836
-- `charrootdyn_getCyclicCollisionDetectZYOneWay` 836
-- `func_000943F8` 840
-- `func_000D3B80` 840
-- `func_000E2358` 840
-- `DEBUG_disp_object_info` 844
-- `func_000D3540` 848
+
+### debugLineObjectCreateAndSetAttributreIfChange: 1 of 1 unmatched
+
+- `debugLineObjectCreateAndSetAttributreIfChange` 1088
+
+### ptclmanBuildMatPacket: 1 of 1 unmatched
+
+- `ptclmanBuildMatPacket` 312 *parked*
+
+### ptclmanBuildVtxPacket: 1 of 1 unmatched
+
+- `ptclmanBuildVtxPacket` 564
+
+### ptclmanEnd .. ptclmanPut: 1 of 4 unmatched
+
+- `ptclmanBuildEnvPacket` 340 *parked*
+
+### meshCreate .. CreateMeshObj: 1 of 13 unmatched
+
+- `meshCreate` 1240
+
+### reflectionBegin: 1 of 1 unmatched
+
+- `reflectionBegin` 4352
+
+### refractionBegin: 1 of 1 unmatched
+
+- `refractionBegin` 612
+
+### shadowReset: 1 of 1 unmatched
+
+- `shadowReset` 456 *parked*
+
+### shadowDraw: 1 of 1 unmatched
+
+- `shadowDraw` 2904
+
+### zFog: 1 of 1 unmatched
+
 - `zFog` 852
-- `GAMEUTIL_inc_or_dec_for_near_to_aim_pitch` 856
-- `func_00059628` 856
-- `func_0003EF60` 864
-- `func_0007F9E8` 864
-- `func_0009D0B0` 872
-- `func_0007B300` 876
-- `update_transform_matrix_set` 876
-- `parentpointxzfit` 880
-- `func_000EA218` 888
-- `updateWindGeo` 888
-- `func_00071738` 896
-- `GetMotionMatrix` 900
-- `T_00094740` 904
-- `func_00011730` 904
-- `func_0009C508` 904
-- `func_000D7AF0` 904
-- `charrootdyn_getCyclicCollisionDetectZY` 908
-- `charrootdyn_slidecollisionCB` 908
-- `func_0008C5C0` 912
-- `func_00099EC8` 912
-- `spriteDrawSpriteUV2` 916
-- `PlayScriptAnimationSequence` 920
-- `charrootdyn_getCyclicCollisionDetectZYOneWayComplexCB` 920
-- `func_000586C0` 920
-- `func_000D2DD0` 920
-- `func_000EAB40` 920
-- `createNumDialog` 924
-- `spriteDrawSpriteST2` 924
-- `func_00048658` 928
-- `updateObjectGeo` 928
-- `func_00090EC0` 936
+
+### get_temp_parameter_motion_ik_base: 1 of 1 unmatched
+
+- `get_temp_parameter_motion_ik_base` 564 *parked*
+
+### SetAnimationClassLastInfoDirectResource .. InitAnimationDefObj: 1 of 8 unmatched
+
+- `func_0003F860` 1372
+
+### swim .. motrootdyn_startswim: 1 of 3 unmatched
+
+- `swim` 1440
+
+### xz: 1 of 1 unmatched
+
+- `xz` 2808
+
+### GameLightCalcImpact .. AddGlLightMan: 1 of 3 unmatched
+
+- `func_0007C670` 1156
+
+### AddSortObj: 1 of 1 unmatched
+
+- `AddSortObj` 260 *parked*
+
+### GetNextSortObj: 1 of 1 unmatched
+
+- `GetNextSortObj` 172 *parked*
+
+### ViewIntervalClip: 1 of 1 unmatched
+
+- `ViewIntervalClip` 664
+
+### GetArbitraryDirectionInverseMatrix: 1 of 1 unmatched
+
+- `GetArbitraryDirectionInverseMatrix` 508 *parked*
+
+### GetVirtualVerticalPlane: 1 of 1 unmatched
+
+- `GetVirtualVerticalPlane` 768
+
+### GetPlaneCrossPos: 1 of 1 unmatched
+
+- `GetPlaneCrossPos` 344 *parked*
+
+### GetTargetLookAtQuaternionOnBase: 1 of 1 unmatched
+
+- `GetTargetLookAtQuaternionOnBase` 1500
+
+### GetTurnYAngleFromGlobalDir: 1 of 1 unmatched
+
+- `GetTurnYAngleFromGlobalDir` 372
+
+### GetTurnYLimitAngleFromGlobalDir: 1 of 1 unmatched
+
+- `GetTurnYLimitAngleFromGlobalDir` 588 *parked*
+
+### IsInsideOfRegion: 1 of 1 unmatched
+
+- `IsInsideOfRegion` 1128
+
+### clothmath_doubleTensionMove: 1 of 1 unmatched
+
+- `clothmath_doubleTensionMove` 364 *parked*
+
+### set_npe_file_data_to_particle_effect_lod: 1 of 8 unmatched
+
+- `set_npe_file_data_to_particle_effect_lod` 10072
+
+### FlushModifiedManagerCB: 1 of 1 unmatched
+
+- `FlushModifiedManagerCB` 616 *parked*
+
+### FlushPadHistory: 1 of 1 unmatched
+
+- `FlushPadHistory` 804
+
+### create_camera_obj .. create_original_view_matrix: 1 of 17 unmatched
+
+- `func_000E7930` 528
+
+### get_apply_camera_region .. get_col_attr_cam_region_select_index: 1 of 8 unmatched
+
+- `get_apply_camera_region` 424 *parked*
+
+### qsort: 1 of 1 unmatched
+
+- `qsort` 2540
+
+### screenBlur .. cameraBlur: 2 of 3 unmatched
+
+- `cameraBlur` 2004
+- `screenBlur` 2436
+
+### SetDemoMotionOrientInfo .. ExecFogColMan: 2 of 3 unmatched
+
+- `ExecFogColMan` 1240
+- `func_00070B20` 1336
+
+### InitAmbientLightObj .. FlushLwsDemoOrientManagerObj: 2 of 9 unmatched
+
+- `ExecLwsDemoOrientManagerObj` 420 *parked*
+- `func_0007E2D0` 748
+
+### InitAliasScriptLayoutObj .. DeleteScriptLwsOrientObjSubObjects: 2 of 15 unmatched
+
+- `func_000920F0` 388 *parked*
+- `func_00092388` 592
+
+### toggleDebPcWinWindow .. pop_camera_context: 2 of 14 unmatched
+
 - `func_000E4F38` 936
+- `update_camera_context` 1420
+
+### getFontBoard .. rotLightVector: 3 of 35 unmatched
+
+- `setLight` 388
+- `func_00016710` 440
+- `getAmbientColorC` 1596
+
+### waterRefractionBegin .. refractionEnd: 3 of 4 unmatched
+
+- `inWaterEffectInit` 732
+- `waterRefractionBegin` 1188
+- `func_00021320` 1908
+
+### getShadowDispFlag .. solarFlare: 3 of 5 unmatched
+
+- `solarFlareReset` 432
+- `func_00023010` 6192
+- `func_00024878` 6672
+
+### texSetModelName .. vramAllocByTBPSize: 3 of 13 unmatched
+
+- `vramFree` 64 *parked*
+- `func_000309B8` 240 *parked*
+- `func_00030710` 624
+
+### doit_motion_ik_interest .. doit_neck_turn: 3 of 15 unmatched
+
+- `func_0003EF60` 864 *parked*
+- `doit_motion_ik_interest` 708
+- `func_0003E918` 1132
+
+### LoopExecPreLightColMan .. SetGeoDispClassLightColMan: 3 of 9 unmatched
+
+- `InitStageLightColMan` 488 *parked*
+- `LoopExecPreLightColMan` 616 *parked*
+- `func_0007ACD0` 524
+
+### DeleteGlobalLight .. UpdateGlobalLightDistant: 3 of 17 unmatched
+
+- `UpdateGlobalLightDistant` 232 *parked*
+- `func_0007D0D0` 964
+- `ExecGlobalLightMan` 1012
+
+### GetGeometryPointerPosition .. ConvertGeometryPointerZNormalMode: 3 of 15 unmatched
+
+- `GetGeometryPointerVirtualSurfacePlane` 348 *parked*
+- `GetGeometryPointerPosition` 788
+- `GetGeometryPointerQuatPos` 992
+
+### mouseDrawCursor .. mouseInit: 3 of 7 unmatched
+
+- `mouseDrawCursor` 436 *parked*
+- `func_000CF510` 688
+- `mouseGetStatus` 740
+
+### sound3DCalc .. seUnloadBDFile: 3 of 24 unmatched
+
+- `sePlay3D` 472
+- `sound3DCalc` 488
+- `func_000DCEF0` 616
+
+### dsysInit .. _dsysOpen: 3 of 11 unmatched
+
+- `CreateCsvModChkTempFileIppatu` 548 *parked*
+- `WriteMemberCsvModChkTempFile` 464
+- `AddSegmentCsvModChkTempFile` 836
+
+### sheetFsLoadSegmentIndex .. sheetFsSetSpecialFs: 3 of 8 unmatched
+
+- `sheetFsLoadSegmentIndex` 416 *parked*
+- `sheetFsLoadStageTex` 416
+- `sheetFsLoadMap` 464
+
+### DEBUG_get_cur_using_anb_file_name .. DEBUG_disp_collision_attribute_info_extend: 4 of 22 unmatched
+
+- `DEBUG_disp_center_collision_attribute_info` 356 *parked*
+- `DEBUG_disp_ray` 448 *parked*
+- `DEBUG_disp_object_info` 844 *parked*
+- `DEBUG_disp_collision_attribute_info` 756
+
+### graphInitAllLayer .. kInit: 4 of 13 unmatched
+
+- `func_00014CD0` 528 *parked*
+- `kInit` 740
+- `func_00014F18` 960
+- `func_00015310` 1256
+
+### texTransResolve .. texScaleClutByName: 4 of 27 unmatched
+
+- `texScaleClut` 432
+- `func_0002DBA8` 668
+- `func_0002EC18` 2204
+- `texTransResolve` 14664
+
+### charrootdyn_debugDispParentGeometryStatus .. CalcRootFitting: 4 of 11 unmatched
+
+- `GetCharacterClassOptionNodeBasePos` 632
+- `func_00065AA8` 760
+- `func_000652C8` 1960
+- `func_00065DD8` 3664
+
+### NewCreateFogColClass .. AddCollMan: 4 of 5 unmatched
+
+- `AddCollMan` 324 *parked*
+- `NewCreateFogColClass` 520 *parked*
+- `func_00071AF0` 608
+- `func_00071738` 896
+
+### CheckPositionInsideOfJudgeVolumeInfo .. ClipJudgeVolumeInfo: 4 of 4 unmatched
+
+- `func_00072858` 712
+- `ClipJudgeVolumeInfo` 752
+- `CheckPositionInsideOfJudgeVolumeInfo` 820
+- `func_00072B58` 832
+
+### sheetFileUnloadCallBack .. sheetfileInit: 4 of 16 unmatched
+
+- `sheetFileUnloadCallBack` 308 *parked*
+- `T_000E1AD0` 448 *parked*
+- `T_000E1870` 608 *parked*
+- `func_000E1270` 2592
+
+### charrootdyn_parentpointxzfitstab .. motrootdyn_startpendulum_with_VCOL: 5 of 14 unmatched
+
+- `func_00069B70` 488
+- `func_00069300` 804
+- `parentpointxzfit` 880
+- `charrootdyn_parentpointxzfitstab` 1388
+- `pendulum` 6560
+
+### GetColLightDebugSts .. AddGaLightMan: 5 of 11 unmatched
+
+- `AddGaLightMan` 324 *parked*
+- `NewCreateGameLightClass` 428 *parked*
+- `func_0007B8D0` 488 *parked*
+- `func_0007B300` 876
+- `ExecGameLight` 1512
+
+### CreateEndAutoModFile .. sheetFsInit: 5 of 23 unmatched
+
+- `func_000DF038` 320
+- `func_000DF1B0` 368
+- `nicosysdRebootRequest` 416
+- `func_000DEE30` 464
+- `func_000DFEB0` 2100
+
+### InitGazeAddChannelDef .. CharaCtrlAIControl: 6 of 18 unmatched
+
+- `func_0004BC58` 696 *parked*
+- `func_0004E880` 728 *parked*
+- `PredictMotionOrientByScriptCtrl` 1092
+- `func_0004BF48` 2328
+- `func_0004EFA0` 6536
+- `func_0004C898` 7464
+
+### SetCharacterObjForceNoExpressionInterp .. edgexz: 6 of 10 unmatched
+
+- `charrootdyn_edgepointstab` 472 *parked*
+- `func_000677B8` 732
+- `edgexz` 1076
+- `edgepoint` 1220
+- `func_00068328` 1392
+- `func_00067068` 1816
+
+### motrootdyn_startxz .. xzfit: 6 of 14 unmatched
+
+- `func_0006D2D0` 468 *parked*
+- `func_0006DFD0` 736
+- `motrootdyn_parent_from_falldown` 744
+- `motrootdyn_startxzfit_from_xz` 976
+- `motrootdyn_startxzfit` 1132
+- `func_0006E2E8` 7872
+
+### kbGetStatus .. initMcManager: 6 of 33 unmatched
+
+- `func_000CDC38` 296 *parked*
+- `func_000CDAA8` 344 *parked*
+- `kbGetStatus` 420 *parked*
+- `mcManager` 600
+- `func_000CCCF0` 1424
+- `func_000CD2B8` 1976
+
+### windowSetTex .. createAdpcmTest: 7 of 38 unmatched
+
+- `func_000DB530` 528 *parked*
+- `func_000DC448` 408
+- `func_000DB778` 448
+- `func_000DB0B8` 732
+- `_adpcmOpenReq` 792
+- `T_000DBFC0` 1104
+- `func_000DBC88` 1928
+
+### sheetMgrResolve .. getSheetDebugNoLoadMode: 8 of 44 unmatched
+
+- `sheetMgrDirectFileLoad` 256 *parked*
+- `sheetMgrAdpcmIntLoad` 288 *parked*
+- `func_000E2A40` 592 *parked*
+- `func_000E2CC8` 728 *parked*
+- `sheetMgrResolve` 748 *parked*
+- `func_000E2808` 512
+- `func_000E2358` 840
+- `T_000E3230` 1640
+
+### get_cur_camera_context .. free_camera_lws_animation_segment: 8 of 44 unmatched
+
+- `func_000E74B8` 264 *parked*
+- `get_camera_lws_animation_data` 380 *parked*
+- `disp_camera_lws_animation_debug_info` 512 *parked*
+- `func_000E5CF8` 368
+- `boot_camera_lws_animation` 428
+- `func_000E6100` 456
+- `func_000E5EA0` 552
+- `get_blend_sub_camera_lws_animation` 768
+
+### GAMEUTIL_get_spring_interpolate_value3D_extend .. set_interp_param_aim_angle_interp_cntrl: 9 of 44 unmatched
+
+- `GAMEUTIL_get_spring_interpolate_offset` 356 *parked*
+- `GAMEUTIL_get_spring_interpolate_value_extend` 408 *parked*
+- `GAMEUTIL_get_spring_damp_offset` 412 *parked*
+- `GAMEUTIL_get_spring_interpolate_offset3D` 504 *parked*
+- `GAMEUTIL_get_spring_interpolate_value3D` 556 *parked*
+- `func_000097E0` 392
+- `func_000099A0` 440
+- `GAMEUTIL_get_spring_interpolate_value3D_extend` 696
+- `doit_double_spring_interp_cntrl` 796
+
+### spriteInitObject .. spriteCreateObject: 9 of 13 unmatched
+
+- `setVertexPos` 548 *parked*
+- `spriteDrawSpriteUV` 672 *parked*
+- `spriteDrawSpriteST` 680 *parked*
+- `spriteInitObject` 444
+- `func_00028E90` 624
+- `spriteDrawSpriteUV2` 916
+- `spriteDrawSpriteST2` 924
+- `spriteDrawSpriteTexNoSet` 3572
+- `spriteDrawSprite` 3688
+
+### get_particle_parameter_blend_doit .. free_wind_segment: 9 of 38 unmatched
+
+- `func_000CBDE0` 168 *parked*
+- `func_000CBB18` 216 *parked*
+- `func_000CACE8` 584 *parked*
+- `boot_wind_emitter_by_judge_volume` 356
+- `boot_wind_emitter` 388
+- `func_000CC018` 388
+- `boot_wind_emitter_by_box` 428
+- `func_000CAA98` 536
+- `get_particle_parameter_blend_doit` 3132
+
+### GetAnimationFogDefByName .. ExecEff: 9 of 11 unmatched
+
+- `ExecEff` 336 *parked*
+- `func_000ED3C0` 544 *parked*
+- `func_000EC410` 592 *parked*
+- `func_000ED160` 552
+- `ExecAnimeTableInfo` 644
+- `func_000EC698` 696
+- `func_000EC988` 820
+- `func_000ECCF8` 1068
+- `func_000ED618` 1908
+
+### AddCharacterClassOptionNodeSubGeometry .. GetCharacterClassGazeAddMotions: 10 of 16 unmatched
+
+- `AddCharacterClassSubGeometriesOfMatrix` 500 *parked*
+- `func_00048D48` 528 *parked*
+- `AddCharacterClassSubGeometries` 580 *parked*
+- `AddCharacterClassOptionNodeSubGeometry` 664
+- `func_00048A30` 736
+- `func_00048658` 928
+- `func_0004AFA8` 1204
+- `func_00049C60` 2400
+- `func_0004A5F8` 2424
+- `func_00048F90` 2692
+
+### update_transform_matrix_set .. getDamageEnableTargetLayoutClass: 11 of 32 unmatched
+
+- `func_000EA9F8` 272 *parked*
+- `func_000EA0B8` 296 *parked*
+- `func_000EA590` 296 *parked*
+- `SendDamageCylinderLetter` 412 *parked*
+- `SendDamageBoxLetter` 428 *parked*
+- `SendVolumeShapeDamageLetter` 496
+- `func_000E9E50` 616
+- `func_000EA6F0` 776
+- `update_transform_matrix_set` 876
+- `func_000EA218` 888
+- `func_000EAB40` 920
+
+### glBeginWithDlLayerNo .. glGetLineSmooth: 12 of 65 unmatched
+
+- `func_000120C8` 232 *parked*
+- `glRotatex` 332 *parked*
+- `glRotatey` 340 *parked*
+- `glRotatez` 340 *parked*
+- `glBeginWithDlLayerNo` 612
+- `func_00011AF0` 680
+- `func_00011730` 904
 - `func_00010B10` 944
 - `func_00011348` 944
-- `func_0009D8F8` 956
-- `windowPrintfBackBoard` 956
-- `func_00014F18` 960
-- `func_0007D0D0` 964
-- `GetMotionDirectResourceNodeQuaternionPosFloatFrame` 968
-- `func_0009AA70` 976
-- `motrootdyn_startxzfit_from_xz` 976
-- `updateWindBoxGeo` 980
-- `modelInitDispModelClass` 984
-- `GetGeometryPointerQuatPos` 992
-- `func_000D84C8` 996
-- `modelClipSkin` 1008
-- `ExecGlobalLightMan` 1012
-- `GetCollisionDBPlaneNormalZQuaternion` 1032
-- `func_0007F5A0` 1040
 - `func_00010EF8` 1048
-- `func_00092CE8` 1048
-- `func_000957B0` 1056
-- `func_0009C0B0` 1056
-- `DEBUG_update_direction` 1064
-- `func_000ECCF8` 1068
-- `func_0007F138` 1072
 - `glRotatef` 1072
-- `updateDamageGeo` 1072
-- `edgexz` 1076
-- `charnodeparent` 1088
-- `debugLineObjectCreateAndSetAttributreIfChange` 1088
-- `PredictMotionOrientByScriptCtrl` 1092
-- `func_000194B8` 1092
-- `func_0005A078` 1092
-- `T_000DBFC0` 1104
-- `GetCollisionDBEdgeInfoNext3` 1108
-- `GetCollisionEdgePointerHVPlane` 1120
-- `func_00080860` 1124
-- `IsInsideOfRegion` 1128
-- `func_000333C8` 1128
-- `bgEnd` 1132
-- `func_0003E918` 1132
-- `motrootdyn_startxzfit` 1132
-- `windowCreate` 1136
-- `func_00019040` 1140
-- `func_000C2F88` 1144
-- `func_00018BC0` 1148
-- `initScriptLayoutObj` 1148
-- `modelClipSolid` 1148
-- `UpdateLayoutClassGeometry` 1152
-- `func_00093F40` 1152
-- `func_0007C670` 1156
-- `func_00096070` 1160
-- `func_00032478` 1168
-- `kickLWS` 1176
-- `func_0009CC10` 1180
-- `func_00094D40` 1184
-- `setLayoutClassInitParam` 1184
-- `waterRefractionBegin` 1188
-- `func_000599B8` 1200
-- `func_000999E0` 1200
-- `func_0004AFA8` 1204
-- `checkShift` 1208
-- `charrootdyn_acceptMotionRootOffset` 1216
-- `edgepoint` 1220
-- `func_0001CCF8` 1224
-- `charrootdyn_getCyclicCollisionDetectZYOneWayCB` 1232
-- `ExecFogColMan` 1240
-- `meshCreate` 1240
-- `func_00015310` 1256
-- `func_00039858` 1260
-- `GetCollisionEdgePointerGlobalVerticalPlane` 1272
-- `func_00032E98` 1272
-- `updateParticleGeo` 1280
-- `GAMEUTIL_act_pitch_rot` 1296
-- `func_0007E9B8` 1296
-- `norootdynamics` 1308
-- `DispDispObjGroupModel` 1316
-- `GetCharacterClassOptionNodeGeo` 1332
-- `charrootdyn_getCompleteFittingYQFromStabGPWithSlopeLimit_X` 1332
-- `func_00070B20` 1336
-- `func_00093138` 1336
-- `windowDraw` 1344
-- `func_000AFA40` 1352
-- `GetTRS_Onake_From_ObjectAnimation` 1356
-- `createMenu` 1356
-- `func_0009AE78` 1368
-- `func_0003F860` 1372
-- `lineObjectDispImmediate` 1380
-- `charrootdyn_parentpointxzfitstab` 1388
-- `func_00068328` 1392
-- `getAverageNormal` 1392
-- `func_000D2368` 1404
-- `GetCharaVCollisionStatus` 1412
-- `update_camera_context` 1420
-- `func_00041670` 1424
-- `func_000B0600` 1424
-- `func_000CCCF0` 1424
-- `UpdateLayoutClassSimpleGeometry` 1428
-- `swim` 1440
-- `func_000BF688` 1448
-- `func_000D73F0` 1460
+- `func_000121E8` 2572
+
+### GetRateInOutCubeVolume .. getClothDynamics: 13 of 28 unmatched
+
+- `getClothDynamics` 332 *parked*
+- `GetRateInOutCubeVolumeWithInverseMatrix` 440
+- `func_000BC1B8` 448
+- `func_000BC3B0` 480
+- `CreateClothChildLayoutObj` 508
+- `func_000BC5C8` 524
+- `func_000BCA98` 536
+- `GetClothQuaternion` 564
+- `GetClothDynamics` 704
+- `CheckClothChainDetect` 752
+- `func_000BBE58` 808
+- `func_000BCCE8` 816
 - `func_000BD050` 1480
-- `func_000D8DF0` 1480
-- `GetTargetLookAtQuaternionOnBase` 1500
-- `func_000C39B0` 1504
-- `ExecGameLight` 1512
-- `character_motchange_adjustrootrot` 1524
+
+### usbdevInit .. createStringInputDialog: 13 of 37 unmatched
+
+- `createSheetMenu` 316 *parked*
+- `func_000D0D78` 376 *parked*
+- `createStringInputDialog` 392 *parked*
+- `func_000D2B30` 672 *parked*
+- `createParamMenu` 584
+- `func_000D3890` 748
+- `func_000D3B80` 840
+- `func_000D3540` 848
+- `createNumDialog` 924
+- `createMenu` 1356
+- `func_000D2368` 1404
+- `func_000D06D8` 1692
+- `func_000D1478` 3824
+
+### CalcNodeInterp .. ReleaseCharacterClassAddMotSyncAnimAll: 14 of 105 unmatched
+
+- `PredictMotionGeometryPotential` 376 *parked*
+- `PredictMotionGeometryPotentialWithScaleElem` 404 *parked*
+- `func_00041068` 448 *parked*
+- `func_00041260` 496 *parked*
+- `func_00041488` 432
+- `FlushCharacterObjImmediate` 728
+- `GetCharacterObjWorkSize` 772
+- `fittingwithrot` 780
+- `GetCharacterClassOptionNodeGeo` 1332
+- `func_00041670` 1424
+- `CalcNodeQuaternionWithIK` 1904
+- `CalcNodeInterp` 2052
+- `ExecCharaGeometry` 3944
+- `InitCharacterObj` 6372
+
+### DebugTestWideAreaSearch .. ClipCollisionDirectExceptObj: 15 of 19 unmatched
+
+- `func_000B1380` 368 *parked*
+- `CheckCollisionInsideOfSurfaceXZ` 684 *parked*
+- `func_000B1208` 320
+- `func_000AFA40` 1352
+- `func_000B0600` 1424
 - `func_000AF400` 1544
 - `func_000AFFC0` 1544
 - `func_000B0BC8` 1544
-- `getAmbientColorC` 1596
-- `func_00056F60` 1620
-- `T_000E3230` 1640
-- `ClipCollisionDB` 1668
-- `func_000D06D8` 1692
-- `func_00053620` 1720
-- `func_0000CF40` 1752
-- `func_000C0F18` 1768
-- `func_00054F18` 1780
-- `func_0001DA30` 1800
-- `func_00067068` 1816
-- `func_000A0DE8` 1888
-- `CalcNodeQuaternionWithIK` 1904
-- `func_00021320` 1908
-- `func_000ED618` 1908
-- `func_000DBC88` 1928
-- `func_000652C8` 1960
-- `func_000CD2B8` 1976
-- `func_00052288` 1984
-- `cameraBlur` 2004
-- `GetCharaRootDynamicsAfter` 2016
-- `func_000A5A28` 2016
-- `func_000C17C8` 2032
-- `bossDeathEffectBegin` 2044
-- `DebugDispCollisionFinder` 2048
-- `CalcNodeInterp` 2052
-- `initScriptLwsorientObj` 2072
-- `func_000DFEB0` 2100
-- `func_000C0698` 2120
-- `func_0002EC18` 2204
-- `func_00055E70` 2264
-- `charrootdyn_HslidecollisionCB` 2268
-- `GetObjectAnimationFloatFrame` 2308
-- `func_0004BF48` 2328
-- `GetRayVolumeUncollisionPoint` 2344
-- `func_00031438` 2376
-- `func_00049C60` 2400
-- `func_0004A5F8` 2424
-- `screenBlur` 2436
-- `func_0009B6C8` 2480
-- `func_0007FD80` 2488
-- `func_00078C28` 2520
-- `qsort` 2540
-- `func_000121E8` 2572
-- `func_000E1270` 2592
-- `func_0005D0B0` 2608
-- `func_00048F90` 2692
 - `ClipCollisionDirect` 2808
-- `xz` 2808
-- `func_00074A78` 2848
-- `shadowDraw` 2904
 - `ClipCollisionDirectCallBackOneObj` 2908
 - `ClipCollisionDirectCallBackOneObjDoubleSide` 2908
 - `ClipCollisionDirectCallBackObjAry` 3032
 - `ClipCollisionDirectCallBack` 3056
-- `func_000A43F8` 3064
-- `get_particle_parameter_blend_doit` 3132
 - `ClipCollisionDirectCallBackObjAryDoubleSide` 3136
 - `ClipCollisionDirectCallBackDoubleSide` 3168
+
+### DeleteSortList .. ExecScriptSpriteObj: 19 of 94 unmatched
+
+- `SpriteMenuGetLayerNoByHash` 124 *parked*
+- `SpriteMenuSetCheckBoxByHash` 240 *parked*
+- `SpriteMenuSetDispFlagByHash` 248 *parked*
+- `func_00093CD0` 312 *parked*
+- `InitSpriteObj` 344 *parked*
+- `func_000936A8` 416 *parked*
+- `func_00096530` 468 *parked*
+- `func_00095218` 520 *parked*
+- `func_00095458` 800 *parked*
+- `func_000943F8` 840 *parked*
+- `func_00098A88` 712
+- `func_00095C08` 760
+- `T_00094740` 904
+- `func_00092CE8` 1048
+- `func_000957B0` 1056
+- `func_00093F40` 1152
+- `func_00096070` 1160
+- `func_00094D40` 1184
+- `func_00093138` 1336
+
+### windowPrintf .. windowGetCurrentWindowHandle: 19 of 33 unmatched
+
+- `func_000D8380` 272 *parked*
+- `windowAddControl` 324 *parked*
+- `func_000D5CE8` 480 *parked*
+- `func_000D5A90` 544 *parked*
+- `windowPrintfScale` 708 *parked*
+- `windowSpriteMenuArrow` 576
+- `windowReInit` 620
+- `windowPrintf` 692
+- `windowSetMouseStatus` 832
+- `func_000D7AF0` 904
+- `windowPrintfBackBoard` 956
+- `func_000D84C8` 996
+- `windowCreate` 1136
+- `windowDraw` 1344
+- `func_000D73F0` 1460
+- `func_000D8DF0` 1480
 - `T_000D9560` 3200
-- `depthOfField` 3240
-- `initScriptCharObj` 3400
 - `func_000D93F0` 3564
-- `spriteDrawSpriteTexNoSet` 3572
-- `func_00065DD8` 3664
-- `spriteDrawSprite` 3688
-- `modelDisp` 3692
-- `GetCharaRootDynamics` 3696
-- `func_0008A6A8` 3720
-- `func_000D1478` 3824
-- `func_000A2B30` 3832
-- `func_00053F80` 3936
-- `ExecCharaGeometry` 3944
-- `reflectionBegin` 4352
-- `bossDeathEffectEnd` 4804
 - `func_000D5F00` 5304
-- `func_000A1580` 5496
+
+### GAMEUTIL_increase_yaw_limit_extend .. GAMEUTIL_is_inside: 20 of 112 unmatched
+
+- `GAMEUTIL_get_cross_position_coefficient_t_by_dist_factor` 236 *parked*
+- `GAMEUTIL_near_to_aim_yaw_dir` 260 *parked*
+- `GAMEUTIL_is_pitch_dir_sandwich` 280 *parked*
+- `GAMEUTIL_is_between_yaw_and_yaw_extend_abs` 304 *parked*
+- `GAMEUTIL_get_rot_dir_for_near_to_aim_pitch_dir` 308 *parked*
+- `GAMEUTIL_increase_pitch` 308 *parked*
+- `GAMEUTIL_get_direction_by_yaw_pitch` 316 *parked*
+- `GAMEUTIL_is_reach_aim_pitch_dir` 348 *parked*
+- `GAMEUTIL_increase_pitch_limit_clip` 392 *parked*
+- `GAMEUTIL_is_inside_of_region_ratio` 424 *parked*
+- `GAMEUTIL_is_pitch_dir_inside_of_region` 480 *parked*
+- `GAMEUTIL_act_pitch_rot_limit_clip` 516 *parked*
+- `GAMEUTIL_act_yaw_rot_region_check` 536 *parked*
+- `GAMEUTIL_get_rot_dir_for_near_to_aim_yaw_dir` 436
+- `GAMEUTIL_inc_or_dec_for_near_to_aim_yaw` 476
+- `GAMEUTIL_is_yaw_dir_inside_of_region` 524
+- `GAMEUTIL_increase_yaw_limit_extend` 596
+- `GAMEUTIL_near_to_aim_pitch_dir` 636
+- `GAMEUTIL_inc_or_dec_for_near_to_aim_pitch` 856
+- `GAMEUTIL_act_pitch_rot` 1296
+
+### GetLwsDemoOrientManagerObjWorkSize .. initLwsOriDefSeg: 21 of 87 unmatched
+
+- `initLightObj` 300 *parked*
+- `initScriptSpriteObj` 344 *parked*
+- `initScriptSpriteMenuObj` 368 *parked*
+- `initScriptAnimationObj` 420 *parked*
+- `func_00081388` 424 *parked*
+- `func_0007EF00` 512 *parked*
+- `initAliasLayoutObj` 820 *parked*
+- `func_00081198` 440
+- `InitLwsOrientObj` 568
+- `func_00081D08` 744
+- `func_00082838` 744
+- `func_0007F9E8` 864
+- `func_0007F5A0` 1040
+- `func_0007F138` 1072
+- `func_00080860` 1124
+- `initScriptLayoutObj` 1148
+- `setLayoutClassInitParam` 1184
+- `func_0007E9B8` 1296
+- `initScriptLwsorientObj` 2072
+- `func_0007FD80` 2488
+- `initScriptCharObj` 3400
+
+### UpdateLayoutClassSimpleGeometry .. GetAmbientBrightnessOfLayoutObject: 22 of 83 unmatched
+
+- `func_00074270` 296 *parked*
+- `func_000748C0` 384 *parked*
+- `ClipLayoutObjModel` 392 *parked*
+- `UpdateLayoutClassParentSimpleGeometry` 412 *parked*
+- `UnparentLayoutObj` 524 *parked*
+- `func_000746A0` 540 *parked*
+- `CalcLightLayoutObj` 624 *parked*
+- `func_000743D0` 664 *parked*
+- `GetLayoutClassWindGeometry` 308
+- `func_00078A60` 400
+- `UpdateLayoutClassParentGeometry` 472
+- `FlushLayoutObjImmediate` 500
+- `func_000755D0` 656
+- `func_00078778` 688
+- `InitAliasLayoutObj` 732
+- `func_00079D28` 780
+- `func_00079788` 816
+- `UpdateLayoutClassGeometry` 1152
+- `DispDispObjGroupModel` 1316
+- `UpdateLayoutClassSimpleGeometry` 1428
+- `func_00078C28` 2520
+- `func_00074A78` 2848
+
+### lineObjectCreatef .. ModelDispGetWorkSize: 27 of 59 unmatched
+
+- `modelSetMatrixTransTag` 296 *parked*
+- `func_000185B8` 448 *parked*
+- `func_00018228` 452 *parked*
+- `func_000183F0` 452 *parked*
+- `func_00019DE0` 472 *parked*
+- `func_00019FB8` 472 *parked*
+- `func_0001A190` 472 *parked*
+- `func_000189B0` 524 *parked*
+- `func_00018778` 564 *parked*
+- `func_00019B78` 616 *parked*
+- `func_0001E9C0` 428
+- `func_0001B340` 568
+- `func_00019900` 632
+- `lineObjectDispImmediatef` 720
+- `lineObjectCreate` 760
+- `lineObjectFlip` 800
+- `lineObjectCreatef` 808
+- `modelInitDispModelClass` 984
+- `modelClipSkin` 1008
+- `func_000194B8` 1092
+- `func_00019040` 1140
+- `func_00018BC0` 1148
+- `modelClipSolid` 1148
+- `func_0001CCF8` 1224
+- `lineObjectDispImmediate` 1380
+- `func_0001DA30` 1800
+- `modelDisp` 3692
+
+### create_particle_texture_and_get_id .. ClipCollisionDirectForParticle: 29 of 128 unmatched
+
+- `func_000C6F08` 96 *parked*
+- `func_000C1638` 344 *parked*
+- `func_000C2360` 392 *parked*
+- `func_000C5718` 400 *parked*
+- `func_000C5FA0` 408 *parked*
+- `func_000BF318` 472 *parked*
+- `doit_particle_manager` 612 *parked*
+- `func_000C2968` 624 *parked*
+- `func_000BF528` 296
+- `init_particle_manager` 344
+- `func_000C54B8` 352
+- `create_and_init_particle_effect_lod` 388
+- `get_polygon_scale_rotation_matrix` 388
+- `func_000C0178` 464
+- `func_000BFF48` 504
+- `func_000C3438` 576
+- `disp_particle_emitter` 620
+- `func_000BFC68` 680
+- `func_000C36B0` 712
+- `func_000BEC80` 728
+- `func_000C0380` 736
+- `func_000C1FF0` 824
+- `func_000C2C10` 832
+- `func_000C2F88` 1144
+- `func_000BF688` 1448
+- `func_000C39B0` 1504
+- `func_000C0F18` 1768
+- `func_000C17C8` 2032
+- `func_000C0698` 2120
+
+### scriptIntrAllDeleteJump .. ReparentChildObjects: 32 of 92 unmatched
+
+- `func_00090C20` 208 *parked*
+- `func_0008BE00` 344 *parked*
+- `CreateScriptAnimationSequence` 400 *parked*
+- `func_0008D058` 416 *parked*
+- `func_0008BF90` 456 *parked*
+- `updateLightGeo` 472 *parked*
+- `StartAnimationSubObjInfinitePart` 780 *parked*
+- `DebugDispVolumeShapeColor` 408
+- `SetScriptAnimationObjAccessSwitch` 428
+- `updateCamVibGeo` 560
+- `updateLayoutGeo` 560
+- `update_camera_region_geometry` 604
+- `CreateScriptAnimationObj` 624
+- `func_0008CDA0` 640
+- `func_0008C988` 672
+- `ExecMotionSyncAnimation` 688
+- `updateLWSTriggerGeo` 736
+- `func_00089910` 760
+- `func_000895D8` 768
+- `updateVolumeShapePQSGeo` 772
+- `updateSEGeo` 792
+- `updateWindGeo` 888
+- `func_0008C5C0` 912
+- `PlayScriptAnimationSequence` 920
+- `updateObjectGeo` 928
+- `func_00090EC0` 936
+- `updateWindBoxGeo` 980
+- `updateDamageGeo` 1072
+- `kickLWS` 1176
+- `updateParticleGeo` 1280
+- `func_0008A6A8` 3720
 - `func_0008D6D0` 6096
-- `func_00023010` 6192
-- `InitCharacterObj` 6372
-- `func_0004EFA0` 6536
-- `pendulum` 6560
-- `func_00024878` 6672
-- `func_0004C898` 7464
-- `func_0006E2E8` 7872
-- `set_npe_file_data_to_particle_effect_lod` 10072
-- `texTransResolve` 14664
 
-## GAMECORE (728)
+### getZFogNear .. GetMotionOptionNodeBooleanInfoFloatFrameDirectResource: 56 of 120 unmatched
 
-- `T_00035468` 8
-- `T_0001DA58` 16
-- `T_000BC4F0` 24
-- `func_000EBEA0` 24
+- `GetMotionNS_RootShiftInfo` 304 *parked*
+- `func_0003DB80` 320 *parked*
+- `GetMotionFloatFrameWithLimitCaribration` 348 *parked*
+- `GetMotionBasePos` 356 *parked*
+- `GetMotionColSphereInfoIntFrame` 356 *parked*
+- `GetAnimObjResource` 384 *parked*
+- `func_0003D508` 392 *parked*
+- `func_0003D300` 464 *parked*
+- `GetMotionIntFrame` 508 *parked*
+- `func_0003D828` 536 *parked*
+- `GetInitialInverseMatrix` 560 *parked*
+- `resourceRot` 584 *parked*
+- `GetMotionMatrixOfTargetFromParent` 592 *parked*
+- `GetMotionOptionNodeIntFrame` 604 *parked*
+- `GetMotionFloatFrame` 608 *parked*
+- `DebugDispMotion` 652 *parked*
+- `InterPOrObjectAnimation` 672 *parked*
+- `GetMotionMatrixOfTargetFromRoot` 748 *parked*
+- `GetMotionMatrix` 900 *parked*
+- `func_00034530` 320
+- `func_000346A8` 368
+- `func_00032B78` 384
+- `func_00039FA8` 392
+- `GetMotionOptionNodeBooleanInfoFloatFrame` 448
+- `GetMotionMatrixOfChildsFromTarget` 452
+- `func_00031210` 496
+- `func_00033DE0` 504
+- `func_00032940` 512
+- `func_00034010` 512
+- `func_00033B88` 544
+- `func_00035A20` 544
+- `func_00035C78` 552
+- `func_0003A4A8` 592
+- `GetMotionStretchRatio` 596
+- `GetMotionFloatFrameNoCaribration` 612
+- `GetMotionOptionNodeNextSwitchFrameDirectResource` 668
+- `func_00034850` 680
+- `func_00034248` 688
+- `func_00034B30` 688
+- `func_00032188` 696
+- `func_00035ED8` 696
+- `func_00035120` 704
+- `func_00035418` 704
+- `GetMotionRootShiftInfo` 712
+- `func_00034E18` 720
+- `func_00035710` 728
+- `func_00033868` 744
+- `func_0003A168` 776
+- `GetMotionDirectResourceNodeQuaternionPosFloatFrame` 968
+- `func_000333C8` 1128
+- `func_00032478` 1168
+- `func_00039858` 1260
+- `func_00032E98` 1272
+- `GetTRS_Onake_From_ObjectAnimation` 1356
+- `GetObjectAnimationFloatFrame` 2308
+- `func_00031438` 2376
+
+### SendCharaNodeParentSetMsg .. directplay: 63 of 184 unmatched
+
+- `charrootdyn_slideExceptionJudgeCB` 144 *parked*
+- `PredictMotionChangeState` 284 *parked*
+- `charrootdyn_checkZplane` 340 *parked*
+- `motrootdyn_startcharnodeparent` 348 *parked*
+- `func_00052EA8` 376 *parked*
+- `charrootdyn_restoreposition` 384 *parked*
+- `charrootdyn_checkSlopeLimit` 388 *parked*
+- `charrootdyn_checkParentGPPlaneDir` 428 *parked*
+- `charrootdyn_getCompleteFittingPlaneFromStabGPWithSlopeLimit` 428 *parked*
+- `charrootdyn_memoryposition` 468 *parked*
+- `func_00052C88` 488 *parked*
+- `OptimizeMotionOrient` 496 *parked*
+- `charrootdyn_addSlideElement` 516 *parked*
+- `func_00053058` 568 *parked*
+- `charrootdyn_setkeepcolhitstatus` 596 *parked*
+- `charrootdyn_getLocalOffsetFromParentGP` 364
+- `func_0005CD18` 376
+- `charrootdyn_getCompleteFittingYQFromStabGPWithSlopeLimit` 400
+- `func_00051CA0` 432
+- `charrootdyn_getLocalYGlobalXZOffsetFromParentGP` 452
+- `func_00052A80` 460
+- `func_00058F50` 464
+- `charrootdyn_setLandingStatus` 488
+- `ForceAcceptMotion` 496
+- `func_00051A60` 520
+- `ReparentCharacterObj` 528
+- `func_00055610` 560
+- `func_0005DE30` 680
+- `func_00056780` 704
+- `func_00056C50` 724
+- `func_0005DB18` 736
+- `charrootdyn_updateParentPointGPInfo` 748
+- `charrootdyn_parentHColGp` 756
+- `charrootdyn_getCollisionDB` 760
+- `func_0005BF30` 776
+- `func_000532C8` 800
+- `charrootdyn_getCyclicCollisionDetectZYOneWay` 836
+- `func_00059628` 856
+- `charrootdyn_getCyclicCollisionDetectZY` 908
+- `charrootdyn_slidecollisionCB` 908
+- `charrootdyn_getCyclicCollisionDetectZYOneWayComplexCB` 920
+- `func_000586C0` 920
+- `charnodeparent` 1088
+- `func_0005A078` 1092
+- `func_000599B8` 1200
+- `checkShift` 1208
+- `charrootdyn_acceptMotionRootOffset` 1216
+- `charrootdyn_getCyclicCollisionDetectZYOneWayCB` 1232
+- `norootdynamics` 1308
+- `charrootdyn_getCompleteFittingYQFromStabGPWithSlopeLimit_X` 1332
+- `getAverageNormal` 1392
+- `GetCharaVCollisionStatus` 1412
+- `character_motchange_adjustrootrot` 1524
+- `func_00056F60` 1620
+- `func_00053620` 1720
+- `func_00054F18` 1780
+- `func_00052288` 1984
+- `GetCharaRootDynamicsAfter` 2016
+- `func_00055E70` 2264
+- `charrootdyn_HslidecollisionCB` 2268
+- `func_0005D0B0` 2608
+- `GetCharaRootDynamics` 3696
+- `func_00053F80` 3936
+
+### resetMicroCodeManager .. objfilter: 73 of 174 unmatched
+
+- `ConstructorCollisionDynamics` 112 *parked*
+- `NippingCheckCollisionFindetWithKeep4D` 316 *parked*
+- `GetCollisionDBSurfBoundary` 416 *parked*
+- `GetCollisionDBGroupCallBack` 424 *parked*
+- `DebugDispCollisionDBEdgeAngle` 432 *parked*
+- `GetCollisionDBEdgeInfo` 484 *parked*
+- `ClipCollisionVariableXZSurface` 500 *parked*
+- `ClipCollisionVariableXZSurfaceNoBottomCheck` 500 *parked*
+- `CollisionPlaneJudgeCallbackArrow` 508 *parked*
+- `CollisionPlaneJudgeCallbackCameraMove` 516 *parked*
+- `CollisionPlaneJudgeCallbackCameraVisibility` 516 *parked*
+- `ClipCollisionFinderWithKeep4DSlopeLimit` 540 *parked*
+- `SlideCollisionFinder4D` 540 *parked*
+- `ClipCollisionVariableXZSurfaceCB` 552 *parked*
+- `IsWaterSurfaceExistAround` 568 *parked*
+- `GetCollisionDBNext3Direct` 580 *parked*
+- `GetCollisionCameraAttributeShareArray` 584 *parked*
+- `ClipCollisionFinderWithKeepSlopeLimitCB` 592 *parked*
+- `GetCollisionDBNext3` 592 *parked*
+- `SlideCollisionFinder4DCB` 600 *parked*
+- `GetSTPositionOfCollisionDB` 612 *parked*
+- `GetCollisionDBPlane` 616 *parked*
+- `func_000A3F00` 616 *parked*
+- `AddCollisionDBCallBack` 620 *parked*
+- `func_0009A7C0` 632 *parked*
+- `ClipCollisionFinderWithKeep4DSlopeLimitCB` 640 *parked*
+- `func_0009B408` 648 *parked*
+- `func_0009A258` 684 *parked*
+- `func_0009A508` 692 *parked*
+- `GetGeometryPointerWithCollisionEdgeGlobalPoint` 788 *parked*
+- `DebugDispCollisionEdge` 820 *parked*
+- `getLayoutClassCollisionIndepSurfBoundary` 380
+- `DebugDispManualEdgeCollisionDB` 428
+- `ClipCollisionFinderWithVariableKeepCB` 484
+- `CheckUnderVariableXZSurface` 500
+- `ClipCollisionFinderWithKeepSlopeLimit` 508
+- `GetCollisionEdgePointerOtherSideDBData` 512
+- `ClipCollisionFinderWithVariableKeep4DCB` 532
+- `func_000A41A0` 544
+- `RelocateCollisionWork` 568
+- `DebugDispCollisionDBEdge` 572
+- `GetWaterSurfacePositionYExtend` 604
+- `GetCollisionDB` 612
+- `AddCollisionDB` 628
+- `GetCollisionDBCallBack` 636
+- `func_0009E2D8` 660
+- `InitCollisionWork` 664
+- `GetGeometryPointerWithCollisionDBDataGlobalPoint` 708
+- `GetLayoutObjCollisionDBWithTargetAttributeJudgeFunc` 768
+- `func_0009C8C8` 784
+- `func_000A6240` 816
+- `func_0009D0B0` 872
+- `func_0009C508` 904
+- `func_00099EC8` 912
+- `func_0009D8F8` 956
+- `func_0009AA70` 976
+- `GetCollisionDBPlaneNormalZQuaternion` 1032
+- `func_0009C0B0` 1056
+- `GetCollisionDBEdgeInfoNext3` 1108
+- `GetCollisionEdgePointerHVPlane` 1120
+- `func_0009CC10` 1180
+- `func_000999E0` 1200
+- `GetCollisionEdgePointerGlobalVerticalPlane` 1272
+- `func_0009AE78` 1368
+- `ClipCollisionDB` 1668
+- `func_000A0DE8` 1888
+- `func_000A5A28` 2016
+- `DebugDispCollisionFinder` 2048
+- `GetRayVolumeUncollisionPoint` 2344
+- `func_0009B6C8` 2480
+- `func_000A43F8` 3064
+- `func_000A2B30` 3832
+- `func_000A1580` 5496
+
+## GAMECORE (650)
+
+131 Source groups to go, 642 fully matched.
+
+### initgcmain: 1 of 2 unmatched
+
 - `func_0000C668` 40
-- `func_000FA168` 48
-- `func_00096610` 64
-- `func_000E1AD0` 64
-- `func_000EB9D8` 64
-- `compel_end_lws_movie_mode_game_camera` 132
-- `GAMEUTIL_is_push_or_down_1p_button` 136
-- `func_0004CD68` 144
-- `func_000D6F28` 144
-- `getFallenLeafSize` 156
-- `T_00056860` 168
-- `analyzeMotionPropertyFromKey2` 168
-- `is_base_default_dir_attr_change_game_camera_param_manager` 168
-- `func_000ED110` 176
-- `func_000F2610` 184
-- `func_000FA1D0` 184
-- `func_000BC988` 192
-- `setrollup` 200
-- `func_000E26E8` 208
-- `func_000E6070` 208
-- `set_offset_yaw_parameter_nico_yaw_pitch_cntrl` 208
-- `doit_cameraman` 212
-- `func_000707B0` 216
-- `func_0001EC38` 232
-- `func_000B0D08` 232
-- `func_000D7138` 240
-- `func_00078F30` 248
-- `func_000DAC30` 248
-- `func_00076698` 256
-- `func_0009DA40` 256
-- `dispgpinfo` 264
-- `func_0000B688` 264
-- `func_000420B8` 264
-- `getStageAreaIndexByPos` 268
-- `func_0009F6E8` 272
-- `func_000B1FE0` 272
-- `set_offset_pitch_parameter_nico_yaw_pitch_cntrl` 272
-- `func_000317C8` 280
-- `func_000B7B08` 280
-- `func_00049FF8` 288
-- `func_0007ABA0` 288
-- `func_00090408` 288
-- `func_000B93F0` 288
-- `func_0009C190` 292
-- `_initBaseMoveTmpWork` 296
-- `_omakeSelectFlagSet` 296
-- `func_000E97A0` 296
-- `func_000B53E0` 300
-- `T_00120848` 304
-- `func_000272A8` 312
-- `func_00027418` 312
-- `func_000E1D58` 312
-- `func_000E1FA8` 312
-- `nico_calcWormGenealogicalNodeHead` 316
-- `calcMoveAngle` 320
-- `func_00005138` 320
-- `func_00076338` 320
-- `func_00090560` 320
-- `func_000A0058` 320
-- `initstage` 320
-- `setIsWeapon` 320
-- `func_000D9028` 324
-- `nico_calcTailGenealogicalNodeTail` 324
-- `func_0009BC48` 328
-- `func_000BEB28` 328
-- `func_000DF418` 328
-- `DisplayCaptionTableBlock` 332
-- `func_00026CA8` 344
-- `func_00081E60` 344
-- `func_0009EB78` 344
-- `func_000D5CF0` 344
-- `func_000DCC98` 344
-- `func_00107250` 344
-- `func_00127AC8` 344
-- `func_0007C828` 348
-- `nico_SmallKiteSpecialStart` 348
-- `func_0000E1D8` 352
-- `func_0004D0C8` 352
-- `func_0009F170` 352
-- `func_000B9B00` 352
-- `func_000F6418` 352
-- `func_0000BBD8` 360
-- `func_0001B9A8` 360
-- `func_00027EB8` 360
-- `func_000DCE28` 360
-- `func_000E6B00` 360
-- `func_0006FC58` 364
-- `func_00025188` 368
-- `func_000CDEB0` 368
-- `func_000D8E80` 368
-- `func_00052EA8` 376
-- `func_000B9798` 376
-- `updatePathInfo` 376
-- `_SCRGetCollisionTwoBoneRay3D` 384
-- `func_0000C9E8` 384
-- `func_000227C8` 384
-- `func_00055780` 384
-- `func_00076180` 384
-- `func_000E24B8` 384
-- `calcAttainRangeData` 392
-- `func_00004F78` 392
-- `func_00079060` 392
-- `func_0009D208` 392
-- `func_00054598` 396
-- `nico_resetHorseBridleTerminalParentPoint` 396
-- `func_00081670` 400
-- `nico_restartWormGenealogicalNodeFromOtherIK` 400
-- `DebugSetHorsePositionWithTargetOfs` 404
-- `func_000F27A0` 408
-- `_setNodeHPB` 412
-- `bossStatStartDemo` 416
-- `func_0009BDC8` 416
-- `func_0009EF98` 416
-- `func_0000DB18` 424
-- `func_0004D260` 424
-- `func_000BCA80` 424
-- `func_000DD1C8` 424
-- `func_000E6408` 424
+
+### dispVuColiDispWork: 1 of 1 unmatched
+
 - `dispVuColiDispWork` 428
-- `func_000421F8` 428
-- `doit_game_camera_param_manager` 432
-- `func_000281F0` 432
-- `func_0005E108` 432
-- `func_000764B0` 432
-- `func_0008F378` 432
-- `func_0008F560` 432
-- `func_0008F748` 432
-- `func_0008F930` 432
-- `func_0009C638` 432
-- `simpleExecCharaGeometry` 432
-- `backStageGobjSaveWithPos` 436
-- `func_000F6228` 436
-- `SCRGetTargetPosXZDirOnMyCtrlGeo` 440
-- `func_00027588` 440
-- `func_00027778` 440
-- `func_0009BFA0` 440
-- `func_000ABA50` 440
-- `ColCont2_Update` 444
-- `func_000D7260` 444
-- `GetVolumeClippedTargetPos` 448
-- `SCRConditionSendDamageToCollisionObject` 448
-- `bossStatGetFromIconGObj` 448
-- `func_0001FA68` 448
-- `func_00022980` 448
-- `func_00065C70` 448
-- `func_000CE428` 448
-- `get_nearest_camera_vs_ofst_cntrl_position` 452
-- `func_0001ED58` 456
-- `func_00055580` 456
-- `func_00056740` 456
-- `func_000D0878` 456
-- `backStageGobjCheckEntry` 464
-- `func_00027968` 464
-- `SCRFuncStartEventDemoGameModeCheck` 468
-- `nico_IK_footPosCalc` 468
-- `nico_IK_footPosCalcLeafDirectConnect` 468
-- `func_00054388` 472
-- `func_000AE8C0` 472
-- `func_000B48A8` 472
-- `calcProgRotRatio` 476
-- `chkAttainExecColumn` 476
-- `nico_createPlayerParachute` 476
-- `nico_execHorseBriddle` 476
-- `GAMEUTIL_disp_col_plane_info_debug` 480
-- `func_000A76F0` 480
-- `func_000B4690` 480
-- `func_000B8510` 480
-- `func_000DD3A8` 480
-- `SCRJumpNearestDeadGeometry` 484
-- `SCRJumpNearestPointUsingDeadGeometry` 484
-- `func_0008FB18` 484
-- `func_000D6410` 488
-- `SCRFuncStartEventDemo` 492
-- `func_00026AB8` 492
-- `func_0004DD98` 492
-- `func_00020DF8` 496
-- `func_00022CD0` 496
-- `func_000631A0` 496
-- `func_00081450` 496
-- `func_000FA2D8` 496
-- `func_0010F110` 496
-- `func_000800B8` 500
-- `nico_execPlayerMantle` 500
-- `AI_GetQuaternionNodeDirTargetExt` 504
-- `func_000682B8` 504
-- `func_000B91C0` 504
-- `getHitPosWayCollision` 504
-- `initWormIKWork` 508
-- `GAMEUTIL_get_boss_interest_position` 512
-- `SCRFuncBirdSetAttainPosForPathData` 512
-- `func_00026E38` 512
-- `func_00027070` 512
-- `func_00052558` 512
-- `func_000CEAE0` 512
-- `st_stageboundary` 512
-- `SCRFuncYamoriBSendKLeftStandUpLey` 516
-- `func_000E45D0` 516
-- `player_updateSlipEffect` 516
-- `CAM_doit_target_offset` 520
-- `func_00027B70` 520
-- `func_000708C0` 520
-- `arrowWaterInit` 524
-- `backStageGobjSave` 524
-- `func_0005E848` 524
-- `nico_getOmakeItem` 524
-- `CAM_doit_view_cut_avoid_cntrl` 528
-- `func_000D0A78` 528
-- `func_000DF598` 528
-- `func_000FAF18` 528
-- `DebugGlobalMoveWith1stController` 532
-- `func_0000FA50` 532
-- `get_camera_position_float_by_hit_collision` 532
-- `DebugGetGlobalDiffWith2ndController` 536
-- `StageManagerCheckAreaExist` 536
-- `func_00073D20` 536
-- `func_000B1128` 536
-- `func_000B9548` 536
-- `GetStageContext` 544
-- `func_00049DA0` 544
-- `func_000B1D88` 544
-- `func_000CE620` 544
-- `func_000E54E0` 544
-- `gextailUpdateQuat` 548
-- `begin_and_update_get_yaw_pitch_camera_target_visible_angle_manager` 552
-- `func_000BF880` 552
-- `func_000C7080` 552
-- `func_0005BB30` 560
-- `func_00076A80` 560
-- `func_000A9D40` 560
-- `func_000CE878` 560
-- `nico_calcWormGenealogicalNodeDownHead` 560
-- `CAM_doit_subjective_target_visibility_and_update_cam_data` 564
-- `func_00125C38` 568
-- `SCRConditionAtkChackThreeRayParallel` 572
+
+### backStageGobjSave: 1 of 1 unmatched
+
+- `backStageGobjSave` 524 *parked*
+
+### backStageGobjCheckEntry: 1 of 1 unmatched
+
+- `backStageGobjCheckEntry` 464 *parked*
+
+### backStageGobjLoad: 1 of 1 unmatched
+
+- `backStageGobjLoad` 720 *parked*
+
+### gameModeInit .. gStatInitNotOmakeInit: 1 of 37 unmatched
+
 - `gStatLoadPlayerAccessories` 572
-- `nico_leoBodyExpression` 572
-- `func_00025E00` 576
-- `func_0009F470` 576
-- `func_000B0A90` 576
-- `func_000E4C48` 576
-- `func_000E5268` 576
-- `CAM_get_warp_position` 580
-- `arrowManagerInit` 580
-- `SCRFuncKameSetTemporaryTarget` 584
-- `func_0002B838` 584
-- `func_00045458` 584
-- `func_00047D88` 584
-- `func_0004A150` 584
-- `func_000A5900` 584
-- `func_000D05F8` 584
-- `func_000DDAC0` 584
-- `CAM_get_interp_cam_and_look_at_posi` 592
-- `func_000479F0` 592
-- `func_00048558` 592
-- `func_000A0600` 592
-- `func_000AB7C8` 592
-- `SCRConditionAtkChackThreeRaySector` 596
-- `calcMoveQuaternion` 596
-- `execPointListSort` 596
-- `func_00025BA8` 596
-- `nico_player_colfit_SetLower` 596
-- `_setNodeHPBIllegal` 600
-- `func_00075EF0` 600
-- `func_0009ED08` 600
-- `func_000BA290` 600
-- `horse_hoist_sword` 600
-- `leoTorch` 600
-- `test` 600
-- `updateAttackWork2` 604
-- `AI_CheckSightOn` 608
-- `CAM_doit_obstacle_avoid_cntrl` 608
-- `func_0002E510` 608
-- `func_000487E0` 608
-- `func_0004CE30` 608
-- `func_000BFAE0` 608
-- `func_000A40D0` 612
-- `func_0000AA90` 616
+
+### st_opflow .. opflowCompareOptionData: 1 of 15 unmatched
+
+- `st_opflow` 3452
+
+### updatePowerWork .. getAttackPowerRatio: 1 of 23 unmatched
+
+- `updatePowerWork` 2320
+
+### st_stageboundary .. CreateStageBoundaryManager: 1 of 5 unmatched
+
+- `st_stageboundary` 512
+
+### deleteAdpcmOrient .. CreateBgmThread: 1 of 15 unmatched
+
 - `func_000306C0` 616
-- `func_00052790` 616
-- `func_000940A0` 616
-- `func_000A5660` 616
-- `is_predict_to_acting_base_yaw_rot_nico_yaw_pitch_cntrl` 616
-- `func_00078168` 620
-- `func_00045F40` 624
-- `func_000B8850` 624
-- `func_0001A418` 628
-- `SCRFuncAttackCancelForOneBoneRay` 632
-- `SCRFuncYamoriBSetAttainPointForWindAttack` 632
-- `func_000767D0` 632
-- `func_000AAF70` 632
-- `func_000EA258` 632
-- `func_0003D650` 636
-- `func_0004FC58` 636
-- `func_000BBB50` 636
-- `func_000540D0` 640
-- `func_0009D788` 640
-- `func_000A0888` 640
-- `func_000C6DC8` 640
-- `nico_SmallKiteMinoStart` 640
-- `AI_GetGeometryPointerOfLayout` 644
-- `func_00095428` 644
-- `func_000C9DA0` 644
-- `func_000A70A0` 648
-- `nico_calcWormGenealogicalNodeNextBase` 648
-- `sendStopKeyFastLegCtrlWork` 648
-- `func_00091CE0` 652
-- `get_manage_obj_status_camera_place_status` 652
-- `SCRFuncYamoriBSetAttackPosAndGazePosMain` 656
-- `func_000E6140` 656
-- `func_000FFB80` 656
-- `func_000167B8` 660
-- `nico_calcWormGenealogicalNodeTailBase` 660
-- `func_000A7360` 664
-- `setSCRGazeStatus` 664
-- `func_0001F560` 672
-- `func_00053058` 672
-- `func_000BD7A0` 672
-- `func_000E5738` 672
-- `func_000EEA28` 672
-- `func_000F7630` 672
-- `T_00079800` 680
-- `arrowWaterMain` 680
-- `func_00052A38` 680
-- `func_000CB658` 680
-- `_sendProgramRotInput` 684
-- `func_00064798` 684
-- `func_000101D0` 688
-- `func_000B4A80` 688
-- `func_000CED18` 688
-- `func_00128510` 688
-- `doit_camera_final_update` 692
-- `func_0002E220` 696
-- `chkCurveCollision` 704
-- `func_0002ABB0` 704
-- `func_00047278` 704
-- `func_0005A028` 704
-- `func_0009D3C8` 712
-- `nico_execMinotaurA_Cloth` 712
-- `nico_execMinotaurC_Cloth` 712
-- `parseHydeObject` 712
-- `SCRFuncNargaWallCheckMain` 720
-- `backStageGobjLoad` 720
-- `doit_expression` 720
-- `func_0006EF28` 720
-- `SCRConditionMinoCBridgeRayChack` 724
-- `disphalfarc` 728
-- `func_0000ACF8` 728
-- `func_000A1AC0` 728
-- `func_00114170` 728
-- `getNearPoint` 728
-- `SCRConditionMinoCBridgeRayChack2` 732
-- `doit_camera_pause_rise` 732
-- `func_00081FF0` 736
-- `func_000E5D58` 736
-- `func_000F4F18` 736
-- `func_00053AE0` 740
-- `T_00073A30` 752
-- `func_00012A40` 752
-- `CAM_doit_aim_angle_rot` 756
-- `execObjectWithNonTaskSwitch` 756
-- `CAM_get_base_space_posi_and_axisXYZ` 760
+
+### nico_birdBossStart .. SCRFuncBirdSetAttainPosForPathData: 1 of 3 unmatched
+
+- `SCRFuncBirdSetAttainPosForPathData` 512 *parked*
+
+### SCRFuncBirdInputRotateMotionKey: 1 of 1 unmatched
+
 - `SCRFuncBirdInputRotateMotionKey` 760
-- `func_00046F48` 760
-- `func_000910B0` 760
-- `func_000A9A10` 760
-- `func_000EAAC0` 760
-- `func_00100A48` 760
-- `AI_CheckNoAngleVec` 768
-- `SCRFuncMinoCSetTemporaryTarget` 772
-- `SCRFuncRegressFromPlayer` 772
-- `T_0005DAB8` 776
-- `fallenLeafMain` 776
-- `func_00025330` 776
-- `func_000DB558` 776
-- `EntrySeamlessStageObject` 784
-- `check_and_boot_boss_subjective_camera_lws_animation` 784
-- `func_000456D8` 784
-- `func_0006F230` 784
-- `func_000E5A10` 784
-- `nico_execGuardACloth` 784
-- `nico_IK_setTargetQFromSkeletonRestWithLimit` 788
-- `spriteweaponsight` 788
-- `updatePerceptionWork` 788
-- `func_000AAC20` 792
-- `func_000AB478` 792
-- `func_000FFE48` 792
-- `func_00110A88` 792
-- `SCRFuncSetAttainPosForEscapeToPlayer` 800
-- `func_0009F830` 800
-- `func_00112B08` 800
-- `SCRFuncMinoBCanossaWallBreak` 804
-- `func_000D0CC0` 808
-- `get_sight_on_cntrl_param_player_expression` 808
-- `SCRFuncYamoriBProgramRotForWindAttack` 812
-- `func_0004D8B0` 812
-- `func_000A3AA0` 816
-- `func_000DDD40` 816
-- `func_0004A760` 820
-- `get_best_mode_manager` 820
-- `func_000160E0` 824
-- `SCRFuncHorseEscapeFromBossMain` 828
-- `func_0006F8E0` 832
-- `nico_execHorseCloth` 836
-- `func_00100D78` 840
-- `set_parameter_nico_sight_on` 844
-- `func_000A7908` 848
-- `func_000A7C90` 848
-- `func_000DF090` 848
-- `fallenLeafInit` 852
-- `func_0004A3D0` 856
-- `func_00063C70` 856
-- `func_000C2620` 856
-- `func_0010B200` 856
-- `SCRFuncHorseBossCircumferenceMain` 860
-- `func_000461E8` 864
-- `func_00016450` 872
-- `func_000450B8` 872
-- `func_00081800` 872
-- `func_000FA870` 872
-- `func_000F1B38` 876
-- `_setRootXYZHPB` 880
-- `func_000E4EC0` 880
-- `CAM_get_safety_cam_and_look_at_posi` 888
-- `SCRFuncYamoriBSendFallKey` 888
-- `func_0003D0D8` 888
-- `func_00044D08` 888
-- `nico_playerExpression` 892
-- `func_0010A040` 896
-- `func_001106D0` 896
-- `st_reloadtask` 896
-- `func_001205F0` 900
-- `AI_CalcIntersectionCircleXZ` 904
-- `func_00036200` 904
-- `func_0003C3B8` 904
-- `func_000CF140` 904
-- `func_000E9900` 912
-- `chkAttainExecOffsetData` 916
-- `func_0004AA98` 916
-- `loadCdSeamlessStageFile` 916
-- `func_000ABE28` 920
-- `initISysPathObj` 924
-- `func_00040B28` 928
-- `func_00076CE8` 928
-- `func_0010F338` 928
-- `memoryCardSaveScript` 928
-- `GetInitWallFunc` 932
-- `func_000A1DD0` 936
-- `func_000715A0` 940
-- `InitSeamlessStageLoad` 944
-- `func_000CF500` 944
-- `func_000FD058` 944
-- `func_00128D00` 944
-- `getDeadPosAndQuaternion` 948
-- `GexInitCommonFunc` 956
-- `func_00109028` 960
-- `func_0010AE08` 960
-- `func_000A5260` 968
-- `func_000ACDF0` 968
-- `func_000E65E8` 968
-- `widePathCollisionDirect` 972
-- `func_000AA150` 976
-- `func_000CE058` 976
-- `func_000F46B8` 976
-- `DebugSnapShot` 980
-- `func_0007DCB8` 984
-- `nico_SmallNamazuStart` 984
-- `initlayout` 988
-- `func_00080E68` 992
-- `get_game_camera_mode_local_parameter` 992
+
+### SCRBirdStartBreath .. st_mcBootChk: 1 of 12 unmatched
+
 - `st_mcBootChk` 992
-- `CAM_doit_post_update_new_camera_data_target_offset` 996
-- `_SCRGetCollisionTwoBoneRay` 996
-- `SCRFuncDamageSendFunc` 1000
-- `func_0004C940` 1008
-- `func_000EFD90` 1008
-- `gameFlagCheckPointLoad` 1008
-- `func_0009C820` 1012
+
+### bootmccheck: 1 of 1 unmatched
+
+- `bootmccheck` 1332
+
+### nico_cerberusEye: 1 of 1 unmatched
+
+- `nico_cerberusEye` 1152
+
+### dischargeMain: 1 of 1 unmatched
+
+- `dischargeMain` 1100
+
+### nico_balltest: 1 of 1 unmatched
+
 - `nico_balltest` 1012
-- `func_000118C8` 1016
-- `func_0005A320` 1016
-- `func_000E41A0` 1016
-- `updateSlowLegCtrlWork` 1028
-- `func_0002AEA8` 1032
-- `func_00110DD8` 1032
+
+### nico_pendulumtest: 1 of 1 unmatched
+
+- `nico_pendulumtest` 1816
+
+### gameover: 1 of 3 unmatched
+
+- `gameover` 1180
+
+### drawbar: 1 of 1 unmatched
+
+- `drawbar` 1892
+
+### SpriteSetStatusClut: 1 of 1 unmatched
+
+- `SpriteSetStatusClut` 1520
+
+### IsGeoColStatus .. demo_battle: 1 of 3 unmatched
+
+- `demo_battle` 1632
+
+### nico_KnightBossStart .. SCRKnightBossPartsBroken: 1 of 5 unmatched
+
+- `SCRFuncKnightParentMoveControlScriptKey` 1164
+
+### SCRLeoTorch0_Disp .. setNowLoadingEffectDisplayFlagHokoraBack: 1 of 25 unmatched
+
+- `func_00064798` 684
+
+### nico_BossMinotaurStart .. SCRFuncMinoBCanossaWallBreak: 1 of 6 unmatched
+
+- `SCRFuncMinoBCanossaWallBreak` 804
+
+### nico_nargaBossStart .. SCRConditionNaragaBodyRot: 1 of 6 unmatched
+
+- `SCRConditionNaragaBodyRot` 1196
+
+### SCRFuncNargaWallCheckMain: 1 of 1 unmatched
+
+- `SCRFuncNargaWallCheckMain` 720 *parked*
+
+### nico_getOmakeItem: 1 of 1 unmatched
+
+- `nico_getOmakeItem` 524
+
+### nico_delOmakeItem .. demo_op1: 1 of 3 unmatched
+
+- `demo_op1` 1352
+
+### demo_op1_setHorseBridle .. demo_op2: 1 of 3 unmatched
+
+- `demo_op2` 2256
+
+### OptionMenuStart .. pauseMenuScript: 1 of 6 unmatched
+
+- `func_00074AC8` 1464
+
+### player_updateSlipEffect: 1 of 1 unmatched
+
+- `player_updateSlipEffect` 516 *parked*
+
+### nico_sheathScript: 1 of 1 unmatched
+
+- `nico_sheathScript` 4016
+
+### AI_CalcIntersectionCircleXZ: 1 of 1 unmatched
+
+- `AI_CalcIntersectionCircleXZ` 904
+
+### spriteweaponsight: 1 of 1 unmatched
+
+- `spriteweaponsight` 788
+
+### setIsWeapon: 1 of 1 unmatched
+
+- `setIsWeapon` 320 *parked*
+
+### get_nearest_camera_vs_ofst_cntrl_position: 1 of 1 unmatched
+
+- `get_nearest_camera_vs_ofst_cntrl_position` 452 *parked*
+
+### doit_cameraman .. check_free_cameraman: 1 of 26 unmatched
+
+- `doit_cameraman` 212 *parked*
+
+### initISysPathObj: 1 of 1 unmatched
+
+- `initISysPathObj` 924
+
+### updateUserPathWorkEx .. getConnectPPointIdx: 1 of 25 unmatched
+
+- `updateUserPathWorkEx` 1920
+
+### _sendProgramRotInput: 1 of 1 unmatched
+
+- `_sendProgramRotInput` 684 *parked*
+
+### updateGazeCtrlWork: 1 of 1 unmatched
+
+- `updateGazeCtrlWork` 1160
+
+### calcMoveQuaternion: 1 of 1 unmatched
+
+- `calcMoveQuaternion` 596 *parked*
+
+### calcMoveAngle .. calcAngleTime: 1 of 2 unmatched
+
+- `calcMoveAngle` 320 *parked*
+
+### calcProgRotRatio: 1 of 1 unmatched
+
+- `calcProgRotRatio` 476
+
+### SCRFuncProgramRotInputForGP: 1 of 1 unmatched
+
+- `SCRFuncProgramRotInputForGP` 1304
+
+### SCRFuncCheckBoneColAndSendDamage: 1 of 1 unmatched
+
+- `SCRFuncCheckBoneColAndSendDamage` 1152
+
+### SCRFuncDamageSendFunc: 1 of 1 unmatched
+
+- `SCRFuncDamageSendFunc` 1000
+
+### SCRFuncRegressFromPlayer: 1 of 1 unmatched
+
+- `SCRFuncRegressFromPlayer` 772
+
+### updateEyeWork: 1 of 1 unmatched
+
+- `updateEyeWork` 1364
+
+### updateInterestWork: 1 of 1 unmatched
+
+- `updateInterestWork` 1208
+
+### nico_aimIK: 1 of 1 unmatched
+
+- `nico_aimIK` 2676
+
+### nico_attackIK_waist: 1 of 1 unmatched
+
+- `nico_attackIK_waist` 2268
+
+### nico_BeardNext .. nico_BeardLast: 1 of 4 unmatched
+
+- `nico_BeardNext` 3192
+
+### nico_Meet2Main: 1 of 2 unmatched
+
+- `nico_Meet2Main` 2108
+
+### setDefaultFsEffect .. endingflowSetTimePlayerHpMax: 2 of 13 unmatched
+
+- `func_00012A40` 752
+- `st_endingflow` 2756
+
+### nico_IK_targetAiming .. nico_IK_setTargetQFromSkeletonRestWithLimit: 2 of 3 unmatched
+
+- `nico_IK_setTargetQFromSkeletonRestWithLimit` 788
 - `nico_IK_targetAiming` 1036
-- `demo_title` 1040
-- `func_00073F70` 1040
-- `func_000BE108` 1040
-- `SCRFuncHorseStandRundmSendkey` 1048
-- `updateHumanCtrlWork` 1048
+
+### guardDamageMain .. nico_guardEStart: 2 of 6 unmatched
+
+- `func_00055780` 384
+- `func_00055580` 456
+
+### guardMainCommon .. SCRGuardArrowShoot: 2 of 11 unmatched
+
+- `func_00056740` 456
+- `guardMainCommon` 1456
+
+### leoTorch .. nico_leoBossStart: 2 of 4 unmatched
+
+- `leoTorch` 600 *parked*
+- `func_00063C70` 856 *parked*
+
+### SCRGetPlayerTiredParam .. SCRFuncPoseidonModifyGP2AttainPos: 2 of 18 unmatched
+
+- `func_000940A0` 616 *parked*
+- `SCRFuncPoseidonParallelTrans` 1100
+
+### st_boss_dead .. nico_shamanStart: 2 of 11 unmatched
+
+- `st_boss_dead` 1376 *parked*
+- `func_00096E00` 1900
+
+### Kite_InitKitePathWork .. Kite_InitKiteAdvertisePathWork: 2 of 12 unmatched
+
+- `func_000ACDF0` 968
+- `Kite_GetPassageWork` 1292
+
+### lizard_berry .. nico_SmallLizardTailStart: 2 of 5 unmatched
+
+- `func_000B4690` 480 *parked*
+- `func_000B4A80` 688 *parked*
+
+### timeAttackTimeScriptEnd .. title_options: 2 of 61 unmatched
+
+- `demo_title` 1040 *parked*
+- `func_000C6DC8` 640
+
+### get_camera_collision_data .. reset_camera_collision_data_except_slide_move_ratio: 2 of 23 unmatched
+
+- `get_camera_position_float_by_hit_collision` 532 *parked*
+- `get_camera_collision_data` 1092
+
+### doit_camera_target_lost_angle .. end_get_yaw_pitch_camera_target_visible_angle_manager: 2 of 23 unmatched
+
+- `begin_and_update_get_yaw_pitch_camera_target_visible_angle_manager` 552 *parked*
+- `func_000DB558` 776
+
+### SCRConditionAtkChackThreeRaySector .. scrDemoInit: 2 of 14 unmatched
+
+- `func_001205F0` 900
+- `func_00120978` 1660
+
+### updatePerceptionWork .. equipmentInvisibilityCloak: 2 of 9 unmatched
+
+- `updatePerceptionWork` 788
+- `perceptionExec` 1236
+
+### nico_calcTailGenealogicalNodeNext .. nico_calcTailGenealogicalNodeTail: 2 of 4 unmatched
+
+- `nico_calcTailGenealogicalNodeTail` 324 *parked*
+- `nico_calcTailGenealogicalNodeNext` 1520
+
+### _omakeSelectFlagSet .. omakeGetAndSelectSet: 3 of 53 unmatched
+
+- `_omakeSelectFlagSet` 296 *parked*
+- `gameFlagCheckPointLoad` 1008
+- `gameFlagCheckPointSave` 1552
+
+### st_menupause .. gameflowJumpOp2DemoNoSkip: 3 of 40 unmatched
+
+- `func_000160E0` 824
+- `func_00016450` 872
+- `st_gameflow` 6064
+
+### parseHydeObject .. st_jumphokoraflow: 3 of 3 unmatched
+
+- `func_0001A418` 628 *parked*
+- `parseHydeObject` 712
+- `st_jumphokoraflow` 1244
+
+### nico_kirinBossStart .. SCRFuncKirinSlopeFallRockLWSLoad: 3 of 7 unmatched
+
+- `nico_kirinBodyExpression` 1212
+- `SCRFuncKirinCaveFallRockLWSLoad` 1680
+- `SCRFuncKirinSlopeFallRockLWSLoad` 1928
+
+### doit_debug_camera .. DebugGetCameraWithManual: 3 of 4 unmatched
+
+- `func_000E41A0` 1016
 - `DebugGetCameraWithManual` 1056
+- `doit_debug_camera` 1720
+
+### updateHumanCtrlWork .. setDashHumanCtrlWork: 3 of 9 unmatched
+
+- `func_0010B200` 856
+- `func_0010AE08` 960
+- `updateHumanCtrlWork` 1048
+
+### updateAttackWork .. setAttackHeadDataFormNowMode: 3 of 14 unmatched
+
+- `updateAttackWork2` 604 *parked*
+- `func_00114170` 728
+- `updateAttackWork` 2448
+
+### initScriptDataSystem .. finishLoadMotList: 3 of 12 unmatched
+
+- `setSCRGazeStatus` 664
+- `initScriptDataSystem` 3092
+- `updateScriptDataSystem` 6104
+
+### initBuriesIKWork .. updateGazeIKWork: 3 of 14 unmatched
+
+- `func_00125C38` 568 *parked*
+- `func_00127AC8` 344
+- `nico_gazeHeadIK4` 6284
+
+### GAMEUTIL_get_boss_interest_position .. getFreeModeRevAngleVelRatio: 4 of 104 unmatched
+
+- `GAMEUTIL_is_push_or_down_1p_button` 136 *parked*
+- `GAMEUTIL_disp_col_plane_info_debug` 480
+- `GAMEUTIL_get_boss_interest_position` 512
+- `GAMEUTIL_doit_look_at_vs_offset_vec` 1088
+
+### gamecore .. setDefaultPlayerControlButton: 4 of 60 unmatched
+
+- `func_0000B688` 264
+- `func_0000BBD8` 360
+- `func_0000AA90` 616
+- `func_0000ACF8` 728
+
+### bossStatSetActiveBoss .. bossStatTimeAttackJumpSekiban: 4 of 19 unmatched
+
+- `bossStatStartDemo` 416 *parked*
+- `func_0000FA50` 532 *parked*
+- `bossStatGetFromIconGObj` 448
+- `func_000101D0` 688
+
+### st_camfinalizer .. QuitCaptionSubThreadAll: 4 of 20 unmatched
+
+- `DisplayCaptionTableBlock` 332 *parked*
+- `func_000118C8` 1016
+- `T_00011498` 1072
+- `func_00010CB0` 1536
+
+### jumphokoraGetDemoInfo .. getStageLayoutGeometryPointer: 4 of 13 unmatched
+
+- `func_0001B9A8` 360
+- `st_reloadtask` 896
+- `func_0001BB48` 1316
+- `loadObj` 3168
+
+### time_attack_begin .. demoNormalHook: 4 of 26 unmatched
+
+- `func_0002E510` 608
+- `func_0002E220` 696
+- `func_0002F770` 1696
+- `func_0002E7A8` 3188
+
+### demo_PlayerDeathEffectEnd .. demo_end3: 4 of 5 unmatched
+
+- `func_0004FC58` 636 *parked*
+- `func_00050678` 1316
+- `demo_end2` 1952
+- `demo_end3` 3440
+
+### SCRFuncMinoCSetTemporaryTarget .. nico_missile1start: 4 of 32 unmatched
+
+- `SCRConditionMinoCBridgeRayChack` 724 *parked*
+- `SCRConditionMinoCBridgeRayChack2` 732 *parked*
+- `SCRFuncMinoCSetTemporaryTarget` 772 *parked*
+- `func_0006C328` 3520
+
+### optionMenuParamSetLoadData .. optionMenuScript: 4 of 32 unmatched
+
+- `func_00073D20` 536
+- `T_00073A30` 752
+- `func_00073F70` 1040
+- `func_00072758` 5576
+
+### player_setGripHangPointGeometry .. nico_player_pendulum_Leg: 4 of 14 unmatched
+
+- `nico_player_colfit_SetLower` 596 *parked*
+- `func_00091CE0` 652 *parked*
+- `func_00092958` 1192
+- `nico_player_edgecolfit_Shoulder` 1936
+
+### bootprogressivecheck .. initstage: 4 of 28 unmatched
+
+- `simpleExecCharaGeometry` 432 *parked*
+- `initstage` 320
+- `func_00095428` 644
+- `execObjectWithNonTaskSwitch` 756
+
+### AI_GetGeometryPointerOfLayout .. AI_GetQuaternionNodeDirTargetExt: 4 of 66 unmatched
+
+- `AI_CheckSightOn` 608 *parked*
+- `AI_GetGeometryPointerOfLayout` 644
+- `AI_CheckNoAngleVec` 768
+- `AI_GetQuaternionNodeDirTarget` 1368
+
+### constructor_camera_default_angle .. is_leave_camera_dist_to_look_at: 4 of 30 unmatched
+
+- `func_000D6F28` 144 *parked*
+- `func_000D7138` 240 *parked*
+- `func_000D6410` 488 *parked*
+- `get_base_default_direction` 1124
+
+### SCRFuncAttackCancelForTwoBoneRay .. SCRFuncSetCreateTempAttain: 4 of 68 unmatched
+
+- `SCRFuncStartEventDemoGameModeCheck` 468 *parked*
+- `SCRFuncStartEventDemo` 492 *parked*
+- `SCRFuncAttackCancelForOneBoneRay` 632 *parked*
+- `SCRFuncSetAttainPosForEscapeToPlayer` 800
+
+### getSpecialEffectObjWork .. StaffRollStart: 5 of 7 unmatched
+
+- `func_00025188` 368 *parked*
+- `func_00025BA8` 596 *parked*
+- `func_00025E00` 576
+- `func_00025330` 776
+- `func_00025670` 1280
+
+### nico_cerberusRStart .. SCRFuncCerberusSetPlayerParentObj: 5 of 14 unmatched
+
+- `SCRConditionSendDamageToCollisionObject` 448 *parked*
+- `nico_leoBodyExpression` 572 *parked*
+- `func_00040B28` 928
+- `SCRConditionSendDamageToCollisionObject3` 1224
+- `SCRConditionSendDamageToCollisionObject2` 2072
+
+### constructor_nico_sight_on .. nico_setOmakeItemFlag: 5 of 35 unmatched
+
+- `func_000707B0` 216 *parked*
+- `func_0006EF28` 720 *parked*
+- `func_0006F230` 784
+- `func_0006F8E0` 832
+- `set_parameter_nico_sight_on` 844
+
+### tryToCheckCollision6Dir .. attrStatusUpdate: 5 of 12 unmatched
+
+- `func_00090560` 320 *parked*
+- `func_000910B0` 760
+- `player_updateAttrStatusAndFindHangPosWithFallDown` 1148
+- `tryToCheckCollision6Dir` 1796
+- `func_000906D8` 2072
+
+### sword.c: 5 of 56 unmatched
+
+- `nico_swordstart` 1152 *parked*
+- `DispWithSwordBlur` 2516 *parked*
+- `DispWithTorchBlur` 2516 *parked*
+- `func_000C2620` 856
+- `func_000C1D80` 1376
+
+### nico_tortoiseBossStart .. SCRConditionUnagiCheckAttackLine: 5 of 58 unmatched
+
+- `SCRFuncKameSetTemporaryTarget` 584 *parked*
+- `nico_unagiBossStart` 1088 *parked*
+- `SCRFuncKameRockLWSLoad` 1472 *parked*
+- `func_000C9DA0` 644
+- `func_000CBF88` 1280
+
+### doit_camera_pause_rise .. CAM_get_interp_slope_pitch_ofst: 5 of 43 unmatched
+
+- `func_000D9028` 324 *parked*
+- `get_manage_obj_status_camera_place_status` 652 *parked*
+- `func_000D8E80` 368
+- `doit_camera_pause_rise` 732
+- `func_000D9B30` 1824
+
+### createHorseCtrlWork .. setFreezeHorseCtrlWork: 5 of 20 unmatched
+
+- `func_0010A040` 896
+- `func_00109028` 960
+- `createHorseCtrlWork` 1540
+- `func_00109420` 3048
+- `updateHorseCtrlWork` 3332
+
+### createSlowLegCtrlWork .. deleteSlowLegCtrlWork: 5 of 19 unmatched
+
+- `func_0010F338` 928 *parked*
+- `updateSlowLegCtrlWork` 1028
+- `func_0010DF90` 1504
+- `createSlowLegCtrlWork` 2032
+- `func_0010E5A8` 2864
+
+### createWormCtrlWork .. getBuryingWormCtrlWork: 5 of 31 unmatched
+
+- `func_00112B08` 800
+- `func_001106D0` 896
+- `func_00110DD8` 1032
+- `updateWormCtrlWork` 2016
+- `func_00111218` 6328
+
+### constructor_nico_yaw_pitch_cntrl .. get_merge_pitch_nico_yaw_pitch_cntrl: 6 of 55 unmatched
+
+- `set_offset_yaw_parameter_nico_yaw_pitch_cntrl` 208 *parked*
+- `set_offset_pitch_parameter_nico_yaw_pitch_cntrl` 272 *parked*
+- `func_0000E1D8` 352
+- `func_0000C9E8` 384
+- `func_0000DB18` 424
+- `is_predict_to_acting_base_yaw_rot_nico_yaw_pitch_cntrl` 616
+
+### mc_save_scr_begin .. memoryCardLoadScript: 6 of 15 unmatched
+
+- `func_00065C70` 448 *parked*
+- `memoryCardSaveScript` 928
+- `func_000650F0` 1112
+- `func_00065640` 1528
+- `func_000685E0` 6432
+- `func_000661D0` 6832
+
+### createFastLegCtrlWork .. setRunStopTurnAngleFastLegCtrlWork: 6 of 26 unmatched
+
+- `sendStopKeyFastLegCtrlWork` 648 *parked*
+- `func_00104F20` 1344
+- `func_001065D0` 1376
+- `createFastLegCtrlWork` 2604
+- `updateFastLegCtrlWork` 3032
+- `func_00105498` 4352
+
+### st_activedemo .. getArrowObjParent: 7 of 31 unmatched
+
+- `arrowManagerInit` 580 *parked*
+- `func_000317C8` 280
+- `func_00033680` 1112
+- `func_00033C48` 1380
+- `st_activedemo` 1696
+- `SCRSetupArrow1ByPlayer2` 1744
+- `func_000318E0` 5252
+
+### getSkeletonGlobalGeo .. GetBossPartsDamagePerParts: 7 of 40 unmatched
+
+- `SCRJumpNearestDeadGeometry` 484 *parked*
+- `SCRJumpNearestPointUsingDeadGeometry` 484 *parked*
+- `func_0003D650` 636 *parked*
+- `func_0003D0D8` 888
+- `func_0003C3B8` 904
+- `SCRCharaInitBossWork` 1380
+- `SCRExecBossPreProcess` 2532
+
+### _SCRGetCollisionTwoBoneRay .. nico_parentSync: 7 of 78 unmatched
+
+- `func_000420B8` 264 *parked*
+- `_SCRGetCollisionTwoBoneRay3D` 384 *parked*
+- `_setNodeHPB` 412 *parked*
+- `SCRGetTargetPosXZDirOnMyCtrlGeo` 440 *parked*
+- `_setNodeHPBIllegal` 600 *parked*
+- `_setRootXYZHPB` 880
+- `_SCRGetCollisionTwoBoneRay` 996
+
+### AI_GetYRotQuaternionFromVector .. nico_SmallBatStart: 7 of 23 unmatched
+
+- `func_0009DA40` 256 *parked*
+- `func_0009D208` 392 *parked*
+- `func_0009BFA0` 440 *parked*
+- `func_0009D3C8` 712
+- `func_0009C820` 1012
+- `func_0009DB78` 1252
+- `func_0009E060` 1576
+
+### calcAttainPosForAttainRange .. moveCtrlWallJudgeFunc: 8 of 28 unmatched
+
+- `analyzeMotionPropertyFromKey2` 168 *parked*
+- `_initBaseMoveTmpWork` 296 *parked*
+- `calcAttainRangeData` 392 *parked*
+- `getHitPosWayCollision` 504 *parked*
+- `chkCurveCollision` 704 *parked*
+- `func_000FD058` 944
+- `chkEstimatCollisionCore` 1324
+- `calcAttainPosForAttainRange` 1628
+
+### SCRBossDebugDeath .. nico_neckFitToParentInvDirIKBankReverse: 10 of 34 unmatched
+
+- `nico_IK_footPosCalc` 468 *parked*
+- `nico_IK_footPosCalcLeafDirectConnect` 468 *parked*
+- `GetVolumeClippedTargetPos` 448
+- `func_00036200` 904
+- `nico_IK_legCalcAndSetUpper` 1204
+- `func_00037C90` 1392
+- `func_000396F0` 1724
+- `func_000372D8` 1884
+- `character_ikcolsearch` 3348
+- `func_00038238` 5248
+
+### dynamicstest .. demo_end: 10 of 45 unmatched
+
+- `func_0004D0C8` 352
+- `func_0004D260` 424
+- `func_0004DD98` 492
+- `func_0004CE30` 608
+- `func_0004D8B0` 812
+- `func_0004C940` 1008
+- `func_0004C4D8` 1072
+- `func_0004D440` 1080
+- `func_0004EB18` 1188
+- `demo_end` 2624
+
+### createBirdCtrlWork .. setHoverAttackBirdCtrlWork: 10 of 24 unmatched
+
+- `func_000FFB80` 656 *parked*
+- `func_00100A48` 760
+- `func_00100D78` 840
+- `getCalcAttackPassagePoint2` 1080
+- `func_00100198` 1088
+- `func_00103030` 1772
+- `createBirdCtrlWork` 2064
+- `func_001010F8` 2600
+- `updateBirdCtrlWork` 3376
+- `func_00101B58` 5280
+
+### ReflectIK_initWormDynamics .. nico_calcWormGenealogicalNodeDownNextLast: 10 of 25 unmatched
+
+- `nico_calcWormGenealogicalNodeHead` 316 *parked*
+- `nico_restartWormGenealogicalNodeFromOtherIK` 400 *parked*
+- `initWormIKWork` 508 *parked*
+- `nico_calcWormGenealogicalNodeDownHead` 560 *parked*
+- `nico_calcWormGenealogicalNodeNextBase` 648 *parked*
+- `func_00128510` 688 *parked*
+- `nico_calcWormGenealogicalNodeTailBase` 660
+- `func_00128D00` 944
+- `nico_calcWormGenealogicalNodeHeadBase` 1336
+- `func_00129E10` 1956
+
+### SCRHorseUnLoad .. nico_initHorseBriddle: 11 of 25 unmatched
+
+- `nico_resetHorseBridleTerminalParentPoint` 396 *parked*
+- `func_0005E108` 432 *parked*
+- `nico_execHorseBriddle` 476 *parked*
+- `nico_execMinotaurA_Cloth` 712 *parked*
+- `nico_execMinotaurC_Cloth` 712 *parked*
+- `func_0005E848` 524
+- `T_0005DAB8` 776
+- `nico_execGuardACloth` 784
+- `nico_execHorseCloth` 836
+- `func_0005D2C8` 1072
+- `func_0005D888` 1336
+
+### home_sound .. nico_blankHorseStart: 12 of 23 unmatched
+
+- `func_0005BB30` 560 *parked*
+- `func_0005A028` 704 *parked*
+- `SCRFuncHorseEscapeFromBossMain` 828
+- `SCRFuncHorseBossCircumferenceMain` 860
+- `func_0005A320` 1016
+- `SCRFuncHorseStandRundmSendkey` 1048
+- `func_0005A750` 1104
+- `func_00056C60` 1204
+- `func_0005ABD8` 1240
+- `func_0005B0E8` 1276
+- `nico_horseBodyExpression` 1624
+- `func_00058000` 8176
+
+### SCRRockFall .. arrowWaterMain: 13 of 20 unmatched
+
+- `func_00052558` 512 *parked*
+- `arrowWaterInit` 524 *parked*
+- `func_00052790` 616 *parked*
+- `func_000540D0` 640 *parked*
+- `func_00053058` 672 *parked*
+- `arrowWaterMain` 680 *parked*
+- `func_00052A38` 680 *parked*
+- `func_00053AE0` 740 *parked*
+- `fallenLeafMain` 776 *parked*
+- `func_00054598` 396
+- `func_00054388` 472
+- `fallenLeafInit` 852
+- `func_00053650` 1112
+
+### Kite_SucceedKitePathWork .. lizard_tail: 13 of 36 unmatched
+
+- `func_000B0D08` 232 *parked*
+- `func_000AE8C0` 472 *parked*
+- `func_000B1128` 536 *parked*
+- `func_000B1D88` 544 *parked*
+- `func_000B0A90` 576 *parked*
+- `func_000B1FE0` 272
+- `GetInitWallFunc` 932
+- `GexInitCommonFunc` 956
+- `func_000AFCE8` 1088
+- `func_000B0350` 1800
+- `func_000B1378` 2072
+- `func_000AEAD0` 4576
+- `func_000B2FC0` 5752
+
+### spritemenudisplaytriggerpad_group .. bosslifebar_sethp: 13 of 32 unmatched
+
+- `setrollup` 200 *parked*
+- `func_000BCA80` 424 *parked*
+- `func_000BF880` 552 *parked*
+- `func_000BD7A0` 672 *parked*
+- `func_000BEB28` 328
+- `func_000BFAE0` 608
+- `func_000BE108` 1040
 - `func_000BD348` 1056
-- `func_000F4AC0` 1056
+- `func_000BE550` 1440
+- `func_000BCCF0` 1568
+- `func_000BDA78` 1624
+- `func_000BFD78` 1992
+- `func_000BED28` 2176
+
+### ResetCharacterObj .. DebugGetCameraWithPursue2: 14 of 63 unmatched
+
+- `dispgpinfo` 264 *parked*
+- `func_00005138` 320 *parked*
+- `func_00004F78` 392 *parked*
+- `DebugSetHorsePositionWithTargetOfs` 404 *parked*
+- `disphalfarc` 728 *parked*
+- `DebugGlobalMoveWith1stController` 532
+- `DebugGetGlobalDiffWith2ndController` 536
+- `DebugSnapShot` 980
+- `func_00002DB8` 1200
+- `disphalfarcpillar` 1756
+- `func_000052B0` 1820
+- `func_00005B68` 2320
+- `func_000064B0` 3080
+- `func_000032A0` 5520
+
+### updateSmallManager .. nico_SmallNamazuStart: 14 of 49 unmatched
+
+- `func_000B53E0` 300 *parked*
+- `nico_SmallNamazuStart` 984 *parked*
+- `func_000B9798` 376
+- `func_000B8510` 480
+- `func_000B91C0` 504
+- `func_000B9548` 536
+- `func_000BA290` 600
+- `func_000B8850` 624
 - `func_000B76A8` 1064
 - `func_000BA520` 1064
-- `T_00011498` 1072
-- `func_0004C4D8` 1072
-- `func_0005D2C8` 1072
-- `func_0004D440` 1080
-- `getCalcAttackPassagePoint2` 1080
-- `GAMEUTIL_doit_look_at_vs_offset_vec` 1088
-- `demo_common` 1088
-- `func_00046AD0` 1088
-- `func_000AFCE8` 1088
-- `func_00100198` 1088
-- `getNearPointPosUserPathWork` 1088
-- `nico_unagiBossStart` 1088
-- `get_camera_collision_data` 1092
-- `func_00047570` 1096
-- `func_00079220` 1096
-- `SCRFuncPoseidonParallelTrans` 1100
+- `func_000B8AF8` 1680
+- `func_000B7C58` 2232
+- `func_000BA980` 2976
+- `func_000B5548` 5336
+
+### getStageChipID .. deleteStageAlignParam: 17 of 74 unmatched
+
+- `getStageAreaIndexByPos` 268 *parked*
+- `func_000227C8` 384 *parked*
+- `func_0001ED58` 456 *parked*
+- `func_00020DF8` 496 *parked*
+- `loadCdSeamlessStageFile` 916 *parked*
+- `func_0001FA68` 448
+- `func_00022980` 448
+- `func_00022CD0` 496
+- `func_0001F560` 672
+- `EntrySeamlessStageObject` 784
+- `InitSeamlessStageLoad` 944
+- `func_00020850` 1392
+- `func_0001EF58` 1544
+- `func_000218E0` 1704
+- `func_000220C0` 1744
+- `func_00021020` 1776
+- `func_0001FF70` 2216
+
+### getstagenumber .. deleteGameObject: 19 of 79 unmatched
+
+- `func_000272A8` 312 *parked*
+- `func_00027418` 312 *parked*
+- `func_00027EB8` 360 *parked*
+- `func_000281F0` 432 *parked*
+- `func_00027968` 464 *parked*
+- `func_00026AB8` 492 *parked*
+- `func_00026E38` 512 *parked*
+- `func_00027B70` 520 *parked*
+- `GetStageContext` 544 *parked*
+- `func_00026238` 1180 *parked*
+- `func_00027588` 440
+- `func_00027778` 440
+- `func_00027070` 512
+- `StageManagerCheckAreaExist` 536
+- `func_0002B838` 584
+- `func_0002ABB0` 704
+- `initlayout` 988
+- `func_0002AEA8` 1032
+- `func_000283D8` 10144
+
+### GetWeaponRange .. demo_common: 21 of 94 unmatched
+
+- `func_000CDEB0` 368 *parked*
+- `func_000CE428` 448 *parked*
+- `func_000CEAE0` 512 *parked*
+- `SCRFuncYamoriBSendKLeftStandUpLey` 516 *parked*
+- `func_000CE620` 544 *parked*
+- `SCRFuncYamoriBSetAttainPointForWindAttack` 632 *parked*
+- `func_000CED18` 688 *parked*
+- `demo_common` 1088 *parked*
+- `func_000CE878` 560
+- `func_000D05F8` 584
+- `func_000D0CC0` 808
+- `SCRFuncYamoriBProgramRotForWindAttack` 812
+- `SCRFuncYamoriBSendFallKey` 888
+- `func_000CF140` 904
+- `func_000CF500` 944
+- `func_000CE058` 976
 - `SCRFuncYamoriAdjustment` 1100
-- `dischargeMain` 1100
-- `func_0005A750` 1104
-- `func_000F5230` 1104
-- `func_00033680` 1112
-- `func_00053650` 1112
-- `func_000650F0` 1112
-- `get_base_default_direction` 1124
-- `func_000A2F48` 1144
-- `func_000DE0A8` 1144
-- `player_updateAttrStatusAndFindHangPosWithFallDown` 1148
-- `SCRFuncCheckBoneColAndSendDamage` 1152
-- `nico_cerberusEye` 1152
-- `nico_swordstart` 1152
-- `updateGazeCtrlWork` 1160
-- `SCRFuncKnightParentMoveControlScriptKey` 1164
-- `func_000A21B0` 1168
-- `func_000EF8C8` 1168
-- `func_0009FB88` 1172
-- `func_00026238` 1180
-- `gameover` 1180
-- `func_0004EB18` 1188
-- `func_00092958` 1192
-- `func_000E7758` 1192
-- `SCRConditionNaragaBodyRot` 1196
-- `func_00002DB8` 1200
-- `func_000A4370` 1200
-- `func_00056C60` 1204
-- `nico_IK_legCalcAndSetUpper` 1204
 - `func_000CFFA0` 1208
-- `updateInterestWork` 1208
-- `nico_kirinBodyExpression` 1212
-- `SCRConditionSendDamageToCollisionObject3` 1224
-- `func_000A4858` 1224
-- `func_000A4D58` 1232
-- `perceptionExec` 1236
-- `func_0005ABD8` 1240
-- `st_jumphokoraflow` 1244
-- `func_0009DB78` 1252
-- `func_00045A20` 1256
-- `func_0007A670` 1272
 - `func_000CFA70` 1272
+- `func_000CD810` 1640
+- `func_000D1A80` 1668
+
+### createUserPathWork .. getColiGroupByUserPathWork: 22 of 133 unmatched
+
+- `func_000F6418` 352 *parked*
+- `updatePathInfo` 376 *parked*
+- `func_000F6228` 436 *parked*
+- `chkAttainExecColumn` 476 *parked*
+- `func_000FA2D8` 496 *parked*
+- `execPointListSort` 596 *parked*
+- `func_000F7630` 672 *parked*
+- `getNearPoint` 728
+- `func_000F4F18` 736
+- `func_000FA870` 872
+- `chkAttainExecOffsetData` 916
+- `getDeadPosAndQuaternion` 948
+- `widePathCollisionDirect` 972
+- `func_000F46B8` 976
+- `func_000F4AC0` 1056
+- `getNearPointPosUserPathWork` 1088
+- `func_000F5230` 1104
 - `func_000F7908` 1272
-- `func_0005B0E8` 1276
-- `func_00025670` 1280
-- `func_000CBF88` 1280
 - `func_000F56B8` 1280
-- `func_000A0B40` 1288
-- `Kite_GetPassageWork` 1292
-- `SCRFuncProgramRotInputForGP` 1304
+- `func_000F4148` 1336
+- `updateUserPathWork` 2068
+- `func_000F69B8` 2240
+
+### CAM_get_base_space_posi_and_axisXYZ .. CAM_doit_follow_rot: 23 of 127 unmatched
+
+- `func_000E1AD0` 64 *parked*
+- `func_000E26E8` 208 *parked*
+- `func_000DCC98` 344 *parked*
+- `func_000DD1C8` 424 *parked*
+- `func_000DD3A8` 480 *parked*
+- `CAM_doit_target_offset` 520 *parked*
+- `CAM_doit_view_cut_avoid_cntrl` 528 *parked*
+- `CAM_doit_subjective_target_visibility_and_update_cam_data` 564 *parked*
+- `CAM_get_warp_position` 580 *parked*
+- `CAM_doit_obstacle_avoid_cntrl` 608 *parked*
+- `func_000E1D58` 312
+- `func_000E1FA8` 312
+- `func_000DF418` 328
+- `func_000DCE28` 360
+- `func_000DF598` 528
+- `func_000DDAC0` 584
+- `CAM_doit_aim_angle_rot` 756
+- `CAM_get_base_space_posi_and_axisXYZ` 760
+- `func_000DDD40` 816
+- `func_000DF090` 848
+- `CAM_get_safety_cam_and_look_at_posi` 888
+- `CAM_doit_post_update_new_camera_data_target_offset` 996
+- `func_000DE0A8` 1144
+
+### is_LwsOrientObj .. AI_GetBaseWorkSize: 25 of 39 unmatched
+
+- `func_00049FF8` 288 *parked*
+- `func_00049DA0` 544 *parked*
+- `func_00045458` 584 *parked*
+- `func_00047D88` 584 *parked*
+- `func_0004A150` 584 *parked*
+- `func_000479F0` 592 *parked*
+- `func_00048558` 592 *parked*
+- `func_000487E0` 608 *parked*
+- `func_00045F40` 624 *parked*
+- `func_00047278` 704 *parked*
+- `func_0004A3D0` 856 *parked*
+- `func_00046F48` 760
+- `func_000456D8` 784
+- `func_0004A760` 820
+- `func_000461E8` 864
+- `func_000450B8` 872
+- `func_00044D08` 888
+- `func_0004AA98` 916
+- `func_00046AD0` 1088
+- `func_00047570` 1096
+- `func_00045A20` 1256
 - `func_00046580` 1304
 - `func_00048008` 1304
-- `func_0001BB48` 1316
-- `func_00050678` 1316
-- `chkEstimatCollisionCore` 1324
-- `physicalOp` 1328
-- `bootmccheck` 1332
-- `func_0005D888` 1336
-- `func_000F4148` 1336
-- `nico_calcWormGenealogicalNodeHeadBase` 1336
-- `player_HellDangerDetect` 1340
-- `func_00104F20` 1344
-- `demo_op1` 1352
-- `func_000A27C8` 1360
-- `updateEyeWork` 1364
-- `AI_GetQuaternionNodeDirTarget` 1368
+- `func_00048A78` 1768
+- `func_00049350` 2584
+
+### check_and_boot_boss_subjective_camera_lws_animation .. get_mode_common_data_filter_base_dist_to_look_at: 35 of 171 unmatched
+
+- `func_000EBEA0` 24 *parked*
+- `compel_end_lws_movie_mode_game_camera` 132 *parked*
+- `is_base_default_dir_attr_change_game_camera_param_manager` 168 *parked*
+- `doit_game_camera_param_manager` 432 *parked*
+- `func_000EA258` 632 *parked*
+- `func_000E97A0` 296
+- `func_000E6B00` 360
+- `func_000F27A0` 408
+- `func_000E4C48` 576
+- `func_000E5268` 576
+- `func_000E6140` 656
+- `func_000EEA28` 672
+- `func_000EAAC0` 760
+- `check_and_boot_boss_subjective_camera_lws_animation` 784
+- `get_best_mode_manager` 820
+- `func_000F1B38` 876
+- `func_000E4EC0` 880
+- `func_000E9900` 912
+- `func_000E65E8` 968
+- `get_game_camera_mode_local_parameter` 992
+- `func_000EFD90` 1008
+- `func_000EF8C8` 1168
+- `func_000E7758` 1192
 - `func_000E9CC8` 1368
 - `func_000EC5E8` 1368
-- `func_000C1D80` 1376
-- `func_001065D0` 1376
-- `st_boss_dead` 1376
-- `SCRCharaInitBossWork` 1380
-- `func_00033C48` 1380
-- `func_00020850` 1392
-- `func_00037C90` 1392
 - `func_000EA508` 1408
-- `func_000BE550` 1440
-- `guardMainCommon` 1456
-- `func_00074AC8` 1464
-- `SCRFuncKameRockLWSLoad` 1472
-- `func_0007E608` 1504
-- `func_0008E918` 1504
-- `func_000A6450` 1504
-- `func_0010DF90` 1504
-- `SpriteSetStatusClut` 1520
-- `nico_calcTailGenealogicalNodeNext` 1520
-- `func_00065640` 1528
 - `func_000ED678` 1528
-- `func_00010CB0` 1536
-- `func_000A6A68` 1536
-- `createHorseCtrlWork` 1540
-- `func_0001EF58` 1544
-- `gameFlagCheckPointSave` 1552
-- `func_000A8C48` 1568
-- `func_000BCCF0` 1568
-- `func_0009E060` 1576
-- `func_000BDA78` 1624
-- `nico_horseBodyExpression` 1624
-- `calcAttainPosForAttainRange` 1628
-- `demo_battle` 1632
-- `func_000CD810` 1640
-- `func_000A33F8` 1648
-- `func_00120978` 1660
-- `func_000D1A80` 1668
-- `SCRFuncKirinCaveFallRockLWSLoad` 1680
-- `func_000B8AF8` 1680
-- `func_0002F770` 1696
-- `st_activedemo` 1696
-- `func_000218E0` 1704
-- `func_000A5B80` 1704
-- `doit_debug_camera` 1720
-- `nico_player1` 1720
-- `func_000396F0` 1724
-- `SCRSetupArrow1ByPlayer2` 1744
-- `func_000220C0` 1744
-- `disphalfarcpillar` 1756
-- `func_00048A78` 1768
-- `func_00103030` 1772
-- `func_00021020` 1776
-- `tryToCheckCollision6Dir` 1796
-- `func_000B0350` 1800
-- `nico_pendulumtest` 1816
-- `func_000052B0` 1820
-- `func_000D9B30` 1824
-- `func_000372D8` 1884
-- `drawbar` 1892
-- `func_00096E00` 1900
-- `func_000A92A0` 1904
-- `updateUserPathWorkEx` 1920
-- `SCRFuncKirinSlopeFallRockLWSLoad` 1928
-- `nico_player_edgecolfit_Shoulder` 1936
-- `demo_end2` 1952
-- `func_00129E10` 1956
-- `func_000BFD78` 1992
-- `updateWormCtrlWork` 2016
-- `func_000AC1C0` 2020
-- `createSlowLegCtrlWork` 2032
 - `func_000F01B8` 2040
-- `createBirdCtrlWork` 2064
-- `updateUserPathWork` 2068
-- `SCRConditionSendDamageToCollisionObject2` 2072
-- `func_000906D8` 2072
-- `func_000B1378` 2072
-- `nico_Meet2Main` 2108
 - `func_000F09E8` 2160
 - `func_000F1290` 2160
-- `func_000BED28` 2176
-- `func_000A1080` 2200
 - `func_000EDCA8` 2200
-- `func_0001FF70` 2216
-- `func_000B7C58` 2232
-- `func_000F69B8` 2240
-- `demo_op2` 2256
-- `nico_attackIK_waist` 2268
-- `func_00005B68` 2320
-- `updatePowerWork` 2320
-- `func_0008DF68` 2424
-- `updateAttackWork` 2448
-- `DispWithSwordBlur` 2516
-- `DispWithTorchBlur` 2516
-- `SCRExecBossPreProcess` 2532
 - `func_000EEEA0` 2544
-- `func_00049350` 2584
-- `func_001010F8` 2600
-- `createFastLegCtrlWork` 2604
-- `demo_end` 2624
-- `nico_aimIK` 2676
 - `func_000E6CA0` 2688
-- `st_endingflow` 2756
 - `func_000E7C38` 2824
-- `func_0010E5A8` 2864
-- `func_000BA980` 2976
-- `updateFastLegCtrlWork` 3032
-- `func_00109420` 3048
-- `func_000A8018` 3064
-- `func_000064B0` 3080
-- `initScriptDataSystem` 3092
-- `loadObj` 3168
-- `func_0002E7A8` 3188
-- `nico_BeardNext` 3192
-- `func_0008D008` 3280
-- `updateHorseCtrlWork` 3332
-- `character_ikcolsearch` 3348
-- `updateBirdCtrlWork` 3376
-- `demo_end3` 3440
-- `st_opflow` 3452
-- `func_0006C328` 3520
-- `T_00077088` 3840
-- `nico_sheathScript` 4016
 - `func_000E8778` 4080
-- `func_00105498` 4352
+
+### physicalOp .. get_sight_on_cntrl_param_player_expression: 37 of 245 unmatched
+
+- `func_0007C828` 348 *parked*
+- `func_00076180` 384 *parked*
+- `func_0008F378` 432 *parked*
+- `func_0008F560` 432 *parked*
+- `func_0008F748` 432 *parked*
+- `func_0008F930` 432 *parked*
+- `nico_createPlayerParachute` 476 *parked*
+- `func_0008FB18` 484 *parked*
+- `nico_execPlayerMantle` 500 *parked*
+- `func_00075EF0` 600 *parked*
+- `func_00078168` 620 *parked*
+- `get_sight_on_cntrl_param_player_expression` 808 *parked*
+- `func_0007ABA0` 288
+- `func_00079060` 392
+- `T_00079800` 680
+- `func_00081FF0` 736
+- `func_00081800` 872
+- `nico_playerExpression` 892
+- `func_00076CE8` 928
+- `func_0007DCB8` 984
+- `func_00080E68` 992
+- `func_00079220` 1096
+- `func_0007A670` 1272
+- `physicalOp` 1328
+- `player_HellDangerDetect` 1340
+- `func_0007E608` 1504
+- `func_0008E918` 1504
+- `nico_player1` 1720
+- `func_0008DF68` 2424
+- `func_0008D008` 3280
+- `T_00077088` 3840
 - `func_0007EF98` 4384
-- `func_000AEAD0` 4576
-- `func_00038238` 5248
-- `func_000318E0` 5252
-- `func_00101B58` 5280
-- `func_000B5548` 5336
-- `func_000032A0` 5520
-- `func_00072758` 5576
-- `func_000B2FC0` 5752
-- `st_gameflow` 6064
-- `updateScriptDataSystem` 6104
-- `nico_gazeHeadIK4` 6284
-- `func_00111218` 6328
-- `func_000685E0` 6432
 - `func_0008B410` 6504
 - `func_000827C8` 6592
-- `func_000661D0` 6832
 - `func_000841C0` 7848
-- `func_00058000` 8176
 - `func_000860A0` 9720
-- `func_000283D8` 10144
 - `func_000886D0` 11528
+
+### BatInitFunc .. nico_SmallKiteMinoStart: 49 of 71 unmatched
+
+- `func_0009F6E8` 272 *parked*
+- `func_000A0058` 320 *parked*
+- `func_0009EB78` 344 *parked*
+- `nico_SmallKiteSpecialStart` 348 *parked*
+- `func_0009F170` 352 *parked*
+- `func_0009EF98` 416 *parked*
+- `func_000ABA50` 440 *parked*
+- `func_000A76F0` 480 *parked*
+- `func_0009F470` 576 *parked*
+- `func_000A5900` 584 *parked*
+- `func_000A0600` 592 *parked*
+- `func_000AB7C8` 592 *parked*
+- `func_000A40D0` 612 *parked*
+- `func_000A5660` 616 *parked*
+- `func_000AAF70` 632 *parked*
+- `func_000A0888` 640 *parked*
+- `nico_SmallKiteMinoStart` 640 *parked*
+- `func_000A70A0` 648 *parked*
+- `func_000A7360` 664 *parked*
+- `func_000A7908` 848 *parked*
+- `func_000A9D40` 560
+- `func_000A1AC0` 728
+- `func_000A9A10` 760
+- `func_000AAC20` 792
+- `func_000AB478` 792
+- `func_0009F830` 800
+- `func_000A3AA0` 816
+- `func_000A7C90` 848
+- `func_000ABE28` 920
+- `func_000A1DD0` 936
+- `func_000A5260` 968
+- `func_000AA150` 976
+- `func_000A2F48` 1144
+- `func_000A21B0` 1168
+- `func_0009FB88` 1172
+- `func_000A4370` 1200
+- `func_000A4858` 1224
+- `func_000A4D58` 1232
+- `func_000A0B40` 1288
+- `func_000A27C8` 1360
+- `func_000A6450` 1504
+- `func_000A6A68` 1536
+- `func_000A8C48` 1568
+- `func_000A33F8` 1648
+- `func_000A5B80` 1704
+- `func_000A92A0` 1904
+- `func_000AC1C0` 2020
+- `func_000A1080` 2200
+- `func_000A8018` 3064

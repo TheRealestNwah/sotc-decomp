@@ -1,18 +1,23 @@
 import pytest
 
 from tools.progress import (
+    GroupRow,
     Progress,
     block,
     c_functions,
     count,
+    group_rows,
     label_addresses,
     loader_game_functions,
     loader_progress,
     module_functions,
+    parked_functions,
     read_sdk_routines,
     render_sdk,
     render_table,
+    render_unmatched,
     strip_nonmatching,
+    text_base,
     unmatched_functions,
     update_readme,
 )
@@ -278,3 +283,42 @@ def test_unmatched_functions_sizes_and_exclusions():
     labels = {"a": 0x100, "b": 0x120, "c": 0x140, "d": 0x180}
     got = unmatched_functions(asm, labels, {"a", "b", "c", "d"}, {"c"}, set(), {"d"})
     assert got == [(0x20, "a"), (0x20, "b")]
+
+
+def test_text_base_from_named_labels():
+    assert text_base({"a": 0x10, "b": 0x40}, {"a": 0x110, "b": 0x140, "c": 0x200}) == 0x100
+    assert text_base({}, {}) == 0
+    with pytest.raises(ValueError):
+        text_base({"a": 0x10, "b": 0x40}, {"a": 0x110, "b": 0x150})
+
+
+def test_parked_functions_are_only_those_defined_under_nonmatching(tmp_path):
+    source = (
+        "int done(void) {\n    return 0;\n}\n"
+        "#ifdef NONMATCHING\nint park(int x) {\n    return x;\n}\n"
+        "#else\nextern int park(int x);\n#endif\n"
+    )
+    (tmp_path / "a.c").write_text(source, encoding="latin-1")
+    assert parked_functions(tmp_path) == {"park"}
+
+
+def test_group_rows_orders_groups_and_functions():
+    groups = [(0x000, "one.c"), (0x100, "b .. c"), (0x200, "d")]
+    offsets = {"a": 0x000, "b": 0x100, "c": 0x180, "x": 0x1C0, "d": 0x200}
+    game = set(offsets)
+    unmatched = [(0x20, "c"), (0x40, "b"), (0x80, "x"), (0x10, "d")]
+    todo, done = group_rows(groups, offsets, game, unmatched, parked={"x"})
+    assert done == 1  # one.c
+    assert [g.label for g in todo] == ["d", "b .. c"]
+    expected = [(0x80, "x", True), (0x20, "c", False), (0x40, "b", False)]
+    assert todo[1] == GroupRow("b .. c", 0x100, 3, expected)
+
+
+def test_render_unmatched_with_groups():
+    rows = {"KERNEL": [(0x10, "d")]}
+    groups = {"KERNEL": ([GroupRow("d", 0x200, 1, [(0x10, "d", True)])], 4)}
+    text = render_unmatched(rows, groups)
+    assert "1 Source groups to go, 4 fully matched." in text
+    assert "### d: 1 of 1 unmatched" in text
+    assert "- `d` 16 *parked*" in text
+    assert "- `d` 16\n" in render_unmatched(rows)

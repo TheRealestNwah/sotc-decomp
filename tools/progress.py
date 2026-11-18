@@ -33,6 +33,7 @@ Usage: python tools/progress.py
 from __future__ import annotations
 
 import argparse
+import bisect
 import csv
 import re
 import sys
@@ -105,6 +106,16 @@ def c_functions(src_dir: Path) -> tuple[set[str], set[str]]:
     return defined, statics
 
 
+def parked_functions(src_dir: Path) -> set[str]:
+    """Functions with a Parked attempt: defined only in NONMATCHING code."""
+    parked: set[str] = set()
+    for c_file in src_dir.glob("*.c"):
+        source = c_file.read_text(encoding="latin-1")
+        everywhere = set(DEFINITION_RE.findall(source))
+        parked |= everywhere - set(DEFINITION_RE.findall(strip_nonmatching(source)))
+    return parked
+
+
 def label_addresses(asm_text: str) -> dict[str, int]:
     """Function labels (glabel and alabel) in a Game module's text.s and their
     asm addresses."""
@@ -120,6 +131,15 @@ def label_addresses(asm_text: str) -> dict[str, int]:
     return labels
 
 
+def text_base(named: dict[str, int], labels: dict[str, int]) -> int:
+    """The fixed difference between asm addresses and .text offsets, found from
+    the named symbols' labels."""
+    bases = {labels[name] - value for name, value in named.items() if name in labels}
+    if len(bases) > 1:
+        raise ValueError(f"named symbols disagree on the asm .text base: {sorted(bases)}")
+    return bases.pop() if bases else 0
+
+
 def module_functions(named: dict[str, int], labels: dict[str, int], targets: set[int]) -> set[str]:
     """A Game module's functions: its named symbols, plus the Placeholder-named
     labels at addresses the Original references.
@@ -128,10 +148,7 @@ def module_functions(named: dict[str, int], labels: dict[str, int], targets: set
     addresses and `targets` holds the .text offsets of section-relative
     relocations. Asm addresses are .text offsets plus a fixed base, found from
     the named symbols' labels."""
-    bases = {labels[name] - value for name, value in named.items() if name in labels}
-    if len(bases) > 1:
-        raise ValueError(f"named symbols disagree on the asm .text base: {sorted(bases)}")
-    base = bases.pop() if bases else 0
+    base = text_base(named, labels)
     functions = set(named)
     for name, address in labels.items():
         if name not in named and PLACEHOLDER_RE.fullmatch(name) and address - base in targets:
@@ -328,8 +345,56 @@ def unmatched_functions(
     return sorted((sizes.get(name, 0), name) for name in todo)
 
 
-def render_unmatched(rows: dict[str, list[tuple[int, str]]]) -> str:
-    """Markdown list of unmatched real functions per module."""
+@dataclass
+class GroupRow:
+    """One Source group with unmatched functions: its label, start (.text offset),
+    Game code function count and the unmatched ones as (size, name, parked)."""
+
+    label: str
+    start: int
+    total: int
+    unmatched: list[tuple[int, str, bool]]
+
+
+def group_rows(
+    groups: list[tuple[int, str]],
+    offsets: dict[str, int],
+    game: set[str],
+    unmatched: list[tuple[int, str]],
+    parked: set[str],
+) -> tuple[list[GroupRow], int]:
+    """Sort a module's Game code into Source groups, in work order: fewest
+    unmatched functions first, then by address. `groups` holds each group's
+    (start offset, label) in address order; a function belongs to the last group
+    starting at or before its offset. Returns the groups with unmatched
+    functions and the number of groups that are fully matched."""
+    starts = [start for start, _ in groups]
+    rows = [GroupRow(label, start, 0, []) for start, label in groups]
+
+    def row(name: str) -> GroupRow | None:
+        i = bisect.bisect_right(starts, offsets.get(name, -1)) - 1
+        return rows[i] if i >= 0 and name in offsets else None
+
+    for name in game:
+        if r := row(name):
+            r.total += 1
+    for size, name in unmatched:
+        if r := row(name):
+            r.unmatched.append((size, name, name in parked))
+    for r in rows:
+        # Parked attempts first, then fresh functions, smallest first.
+        r.unmatched.sort(key=lambda u: (not u[2], u[0], u[1]))
+    todo = sorted((r for r in rows if r.unmatched), key=lambda r: (len(r.unmatched), r.start))
+    done = sum(1 for r in rows if r.total and not r.unmatched)
+    return todo, done
+
+
+def render_unmatched(
+    rows: dict[str, list[tuple[int, str]]],
+    groups: dict[str, tuple[list[GroupRow], int]] | None = None,
+) -> str:
+    """Markdown list of unmatched real functions per module, sorted into Source
+    groups in work order when `groups` is given."""
     out = [
         "# Unmatched Game code functions",
         "",
@@ -338,13 +403,52 @@ def render_unmatched(rows: dict[str, list[tuple[int, str]]]) -> str:
         "Original references. Tails of larger functions that spimdisasm split off are",
         "left out. Parked drafts (`#ifdef NONMATCHING`) still count as unmatched.",
         "Size is in bytes, from the asm; 0 means unknown.",
-        "",
     ]
+    if groups is not None:
+        out += [
+            "",
+            "Functions are sorted into Source groups (`tools/xff_tus.py`) in work order:",
+            "the groups with the fewest unmatched functions first. Within a group,",
+            "Parked attempts (marked *parked*) come first, then fresh functions,",
+            "smallest first. A group is named after its Original source file when a",
+            "string gives one, otherwise after its first and last functions.",
+        ]
+    out.append("")
     for module, items in rows.items():
         out += [f"## {module} ({len(items)})", ""]
-        out += [f"- `{name}` {size}" for size, name in items]
-        out.append("")
+        if groups is None or module not in groups:
+            out += [f"- `{name}` {size}" for size, name in items]
+            out.append("")
+            continue
+        todo, done = groups[module]
+        out += [f"{len(todo)} Source groups to go, {done} fully matched.", ""]
+        for g in todo:
+            out += [f"### {g.label}: {len(g.unmatched)} of {g.total} unmatched", ""]
+            out += [
+                f"- `{name}` {size}" + (" *parked*" if parked else "")
+                for size, name, parked in g.unmatched
+            ]
+            out.append("")
     return "\n".join(out)
+
+
+def source_groups(xff_path: Path) -> list[tuple[int, str]]:
+    """(start .text offset, label) of each Source group in a Game module."""
+    from tools.functions import open_module
+    from tools.xff_tus import infer
+
+    result = infer(open_module(xff_path.stem, xff_path.parent))
+    out = []
+    for g in result.groups:
+        first, last = result.functions[g.first], result.functions[g.last]
+        if g.names:
+            label = ", ".join(sorted(g.names))
+        elif g.first == g.last:
+            label = first[1]
+        else:
+            label = f"{first[1]} .. {last[1]}"
+        out.append((first[0], label))
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -373,6 +477,7 @@ def main(argv: list[str] | None = None) -> int:
     sdk = read_sdk_routines(SDK_ROUTINES)
     progress = {}
     unmatched = {}
+    groups: dict[str, tuple[list[GroupRow], int]] = {}
     for module in MODULES:
         asm_path = args.asm_dir / module / "text.s"
         xff_path = args.iso_dir / f"{module}.XFF"
@@ -384,20 +489,31 @@ def main(argv: list[str] | None = None) -> int:
         labels = label_addresses(asm_path.read_text(encoding="latin-1"))
         defined, statics = c_functions(REPO / "src" / "xff" / module)
         if args.unmatched:
+            functions = module_functions(named, labels, targets)
+            module_sdk = sdk.get(module, set())
             unmatched[module] = unmatched_functions(
                 asm_path.read_text(encoding="latin-1"),
                 labels,
-                module_functions(named, labels, targets),
+                functions,
                 defined,
                 statics,
-                sdk.get(module, set()),
+                module_sdk,
+            )
+            base = text_base(named, labels)
+            offsets = {name: labels[name] - base for name in functions if name in labels}
+            groups[module] = group_rows(
+                source_groups(xff_path),
+                offsets,
+                functions - module_sdk,
+                unmatched[module],
+                parked_functions(REPO / "src" / "xff" / module),
             )
             continue
         progress[module] = count(
             module_functions(named, labels, targets), defined, statics, sdk.get(module, set())
         )
     if args.unmatched:
-        args.unmatched.write_text(render_unmatched(unmatched), encoding="utf-8")
+        args.unmatched.write_text(render_unmatched(unmatched, groups), encoding="utf-8")
         print(f"wrote {args.unmatched}")
         return 0
     loader = loader_progress(LOADER_FUNCTIONS_CSV, REPO / "src" / "loader")
