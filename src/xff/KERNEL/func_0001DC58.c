@@ -10,6 +10,7 @@ typedef struct {
             u64 mode : 3;
         } b;
         int w;
+        u64 d;
     } f;
     char pad10[0x10];
     float cur;
@@ -25,7 +26,7 @@ extern int D_00040FAC;
 extern int Sg2SepSetParam(unsigned int id, int selector, int value, int extra);
 
 #ifdef NONMATCHING
-/* Parked: mode-check branch shape and volume-store conversions differ. */
+/* Parked: 3 words differ; the volTarget arm loads vol before mtc1/cvt.s.w instead of after. */
 void func_0001DC58(SepVoice *v)
 {
     int id = v->id;
@@ -34,30 +35,28 @@ void func_0001DC58(SepVoice *v)
     short vol;
     int d;
 
-    if (D_00040FAC == 0 || v->f.b.mode == 1) {
-        t = v->volTarget;
-    } else {
+    if (D_00040FAC != 0 && ((v->f.d >> 34) & 7) != 1) {
         t = 0.0f;
+        vol = v->vol;
+    } else {
+        t = v->volTarget;
+        vol = v->vol;
     }
-    vol = v->vol;
     if (vol != t) {
         d = vol - t;
-        if (vol >= 0) {
-            if (d > 0) {
-                if (d >= 10) {
-                    n = vol - 10;
-                    goto conv;
-                }
-            } else if (d < -9) {
-                n = vol + 10;
-                goto conv;
+        if (vol < 0) {
+            v->vol = t;
+        } else if (d > 0) {
+            if (d < 10) {
+                v->vol = t;
+            } else {
+                v->vol = (float)(vol - 10);
             }
+        } else if (d < -9) {
+            v->vol = (float)(vol + 10);
+        } else {
+            v->vol = t;
         }
-        v->vol = t;
-        goto done;
-    conv:
-        v->vol = (float)n;
-    done:
         Sg2SepSetParam(id, 2, v->vol, 0);
     }
     if (v->cur != v->target) {
