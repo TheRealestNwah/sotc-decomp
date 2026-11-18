@@ -1,4 +1,4 @@
-/* Parked: 107 diffs, same size. Sibling of _sendProgramRotInput: direction from the character's position (cc+0x134 pointer) to the target, normalised with w = 1.0, transformed by the inverse of the character's quaternion matrix (cc+0x470, rows only, identity translation row stored from vf0), atan2(x, z) as the turn angle; when the character's mode (cc+0x750) equals w+0x20 it refreshes the motion ratio at w+0x110 through calcNextMotRatio (only while it still holds the sentinel RO_001814B8, an all-ones word compared as a float), otherwise switches to SCRStop and then SCRStopR / SCRStopL by angle versus the threshold and re-arms w+0x110 with the sentinel. Remaining: register numbering (the Original keeps obj/w in s3/s2 swapped from ours and uses a separate address register for the identity-row store); the operand-swap trick did not change it. */
+/* Parked: 11 diffs, same size. Sibling of _sendProgramRotInput: direction from the character's position (cc+0x134 pointer) to the target, normalised with w = 1.0, transformed by the inverse of the character's quaternion matrix (cc+0x470, rows only, identity translation row stored from vf0), atan2(x, z) as the turn angle; when the character's mode (cc+0x750) equals w+0x20 it refreshes the motion ratio at w+0x110 through calcNextMotRatio (only while it still holds the sentinel RO_001814B8, an all-ones word compared as a float), otherwise switches to SCRStop and then SCRStopR / SCRStopL by angle versus the threshold (one shared call) and re-arms w+0x110 with the sentinel. Remaining: the Original rebuilds the matrix address in v0 after the identity-row store instead of copying a0, and sets a0 in each StopR/StopL arm with the script pointer loaded through v1. */
 #ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -29,6 +29,8 @@ static inline void vecNormalize(float *dst, float *src)
 
 static inline void quatToMatrix3(float *out, float *quat)
 {
+    register float *o asm("$4") = out;
+    register float *q asm("$2") = quat;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
                          "vmr32.w vf14, vf0\n"
@@ -56,7 +58,7 @@ static inline void quatToMatrix3(float *out, float *quat)
                          "sqc2 vf14, 0x0(%0)\n"
                          "sqc2 vf15, 0x10(%0)\n"
                          "sqc2 vf16, 0x20(%0)\n"
-                         : : "r"(out), "r"(quat) : "memory");
+                         : : "r"(o), "r"(q) : "memory");
 }
 
 static inline void matInverse(float *dst, float *src)
@@ -132,26 +134,29 @@ int sendStopKeyFastLegCtrlWork(int obj, char *w, char *target, float thr)
     vecNormalize(v, v);
     v[3] = 1.0f;
     quatToMatrix3(m[0], (float *)(cc + 0x470));
-    __asm__ __volatile__("sqc2 vf0, 0x0(%0)
-" : : "r"(m[3]) : "memory");
-    matInverse(m[0], m[0]);
-    matApply(v, m[0], v);
+    { register float *p3 asm("$3") = m[3]; __asm__ __volatile__("sqc2 vf0, 0x0(%0)
+" : : "r"(p3) : "memory"); }
+    { register float *mm asm("$2") = m[0]; __asm__("" : "+r"(mm)); matInverse(mm, mm); matApply(v, mm, v); }
     ang = iosGetATan2fExact(v[0], v[2]);
     if (*(int *)(cc + 0x750) == *(int *)(w + 0x20)) {
-        if (*(float *)(w + 0x110) != RO_F)
-            return 1;
-        *(float *)(w + 0x110) = calcNextMotRatio(obj, cr, ang, *(float *)(cc + 0x574));
+        if (*(float *)(w + 0x110) == RO_F)
+            *(float *)(w + 0x110) = calcNextMotRatio(obj, cr, ang, *(float *)(cc + 0x574));
         return 1;
     }
     CharaCtrlSetScriptCtrlStatus(obj, ScriptCtrlDef_SCRStop[1]);
-    if (thr < ang) {
-        CharaCtrlSetScriptCtrlStatus(obj, ScriptCtrlDef_SCRStopR[1]);
-    } else if (ang < -thr) {
-        CharaCtrlSetScriptCtrlStatus(obj, ScriptCtrlDef_SCRStopL[1]);
-    } else {
-        return 0;
+    {
+        int *s;
+
+        if (thr < ang)
+            s = ScriptCtrlDef_SCRStopR;
+        else if (ang < -thr)
+            s = ScriptCtrlDef_SCRStopL;
+        else
+            return 0;
+        CharaCtrlSetScriptCtrlStatus(obj, s[1]);
     }
     *(float *)(w + 0x110) = RO_F;
+    __asm__ __volatile__("");
     return 0;
 }
 #endif
