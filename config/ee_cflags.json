@@ -282,6 +282,9 @@
   "src/xff/KERNEL/Sg2SmfpPlay.c": [
     "--asm-fill-delay-slots"
   ],
+  "src/xff/KERNEL/Sg2SmfpTickProc.c": [
+    "--asm-fill-delay-slots"
+  ],
   "src/xff/KERNEL/func_00016380.c": [
     "-fno-strict-aliasing"
   ],
