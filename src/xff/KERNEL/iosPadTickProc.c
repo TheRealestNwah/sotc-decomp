@@ -4,7 +4,7 @@ typedef struct {
     unsigned int trig;
     unsigned int rel;
     unsigned int rep;
-    float time[16];
+    union PadTime { float f; unsigned int u; } time[16];
     unsigned char lx, ly, rx, ry;
     struct Shock { char d[0x10]; unsigned char m0, m1; char pad[2]; } shock;
     char motor[4];
@@ -29,8 +29,6 @@ extern void Shock_Decode(void *, void *, void *);
 extern void Shock_SetMotor(int, int, void *, int, int);
 extern void padSysVibSetAcrParam(void *, void *);
 
-/* Parked: Parked: 85 words differ (button word kept in a register instead of reloading trig each loop pass) */
-#ifdef NONMATCHING
 void iosPadTickProc(void)
 {
     int port;
@@ -42,7 +40,7 @@ void iosPadTickProc(void)
         PadSys *s = padSysGet(port, 0);
         unsigned int btn, chg;
         int i;
-        float *tp;
+        union PadTime *tp;
         struct Shock *sh;
 
         p->old = p->now;
@@ -52,18 +50,17 @@ void iosPadTickProc(void)
         p->trig = chg & btn;
         p->rel = chg & ~btn;
         p->now = btn;
-        tp = p->time;
-        for (i = 0; i < 16; i++, tp++) {
+        for (i = 0, tp = p->time; i < 16; i++, tp++) {
             unsigned int bit = 1 << i;
             float t;
             if (p->trig & bit) {
                 t = now + 0.4f;
-            } else if ((p->now & bit) && *tp < now) {
+            } else if ((p->now & bit) && tp->f < now) {
                 t = now + 0.08f;
             } else {
                 continue;
             }
-            *tp = t;
+            tp->f = t;
             p->rep |= bit;
         }
         p->rx = s->rx;
@@ -81,6 +78,3 @@ void iosPadTickProc(void)
         D_000407F8();
     }
 }
-#else
-extern void iosPadTickProc(void);
-#endif
