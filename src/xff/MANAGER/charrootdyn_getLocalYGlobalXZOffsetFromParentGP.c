@@ -1,4 +1,4 @@
-/* Parked at 24 diffs: the Original keeps &pos in s0 and q in s1 (swapped here), the matrix pointers in v0/v1 are swapped, and the first three zero stores are ordered 0, 0xC, 8. */
+/* Parked at 2 diffs: the Original copies local into v (sq) before the first zero store to local; here the sq is scheduled one slot later. Register pins on the matrix pointers and q fix the rest (was 24). */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -35,18 +35,30 @@ typedef union { s128 q; float f[4]; } Vec4;
                          : : "r"(dst), "r"(src) \
                          : "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15", "memory")
 
-#define VU_APPLY(out, mtx, v) \
-    __asm__ __volatile__("lqc2 vf8, 0(%2)\n" \
-                         "lqc2 vf14, 0(%1)\n" \
-                         "lqc2 vf15, 16(%1)\n" \
-                         "lqc2 vf16, 32(%1)\n" \
-                         "lqc2 vf17, 48(%1)\n" \
-                         "vmulax.xyzw ACC, vf14, vf8x\n" \
-                         "vmadday.xyzw ACC, vf15, vf8y\n" \
-                         "vmaddaz.xyzw ACC, vf16, vf8z\n" \
-                         "vmaddw.xyzw vf10, vf17, vf8w\n" \
-                         "sqc2 vf10, 0(%0)\n" \
-                         : : "r"(out), "r"(mtx), "r"(v) : "memory")
+static inline void VU_APPLY(Vec4 *out, Vec4 *mtx, Vec4 *v)
+{
+    __asm__ __volatile__("lqc2 vf8, 0x0(%2)
+"
+                         "lqc2 vf14, 0x0(%1)
+"
+                         "lqc2 vf15, 0x10(%1)
+"
+                         "lqc2 vf16, 0x20(%1)
+"
+                         "lqc2 vf17, 0x30(%1)
+"
+                         "vmulax.xyzw ACC, vf14, vf8x
+"
+                         "vmadday.xyzw ACC, vf15, vf8y
+"
+                         "vmaddaz.xyzw ACC, vf16, vf8z
+"
+                         "vmaddw.xyzw vf10, vf17, vf8w
+"
+                         "sqc2 vf10, 0x0(%0)
+"
+                         : : "r"(out), "r"(mtx), "r"(v) : "memory");
+}
 
 extern void GetGeometryPointerPosition(Vec4 *, void *);
 
@@ -57,9 +69,11 @@ void charrootdyn_getLocalYGlobalXZOffsetFromParentGP(Vec4 *local, Vec4 *global, 
     Vec4 m[4];
     Vec4 inv[4];
     Vec4 *pp = &pos;
+    register float *qq __asm__("$17") = q;
 
     v.q = offset->q;
     GetGeometryPointerPosition(pp, gp);
+    { register float *mp __asm__("$2") = m[0].f;
     __asm__ __volatile__(".set noreorder\n"
         "vaddw.xyz vf12, vf0, vf0w\n"
         "lqc2 vf11, 0x0(%0)\n"
@@ -92,8 +106,9 @@ void charrootdyn_getLocalYGlobalXZOffsetFromParentGP(Vec4 *local, Vec4 *global, 
         "vmove.w vf4, vf0\n"
         "sqc2 vf4, 0x30(%1)\n"
         ".set reorder\n"
-        : : "r"(q), "r"(m[0].f), "r"(pp));
-    VU_INVERSE_MATRIX(inv, m);
+        : : "r"(qq), "r"(mp), "r"(pp));
+    }
+    { register Vec4 *ip __asm__("$3") = inv; VU_INVERSE_MATRIX(ip, m); }
     VU_APPLY(local, inv, &v);
     v.q = local->q;
     {
