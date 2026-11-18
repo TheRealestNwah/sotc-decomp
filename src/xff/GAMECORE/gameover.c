@@ -35,8 +35,8 @@ extern void scrRun(void);
 extern int *DldSysUndefSymbol;
 extern GcGlobal gcGlobalVar;
 extern int D_0017ABB8;
-extern void func_00055308(void *, void *, int, int);
-extern void func_00055350(void *, void *, int, int);
+static void func_00055308(void *a0, void *a1, int flags, int mode);
+static void func_00055350(void *a0, void *a1, int flags, int mode);
 
 static inline char *dldResolve(unsigned int *h)
 {
@@ -145,4 +145,31 @@ void gameover(void *parameters)
     } while (loop);
     gameflowSelectGameoverMenu(result);
     ScrSpriteParamEnd(&local, 1);
+}
+
+static void func_00055308(void *a0, void *a1, int flags, int mode)
+{
+    if (flags & 1) {
+        switch (mode) {
+        case 0:
+            D_0017ABB8 = 1;
+            break;
+        case 1:
+            D_0017ABB8 = 2;
+            break;
+        }
+    }
+}
+
+static void func_00055350(void *a0, void *a1, int flags, int mode)
+{
+    if (flags & 1) {
+        if (mode != 0) {
+            if (mode == 1) {
+                D_0017ABB8 = 6;
+            }
+        } else {
+            D_0017ABB8 = 7;
+        }
+    }
 }
