@@ -1,6 +1,6 @@
 typedef struct { char pad[0xD0]; float d0; float d4; float d8; } Range;
 
-#ifdef NONMATCHING /* 7 diffs: even with the barrier, gcc turns the final a0 ? 1 : 0 into sltu instead of the original bnez/li 1/li 0, which shifts branch offsets and puts the 0x38 load in $v1 */
+/* The final test is written as if/return with barriers so gcc keeps the original bnez/li 1/li 0 form instead of sltu; the 0x38 load is pinned to $v0. */
 static int func_0009F6E8(char *c)
 {
     float f1;
@@ -14,8 +14,11 @@ static int func_0009F6E8(char *c)
     st = *(int *)(c + 0x274);
     if (st != 2 && st != 4 && st != 8 && st != 6)
         return 1;
-    if (*(int *)(c + 0x38) != 0)
-        return 0;
+    {
+        register int t __asm__("$2") = *(int *)(c + 0x38);
+        if (t != 0)
+            return 0;
+    }
     f1 = *(float *)(c + 0x324);
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
@@ -41,6 +44,8 @@ static int func_0009F6E8(char *c)
             a0 = *(float *)(c + 0x90) < 50.0f;
     }
     __asm__("" : "+r"(a0));
-    return a0 ? 1 : 0;
+    if (a0 != 0)
+        return 1;
+    __asm__("");
+    return 0;
 }
-#endif
