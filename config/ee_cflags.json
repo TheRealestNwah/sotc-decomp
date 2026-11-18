@@ -1,4 +1,7 @@
 {
+  "src/xff/KERNEL/Sg2SlotSetLfoVolDepth.c": [
+    "--asm-fill-delay-slots"
+  ],
   "src/xff/KERNEL/isysDisposeModuleObjRelocationElement.c": [
     "-fno-strict-aliasing"
   ],
