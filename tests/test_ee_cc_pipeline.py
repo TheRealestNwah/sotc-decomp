@@ -53,7 +53,7 @@ def test_windows_compiler_keeps_native_compile_fallback(tmp_path, monkeypatch):
     monkeypatch.setattr(ee_cc, "find_cc1", lambda _: tmp_path / "cc1.exe")
     calls = []
     monkeypatch.setattr(ee_cc, "compile_c", lambda *args: calls.append(("compile", args)))
-    monkeypatch.setattr(ee_cc, "assemble", lambda *args: calls.append(("assemble", args)))
+    monkeypatch.setattr(ee_cc, "assemble", lambda *args, **kwargs: calls.append(("assemble", args)))
     assert (
         ee_cc.compile_and_assemble(tmp_path, tmp_path / "x.c", ["-G8"], output, tmp_path / "ee-as")
         is None

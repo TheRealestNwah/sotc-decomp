@@ -29,12 +29,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from tools.ee_asm import (  # noqa: E402
-    expand_indexed_loads as expand_indexed_loads,
-)
 from tools.ee_asm import (
+    FILL_DELAY_SLOTS,
     fix_moves,
     prepare_asm,
+    split_asm_options,
+)
+from tools.ee_asm import (  # noqa: E402
+    expand_indexed_loads as expand_indexed_loads,
 )
 from tools.ee_asm import (
     indexed_la_barriers as indexed_la_barriers,
@@ -116,13 +118,20 @@ def find_package_as(compiler_dir: Path) -> Path | None:
     return found[0] if found else None
 
 
-def assemble(asm: Path, obj: Path, package_as: Path | None = None, gp: int = 0) -> str | None:
+def assemble(
+    asm: Path,
+    obj: Path,
+    package_as: Path | None = None,
+    gp: int = 0,
+    fill_delay_slots: bool = False,
+) -> str | None:
     """Assemble with the compiler package's own (era-matching) ee-as when
     given; otherwise modern binutils, patching the one known expansion
     difference. Macro expansions (`move`, `lw reg, sym(reg)`) differ between
     assembler versions, so the package's assembler is preferred. `gp` is the
-    small-data limit (-G) the C was compiled with."""
-    prepare_asm(asm, gp)
+    small-data limit (-G) the C was compiled with; `fill_delay_slots` lets the
+    assembler fill delay slots (tools/ee_asm.py)."""
+    prepare_asm(asm, gp, fill_delay_slots)
     if package_as is not None:
         script = (
             f'L={I386_LIBS}; work=$(mktemp -d); cp "$1" "$work/in.s"; '
@@ -206,8 +215,12 @@ def main(argv: list[str] | None = None) -> int:
 
     from elftools.elf.elffile import ELFFile
 
+    from tools.ee_cc import source_cflags
     from tools.functions import function, functions, open_module
 
+    # A source listed in config/ee_cflags.json brings its assembler options
+    # (tools/ee_asm.py) along, as in the build; its compiler flags stay as given.
+    _, config_fill = split_asm_options(source_cflags(args.source))
     original = open_module(args.module, ROOT / "iso")
     targets = functions(original)
     compilers = sorted(
@@ -228,10 +241,14 @@ def main(argv: list[str] | None = None) -> int:
                 asm.unlink(missing_ok=True)
                 obj.unlink(missing_ok=True)
                 package_as = None if args.modern_as else find_package_as(compiler)
-                error = compile_c(compiler, source, flags.split(), asm) or assemble(
-                    asm, obj, package_as
+                cc_flags, fill = split_asm_options(flags.split())
+                fill = fill or config_fill
+                error = compile_c(compiler, source, cc_flags, asm) or assemble(
+                    asm, obj, package_as, fill_delay_slots=fill
                 )
                 label = f"{compiler.name:{names_width}} {flags:10}"
+                if fill and FILL_DELAY_SLOTS not in flags.split():
+                    label += f" {FILL_DELAY_SLOTS}"
                 if package_as is None and not args.modern_as:
                     label += "*"
                 if error:
