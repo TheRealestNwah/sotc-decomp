@@ -7,7 +7,7 @@ extern void *memset(void *, int, unsigned int);
 extern void UpdateLayoutClassPastSimpleGeometry(char *);
 extern void InitCollisionFinder(void *, int, int);
 extern void GetCollisionDB(void *, void *, int *, void *, void *, float);
-extern int SlideCollisionFinder4D(void *, void *, void *, void *, int, float, float);
+extern int SlideCollisionFinder4D(void *, void *, void *, float, void *, int, float);
 extern void SetQuaternionByAxisRotateVWithNoRegularize(void *, short, void *);
 extern void charrootdyn_getvelocity(void *, void *, void *, float);
 extern void UpdateLayoutClassSimpleGeometry(char *, float);
@@ -35,7 +35,7 @@ extern float D_0017A9B8;
                          "sqc2 vf13, 0x0(%2)\n"                                                    \
                          : : "r"(a), "r"(b), "r"(dst) : "memory")
 
-#ifdef NONMATCHING /* 5 diffs: gcGlobalVar base built in $v0 instead of $v1; in the SlideCollisionFinder4D call the original puts mov.s $f12,$f21 before daddu $a3,$sp with daddu $t0,$zero in the delay slot. Permuter: no gain in ~240 iterations */
+#ifdef NONMATCHING /* 2 diffs: gcGlobalVar base built in $v0 instead of $v1. Listing the float arguments of SlideCollisionFinder4D in their register order fixed the call setup. Permuter: no gain in ~240 iterations */
 void nico_balltest(void)
 {
     char finder[0x20];
@@ -71,7 +71,7 @@ void nico_balltest(void)
                              : : "r"(*(char **)(lc + 0x134)), "r"(*(char **)(lc + 0x134)), "r"(&step) : "memory");
         (*(Vec4 **)(lc + 0x134))->f[1] += D_0017A9B8 * -14.6999989f * 0.5f * dt * dt;
         GetCollisionDB(finder, gcGlobalVar.col, th, *(void **)(lc + 0x134), *(void **)(lc + 0x138), 0.5f);
-        if (SlideCollisionFinder4D(res, *(void **)(lc + 0x138), *(void **)(lc + 0x134), finder, 0, 0.5f, 0.001f) != 0) {
+        if (SlideCollisionFinder4D(res, *(void **)(lc + 0x138), *(void **)(lc + 0x134), 0.5f, finder, 0, 0.001f) != 0) {
             Vec4 diff;
             Vec4 q;
             float len;
