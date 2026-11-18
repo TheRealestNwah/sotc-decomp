@@ -260,5 +260,8 @@
   ],
   "src/xff/MANAGER/func_000E2A40.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/debug_sep_config.c": [
+    "--asm-fill-delay-slots"
   ]
 }
