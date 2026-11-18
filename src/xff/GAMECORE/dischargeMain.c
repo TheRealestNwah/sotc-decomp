@@ -84,7 +84,6 @@ static inline void scaleAdd(Vec4 *out, Vec4 *in, float s, Vec4 *add)
 
 typedef struct { float x, y, z, w; } __attribute__((aligned(8))) F4;
 
-#ifdef NONMATCHING /* 2 diffs: the original stores the second scale half (sd $v0,0x28($sp)) before jal GetLayoutClass with lw $a0,0x10($s2) in the delay slot; ours swaps them. Permuter: no gain in ~400 iterations */
 void dischargeMain(char *obj)
 {
     Vec4 color;
@@ -103,9 +102,14 @@ void dischargeMain(char *obj)
     SCRSetLWSGeometry(w->lws, 0, at, IdentityQuaternion);
     max.f[0] = w->ratio * w->scale;
     max.f[1] = 1.0f;
-    max.f[2] = w->ratio * w->scale;
+    {
+        register float s asm("$f0") = w->scale;
+
+        max.f[2] = w->ratio * s;
+    }
     max.f[3] = 1.0f;
     scl = *(F4 *)&max;
+    __asm__ volatile("" ::: "memory");
     SetLayoutClassScaleElem(GetLayoutClass(w->lws), &scl, 0);
     if (w->ratio == 0.0f) {
         if (*(signed char *)(GetScriptAnimationClass(w->lws) + 0x364) != 1)
@@ -171,4 +175,3 @@ void dischargeMain(char *obj)
     }
     iosDlPopLayer();
 }
-#endif
