@@ -34,15 +34,23 @@ extern void iosStartThread(int, int);
 
 typedef void (*PrintFn)(const char *, ...);
 
-#ifdef NONMATCHING
-/* Parked: 36 words differ (prologue order; original has nops around the
-   __loader_version_id__ address load that this C does not produce) */
 int ioskernel(int verbose, char *version)
 {
     MemoryInfo info;
-    PrintFn print = *(PrintFn volatile *)0x100000;
-    PrintFn warn = *(PrintFn volatile *)0x100004;
-    char *mine = __loader_version_id__;
+    PrintFn print = *(PrintFn *)0x100000;
+    PrintFn warn = *(PrintFn *)0x100004;
+    char *mine;
+
+    /* The Original loads this address with nops around the %lo half, which
+       gcc never emits for a symbol address. */
+    __asm__ volatile("lui %0, %%hi(__loader_version_id__)
+	"
+                     "nop
+	"
+                     "addiu %0, %0, %%lo(__loader_version_id__)
+	"
+                     "nop"
+                     : "=r"(mine));
 
     if (verbose) {
         print(RO_00042770);
@@ -71,4 +79,3 @@ int ioskernel(int verbose, char *version)
     iosStartThread(B_00053F08, 0);
     return 0;
 }
-#endif
