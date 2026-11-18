@@ -1,4 +1,4 @@
-/* Parked: 9 diffs, same size (incl. the split tail func_0010F6D8). Root scale ratio update: clamps o->r (0x160) toward the chara's current ratio by a per-frame step, limits it to [p->f58, p->f38], eases it with getValueInterp and, when shrinking, limits it by the two analyzeMotionProperty2 speeds, then hands it to SCRSetRootScaleRatio / SCRSetCharaRootTurnScaleRatio. Remaining: argument setup order before the two analyzeMotionProperty2 calls (the Original sets f13 before f12 and a2/a3 last). */
+/* Parked: 6 diffs, same size (incl. the split tail func_0010F6D8). Root scale ratio update: clamps o->r (0x160) toward the chara's current ratio by a per-frame step, limits it to [p->f58, p->f38], eases it with getValueInterp and, when shrinking, limits it by the two analyzeMotionProperty2 speeds, then hands it to SCRSetRootScaleRatio / SCRSetCharaRootTurnScaleRatio. The analyzeMotionProperty2 prototype lists its float arguments before the pointers so gcc sets them up in the Original order. Remaining: in the second call the Original loads elem in the delay slot. */
 #ifdef NONMATCHING
 typedef struct { char pad0[0x360]; char b360; char pad361[2]; char b363; char pad364[0x20C]; float f570; char pad574[0x1DC]; int i750; } Chara;
 typedef struct { char *elem; int pad4; float f8; float fC; } Mot;
@@ -7,7 +7,7 @@ typedef struct { char pad0[8]; int h; char padC[8]; Chara *c; char pad18[4]; Mot
 typedef struct { char pad0[0x190]; float f190; } GV;
 extern GV gcGlobalVar;
 extern void analyzeMotionProperty(int, char *, float *, float *, float *, float, float);
-extern void analyzeMotionProperty2(int, char *, float *, float *, float *, float, float, float);
+extern void analyzeMotionProperty2(int, char *, float, float, float, float *, float *, float *);
 extern float getValueInterp(float, float, float, float);
 extern void SCRSetRootScaleRatio(int, float);
 extern void SCRSetCharaRootTurnScaleRatio(int, float);
@@ -59,9 +59,9 @@ static void func_0010F338(Obj *o)
     if (d < 0.0f && (p->i98 != 0 || o->c->b363 != 0)) {
         if (o->m->fC != 0.0f) {
             if (v[0] != 0.0f) {
-            analyzeMotionProperty2(o->h, o->m->elem, 0, 0, &v[1], 1.0f, 0.0f, o->m->fC);
+            analyzeMotionProperty2(o->h, o->m->elem, 1.0f, 0.0f, o->m->fC, 0, 0, &v[1]);
             v[1] *= cur;
-            analyzeMotionProperty2(o->h, o->m->elem, 0, 0, &v[2], 1.0f, 0.0f, o->m->f8);
+            analyzeMotionProperty2(o->h, o->m->elem, 1.0f, 0.0f, o->m->f8, 0, 0, &v[2]);
             {
                 float rr = o->r, a = v[1], b = v[2];
                 float t = b * rr;

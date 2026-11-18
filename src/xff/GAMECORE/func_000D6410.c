@@ -11,7 +11,7 @@ extern float get_upper_limit_clip_default_pitch_camera_target_approach(void *, f
 extern int get_yaw_pitch_camera_target_lost_angle(void *, void *, void *, void *, float, float);
 extern int is_must_reach_normal_default_angle(void *, int);
 
-#ifdef NONMATCHING /* 6 diffs: scheduling only; the a0=0 setup and the second cfg load swap around the yaw store, and mov.s $f13 vs the arg4 copy before func_000D6F28. A 25-minute permuter run found nothing better. */
+#ifdef NONMATCHING /* 4 diffs: scheduling only; the a0=0 setup and the second cfg load (v0 in the Original, v1 here) swap around the yaw store. Pinning the pitch argument to $f13 fixed the mov.s order before func_000D6F28. A 25-minute permuter run found nothing better. */
 static void func_000D6410(char *c, char *m, int arg2, int arg3, int arg4, float fparg0)
 {
     float dir[4];
@@ -40,7 +40,7 @@ static void func_000D6410(char *c, char *m, int arg2, int arg3, int arg4, float 
     *(float *)(c + 0x34) = p;
     p = get_upper_limit_clip_default_pitch_camera_target_approach(m + 0x6A0, p);
     *(float *)(c + 0x34) = p;
-    func_000D6F28(c, m, arg2, arg3, arg4, *(float *)(c + 0x30), p, fparg0);
+    { register float pp __asm__("$f13") = p; func_000D6F28(c, m, arg2, arg3, arg4, *(float *)(c + 0x30), pp, fparg0); }
     {
         int s0 = *(int *)(*(char **)m + 0xD0);
         if (s0 == 1) {
