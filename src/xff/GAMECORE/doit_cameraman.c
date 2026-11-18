@@ -1,3 +1,4 @@
+/* The union store keeps the dt load after the prevTarget store (strict aliasing would hoist it); the pins give the Original's registers. */
 typedef struct { char pad[0x170]; float dt; } GcGlobal;
 extern GcGlobal gcGlobalVar;
 extern int DebugFindPlayer(int);
@@ -21,13 +22,19 @@ typedef struct {
     float timer;
 } Cameraman;
 
-#ifdef NONMATCHING
+typedef union { int i; float f; } IF;
+
 void doit_cameraman(Cameraman *c, float f)
 {
     int *mode = &c->mode;
 
-    c->prevTarget = c->target;
-    c->timer = c->timer - gcGlobalVar.dt;
+    {
+        register GcGlobal *g asm("$5") = &gcGlobalVar;
+        register int t asm("$3") = c->target;
+        register float tm asm("$f0") = c->timer;
+        ((IF *)&c->prevTarget)->i = t;
+        c->timer = tm - g->dt;
+    }
     func_000E3350(c);
     if (func_000E32B0(c) == 0) {
         c->target = DebugFindPlayer(c->owner);
@@ -44,6 +51,3 @@ void doit_cameraman(Cameraman *c, float f)
     update_camera_obj(c->camObj);
     func_000E33D0(c);
 }
-#else
-extern void doit_cameraman(Cameraman *c, float f);
-#endif
