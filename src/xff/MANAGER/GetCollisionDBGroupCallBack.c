@@ -42,8 +42,14 @@ extern SysGroup *isysGroupForNext(SysGroup *, int);
 extern void isysGroupForExit(int, int);
 extern LayoutClass *GetLayoutClass(int);
 
-#ifdef NONMATCHING
-/* 81 diffs: the second reference address is hoisted into a saved register, so the callback is spilled to the stack instead of the group object */
+static inline void callRef(void (*cb)(CollisionReference *, void *), int obj, unsigned packed, void *user)
+{
+    CollisionReference ref;
+    ref.object = obj;
+    ref.packed = packed;
+    cb(&ref, user);
+}
+
 void GetCollisionDBGroupCallBack(void *head, void (*callback)(CollisionReference *, void *), void *user)
 {
     SysGroup *group = isysGroupForFirst(head, 0);
@@ -64,19 +70,13 @@ void GetCollisionDBGroupCallBack(void *head, void (*callback)(CollisionReference
                     continue;
                 if (node->planeCount != 0) {
                     for (i = 0; i < node->planeCount; i++) {
-                        CollisionReference ref;
-                        ref.object = last;
-                        ref.packed = (n << 24) | i | 0x80000000;
-                        callback(&ref, user);
+                        callRef(callback, last, (n << 24) | i | 0x80000000, user);
                     }
                 }
                 count = node->sphereCount;
                 if (count != 0) {
                     for (i = 0; i < count; i++) {
-                        CollisionReference ref;
-                        ref.object = last;
-                        ref.packed = (n << 24) | i;
-                        callback(&ref, user);
+                        callRef(callback, last, (n << 24) | i, user);
                     }
                 }
             }
@@ -86,4 +86,3 @@ void GetCollisionDBGroupCallBack(void *head, void (*callback)(CollisionReference
     if (last != 0)
         isysGroupForExit(last, 0);
 }
-#endif
