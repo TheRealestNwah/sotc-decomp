@@ -1,5 +1,5 @@
 typedef int s128 __attribute__((mode(TI)));
-typedef union { s128 q; float f[4]; } Vec4;
+typedef union { s128 q; float f[4]; int i[4]; } Vec4;
 
 #define I(p, o) (*(int *)((char *)(p) + (o)))
 #define F(p, o) (*(float *)((char *)(p) + (o)))
@@ -117,9 +117,6 @@ static inline void randomAround(void *out, void *center, float rmin, float rmax)
     addXYZ(out, center, &ofs);
 }
 
-/* Parked: 2 words differ (sw $zero,0x798 and lq of the base vector swap
-   around the else-branch `b`'s delay slot) */
-#ifdef NONMATCHING
 static void func_000A2F48(char *w)
 {
     int i;
@@ -198,7 +195,8 @@ static void func_000A2F48(char *w)
                     Q(dst, 0) = res.hit.q;
                 } else {
                     I(w, 0x798) = 0;
-                    Q(dst, 0) = Q(base, 0);
+                    /* Through the union, so the load may alias the int store above and stays after it. */
+                    Q(dst, 0) = ((Vec4 *)base)->q;
                 }
             } else {
                 I(w, 0x798) = 0;
@@ -241,4 +239,3 @@ static void func_000A2F48(char *w)
         break;
     }
 }
-#endif
