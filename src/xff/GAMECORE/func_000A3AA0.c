@@ -103,8 +103,6 @@ static inline void quatRotateVector(Vec4 *out, float *quat, Vec4 *vec)
 }
 
 
-/* Parked: 5 words differ (register allocation around the quaternion temporaries); permuter found no plausible change */
-#ifdef NONMATCHING
 static float func_000A3AA0(char *w, float max)
 {
     Vec4 d, q, a, b;
@@ -133,8 +131,14 @@ static float func_000A3AA0(char *w, float max)
         GetDifferencialQuaternionWithNoRegularize(q.f, ZUnitVector.f, &d, &YUnitVector);
         quatRotateVector(&a, q.f, &a);
         quatRotateVector(&b, q.f, &b);
-        dist = b.f[2] - a.f[2];
-        sign = dist < 0.0f ? -1 : 1;
+        {
+            /* The zero is pinned to $f2 and set before the loads, as in the Original. */
+            register float z __asm__("$f2");
+            z = 0.0f;
+            __asm__ __volatile__("" : "+f"(z) : : "memory");
+            dist = b.f[2] - a.f[2];
+            sign = dist < z ? -1 : 1;
+        }
     }
     r = AI_GetInterRatio(dist < 0.0f ? -dist : dist, *(float *)(*(char **)(w + 0x20) + 0x14),
                          *(float *)(*(char **)(w + 0x20) + 0x14) * 2.0f, 0.0f, max);
@@ -144,4 +148,3 @@ static float func_000A3AA0(char *w, float max)
         r = 0.0f;
     return r * (float)sign;
 }
-#endif
