@@ -1,8 +1,9 @@
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
-typedef struct { int pad0; int count; int n; char padC[0x1C]; float *param; } ClothHeader;
+typedef struct { short type; short pad2; int count; int n; char padC[0x1C]; float *param; } ClothHeader;
 typedef struct { char pad0[0x10]; Vec4 *pts; char pad14[4]; } ClothStrand;
-typedef struct { ClothHeader *header; char pad4[8]; ClothStrand *strands; } Cloth;
+typedef struct { char pad[0x40]; char flag; } ClothGeo;
+typedef struct { ClothHeader *header; char pad4[8]; ClothStrand *strands; char pad10[0x20]; ClothGeo geo; } Cloth;
 
 static inline float subRsqrt(Vec4 *out, Vec4 *a, Vec4 *b)
 {
@@ -93,7 +94,7 @@ static inline void limitLen(Vec4 *out, Vec4 *base, float len, float lim)
 /* Parked at 8 diffs: the Original passes &tmp in a3 and &d in t1 to the
  * subRsqrt/scaleAdd pair; gcc swaps the two registers. */
 #ifdef NONMATCHING
-static void func_000BC1B8(Cloth *cloth)
+static void func_000BC1B8(Cloth *cloth, void *work)
 {
     ClothHeader *h = cloth->header;
     ClothStrand *s = cloth->strands;
@@ -133,6 +134,76 @@ static void func_000BC1B8(Cloth *cloth)
             p = next;
         }
         s++;
+    }
+}
+#endif
+
+#ifdef NONMATCHING
+extern void GetGeometryPointerPosition(Vec4 *, ClothGeo *);
+extern void clothmath_doubleTensionMove(Vec4 *p, Vec4 *q, Vec4 *anchor, float maxSq, float k, float lim);
+
+static void func_000BC5C8(Cloth *cloth, void *work, int unused)
+{
+    ClothHeader *h = cloth->header;
+
+    switch (h->type) {
+    case 0:
+    default: {
+        int n = h->count;
+        ClothStrand *s = cloth->strands;
+        float len = h->param[1];
+        float lim = h->param[2];
+
+        int m = h->n - 1;
+
+        while (n--) {
+            Vec4 *p = s->pts;
+            int j = m;
+            while (j--) {
+                limitLen(p + 1, p, len, lim);
+                p++;
+            }
+            s++;
+        }
+        break;
+    }
+    case 1: {
+        ClothGeo *geo = &cloth->geo;
+        if (geo->flag != 0) {
+            int n = h->n;
+            ClothStrand *s = cloth->strands;
+            float len = h->param[1];
+            float lim = h->param[2];
+            float len2;
+            Vec4 *p;
+            int j;
+            int m;
+
+            {
+                int k = n - 1;
+                GetGeometryPointerPosition(&s->pts[k], geo);
+            }
+            len2 = len * len;
+            p = s->pts + 1;
+            m = n - 2;
+            j = m;
+            while (j--) {
+                Vec4 *q = p;
+                p++;
+                clothmath_doubleTensionMove(q, p, q - 1, len2, len, lim);
+            }
+            p = s->pts + m;
+            j = m;
+            while (j--) {
+                Vec4 *q = p;
+                p--;
+                clothmath_doubleTensionMove(q, p, q + 1, len2, len, lim);
+            }
+        } else {
+            func_000BC1B8(cloth, work);
+        }
+        break;
+    }
     }
 }
 #endif
