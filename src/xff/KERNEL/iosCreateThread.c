@@ -60,7 +60,7 @@ static inline Thread *iosAllocThread(void)
     return t;
 }
 
-/* Parked: Parked: ~65-84 words differ (inlined thread pop/push register allocation and counter base) */
+/* Parked: 8 words differ (register allocation in the inlined free-list pop) */
 #ifdef NONMATCHING
 Thread *iosCreateThread(void (*func)(void), char *stack, int size, int prio)
 {
@@ -71,9 +71,11 @@ Thread *iosCreateThread(void (*func)(void), char *stack, int size, int prio)
     t = iosAllocThread();
     if (t != 0) {
         if (++D_000408F4 == 0) {
-            ++D_000408F4;
+            id = ++D_000408F4;
+        } else {
+            id = D_000408F4;
         }
-        t->id = D_000408F4;
+        t->id = id;
         t->info->func = func;
         t->info->stack = stack;
         memcpy(stack, "<THREAD_SP>....", 16);
