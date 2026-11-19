@@ -1,5 +1,3 @@
-/* Parked attempt: 2 words differ from the Original. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -47,7 +45,8 @@ static inline void vecAddXYZ(float *out, float *a, float *b)
                          : : "r"(out), "r"(a), "r"(b) : "memory");
 }
 
-static void func_00127AC8(float *out, float *base, float *q, int idx, char *w)
+/* __restrict on out lets the epilogue's first ld move above the final w store, as in the Original. */
+static void func_00127AC8(float *__restrict out, float *base, float *q, int idx, char *w)
 {
     Vec4 m;
     Vec4 v;
@@ -80,4 +79,3 @@ static void func_00127AC8(float *out, float *base, float *q, int idx, char *w)
     *(s128 *)out = *(s128 *)v;
     out[3] = 1.0f;
 }
-#endif
