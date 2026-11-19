@@ -1,9 +1,8 @@
-/* Parked attempt: 6 words differ from the Original. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } Vec4 __attribute__((aligned(16)));
 typedef struct { Vec4 p[5]; } PtList;
 typedef union { Vec4 v; s128 q; } U4;
+typedef union { s128 q; int i[4]; } QI;
 
 extern char *GetSCRCharaAIWorkPtr(void *);
 extern char *getSCRDataCtrlWork(void *);
@@ -156,7 +155,8 @@ static int func_000CBF88(void *actor, int select, unsigned int *h)
     lay = GetLayoutClass(actor);
     iosRotMatrixY(m, (float)*(unsigned int *)(ai + 0x5ACC) * 0.19634954f);
     applyMatrix(&dir, m, &ZDirVector);
-    *(s128 *)(ai + 0x5B20) = *(s128 *)&dir;
+    /* Through a union with an int member, so the store may alias the 0x407C load below and stays ahead of it. */
+    ((QI *)(ai + 0x5B20))->q = *(s128 *)&dir;
     ptsU.q[2] = **(s128 **)(*(char **)(ctl + 0x407C) + 0x134);
     pts.p[2].y = 22.5f;
     scaleVector(&pts.p[0], &dir, -*(float *)(ai + 0x5AB0));
@@ -208,4 +208,3 @@ static int func_000CBF88(void *actor, int select, unsigned int *h)
     *(PtList *)(ai + 0x5AD0) = pts;
     return 1;
 }
-#endif
