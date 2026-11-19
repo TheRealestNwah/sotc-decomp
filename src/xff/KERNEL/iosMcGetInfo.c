@@ -6,8 +6,6 @@ extern char RO_000424F0[];
 extern void LoaderSysPrintf(const char *, ...);
 extern int sceMc2GetInfo(int, int *);
 
-#ifdef NONMATCHING
-/* Parked: 48 words differ (retry movn and lookup loop layout) */
 int iosMcGetInfo(int port, int verbose, int *out)
 {
     int buf[4];
@@ -34,21 +32,32 @@ int iosMcGetInfo(int port, int verbose, int *out)
             retry = 0;
             break;
         default:
-            if (r != prev) {
-                prev = r;
-                retry = 8;
+            {
+                int t = 8;
+                if (r == prev)
+                    t = retry;
+                retry = t;
             }
+            prev = r;
             break;
         }
-    } while (--retry > 0);
+        {
+            int t = retry - 1;
+            retry = t;
+            if (t <= 0)
+                break;
+        }
+    } while (1);
     ret = 8;
     e = D_000406E8;
-    for (i = 0; i < 22; i++, e++) {
+    i = 0;
+    do {
         if (r == e->code) {
             ret = e->result;
             break;
         }
-    }
+        i++;
+        e++;
+    } while (i < 22);
     return ret;
 }
-#endif
