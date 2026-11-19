@@ -1,10 +1,6 @@
-#ifdef NONMATCHING
-/* 92 diffs, same length (140 words). Draft from the asm: looks up the stage-map chip for (x, y) (getChipNo as in DeleteNoUseLoadAreaGroupData), sums the widths of its rects, allocates total * 16 bytes, expands every rect into one (x + j, y) point per column, tracks min/max x and y, and calls func_0001FF70 with the point list and its bounds (args 9 and 10 on the stack are x and y) before freeing the buffer. Differences: the Original runs both rect loops with a separate down-counter ($t3, bnez) and loads the count and rect pointer into $t0/$t4, while ours reuses the count register with bgtz, which moves every later register. Permuter (12 workers, 25 min): best 3175, not close. */
-typedef struct {
-    short x;
-    short y;
-    short w;
-    short h;
+typedef union {
+    struct { short x, y, w, h; } s;
+    int i[2];
 } Rect;
 
 typedef struct {
@@ -46,7 +42,7 @@ static inline int getChipNo(int x, int y)
     return y * D_0017A340.width + x;
 }
 
-void func_00020DF8(int a0, int a1, int x, int y)
+static void func_00020DF8(int a0, int a1, int x, int y)
 {
     Grp *g = D_0017A340.chips[getChipNo(x, y)].grp;
     int minX = 9999;
@@ -61,33 +57,32 @@ void func_00020DF8(int a0, int a1, int x, int y)
     Pt *buf;
 
     n = g->count;
-    r = g->rects + n;
+    r = g->rects + n - 1;
     for (i = 0; i < n; i++) {
+        total += r->s.w;
         r--;
-        total += r->w;
     }
     buf = iosMallocAlign(rootPtn, total * 16, 0x10);
-    r = g->rects + g->count;
+    r = g->rects + g->count - 1;
     k = 0;
-    for (i = 0; i < g->count; i++) {
+    for (i = 0; i < g->count; i++, r--) {
         int j;
 
-        r--;
-        for (j = 0; j < r->w; j++) {
-            buf[k].x = r->x + j;
-            buf[k].y = r->y;
+        for (j = 0; j < r->s.w; j++) {
+            buf[k].x = r->s.x + j;
+            buf[k].y = r->s.y;
             k++;
         }
-        if (r->x < minX)
-            minX = r->x;
-        if (r->x + r->w > maxX)
-            maxX = r->x + r->w;
-        if (r->y < minY)
-            minY = r->y;
-        if (r->y > maxY)
-            maxY = r->y;
+        if (r->s.x < minX)
+            minX = r->s.x;
+        if (r->s.x + r->s.w > maxX)
+            maxX = r->s.x + r->s.w;
+        if (r->s.y < minY)
+            minY = r->s.y;
+        if (r->s.y > maxY)
+            maxY = r->s.y;
     }
     func_0001FF70(buf, total, minX, minY, maxX - minX + 1, maxY - minY + 1, a0, a1, x, y);
     iosFree(buf);
 }
-#endif
+
