@@ -1,7 +1,3 @@
-#ifdef NONMATCHING
-/* 6 diffs, same length. In the near-target branch the Original reloads the
-   probe position from w+0xC before loading the target's position pointer
-   (o+0x134) into $v1; ours schedules that pointer load first, into $a0. */
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef int u128 __attribute__((mode(TI)));
 
@@ -73,7 +69,7 @@ static inline void applyMatrix(void *d, void *m, void *v)
                          : : "r"(d), "r"(m), "r"(v) : "memory");
 }
 
-void func_001106D0(char *w)
+static void func_001106D0(char *w)
 {
     Vec4 d0, d1, d2, a, b;
     char *prm;
@@ -94,8 +90,14 @@ void func_001106D0(char *w)
         o = *(char **)(w + 0x18);
         if (distXZ(a, *(void **)(o + 0x134)) < *(float *)(prm + 0xB8)) {
             *(u128 *)a = **(u128 **)(w + 0xC);
-            vecSub(d0, a, *(void **)(o + 0x134));
-            *(int *)(w + 0x164) = 1;
+            __asm__ __volatile__("" ::: "memory");
+            {register void *pp __asm__("$3") = *(void **)(o + 0x134);
+            __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                                 "lqc2 vf6, 0x0(%2)\n"
+                                 "vsub.xyzw vf7, vf5, vf6\n"
+                                 "sqc2 vf7, 0x0(%0)\n"
+                                 : : "r"(d0), "r"(a), "r"(pp) : "memory");}
+            {register int one __asm__("$2") = 1; *(int *)(w + 0x164) = one;}
         } else {
             *(int *)(w + 0x164) = 0;
             vecSub(d0, a, *(char **)(w + 4) + 0x30);
@@ -123,4 +125,3 @@ void func_001106D0(char *w)
     getTurnAndPitchFromDir(w + 0x140, w + 0x150, w + 0x154);
     *(float *)(w + 0x160) = *(float *)(prm + 0x70);
 }
-#endif
