@@ -1,5 +1,3 @@
-/* Parked at 5 diffs: the Original schedules the func_000B78C8 argument move (daddu $a0) ahead of the 0xFF0 load and keeps the 0x362 byte in $v1, storing 0x248 in the branch delay slot. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -49,6 +47,7 @@ static inline void quatRotateVector(Vec4 *out, float *quat, Vec4 *vec)
 
 static void func_000BA290(char *w)
 {
+    register char *a0 __asm__("$4");
     int th = isysGetThisSubThread();
     char *tl = GetLayoutClass(*(int *)(w + 0x40));
     char *lc = GetLayoutClass(th);
@@ -59,7 +58,7 @@ static void func_000BA290(char *w)
     int mode;
     int c;
     float len;
-    signed char b;
+    register int b __asm__("$3");
 
     if (AI_PlayerParentFlag(th, *(int *)(w + 0x40)) != 0) {
         char *d = *(char **)(w + 0x64);
@@ -119,12 +118,15 @@ static void func_000BA290(char *w)
                          : "=f"(len) : "r"(tl + 0x30) : "$2");
     *(float *)(w + 0x1A0) = len;
     __asm__ __volatile__("" : : : "memory");
-    b = *(signed char *)(cc + 0x362);
+    /* The call argument and the 0x362 byte are pinned to $a0 and $v1, as in the Original. */
+    a0 = w;
+    __asm__ __volatile__("" : "+r"(a0) : : "memory");
     *(int *)(w + 0x244) = *(int *)(cc + 0xFF0);
+    b = *(signed char *)(cc + 0x362);
+    __asm__("" : "+r"(b));
     *(int *)(w + 0x248) = b;
     if (b != 0) {
         *(float *)(w + 0x24C) = *(float *)(cc + 0x10C8);
     }
-    func_000B78C8(w);
+    func_000B78C8(a0);
 }
-#endif
