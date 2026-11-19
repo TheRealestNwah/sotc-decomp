@@ -28,12 +28,15 @@ extern ShockTable *D_000408F8;
 extern ShockReq *func_000070F0(void *pad, int *pattern, ShockPattern p);
 
 #ifdef NONMATCHING
-/* Parked: 7 words differ (prologue order and index register) */
+/* Parked: 3 words differ (the index lives in $t1 in the original, $a3 here) */
 static inline ShockSet *getSet(unsigned int k)
 {
-    if (k < D_000408F8->count)
-        return D_000408F8->sets[k];
-    return 0;
+    ShockSet *r = 0;
+    if (k < D_000408F8->count) {
+        __asm__ __volatile__("");
+        r = D_000408F8->sets[k];
+    }
+    return r;
 }
 static inline int *getPat(ShockSet *set, unsigned int index)
 {
@@ -48,7 +51,8 @@ ShockReq *Shock_Request(void *pad, unsigned int index, ShockPattern pattern)
     ShockReq *req;
 
     set = getSet((unsigned char)pattern.data[0]);
-    p = getPat(set, index);    if (p == 0)
+    p = getPat(set, index);
+    if (p == 0)
         return 0;
     req = func_000070F0(pad, p, pattern);
     if (req != 0)
