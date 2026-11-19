@@ -1,6 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 1 word differs (at 0xAC the original has movz v0,$s1,v1; this has
-   movz v0,$zero,v1 for the sg2err(x) result). A 25-minute permuter run found nothing better. */
 typedef struct SepData { int pad0; int id; } SepData;
 typedef struct SepEntry SepEntry;
 struct SepEntry {
@@ -25,20 +22,21 @@ extern void Sg2SepStopSndOff(int);
 extern void func_0001DC58(SepEntry *);
 extern SepEntry B_000C2910[32];
 
-static inline int sg2err(int x) { if (x < 0) return x; return 0; }
-
 void sndSepTickProc(void)
 {
     int i;
     for (i = 0; i < 32; i++) {
         SepEntry *e = &B_000C2910[i];
         int notify = 0;
+        int err;
         switch (e->state) {
         case 0:
             break;
         case 1:
             if (e->prepare(e) != 0
-                || sg2err(e->handle = Sg2SepPlay(e->data->id, e->a, e->b, 0)) != 0) {
+                || (err = notify,
+                    (e->handle = Sg2SepPlay(e->data->id, e->a, e->b, 0)) < 0 && (err = e->handle),
+                    err != 0)) {
                 if (e->done) {
                     e->done(e);
                 }
@@ -93,4 +91,3 @@ void sndSepTickProc(void)
         }
     }
 }
-#endif
