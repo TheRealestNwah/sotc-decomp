@@ -1,3 +1,4 @@
+typedef int s128 __attribute__((mode(TI)));
 /* ~140 diffs, 168 vs 170 words. Arrow-water ripple effect update over a 25-entry table B_0018AD70 (stride 0x14: on, prev, pad, t, handle): spawns new entries (on && !prev) via func_00054388, round-robins one new handle via func_00054598 from the cursor at work+0x150, steps live ones (func_00052A38, func_000540D0), runs the group list (func_00052D18, stride 0x40), func_00053AE0, then copies on->prev and advances t by gcGlobalVar+0x190. Original builds the spawn predicate with two branches (v1 = 0 / 1 in delay slots) and keeps the table pointer in s0 with the work pointer in s1; ours uses sltiu and the opposite saved registers. */
 typedef struct {
     int on;
@@ -11,7 +12,6 @@ extern ArrowWater B_0018AD70[25];
 extern char gcGlobalVar[];
 extern int *getSpecialEffectObjWork(void *);
 extern char *getEditWorkInitData(int);
-extern void func_00054388(void *, int);
 extern void func_00053058(void *, void *, void *);
 extern void func_00052A38(void *);
 extern void func_000540D0(void *, int);
@@ -73,6 +73,59 @@ static inline float randSign(float r)
 }
 
 typedef union { char *c; float f; } PU;
+typedef union { char *c; int i; float f; } PI;
+typedef struct { float x; int y; float z; int w; } __attribute__((aligned(8))) Ofs;
+extern float ZUnitVector[];
+extern float iosGetATan2fExact(float, float);
+extern void func_00052558(void *);
+
+static inline void setUnit(void *p)
+{
+    __asm__ __volatile__("sqc2 vf0, 0x0(%0)
+" : : "r"(p) : "memory");
+}
+
+/* 13 diffs. Places a new ripple: unit vectors at +0x50/+0x60, flags reset, offset (layout 0x70/0x74 of the owner's +0x114 data) rotated by the layout quaternion and added to its position, facing from ZUnitVector, angle via iosGetATan2fExact, then func_00052558. Remaining diffs: the Original schedules the Ofs zero stores and the second quaternion load differently. */
+#ifdef NONMATCHING
+static void func_00054388(char *p, int i)
+{
+    float dir[4] __attribute__((aligned(16)));
+    Ofs ofs __attribute__((aligned(16)));
+    char *lay = GetLayoutClass(B_0018AD78[i * 5]);
+    char *q;
+    char *w;
+    Ofs t;
+
+    setUnit(p + 0x50);
+    q = p + 0x60;
+    setUnit(q);
+    *(int *)(q + 0x10) = 0;
+    *(int *)(q + 0x14) = 0;
+    *(int *)(q + 0x18) = 1;
+    *(int *)(p + 0x8) = 0;
+    *(float *)(p + 0x10) = 1.0f;
+    *(int *)(p + 0xC) = 0;
+    *(int *)(p + 0x14) = 0;
+    *(int *)(p + 0x18) = 0;
+    w = ((PI *)p)->c;
+    t.x = *(float *)(((PU *)(w + 0x114))->c + 0x70);
+    t.y = 0;
+    t.z = *(float *)(((PU *)(w + 0x114))->c + 0x74);
+    t.w = 0;
+    ofs = t;
+    quatRotateVector((float *)&ofs, (float *)*(int *)(lay + 0x13C), (float *)&ofs);
+    addXYZ((float *)(p + 0x40), *(float **)(lay + 0x134), (float *)&ofs);
+    *(s128 *)(p + 0x20) = *(s128 *)(p + 0x40);
+    quatRotateVector(dir, (float *)*(int *)(lay + 0x13C), ZUnitVector);
+    *(float *)(p + 0x34) = -dir[0];
+    *(int *)(p + 0x38) = 0;
+    *(float *)(p + 0x30) = dir[2];
+    *(int *)(p + 0x3C) = 0;
+    *(int *)(p + 0x18) = 0;
+    *(float *)(p + 0x1C) = iosGetATan2fExact(-dir[0], dir[2]);
+    func_00052558(p);
+}
+#endif
 
 static int func_00054598(char *p, int i)
 {
