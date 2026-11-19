@@ -7,7 +7,7 @@ extern char *D_00139F80;
 extern char *GetLayoutClass(char *);
 extern void GetControlCheckStatusFromGP(void *, char *);
 extern int CheckControlDefByStatus(void *, void *);
-extern int CheckControlDef(char *, char *, char *);
+extern int CheckControlDef(char *, char *, char *, void *);
 extern int execCondition(char *, void *);
 extern int func_000ED618(void *, void *);
 
@@ -49,18 +49,19 @@ typedef struct {
     int data;
 } Entry;
 
-/* Parked: 13 diffs (28 before a permuter run, which added the `failed` and `base` temporaries).
- * Remaining: the D_00139F7C walk sets up its loop constants in a different order and keeps
- * the entry pointer in a3 where gcc uses a2. */
+/* Parked: 10 diffs (28 before permuter runs; passing the entry as CheckControlDef's fourth
+ * argument took it from 13 to 10). Remaining: the D_00139F7C walk sets up its loop constants
+ * (lui s5/s4, addiu s0, daddu s2) in a different order and keeps the entry pointer in a3
+ * where gcc uses a0. */
 #ifdef NONMATCHING
 static int func_000EC698(unsigned int *list, void *ctx)
 {
     Entry *first = (Entry *)dldEntry(list);
     char *elseAlways = ControlDef_ELSE_ALWAYS;
     char *e;
+    char *def;
     int r;
     int failed;
-    char *base;
     int i;
     int j = 0;
 
@@ -70,8 +71,8 @@ static int func_000EC698(unsigned int *list, void *ctx)
             if (e != elseAlways) {
                 Entry *ent = (Entry *)((char *)first + i);
                 if (*(char **)(dldModule(&ent->ref) + 8) == _ControlDef) {
-                    base = D_00139F7C;
-                    if (CheckControlDef(D_00139F78, D_00139F7C, base + 0x760) <= 0)
+                    def = D_00139F7C;
+                    if (CheckControlDef(D_00139F78, D_00139F7C, def + 0x760, ent) <= 0)
                         continue;
                 } else {
                     failed = !execCondition(D_00139F78, ent);
