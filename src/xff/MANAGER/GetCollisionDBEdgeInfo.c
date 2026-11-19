@@ -1,4 +1,4 @@
-/* Parked: same size, only register allocation and scheduling of the group lookup differ (68 words). */
+/* Parked: ~18 diffs, same size. Copies the three edge records (object, packed reference, edge index, edge value) of the collision shape a packed reference points at: masked 15-bit values from a packed shape, or the edge words of a full shape or plane. Precomputing the masks before the second GetLayoutClass call, storing object/key/index in that order and reading the packed edge through a union (so the load is not hoisted above the int stores) brought it from 68 to 18. Remaining diffs are register allocation only: a0/a1 swapped for the cls184/db pointers in the head and the group/offset operands in the packed and full-shape address math. */
 #ifdef NONMATCHING
 typedef struct Edge {
     int obj;
@@ -7,6 +7,8 @@ typedef struct Edge {
     int val;
 } Edge;
 
+typedef union PackedEdge { int i; unsigned short h[2]; } PackedEdge;
+
 typedef struct Group {
     char pad0[8];
     unsigned char has14;
@@ -14,11 +16,13 @@ typedef struct Group {
     char *tbl14;
     char pad18[0x3C];
     int *tbl54;
+    char pad58[0x38];
 } Group;
 
 typedef struct Db {
     char pad0[8];
-    char *groups;
+    Group *groups;
+    char padC[0xC];
     char *base18;
 } Db;
 
@@ -39,28 +43,28 @@ void GetCollisionDBEdgeInfo(Edge *out, Edge *in)
     unsigned int k;
     unsigned char b = ((unsigned char *)in)[7];
     Cls *c = GetLayoutClass(in->obj)->cls184;
-    Group *g = (Group *)(c->db->groups + ((b & 0x7F) * 0x90));
+    Group *g = &c->db->groups[b & 0x7F];
 
     if (g->has14 != 0) {
         int i;
-        unsigned short *p;
+        PackedEdge *p;
         Edge *o;
         unsigned int hi, lo;
+        Db *d;
         k = in->key;
-        hi = k >> 24;
         lo = k & 0xFFFFFF;
-        p = (unsigned short *)(((Group *)(GetLayoutClass(in->obj)->cls184->db->groups + ((hi & 0x7F) * 0x90)))->tbl14 + lo * 0x14 + 8);
+        hi = (k >> 24) & 0x7F;
+        d = GetLayoutClass(in->obj)->cls184->db;
+        p = (PackedEdge *)(d->groups[hi].tbl14 + lo * 0x14 + 8);
         o = out;
-        i = 0;
-        do {
+        for (i = 0; i < 3; i++) {
             o->obj = in->obj;
-            o->idx = i;
-            i++;
             o->key = in->key;
-            o->val = *p & 0x7FFF;
-            p += 4;
+            o->idx = i;
+            o->val = p->h[0] & 0x7FFF;
+            p++;
             o++;
-        } while (i < 3);
+        }
         return;
     }
     {
@@ -73,20 +77,18 @@ void GetCollisionDBEdgeInfo(Edge *out, Edge *in)
         int i;
 
         if ((int)in->key < 0)
-            p = (int *)(((Group *)(d->groups + s0 * 0x90))->tbl14 + s1 * 0x34 + 0xC);
+            p = (int *)(d->groups[s0].tbl14 + s1 * 0x34 + 0xC);
         else
-            p = (int *)(d->base18 + (((Group *)(d->groups + s0 * 0x90))->tbl54[s1] << 6) + 0x18);
+            p = (int *)(d->base18 + (d->groups[s0].tbl54[s1] << 6) + 0x18);
         o = out;
-        i = 0;
-        do {
+        for (i = 0; i < 3; i++) {
             o->obj = in->obj;
-            o->idx = i;
-            i++;
             o->key = in->key;
+            o->idx = i;
             o->val = *p;
-            p += 12;
+            p += 3;
             o++;
-        } while (i < 3);
+        }
     }
 }
 #else
