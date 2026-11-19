@@ -1,7 +1,6 @@
 typedef int s128 __attribute__((mode(TI)));
 extern void StabilizeToYRotQuaternion(void *);
 
-#ifdef NONMATCHING /* 1 diff: otherwise exact (VU blocks, pinned registers; the empty asm on pp fixes the load/addiu order). The matrix pointer for the inverse ($v1) is copied from $v0 instead of a fresh addiu (asm barriers on mA/m, "+r" on mA and passing mtx directly do not help) A 25-minute permuter run found nothing better. */
 static int chkAttainExecColumn(char *w0, float *pos0, char *cam0, char *src)
 {
     register char *w __asm__("$17") = w0;
@@ -55,7 +54,7 @@ static int chkAttainExecColumn(char *w0, float *pos0, char *cam0, char *src)
                          "lqc2 vf4, 0x0(%2)\n"
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
-                         : : "r"(mA), "r"(q), "r"(pp) : "memory");
+                         : : "r"(mA), "r"(q), "r"(pp));
     m = mtx;
     __asm__ __volatile__("lqc2 vf24, 0x30(%8)\n"
                          "vsubw.x vf25, vf0, vf0w\n"
@@ -117,4 +116,3 @@ static int chkAttainExecColumn(char *w0, float *pos0, char *cam0, char *src)
         return 1;
     return 0;
 }
-#endif
