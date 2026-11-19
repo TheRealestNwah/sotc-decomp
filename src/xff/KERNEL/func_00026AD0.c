@@ -9,16 +9,14 @@ extern unsigned char B_000DE110[];
 extern int B_000DE210;
 extern int B_000DE214;
 
-/* Parked: 6 words differ (lui/lw scheduling of B_000DE214) */
+/* Parked: 5 words differ (lui/lw scheduling of B_000DE214) */
 #ifdef NONMATCHING
 static void func_00026AD0(MidiTrk *t)
 {
     register unsigned char **pp __asm__("$5") = &t->ptr;
-    register int *cur __asm__("$8");
+    int *cur;
     unsigned char st, a, b, c;
-    __asm__("" : "+r"(pp));
     cur = &B_000DE214;
-    __asm__("" : "+r"(cur));
     st = t->status;
     a = *(*pp)++;
     b = *(*pp)++;
