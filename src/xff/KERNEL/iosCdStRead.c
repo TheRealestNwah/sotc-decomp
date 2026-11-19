@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 36 words differ (loop layout, extra branch in original) */
 extern long B_0004E580;
 extern long B_0004E588;
 extern long B_0004E590;
@@ -11,9 +9,8 @@ void iosCdStRead(char *dst, int size)
 {
     while (size > 0) {
         if (B_0004E590 >= B_0004E580 && B_0004E590 < B_0004E588) {
-            int n = B_0004E588 - B_0004E590;
-            if (n >= size)
-                n = size;
+            int k = B_0004E588 - B_0004E590;
+            int n = (k < size) ? k : size;
             memcpy(dst, B_00046580 + (int)(B_0004E590 - B_0004E580), n);
             size -= n;
             dst += n;
@@ -23,4 +20,3 @@ void iosCdStRead(char *dst, int size)
         }
     }
 }
-#endif
