@@ -1,5 +1,4 @@
-/* Parked attempt: 4 words differ from the Original. */
-#ifdef NONMATCHING
+/* Life bar wave: two sine wobbles, then the life bar update. The empty asm barrier keeps the period load after the multiply, as in the Original. */
 typedef struct {
     int active;
     float period;
@@ -27,7 +26,12 @@ static inline float lifebarWaveCalc(LifebarWave *w)
             w->active = 0;
         } else {
             func_000BC988(4);
-            out = w->amp * iosGetSinf(t * 3.14159265f / w->period);
+            {
+                float a = t * 3.14159265f;
+
+                __asm__ __volatile__("" ::: "memory");
+                out = w->amp * iosGetSinf(a / w->period);
+            }
         }
     }
     return out;
@@ -39,4 +43,3 @@ static void func_000BEB28(float dt)
     B_0019CD28.out = lifebarWaveCalc(&B_0019CD28);
     func_000BE838(dt);
 }
-#endif
