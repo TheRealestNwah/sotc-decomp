@@ -1,99 +1,80 @@
-typedef struct { float x, y, z, w; } __attribute__((aligned(16))) V4;
+typedef int s128 __attribute__((mode(TI)));
+typedef union { s128 q; float f[4]; } Vec4;
+typedef struct {
+    float x, y, z, w;
+} __attribute__((aligned(8))) Pos;
+typedef struct {
+    char pad[8];
+    unsigned int node;
+    float x, y, z;
+    float rotY, rotX, rotZ;
+    int global;
+} NodeDef;
+extern int *DldSysUndefSymbol;
+extern int D_00139F78;
+extern void *D_00139F80;
+extern Vec4 D_00139F90;
+extern Vec4 B_0015E440;
+extern float IdentityQuaternion[];
+extern char XUnitVector[], YUnitVector[], ZUnitVector[];
+extern void CopyGeometryPointer(void *, void *);
+extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, short, void *);
+extern void SetGeometryPointerNodePosState(void *, int, int, float *, Pos *);
+extern void SetGeometryPointerNodePosStateGlobalRot(void *, int, int, float *, Pos *);
 
-extern int DldSysUndefSymbol;
-extern char *D_00139F78;
-extern char *D_00139F80;
-extern V4 B_0015E440;
-extern V4 D_00139F90;
-extern V4 IdentityQuaternion;
-extern V4 XUnitVector;
-extern V4 YUnitVector;
-extern V4 ZUnitVector;
-extern void SetQuaternionByAxisRotateVWithNoRegularize(V4 *, short, V4 *);
-extern void SetGeometryPointerNodePosState(void *, char *, int, V4 *, V4 *);
-extern void SetGeometryPointerNodePosStateGlobalRot(void *, char *, int, V4 *, V4 *);
-extern void CopyGeometryPointer(void *, char *);
-
-static inline void quatMul(V4 *dst, V4 *a, V4 *b)
+static inline void VU_QUAT_MUL(float *dst, float *a, float *b)
 {
-    __asm__ __volatile__("lqc2 vf11, 0x0(%0)
-" "lqc2 vf12, 0x0(%1)
-" "vmul.xyzw vf13, vf11, vf12
-" "vaddy.x vf13, vf13, vf13y
-" "vaddz.x vf13, vf13, vf13z
-" "vsubx.w vf13, vf13, vf13x
-" "vmulw.xyz vf14, vf12, vf11w
-" "vmulw.xyz vf15, vf11, vf12w
-" "vopmula.xyz ACC, vf12, vf11
-" "vopmsub.xyz vf16, vf11, vf12
-" "vadd.xyz vf13, vf14, vf15
-" "vadd.xyz vf13, vf13, vf16
-" "sqc2 vf13, 0x0(%2)
-" : : "r"(a), "r"(b), "r"(dst) : "memory");
+        __asm__ __volatile__("lqc2 vf11, 0x0(%0)\n"                          "lqc2 vf12, 0x0(%1)\n"                          "vmul.xyzw vf13, vf11, vf12\n"                          "vaddy.x vf13, vf13, vf13y\n"                          "vaddz.x vf13, vf13, vf13z\n"                          "vsubx.w vf13, vf13, vf13x\n"                          "vmulw.xyz vf14, vf12, vf11w\n"                          "vmulw.xyz vf15, vf11, vf12w\n"                          "vopmula.xyz ACC, vf12, vf11\n"                          "vopmsub.xyz vf16, vf11, vf12\n"                          "vadd.xyz vf13, vf14, vf15\n"                          "vadd.xyz vf13, vf13, vf16\n"                          "sqc2 vf13, 0x0(%2)\n"                          : : "r"(a), "r"(b), "r"(dst) : "memory");
 }
 
-static inline char *dldEntry(unsigned int *h)
+/* Resolves a DLD symbol reference to its target address. */
+static inline char *resolve(unsigned int *h)
 {
     unsigned int v = *h;
     int off = v & 0x3FFFF;
-    char *t = off != 0 ? *(char **)((char *)h - off) : 0;
-
-    return (t != 0 && t != (char *)DldSysUndefSymbol)
-               ? *(char **)(t + 0x10) + ((v >> 18) & 0xFFF) * *(int *)(*(char **)(t + 8) + 0xC)
-               : 0;
+    int *t = off != 0 ? *(int **)((char *)h - off) : 0;
+    return t != 0 && t != DldSysUndefSymbol ? (char *)t[4] + ((v >> 18) & 0xFFF) * ((int *)t[2])[3] : 0;
 }
 
-static inline void quatAxisMul(V4 *dst, V4 *src, int ang, V4 *axis)
+/* dst = src * (rotation by ang about axis). */
+static inline void rotQuat(float *dst, float *src, int ang, char *axis)
 {
-    V4 t;
-    V4 *d = dst;
-    V4 *s = src;
+    Vec4 r;
 
-    SetQuaternionByAxisRotateVWithNoRegularize(&t, (short)ang, axis);
-    quatMul(d, s, &t);
+    SetQuaternionByAxisRotateVWithNoRegularize(r.f, ang, axis);
+    VU_QUAT_MUL(dst, src, r.f);
 }
 
-static inline void quatAxisMul0(V4 *dst, V4 *src, int ang, V4 *axis)
+static void func_000EC988(void *geo, NodeDef *def)
 {
-    V4 t;
-    V4 *s = src;
+    Pos pos;
+    Vec4 q;
+    char *node;
+    int idx;
 
-    SetQuaternionByAxisRotateVWithNoRegularize(&t, (short)ang, axis);
-    quatMul(dst, s, &t);
-}
-
-static void func_000EC988(void *geom, float *arg)
-{
-    V4 pos;
-    V4 q;
-    char *e;
-    V4 *r;
-    int n;
-
-    q.x = -arg[3];
-    q.y = arg[4];
-    q.z = -arg[5];
-    q.w = 1.0f;
-    pos = q;
+    q.f[0] = -def->x;
+    q.f[1] = def->y;
+    q.f[2] = -def->z;
+    q.f[3] = 1.0f;
+    pos = *(Pos *)q.f;
     if (D_00139F80 == 0) {
-        e = dldEntry((unsigned int *)(arg + 2));
-        if (!e) {
-            SetGeometryPointerNodePosState(geom, D_00139F78, -2, &IdentityQuaternion, &pos);
+        node = resolve(&def->node);
+        if (node == 0) {
+            SetGeometryPointerNodePosState(geo, D_00139F78, -2, IdentityQuaternion, &pos);
         } else {
-            r = &q;
-            quatAxisMul0(r, &IdentityQuaternion, -(short)(int)(arg[6] * 32768.0f / 180.0f), &YUnitVector);
-            quatAxisMul(r, r, -(short)(int)(arg[7] * 32768.0f / 180.0f), &XUnitVector);
-            quatAxisMul(r, r, (int)(arg[8] * 32768.0f / 180.0f), &ZUnitVector);
-            n = *(int *)(e + 8);
-            if (*(int *)(arg + 9)) {
-                quatMul(r, &B_0015E440, r);
-                SetGeometryPointerNodePosStateGlobalRot(geom, D_00139F78, n, r, &pos);
+            rotQuat(q.f, IdentityQuaternion, -(short)(int)(def->rotY * 32768.0f / 180.0f), YUnitVector);
+            rotQuat(q.f, q.f, -(short)(int)(def->rotX * 32768.0f / 180.0f), XUnitVector);
+            rotQuat(q.f, q.f, (int)(def->rotZ * 32768.0f / 180.0f), ZUnitVector);
+            idx = *(int *)(node + 8);
+            if (def->global != 0) {
+                VU_QUAT_MUL(q.f, B_0015E440.f, q.f);
+                SetGeometryPointerNodePosStateGlobalRot(geo, D_00139F78, idx, q.f, &pos);
             } else {
-                quatMul(r, &D_00139F90, r);
-                SetGeometryPointerNodePosState(geom, D_00139F78, n, r, &pos);
+                VU_QUAT_MUL(q.f, D_00139F90.f, q.f);
+                SetGeometryPointerNodePosState(geo, D_00139F78, idx, q.f, &pos);
             }
         }
     } else {
-        CopyGeometryPointer(geom, D_00139F80);
+        CopyGeometryPointer(geo, D_00139F80);
     }
 }
