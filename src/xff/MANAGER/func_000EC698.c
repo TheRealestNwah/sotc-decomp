@@ -1,0 +1,118 @@
+extern int DldSysUndefSymbol;
+extern char *ControlDef_ELSE_ALWAYS;
+extern char _ControlDef[];
+extern char *D_00139F78;
+extern char *D_00139F7C;
+extern char *D_00139F80;
+extern char *GetLayoutClass(char *);
+extern void GetControlCheckStatusFromGP(void *, char *);
+extern int CheckControlDefByStatus(void *, void *);
+extern int CheckControlDef(char *, char *, char *);
+extern int execCondition(char *, void *);
+extern int func_000ED618(void *, void *);
+
+static inline char *dldModule(unsigned int *reference)
+{
+    unsigned int offset = *reference & 0x3FFFF;
+    char *module;
+
+    if (offset)
+        module = *(char **)((char *)reference - offset);
+    else
+        module = 0;
+    if (module && module != (char *)DldSysUndefSymbol)
+        return module;
+    return 0;
+}
+
+static inline char *dldEntry(unsigned int *reference)
+{
+    unsigned int encoded = *reference;
+    unsigned int offset = encoded & 0x3FFFF;
+    char *module;
+
+    if (offset)
+        module = *(char **)((char *)reference - offset);
+    else
+        module = 0;
+    if (module && module != (char *)DldSysUndefSymbol) {
+        int index = (encoded >> 18) & 0xFFF;
+        char *definition = *(char **)(module + 8);
+        char *data = *(char **)(module + 0x10);
+        return data + index * *(int *)(definition + 0xC);
+    }
+    return 0;
+}
+
+typedef struct {
+    unsigned int ref;
+    int data;
+} Entry;
+
+/* Parked: 13 diffs (28 before a permuter run, which added the `failed` and `base` temporaries).
+ * Remaining: the D_00139F7C walk sets up its loop constants in a different order and keeps
+ * the entry pointer in a3 where gcc uses a2. */
+#ifdef NONMATCHING
+static int func_000EC698(unsigned int *list, void *ctx)
+{
+    Entry *first = (Entry *)dldEntry(list);
+    char *elseAlways = ControlDef_ELSE_ALWAYS;
+    char *e;
+    int r;
+    int failed;
+    char *base;
+    int i;
+    int j = 0;
+
+    if (D_00139F7C) {
+        char *q = (char *)first + 4;
+        for (i = 0; (e = dldEntry((unsigned int *)((char *)first + i))) != 0; q += 8, i += 8) {
+            if (e != elseAlways) {
+                Entry *ent = (Entry *)((char *)first + i);
+                if (*(char **)(dldModule(&ent->ref) + 8) == _ControlDef) {
+                    base = D_00139F7C;
+                    if (CheckControlDef(D_00139F78, D_00139F7C, base + 0x760) <= 0)
+                        continue;
+                } else {
+                    failed = !execCondition(D_00139F78, ent);
+                    if (failed)
+                        continue;
+                }
+            }
+            r = func_000ED618(q, ctx);
+            if (r)
+                return r;
+        }
+        return 0;
+    } else {
+        int status[8];
+        char *lgp = 0;
+        char *gp;
+        char *lc;
+
+        if (D_00139F78) {
+            lc = GetLayoutClass(D_00139F78);
+            if (lc && *(int *)(lc + 0x124))
+                lgp = lc + 0xC0;
+        }
+        if (!lgp)
+            gp = D_00139F80;
+        else
+            gp = lgp;
+        if (gp)
+            GetControlCheckStatusFromGP(status, gp);
+        for (; (e = dldEntry(&first[j].ref)) != 0; j++) {
+            if (e != elseAlways) {
+                if (!gp)
+                    continue;
+                if (CheckControlDefByStatus(status, &first[j]) <= 0)
+                    continue;
+            }
+            r = func_000ED618(&first[j].data, ctx);
+            if (r)
+                return r;
+        }
+        return 0;
+    }
+}
+#endif
