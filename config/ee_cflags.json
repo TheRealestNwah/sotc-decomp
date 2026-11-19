@@ -293,5 +293,8 @@
   ],
   "src/xff/KERNEL/iosCreateThread.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/isysLaunchModule.c": [
+    "-fno-strict-aliasing"
   ]
 }

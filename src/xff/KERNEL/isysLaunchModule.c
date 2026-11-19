@@ -76,10 +76,6 @@ static inline int resolve_all(void *group)
     return count;
 }
 
-/* Parked: 16 words off. Only the register choice for the two module-list globals differs
-   ($v0/$v1/$a0 swapped) and the final subtract-and-store pair is scheduled
-   before the callee-saved restores instead of between them. */
-#ifdef NONMATCHING
 void isysLaunchModule(Module *m)
 {
     char buf[0x400];
@@ -92,8 +88,8 @@ void isysLaunchModule(Module *m)
     y = m->xff;
     iosSPrintf(buf, "%s.cmd", m->name);
     OutputLinkerScriptFile(y, buf, printf);
-    x = m->xff;
     size = 0;
+    x = m->xff;
     if (x->magic == D_STR_00040908) {
         n = x->nsect >> 1;
         for (i = 0; i < n; i++)
@@ -106,4 +102,3 @@ void isysLaunchModule(Module *m)
     m->x3C -= size;
     D_00040900 -= size;
 }
-#endif
