@@ -1,6 +1,4 @@
-#ifdef NONMATCHING
-/* 2 diffs: the Original uses branch-likely (bc1tl, bc1fl) for the final
-   two dot-product comparisons, where this compiles to bc1t, bc1f. */
+/* Checks that two vectors are nonzero and not (anti)parallel: both are normalized and their dot product must stay within 0.999 of +-1. The final returns go through shared labels, which gives the Original's branch-likely forms. */
 typedef struct { float f[4]; } __attribute__((aligned(16))) V4;
 
 static inline int isNonZero(float *v)
@@ -67,10 +65,14 @@ int AI_CheckNoAngleVec(float *a, float *b)
     vecNormalize(&na, a);
     vecNormalize(&nb, b);
     if (vecDot(&na, &nb) < 0.0f) {
-        return vecDot(&na, &nb) < -0.9989999532699585f ? 0 : 1;
+        if (vecDot(&na, &nb) < -0.9989999532699585f)
+            goto zero;
+        goto one;
     }
     if (!(vecDot(&na, &nb) > 0.9989999532699585f))
-        return 1;
+        goto one;
+zero:
     return 0;
+one:
+    return 1;
 }
-#endif
