@@ -98,7 +98,8 @@ extern int Sg2SlotSetSsa(int s, int ssa);
 extern void Sg2SlotSetKeyOnBit(int hi, int bit);
 
 #ifdef NONMATCHING
-/* 12 words differ: v0/v1 swap in the MasTune/Pitch loads and a0/a1 swap in the B_000C5C18[c->mod] index */
+/* Parked: 7 words differ (the B_000C5C18[c->mod] address: the Original loads the
+   table base into $a0 before the index and keeps the offset in $a1) */
 static void func_00023DD0(void)
 {
     unsigned char *ev = B_000C5C0C;
@@ -195,8 +196,8 @@ static void func_00023DD0(void)
         if (c->rr != 0)
             a2 = c->rr | (a2 & 0xFFE0);
         Sg2SlotSetAdsr(slot, a1, a2);
-        Sg2SlotSetMasTune(slot, B_000C5C10->masTune);
-        Sg2SlotSetPitch(slot, c->note, B_000C5C10->x40, sp[2], (signed char)sp[3], c->x48);
+        { register ModState *ms __asm__("$2") = B_000C5C10; Sg2SlotSetMasTune(slot, ms->masTune); }
+        { register ModState *ms __asm__("$3") = B_000C5C10; Sg2SlotSetPitch(slot, c->note, ms->x40, sp[2], (signed char)sp[3], c->x48); }
         Sg2SlotSetMasPan(slot, B_000C5C10->masPan);
         v = c->pan;
         if (v >= 0x80)
@@ -218,10 +219,13 @@ static void func_00023DD0(void)
         ul *= sp[0xB];
         Sg2SlotSetBaseVol(slot, ul / 0x1F417F);
         Sg2SlotSetSeMasVol(slot, vab_get_semastervol(B_000C5C10->vab));
-        if (B_000C5C18[c->mod].useVelTbl == 0)
-            lv = c->velo;
-        else
-            lv = B_000C5C18[c->mod].velTbl[c->velo];
+        {
+            register int mi __asm__("$5") = c->mod;
+            if (B_000C5C18[mi].useVelTbl == 0)
+                lv = c->velo;
+            else
+                lv = B_000C5C18[mi].velTbl[c->velo];
+        }
         Sg2SlotSetVol(slot, lv);
         { unsigned int ssa = *(unsigned short *)(sp + 4); lv = (ssa << B_000C5C10->ssaShift) + B_000C5C10->ssaBase; }
         Sg2SlotSetSsa(slot, lv);
