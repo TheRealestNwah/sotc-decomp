@@ -1,5 +1,3 @@
-/* Parked attempt: 5 differing words (entry scheduling only). */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
 extern int act_camera_cutout_game_camera_param_manager(void *, void *);
@@ -13,8 +11,11 @@ extern int CAM_doit_follow_rot(void *, void *, void *, float);
 extern void CAM_get_camera_position_by_look_at(void *, void *, void *, float);
 extern float D_0017B720;
 
+/* Union member accesses get alias set 0, keeping the int load of the mode
+   ordered against the quadword copies as in the Original. */
+typedef union { float f; int i; s128 q; } U;
 #define F(p, o) (*(float *)((char *)(p) + (o)))
-#define I(p, o) (*(int *)((char *)(p) + (o)))
+#define I(p, o) (((U *)((char *)(p) + (o)))->i)
 #define Q(p, o) (*(s128 *)((char *)(p) + (o)))
 
 static inline float dotVector(void *a, void *b)
@@ -143,4 +144,3 @@ static void func_000E65E8(char *a, char *b, int arg)
     if (flag == 1)
         CAM_get_camera_position_by_look_at(cd, cd + 0x20, q, F(cd, 0x38));
 }
-#endif
