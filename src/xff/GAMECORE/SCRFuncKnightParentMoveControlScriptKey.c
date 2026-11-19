@@ -14,7 +14,6 @@ extern GcGlobal gcGlobalVar;
 #define DT (gcGlobalVar.dt)
 #define COL(a) ColCont2_IsColStatus(getPlayerColCont2(*(int *)(scr + 0x4078)), 0x3F0, (a))
 
-#ifdef NONMATCHING /* 3 diffs: the ScriptCtrlDef load swaps $v0/$v1 (lui into $v0, pointer into $v1 in the Original); everything else matches. The permuter found nothing better in 1350 iterations */
 int SCRFuncKnightParentMoveControlScriptKey(void *chara, float waitTime, float moveTime, float stopTime)
 {
     char *ai;
@@ -35,7 +34,9 @@ int SCRFuncKnightParentMoveControlScriptKey(void *chara, float waitTime, float m
             t = u;
         }
         if (stopTime <= t) {
-            CharaCtrlSetScriptCtrlStatus(chara, ScriptCtrlDef_SCRKnightMoveStop[1]);
+            register int *p asm("$3") = ScriptCtrlDef_SCRKnightMoveStop; /* pins the pointer to $v1 like the Original */
+
+            CharaCtrlSetScriptCtrlStatus(chara, p[1]);
             flag = *(int *)(ai + 0x41B0);
         }
         if (flag & 1) {
@@ -74,4 +75,3 @@ int SCRFuncKnightParentMoveControlScriptKey(void *chara, float waitTime, float m
         }
     }
 }
-#endif
