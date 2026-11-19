@@ -1,5 +1,3 @@
-/* Parked attempt: 11 words differ ($a1/$a2 swap in the track loop, order of the 0x7F/0x40 stores). */
-#ifdef NONMATCHING
 typedef struct {
     int on;
     int a;
@@ -57,7 +55,8 @@ int Sg2SmfpOpenSelCore(int vab, unsigned char *data, int arg)
         goto end;
     }
     idx = -1;
-    for (j = 0; j < 8; j++) {
+    j = 0;
+    do {
         k = (B_000E11C4 + j) & 7;
         if (B_000E0DC0[k].on == 0) {
             idx = k;
@@ -65,7 +64,8 @@ int Sg2SmfpOpenSelCore(int vab, unsigned char *data, int arg)
             B_000E0DC0[k].a = B_000E11C4++;
             break;
         }
-    }
+        j++;
+    } while (j < 8);
     if (idx == -1) {
         ret = -1;
         goto end;
@@ -97,12 +97,12 @@ int Sg2SmfpOpenSelCore(int vab, unsigned char *data, int arg)
     t = 1000000.0 / (60000000.0 / s->tempo) * s->d38;
     s->d40 = t / Sg2CtrlGetTickMode();
     s->d40 = dpmul(s->d40, s->d78) / 100.0;
+    s->x10 = 0x7F;
     s->x14 = 0x7F;
+    s->x18 = 0x40;
     s->p64 = s->p60;
     s->x1C = 0x40;
     s->x70 = 0x7F;
-    s->x10 = 0x7F;
-    s->x18 = 0x40;
     s->x6C = 0;
     s->x69 = 0;
     s->d48 = 0;
@@ -111,4 +111,3 @@ end:
         EIntr();
     return ret;
 }
-#endif
