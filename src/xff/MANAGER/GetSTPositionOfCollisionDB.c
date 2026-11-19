@@ -1,46 +1,64 @@
-#ifdef NONMATCHING /* parked draft: 138 diffs, VU0 runs in place */
+#ifdef NONMATCHING /* parked draft: 58 diffs; the Original computes the second div before storing *s and keeps the denominators in $f3 */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
+typedef struct { char pad0[0x3C]; int attribute; } CollisionPlane;
+typedef struct {
+    char pad0[0x54];
+    int *planeIndices;
+    char pad58[0x38];
+} CollisionNode;
+typedef struct {
+    char pad0[8]; CollisionNode *nodes;
+    char padC[8]; void *vertices; CollisionPlane *planes;
+} CollisionResource;
+typedef struct { char pad0[0x20]; CollisionResource *resource; } CollisionFile;
+typedef struct { char pad0[0x24]; void *nodes; char geometry[0x48]; } CollisionModel;
+typedef struct { char pad0[8]; void *matrices; char padC[0x14]; CollisionModel *model; char pad24[0xC]; } CollisionRuntime;
+typedef struct { char pad0[0x154]; CollisionRuntime runtime; CollisionFile *collision; } LayoutClass;
+typedef struct { void *object; unsigned int packed; } CollisionReference;
+extern LayoutClass *GetLayoutClass(void *);
+extern void func_0009AE78(void **, int, void *, void *, void *, CollisionNode *, void *, CollisionPlane *);
+extern void func_000999E0(void **, int, LayoutClass *, int, int);
 
-extern char *GetLayoutClass(void *);
-extern void func_000999E0(void *, int, char *, int, int);
-extern void func_0009AE78(void *, int, int, int, int, int, int, int);
-
-int GetSTPositionOfCollisionDB(float *s, float *t, int *handle, float *point)
+int GetSTPositionOfCollisionDB(float *s, float *t, CollisionReference *reference, Vec4 *point)
 {
     Vec4 e1;
     Vec4 e2;
     Vec4 d;
-    Vec4 w[2];
-    int *rec[2];
-    unsigned int idx = handle[1] & 0xFFFFFF;
-    unsigned int group = ((unsigned int)handle[1] >> 24) & 0x7F;
-    char *cls = GetLayoutClass((void *)handle[0]);
-    float a, b, f2, f3;
+    void *v[4];
+    void **vp = v;
+    Vec4 *pe1 = &e1;
+    Vec4 *pe2 = &e2;
+    unsigned int packed = reference->packed;
+    int nodeIndex = (packed >> 24) & 0x7F;
+    int shapeIndex = packed & 0xFFFFFF;
+    LayoutClass *layout = GetLayoutClass(reference->object);
+    float f2, f3, a, b;
 
-    if (handle[1] < 0) {
-        func_000999E0(rec, 0, cls, group, idx);
+    if ((int)reference->packed < 0) {
+        func_000999E0(vp, 0, layout, nodeIndex, shapeIndex);
     } else {
-        char *g = *(char **)(*(char **)(cls + 0x184) + 0x20);
-        char *p = *(char **)(cls + 0x154 + 0x20);
-        func_0009AE78(rec, 0, *(int *)(p + 0x28), *(int *)(*(char **)(p + 0x24)), *(int *)(g + 0x8), *(int *)(g + 0x14), *(int *)(g + 0x18), idx);
+        CollisionResource *resource = layout->collision->resource;
+        CollisionRuntime *rt = &layout->runtime;
+        int plane = resource->nodes[nodeIndex].planeIndices[shapeIndex];
+
+        func_0009AE78(vp, 0, rt->model->geometry, rt->model->nodes, rt->matrices, resource->nodes,
+                      resource->vertices, &resource->planes[plane]);
     }
-    __asm__ __volatile__("lqc2 vf29, 0x0(%1)\n"
-                         "lqc2 vf30, 0x0(%2)\n"
-                         "vsub.xyzw vf31, vf29, vf30\n"
-                         "sqc2 vf31, 0x0(%0)\n"
-                         : : "r"(&e1), "r"((float *)rec[1]), "r"((float *)rec[0]) : "memory");
-    __asm__ __volatile__("lqc2 vf29, 0x0(%1)\n"
-                         "lqc2 vf30, 0x0(%2)\n"
-                         "vsub.xyzw vf31, vf29, vf30\n"
-                         "sqc2 vf31, 0x0(%0)\n"
-                         : : "r"(&e2), "r"((float *)rec[2]), "r"((float *)rec[0]) : "memory");
+    __asm__ __volatile__("lqc2 vf29, 0x0(%0)\n" : : "r"(v[1]) : "memory");
+    __asm__ __volatile__("lqc2 vf30, 0x0(%0)\n" : : "r"(v[0]) : "memory");
+    __asm__ __volatile__("vsub.xyzw vf31, vf29, vf30\n"
+                         "sqc2 vf31, 0x0(%0)\n" : : "r"(pe1) : "memory");
+    __asm__ __volatile__("lqc2 vf29, 0x0(%0)\n" : : "r"(v[2]) : "memory");
+    __asm__ __volatile__("vsub.xyzw vf31, vf29, vf30\n"
+                         "sqc2 vf31, 0x0(%0)\n" : : "r"(pe2) : "memory");
+    __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
+                         "lqc2 vf6, 0x0(%1)\n"
+                         "vsub.xyzw vf7, vf5, vf6\n"
+                         "sqc2 vf7, 0x0(%2)\n"
+                         : : "r"(point), "r"(v[0]), "r"(&d) : "memory");
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
-                         "vsub.xyzw vf7, vf5, vf6\n"
-                         "sqc2 vf7, 0x0(%3)\n"
-                         "lqc2 vf5, 0x0(%4)\n"
-                         "lqc2 vf6, 0x0(%5)\n"
                          "lqc2 vf7, 0x0(%3)\n"
                          "vopmula.xyz ACC, vf5, vf6\n"
                          "vopmsub.xyz vf8, vf6, vf5\n"
@@ -55,7 +73,7 @@ int GetSTPositionOfCollisionDB(float *s, float *t, int *handle, float *point)
                          "vmaddz.x vf10, vf10, vf11z\n"
                          "qmfc2.ni $2, vf10\n"
                          "mtc1 $2, %0\n"
-                         : "=f"(f2) : "r"(point), "r"((float *)rec[0]), "r"(&d), "r"(&e1), "r"(&e2) : "$2", "memory");
+                         : "=f"(f2) : "r"(&e1), "r"(pe2), "r"(&d) : "$2", "memory");
     __asm__ __volatile__("vaddw.x vf10, vf0, vf0w\n"
                          "vmul.xyz vf11, vf9, vf5\n"
                          "vaddax.x ACC, vf0, vf11x\n"
@@ -64,7 +82,7 @@ int GetSTPositionOfCollisionDB(float *s, float *t, int *handle, float *point)
                          "qmfc2.ni $2, vf10\n"
                          "mtc1 $2, %0\n"
                          : "=f"(f3) : : "$2", "memory");
-    *s = f2 / f3;
+    a = f2 / f3;
     __asm__ __volatile__("vopmula.xyz ACC, vf8, vf5\n"
                          "vopmsub.xyz vf9, vf5, vf8\n"
                          "vsub.w vf9, vf9, vf9\n"
@@ -84,14 +102,14 @@ int GetSTPositionOfCollisionDB(float *s, float *t, int *handle, float *point)
                          "qmfc2.ni $2, vf10\n"
                          "mtc1 $2, %0\n"
                          : "=f"(f3) : : "$2", "memory");
-    *t = f2 / f3;
-    a = *s;
-    b = *t;
-    if (a < -0.00001f)
+    b = f2 / f3;
+    *s = a;
+    *t = b;
+    if (*s < -0.00002f)
         return 0;
-    if (b < -0.00001f)
+    if (b < -0.00002f)
         return 0;
-    if (a + b - 1.0f > 0.00001f)
+    if (*s + b - 1.0f > 0.00002f)
         return 0;
     return 1;
 }
