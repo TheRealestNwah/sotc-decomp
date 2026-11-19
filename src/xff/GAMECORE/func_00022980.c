@@ -2,9 +2,9 @@ extern int *DldSysUndefSymbol;
 extern char rootPtn[];
 extern void *iosMallocAlign(void *, int, int);
 
-typedef struct {
-    short x, y, w, h;
-    int unk8;
+typedef union {
+    struct { short x, y, w, h; int unk8; } s;
+    int w[3];
 } CellRect;
 
 typedef struct {
@@ -44,7 +44,7 @@ typedef struct AreaGroup {
     int unk10;
     int count;
     CellRect *rects;
-    AreaEntry *entry;
+    int entry;
     struct AreaGroup *next;
 } AreaGroup;
 
@@ -74,7 +74,6 @@ static inline int dldCount(unsigned int *h)
     return (t != 0 && t != DldSysUndefSymbol) ? t[3] : 0;
 }
 
-#ifdef NONMATCHING /* 24 diffs, same size: the Original schedules a->unkC/unk10 loads after the D_0017A310 address, and keeps the rect loop's loads (D_0017A340.gh, src->unk14) after the preceding short stores */
 static void func_00022980(AreaEntry *a)
 {
     AreaSrc *src = (AreaSrc *)dldData(&a->sheet);
@@ -83,10 +82,10 @@ static void func_00022980(AreaEntry *a)
     CellRect *r;
     int i;
 
-    g->entry = a;
+    g->entry = (int)a;
     g->unkC = a->unkC;
     g->unk10 = a->unk10;
-    g->next = D_0017A310;
+    *(int *)&g->next = *(int *)&D_0017A310;
     D_0017A310 = g;
     g->count = dldCount(&a->sheet);
     g->unk0 = a->unk8;
@@ -94,14 +93,14 @@ static void func_00022980(AreaEntry *a)
     p = src;
     r = g->rects;
     for (i = 0; i < g->count; i++) {
-        r->x = p->x;
-        r->y = D_0017A340.gh - p->y - p->h;
-        r->w = p->w;
-        r->h = p->h;
-        r->unk8 = p->unk14;
+        r->s.x = p->x;
+        r->s.y = D_0017A340.gh - p->y - p->h;
+        r->s.w = p->w;
+        r->s.h = p->h;
+        r->s.unk8 = p->unk14;
         func_000227C8(r, g);
         p++;
         r++;
     }
 }
-#endif
+
