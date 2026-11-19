@@ -296,5 +296,9 @@
   ],
   "src/xff/KERNEL/isysLaunchModule.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/Sg2ModTickProc.c": [
+    "--asm-fill-delay-slots",
+    "-fno-strict-aliasing"
   ]
 }
