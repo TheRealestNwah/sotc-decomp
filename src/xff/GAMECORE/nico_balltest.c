@@ -5,7 +5,7 @@ extern int *isysGetThisSubThread(void);
 extern char *GetLayoutClass(int *);
 extern void *memset(void *, int, unsigned int);
 extern void UpdateLayoutClassPastSimpleGeometry(char *);
-extern void InitCollisionFinder(void *, int, int);
+extern int InitCollisionFinder(void *, int, int);
 extern void GetCollisionDB(void *, void *, int *, void *, void *, float);
 extern int SlideCollisionFinder4D(void *, void *, void *, float, void *, int, float);
 extern void SetQuaternionByAxisRotateVWithNoRegularize(void *, short, void *);
@@ -35,7 +35,6 @@ extern float D_0017A9B8;
                          "sqc2 vf13, 0x0(%2)\n"                                                    \
                          : : "r"(a), "r"(b), "r"(dst) : "memory")
 
-#ifdef NONMATCHING /* 2 diffs: gcGlobalVar base built in $v0 instead of $v1. Listing the float arguments of SlideCollisionFinder4D in their register order fixed the call setup. Permuter: no gain in ~240 iterations */
 void nico_balltest(void)
 {
     char finder[0x20];
@@ -135,4 +134,3 @@ void nico_balltest(void)
         scrRun();
     }
 }
-#endif
