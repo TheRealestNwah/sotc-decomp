@@ -300,5 +300,11 @@
   "src/xff/KERNEL/Sg2ModTickProc.c": [
     "--asm-fill-delay-slots",
     "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/func_000A9A10.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/GAMECORE/func_000AAC20.c": [
+    "-fno-strict-aliasing"
   ]
 }
