@@ -1,7 +1,3 @@
-/* Parked attempt (2 diffs): gcc puts the 0.017453293f constant for the
- * cos argument in $f21 instead of the Original's $f12 (mtc1/mul.s at
- * 0x124 and 0x130). Everything else matches. */
-#ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef unsigned int u_long128 __attribute__((mode(TI)));
 
@@ -104,6 +100,7 @@ static inline float vecDot(float *a, float *b)
     return dot;
 }
 
+/* c is pinned to $f20 so the degree constant can take $f12, as in the Original. */
 void SCRFuncSetAttainPosForEscapeToPlayer(float angle, float minDist)
 {
     Vec4 dir;
@@ -114,7 +111,7 @@ void SCRFuncSetAttainPosForEscapeToPlayer(float angle, float minDist)
     char *ctrl;
     PathInfo *path;
     float bestDist;
-    float c;
+    register float c __asm__("$f20");
     float d;
     int i;
     unsigned j;
@@ -130,8 +127,7 @@ void SCRFuncSetAttainPosForEscapeToPlayer(float angle, float minDist)
         vecNormalize(toPlayer, toPlayer);
         toPlayer[3] = 1.0f;
     }
-    bestDist = 0.017453293f;
-    c = iosGetCosf(angle * bestDist);
+    c = iosGetCosf(angle * 0.017453293f);
     bestDist = RO_00181640;
     for (i = 0; i < path->n; i++) {
         unsigned *cnt = path->a[i].cnt;
@@ -157,4 +153,3 @@ void SCRFuncSetAttainPosForEscapeToPlayer(float angle, float minDist)
     if (bestDist != RO_00181640)
         setAttainmentPos(ctrl, (u_long128 *)best);
 }
-#endif
