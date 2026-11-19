@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* parked draft: 31 diffs; sibling of ClipCollisionVariableXZSurface (ok flag in a0 not v1, loop tail bnel) */
+/* Finds the first group object whose variable XZ surface clips the segment, and reports the hit in object space. */
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -58,29 +58,28 @@ extern int func_0009C0B0(void *, void *, void *, int, int, int, int, int);
 
 int ClipCollisionVariableXZSurfaceCB(char *out, void *a, void *b, int group, int t0, int (*cb)(int, int), int t2, int t3, int arg)
 {
+    s128 *hit;
     Vec4 buf[5];
     int r = 0;
     int obj = 0;
     int *g;
 
-    g = isysGroupForFirst(group, 0);
-    if (g) {
+    hit = (s128 *)buf;
+
+    for (g = isysGroupForFirst(group, 0); g; g = isysGroupForNext(g, 0)) {
         obj = g[0];
-        do {
+        {
             if (GetLayoutClass(obj)[0x1B8] != 0 && (cb == 0 || cb(obj, arg) != 0)) {
                 int ok;
                 char *cls;
                 int *v = *(int **)(*(int *)(GetLayoutClass(obj) + 0x184) + 0x20);
-                if (*v < 2) {
-                    ok = 0;
-                } else if (v[14] != 0 && func_0009C0B0(buf, a, b, obj, t0, t2, t3, arg)) {
+                if (*v >= 2 && v[14] != 0 && func_0009C0B0(buf, a, b, obj, t0, t2, t3, arg))
                     ok = 1;
-                } else {
+                else
                     ok = 0;
-                }
                 if (ok) {
                     if (out) {
-                        *(s128 *)(out + 0x40) = *(s128 *)buf;
+                        *(s128 *)(out + 0x40) = *hit;
                         cls = GetLayoutClass(obj);
                         *(int *)out = obj;
                         matInverse((float *)buf[1], *(float **)(cls + 0x158));
@@ -91,13 +90,9 @@ int ClipCollisionVariableXZSurfaceCB(char *out, void *a, void *b, int group, int
                     break;
                 }
             }
-            g = isysGroupForNext(g, 0);
-            if (g)
-                obj = g[0];
-        } while (g);
+        }
     }
     if (obj)
         isysGroupForExit(obj, 0);
     return r;
 }
-#endif
