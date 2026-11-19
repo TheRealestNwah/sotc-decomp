@@ -1,4 +1,5 @@
-#ifdef NONMATCHING /* parked draft: 79 diffs; skeleton of the ClipCollisionVariableXZSurface family, matInverse/matApply result block not yet wired */
+/* Parked: ~53 diffs, same size (142 words). Probes the variable XZ surfaces of a group around a position with the water callback (func_0009D0B0) and reports the surface distance found. The body is ClipCollisionVariableXZSurfaceCB inlined with a local hit record, no filter callback and the result record as the callback argument. Remaining diffs: the original keeps the buffer address in s3 and computes it inside the loop (ours hoists it, costing a load-delay nop before the first GetLayoutClass call and shifting the loop by one word), and s4/s5 are swapped for the hit record and buf[1]. */
+#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -54,58 +55,67 @@ extern int *isysGroupForFirst(int, int);
 extern int *isysGroupForNext(int *, int);
 extern void isysGroupForExit(int, int);
 extern char *GetLayoutClass(int);
-extern int func_0009C0B0(void *, void *, void *, int, int, void *, int, void *);
-extern int func_0009D0B0(void);
+extern int func_0009C0B0(void *, void *, void *, int, int, int, int, int);
+extern int func_0009D0B0();
 extern float RO_0011A5B4;
+
+static inline int clipSurface(char *out, void *a, void *b, int group, int t0, int (*cb)(int, int), int t2, int t3, int arg)
+{
+    Vec4 buf[5];
+    int r = 0;
+    int obj = 0;
+    int *g;
+
+    for (g = isysGroupForFirst(group, 0); g; g = isysGroupForNext(g, 0)) {
+        obj = g[0];
+        {
+            if (GetLayoutClass(obj)[0x1B8] != 0 && (cb == 0 || cb(obj, arg) != 0)) {
+                int ok;
+                char *cls;
+                int *v = *(int **)(*(int *)(GetLayoutClass(obj) + 0x184) + 0x20);
+                if (*v >= 2 && v[14] != 0 && func_0009C0B0(buf, a, b, obj, t0, t2, t3, arg))
+                    ok = 1;
+                else
+                    ok = 0;
+                if (ok) {
+                    if (out) {
+                        *(s128 *)(out + 0x40) = *(s128 *)buf;
+                        cls = GetLayoutClass(obj);
+                        *(int *)out = obj;
+                        matInverse((float *)buf[1], *(float **)(cls + 0x158));
+                        matApply((float *)(out + 0x10), (float *)buf[1], (float *)buf);
+                        *(int *)(out + 0x30) = 10;
+                    }
+                    r = obj;
+                    break;
+                }
+            }
+        }
+    }
+    if (obj)
+        isysGroupForExit(obj, 0);
+    return r;
+}
 
 struct Res {
     int found;
     float dist;
     int pad[2];
     Vec4 pos;
-    float a, b, c, d;
+    float lo, hi;
 };
 
 int IsWaterSurfaceExistAround(float *out, float *pos, int group, float f12, float f13)
 {
-    Vec4 buf[5];
+    char hit[0x50];
     struct Res res;
-    Vec4 query;
-    float lim[2];
-    int obj = 0;
-    int *g;
-    char *cls;
-    int ok;
 
     res.found = 0;
     res.dist = RO_0011A5B4;
-    *(s128 *)query = *(s128 *)pos;
-    lim[0] = f12;
-    lim[1] = f13;
-    g = isysGroupForFirst(group, 0);
-    if (g) {
-        obj = g[0];
-        do {
-            if (GetLayoutClass(obj)[0x1B8] != 0) {
-                int *v = *(int **)(*(int *)(GetLayoutClass(obj) + 0x184) + 0x20);
-                if (*v < 2) {
-                    ok = 0;
-                } else if (v[14] != 0 && func_0009C0B0(buf, pos, pos, obj, 1, (void *)func_0009D0B0, 0, &res)) {
-                    ok = 1;
-                } else {
-                    ok = 0;
-                }
-                if (ok) {
-                    break;
-                }
-            }
-            g = isysGroupForNext(g, 0);
-            if (g)
-                obj = g[0];
-        } while (g);
-    }
-    if (obj)
-        isysGroupForExit(obj, 0);
+    *(s128 *)res.pos = *(s128 *)pos;
+    res.lo = f12;
+    res.hi = f13;
+    clipSurface(hit, pos, pos, group, 1, 0, (int)func_0009D0B0, 0, (int)&res);
     if (res.found == 1)
         *out = res.dist;
     return res.found;
