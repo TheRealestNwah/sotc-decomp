@@ -1,5 +1,3 @@
-/* Parked attempt: 4 diffs (lw $a1 load order around the quaternion asm, and $v1 copied from $a0 instead of rematerialized). */
-#ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef unsigned int u_long128 __attribute__((mode(TI)));
 
@@ -251,7 +249,7 @@ void guardMainCommon(int obj, int *flag, void *path, void *hc, char *ctrl, float
                          "lqc2 vf4, 0x0(%2)\n"
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
-                         : : "r"(po), "r"(pq), "r"(pp) : "memory");
+                         : : "r"(po), "r"(pq), "r"(pp));
         }
         {
             register float *pi __asm__("$3") = m[0];
@@ -316,4 +314,3 @@ void guardMainCommon(int obj, int *flag, void *path, void *hc, char *ctrl, float
         *flag = 0;
     }
 }
-#endif
