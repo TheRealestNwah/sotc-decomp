@@ -36,7 +36,31 @@ extern void DebugDispCollisionDBEdge();
 extern int iosInitKPrintfContext3D(void *, void *, int, int, float, float, float, float);
 extern void kprintfContextCentering(void *, const char *, ...);
 #ifdef NONMATCHING
-/* Parked: 48 words differ (load/scheduling order around the pair loads and 0.5f constant). */
+static inline void lerpv(float *out, int a, int b, float t)
+{
+    __asm__ __volatile__(".set noreorder
+"
+                         "mfc1 $8, %0
+"
+                         "qmtc2.ni $8, vf7
+"
+                         "lqc2 vf5, 0x0(%1)
+"
+                         "lqc2 vf6, 0x0(%2)
+"
+                         "vsubx.w vf8, vf0, vf7x
+"
+                         "vmulax.xyzw ACC, vf5, vf7x
+"
+                         "vmaddw.xyzw vf9, vf6, vf8w
+"
+                         "sqc2 vf9, 0x0(%3)
+"
+                         ".set reorder
+"
+                         : : "f"(t), "r"(a), "r"(b), "r"(out) : "memory", "$8");
+}
+/* Parked: 6 words differ (register/scheduling order around the pair loads). */
 void DebugDispCollisionDBEdgeAngle(CollisionReference *reference, int edge, float angle)
 {
     struct { int pair[4] __attribute__((aligned(16))); float point[4]; float ctx[16]; int vertices[4]; } L;
@@ -58,27 +82,7 @@ void DebugDispCollisionDBEdgeAngle(CollisionReference *reference, int edge, floa
     }
     pair[0] = vertices[edge];
     pair[1] = vertices[RO_001407D8[edge]];
-    __asm__ __volatile__(".set noreorder
-"
-                         "mfc1 $8, %0
-"
-                         "qmtc2.ni $8, vf7
-"
-                         "lqc2 vf5, 0x0(%1)
-"
-                         "lqc2 vf6, 0x0(%2)
-"
-                         "vsubx.w vf8, vf0, vf7x
-"
-                         "vmulax.xyzw ACC, vf5, vf7x
-"
-                         "vmaddw.xyzw vf9, vf6, vf8w
-"
-                         "sqc2 vf9, 0x0(%3)
-"
-                         ".set reorder
-"
-                         : : "f"(0.5f), "r"(pair[0]), "r"(pair[1]), "r"(L.point) : "memory", "$8");
+    lerpv(L.point, L.pair[0], L.pair[1], 0.5f);
     if (iosInitKPrintfContext3D(L.ctx, L.point, 0, 1, 1.0f, 1.0f, 1.0f, 1.0f) != 0) {
         kprintfContextCentering(L.ctx, RO_00140800, (int)angle);
     }
