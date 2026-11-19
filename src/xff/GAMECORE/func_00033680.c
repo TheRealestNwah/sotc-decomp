@@ -1,5 +1,4 @@
-/* Parked: 2 diffs, same size. Debug draw of a grab line: copies (or, in mode 5, offsets by -0.65 along the layout's Y rotation) the two layout positions at 0x134/0x138, builds a matrix looking from the camera along the segment (GetQuaternionByAxisDirZY, quatPosToMatrix), and draws a fading two-colour strip in layer 0x12. Remaining: the Original loads the second position pointer (0x138) after storing the first copied quadword; this hoists it above the first sq. */
-#ifdef NONMATCHING
+/* Debug draw of a grab line: copies (or, in mode 5, offsets by -0.65 along the layout's Y rotation) the two layout positions at 0x134/0x138, builds a matrix looking from the camera along the segment (GetQuaternionByAxisDirZY, quatPosToMatrix), and draws a fading two-colour strip in layer 0x12. The second position pointer is read through a union with the quadword type so it may alias the first copy's store and stays after it. */
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -214,14 +213,9 @@ static void func_00033680(void *a0, void *a1, char *arg)
     iosDlPushLayer(0x12);
     modelResetSurface(0x12);
     if (*(int *)(arg + 0x48) != 5) {
-        s128 *s;
-        s128 t;
-        s = *(s128 **)(lc + 0x134);
-        t = *s;
-        *(s128 *)p0 = t;
-        s = *(s128 **)(lc + 0x138);
-        t = *s;
-        *(s128 *)p1 = t;
+        typedef union { s128 q; char *p[4]; } U;
+        *(s128 *)p0 = **(s128 **)(lc + 0x134);
+        *(s128 *)p1 = *(s128 *)((U *)(lc + 0x138))->p[0];
     } else {
         quatRotY(tmp, *(float **)(lc + 0x13C));
         vecScaleXYZ(tmp, tmp, -0.65f);
@@ -256,4 +250,3 @@ static void func_00033680(void *a0, void *a1, char *arg)
     iosDlPopLayer();
     *(short *)(arg + 0xAA) = 0;
 }
-#endif
