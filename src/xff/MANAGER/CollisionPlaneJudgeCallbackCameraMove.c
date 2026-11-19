@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 34 diffs: target keeps the result in v1 with explicit 0/1 stores and re-tests kind 0x280000000 at the end */
+/* Judges whether a collision plane blocks camera movement from its attribute bits. */
 typedef struct { char pad0[0x30]; int attribute; } FullCollisionShape;
 typedef struct { unsigned short attribute; char pad2[0x12]; } PackedCollisionShape;
 typedef struct { char pad0[0x3C]; int attribute; } CollisionPlane;
@@ -45,12 +45,11 @@ int CollisionPlaneJudgeCallbackCameraMove(CollisionReference *reference)
     unsigned long kind = attr & 0xF80000000ULL;
     unsigned long sound = attr & 0x7C000000;
     unsigned long camera = attr & 0x3C0000000000ULL;
+    int ret;
 
     if (kind == 0x280000000ULL) return 1;
     if (camera == 0x200000000000ULL) return 0;
-    if (sound == 0x30000000 || sound == 0x34000000 || sound == 0x64000000 || sound == 0x68000000 || sound == 0x6C000000 || sound == 0x24000000) return 0;
-    if (kind == 0x300000000ULL || kind == 0x500000000ULL || kind == 0x200000000ULL || kind == 0xB80000000ULL || kind == 0x80000000ULL || kind == 0x280000000ULL) return 0;
-    if (camera != 0x80000000000ULL) return 1;
-    return 0;
+    if (!(sound == 0x30000000 || sound == 0x34000000 || sound == 0x64000000 || sound == 0x68000000 || sound == 0x6C000000 || sound == 0x24000000) && !(kind == 0x300000000ULL || kind == 0x500000000ULL || kind == 0x200000000ULL || kind == 0xB80000000ULL || kind == 0x80000000ULL || kind == 0x280000000ULL) && camera != 0x80000000000ULL) ret = 1;
+    else ret = 0;
+    return ret;
 }
-#endif
