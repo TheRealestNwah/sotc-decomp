@@ -1,5 +1,4 @@
-/* Parked: 5 diffs, same size (104 words). Boss demo start: boss status lookup (as in bossStatTimeAttackJumpSekiban), then a VU0 vadd.xyz of the seamless-area centre onto the negated boss offset (one asm run). The 16-byte copy of the offset vector uses a union with a two-long view so gcc emits ld/sd, not ldl/ldr. Remaining: store order of the 1.0f w component against the z load/neg (scheduling). */
-#ifdef NONMATCHING
+/* Boss demo start: boss status lookup (as in bossStatTimeAttackJumpSekiban), then a VU0 vadd.xyz of the seamless-area centre onto the negated boss offset (one asm run). The 16-byte copy of the offset vector uses a union with a two-long view so gcc emits ld/sd, not ldl/ldr; the y component is pinned to $f1 for the Original register choice. */
 extern int *DldSysUndefSymbol;
 extern int SH_BossStatusDEFAULT[];
 extern int D_00179F90;
@@ -60,9 +59,13 @@ void bossStatStartDemo(void)
         obj = SCRGetFirstObj(gcGlobalVar + 0x2B4);
         if (obj != 0) {
             tmp.x = -*(float *)(s + 0x64);
-            tmp.y = *(float *)(s + 0x68);
-            tmp.w = 1.0f;
+            {
+                register float y __asm__("$f1") = *(float *)(s + 0x68);
+
+                tmp.y = y;
+            }
             tmp.z = -*(float *)(s + 0x6C);
+            tmp.w = 1.0f;
             v = tmp;
             YattsukeGetSeamlessAreaCenter(&center, *(unsigned char *)(s + 0x51));
             __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
@@ -81,4 +84,3 @@ void bossStatStartDemo(void)
     if (gstatTimeAttackMode != 0)
         gStatStartTimeAttack();
 }
-#endif
