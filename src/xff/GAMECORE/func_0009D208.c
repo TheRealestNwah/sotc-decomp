@@ -4,7 +4,9 @@ extern char ZeroVector[];
 extern char All1Vector[];
 extern float iosGetRandom(void);
 
-#ifdef NONMATCHING /* 17 diffs: the nine-entry jump table, register use and VU0 sequence match; a memory barrier before each case-final 0x26C store keeps the stores unmerged; remaining diffs are the ZeroVector pointer/value register pair ($v0/$v1 swapped) and the 0x270 store sitting before the float math instead of between lq/sq */
+/* The 0x270/0x1C0 stores go through a union so gcc keeps them in the
+   Original's order around the ZeroVector copy (strict aliasing would
+   reorder them otherwise); All1Vector is pinned to $v0. */
 static void func_0009D208(char *c)
 {
     char *p;
@@ -25,17 +27,23 @@ static void func_0009D208(char *c)
     case 1:
         r = iosGetRandom();
         p = *(char **)(c + 0x20);
-        *(float *)(c + 0x1C0) = *(float *)(p + 0x38) + *(float *)(p + 0x3C) * r;
-        *(int *)(c + 0x270) = 0;
-        *(s128 *)(c + 0x4D0) = *(s128 *)ZeroVector;
+        ((union { int i; s128 q; float f; } *)(c + 0x1C0))->f = *(float *)(p + 0x38) + *(float *)(p + 0x3C) * r;
+        {
+        s128 z = *(s128 *)ZeroVector;
+        ((union { int i; s128 q; float f; } *)(c + 0x270))->i = 0;
+        *(s128 *)(c + 0x4D0) = z;
+        }
         __asm__ __volatile__("" : : : "memory");
         *(int *)(c + 0x26C) = 0;
         break;
     case 2:
     case 3:
     case 7:
-        *(int *)(c + 0x270) = 0;
-        *(s128 *)(c + 0x4D0) = *(s128 *)ZeroVector;
+        {
+        s128 z = *(s128 *)ZeroVector;
+        ((union { int i; s128 q; float f; } *)(c + 0x270))->i = 0;
+        *(s128 *)(c + 0x4D0) = z;
+        }
         __asm__ __volatile__("" : : : "memory");
         *(int *)(c + 0x26C) = 0;
         break;
@@ -73,6 +81,8 @@ static void func_0009D208(char *c)
                                  "sqc2 vf5, 0x0(%0)\n"
                                  : : "r"(c), "f"(two) : "$2", "memory");
         }
+        {
+        register char *one __asm__("$2") = All1Vector;
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "lqc2 vf6, 0x0(%1)\n"
                              "vsub.xyz vf5, vf5, vf6\n"
@@ -86,7 +96,8 @@ static void func_0009D208(char *c)
                              "vwaitq\n"
                              "vmulq.xyz vf5, vf5, Q\n"
                              "sqc2 vf5, 0x0(%0)\n"
-                             : : "r"(c), "r"(All1Vector) : "memory");
+                             : : "r"(c), "r"(one) : "memory");
+        }
         __asm__ __volatile__("mfc1 $2, %1\n"
                              "lqc2 vf5, 0x0(%0)\n"
                              "qmtc2.ni $2, vf6\n"
@@ -98,4 +109,3 @@ static void func_0009D208(char *c)
         break;
     }
 }
-#endif
