@@ -1,6 +1,6 @@
-/* Parked attempt: 14 words differ from the Original. */
+/* Parked attempt: 8 words differ from the Original. */
 #ifdef NONMATCHING
-/* 14 diffs: scheduling of two loop setups and f0/f1 numbering in the colour copy. */
+/* 8 diffs: f0/f1 numbering in the second loop's colour copy (sp+0x10..0x1C). */
 typedef struct {
     float x, y, z, w;
 } V4 __attribute__((aligned(8)));
@@ -87,8 +87,7 @@ void updateEyeWork(void *obj)
     EyeCond *c;
     EyeCol *l;
     EyeCol *k;
-    V4 *dst;
-    V4 *p;
+    
     union {
         V4 v;
         u_long128 q;
@@ -111,15 +110,14 @@ void updateEyeWork(void *obj)
         if (e->cur == 0) {
             k = (EyeCol *)dldResolve((unsigned int *)e->target);
             if (k != 0) {
-                for (p = e->col; dldBase(&k->tex) != 0;) {
+                for (i = 0; dldBase(&k->tex) != 0; i++) {
                     tmp.x = k->x;
                     tmp.y = k->y;
                     tmp.z = k->z;
                     tmp.w = k->w;
                     k++;
                     col.v = tmp;
-                    *(u_long128 *)p = col.q;
-                    p++;
+                    *(u_long128 *)&e->col[i] = col.q;
                 }
             }
         }
@@ -130,7 +128,6 @@ void updateEyeWork(void *obj)
         l = (EyeCol *)dldResolve((unsigned int *)e->cur);
         if (l != 0) {
             i = 0;
-            dst = e->col;
             while (dldBase(&l->tex) != 0) {
                 clut = *(int *)(dldBase(&l->tex) + 0xC);
                 tmp.x = l->x;
@@ -139,14 +136,14 @@ void updateEyeWork(void *obj)
                 tmp.w = l->w;
                 col.v = tmp;
                 if (l->time > e->timer) {
-                    vecSub(&tmp, &col.v, dst);
+                    vecSub(&tmp, &col.v, &e->col[i]);
                     vecScale(&tmp, &tmp, gcGlobalVar.dt / (l->time - e->timer));
-                    vecAdd(dst, dst, &tmp);
+                    vecAdd(&e->col[i], &e->col[i], &tmp);
                 } else {
-                    *(u_long128 *)dst = col.q;
+                    *(u_long128 *)&e->col[i] = col.q;
                 }
+                texScaleClut(clut, &e->col[i]);
                 i++;
-                texScaleClut(clut, dst++);
                 l++;
                 if (i >= 5)
                     return;
