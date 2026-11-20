@@ -1,5 +1,3 @@
-/* Parked attempt: 6 words differ from the Original. */
-#ifdef NONMATCHING
 typedef struct ArrowNode {
     char pad0[0x90];
     void *obj90;
@@ -28,21 +26,22 @@ static inline int arrowListRemove(ArrowList *l, ArrowNode *n)
     ArrowNode *p;
     ArrowNode *prev;
 
-    if (l->head == 0)
-        return 0;
-    prev = 0;
-    for (p = l->head; p != 0; p = p->next) {
-        if (p == n) {
-            if (prev != 0)
-                prev->next = n->next;
-            if (l->head == n)
-                l->head = n->next;
-            if (l->tail == n)
-                l->tail = prev;
-            l->count--;
-            return 1;
+    if (l->head != 0) {
+        p = l->head;
+        prev = 0;
+        for (; p != 0; p = p->next) {
+            if (p == n) {
+                if (prev != 0)
+                    prev->next = n->next;
+                if (l->head == n)
+                    l->head = n->next;
+                if (l->tail == n)
+                    l->tail = prev;
+                l->count--;
+                return 1;
+            }
+            prev = p;
         }
-        prev = p;
     }
     return 0;
 }
@@ -74,4 +73,3 @@ static void func_000317C8(ArrowNode *n)
         n->obj94 = 0;
     }
 }
-#endif
