@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* case 9 keeps &q in s0 instead of recomputing sp+0x10 */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -11,7 +10,7 @@ typedef struct {
 } GeometryPointer;
 
 extern Vec4 YUnitVector;
-static void GetGeometryPointerPosition(Vec4 *, GeometryPointer *);
+extern void GetGeometryPointerPosition(Vec4 *, GeometryPointer *);
 extern Vec4 *GetCollisionDBPlane(void *);
 extern void GetClothQuaternion(Vec4 *, int, int, float, int);
 extern void CompletePlaneD(Vec4 *, Vec4 *);
@@ -57,6 +56,7 @@ int GetGeometryPointerVirtualSurfacePlane(Vec4 *plane, GeometryPointer *g)
     case 9: {
         GetGeometryPointerPosition(&pos, g);
         GetClothQuaternion(&q, g->unk0, g->unk4, g->unk8, 0);
+        __asm__ __volatile__("" : : );
         __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                              "vmul.xyzw vf5, vf4, vf4\n"
                              "vmr32.xyzw vf6, vf4\n"
@@ -84,4 +84,3 @@ int GetGeometryPointerVirtualSurfacePlane(Vec4 *plane, GeometryPointer *g)
     }
     return ret;
 }
-#endif
