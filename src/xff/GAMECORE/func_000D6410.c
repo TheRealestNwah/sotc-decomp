@@ -11,7 +11,6 @@ extern float get_upper_limit_clip_default_pitch_camera_target_approach(void *, f
 extern int get_yaw_pitch_camera_target_lost_angle(void *, void *, void *, void *, float, float);
 extern int is_must_reach_normal_default_angle(void *, int);
 
-#ifdef NONMATCHING /* 4 diffs: scheduling only; the a0=0 setup and the second cfg load (v0 in the Original, v1 here) swap around the yaw store. Pinning the pitch argument to $f13 fixed the mov.s order before func_000D6F28. A 25-minute permuter run found nothing better. */
 static void func_000D6410(char *c, char *m, int arg2, int arg3, int arg4, float fparg0)
 {
     float dir[4];
@@ -33,9 +32,9 @@ static void func_000D6410(char *c, char *m, int arg2, int arg3, int arg4, float 
     {
     float y = GAMEUTIL_increase_yaw(0, ang[0], ang[2]);
     float k = 0.017453293f;
-    *(float *)(c + 0x30) = y;
-    cfg = *(char **)m;
-    p = GAMEUTIL_increase_pitch_limit_clip(0, 0, ang[1], ang[3], *(float *)(cfg + 0xAC) * k, *(float *)(cfg + 0xB0) * k);
+    ((union { float f; char *p; } *)(c + 0x30))->f = y;
+    { register char *c2 __asm__("$2"); c2 = *(char **)m;
+    p = GAMEUTIL_increase_pitch_limit_clip(0, 0, ang[1], ang[3], *(float *)(c2 + 0xAC) * k, *(float *)(c2 + 0xB0) * k); }
     }
     *(float *)(c + 0x34) = p;
     p = get_upper_limit_clip_default_pitch_camera_target_approach(m + 0x6A0, p);
@@ -68,4 +67,3 @@ static void func_000D6410(char *c, char *m, int arg2, int arg3, int arg4, float 
     }
     GAMEUTIL_doit_status_manager(c, state, 0, fparg0);
 }
-#endif
