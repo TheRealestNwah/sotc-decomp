@@ -52,7 +52,7 @@ typedef struct {
     int auxiliary;
     char tail[0x2C];
 } AnimationSample;
-static float T_000E5EA0(void *, const Vector *);
+static float func_000E5EA0(void *, const Vector *);
 #ifdef NONMATCHING
 /* 15 diffs: register allocation around the volume-rate calls and stack layout of the lo/hi bounds. */
 typedef struct { float x, y, z; int w; } __attribute__((aligned(8))) V;
@@ -109,7 +109,7 @@ static inline void quatToMatrix(float *m, float *q, void *pos)
                          : : "r"(m), "r"(pos) : "memory");
 }
 
-static float T_000E5EA0(void *animation, const Vector *reference)
+static float func_000E5EA0(void *animation, const Vector *reference)
 {
     void **anim = animation;
     void *pos = (void *)reference;
@@ -185,7 +185,7 @@ static inline void scaleXYZ(Vector *out, float scale)
 static void func_000E75F8(CameraLwsAnimeData *out, void *animation, const Vector *reference)
 {
     AnimationSample sample;
-    float scale = T_000E5EA0(animation, reference);
+    float scale = func_000E5EA0(animation, reference);
     (void)GetAnimationClassObjectAnimation(&sample, (float *)((char *)animation + 4),
         (void *)*(int *)((char *)animation + 0x44), 1);
     out->unk54 = sample.auxiliary;
