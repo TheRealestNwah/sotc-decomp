@@ -1,6 +1,6 @@
-typedef struct {
-    short x, y, w, h;
-    int unk8;
+typedef union {
+    struct { short x, y, w, h; int unk8; } s;
+    int w[3];
 } CellRect;
 
 typedef struct {
@@ -21,19 +21,16 @@ static inline int cellIdx(int x, int y)
     return -1;
 }
 
-#ifdef NONMATCHING /* 99 diffs, same word count: loop-invariant hoisting and inlined bounds checks */
 static void func_000227C8(CellRect *r, int val)
 {
     int y, x;
 
-    for (y = r->y; y < r->y + r->h; y++) {
-        for (x = r->x; x < r->x + r->w; x++) {
-            int i = cellIdx(x, y);
-            if (*(int *)(D_0017A340.cells + i * 24 + 0x10) == 0) {
+    for (y = r->s.y; y < r->s.y + r->s.h; y++) {
+        for (x = r->s.x; x < r->s.x + r->s.w; x++) {
+            if (*(int *)(D_0017A340.cells + cellIdx(x, y) * 24 + 0x10) == 0) {
                 *(int *)(D_0017A340.cells + cellIdx(x, y) * 24 + 0x10) = val;
-                *(int *)(D_0017A340.cells + cellIdx(x, y) * 24 + 0x14) = r->unk8;
+                *(int *)(D_0017A340.cells + cellIdx(x, y) * 24 + 0x14) = r->s.unk8;
             }
         }
     }
 }
-#endif

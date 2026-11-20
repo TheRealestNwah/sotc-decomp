@@ -41,7 +41,7 @@ static inline void *attributeAddress(CollisionReference *reference)
 }
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { char pad0[0x20]; CollisionReference ref; char tail[0x28]; } CollisionHit;
-typedef struct { char b[0x30]; } Blk30;
+typedef struct { long long b[6]; } Blk30;
 typedef struct { char b[0x30]; int have; } HitCopy;
 typedef struct { char pad0[0x30]; CollisionHit best; int have; } Finder;
 extern int ClipCollisionFinderWithKeep4DSlopeLimit(CollisionHit *, void *, void *, int, int, float, float);
@@ -59,8 +59,10 @@ int SlideCollisionFinder4D(char *finder, s128 *p, s128 *q, int a3, int t0, float
     if (ClipCollisionFinderWithKeep4DSlopeLimit(&hit, &pc, &qc, a3, t0, f12, f13) == 0)
         return 0;
     if (keep->have == 0) {
-        if ((int)(*(unsigned long *)attributeAddress(&hit.ref) & 1) != 0) {
-            *(Blk30 *)keep = *(Blk30 *)&hit;
+        CollisionHit *h = &hit;
+        CollisionReference *ref = &h->ref;
+        if ((int)(*(unsigned long *)attributeAddress(ref) & 1) != 0) {
+            *(Blk30 *)keep = *(Blk30 *)h;
             keep->have = 1;
         }
     }

@@ -19,8 +19,10 @@ static inline void quatMul(float *q, float *r)
                          : : "r"(q), "r"(r) : "memory");
 }
 
-static inline void matFromQuat(float *mat, float *q)
+static inline void matFromQuat(float *mat_, float *q)
 {
+    register float *mat __asm__("$2") = mat_;
+
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w
 "
                          "lqc2 vf11, 0x0(%1)
@@ -75,7 +77,9 @@ static inline void matFromQuat(float *mat, float *q)
 "
                          "sqc2 vf16, 0x20(%0)
 "
-                         : : "r"(mat), "r"(q) : "memory");
+                         : "+r"(mat) : "r"(q) : "memory");
+    __asm__ __volatile__("sqc2 vf0, 0x0(%0)
+" : : "r"((char *)mat + 0x30) : "memory");
 }
 
 extern void iosGetArbitraryUpVectorElement(float *, float *);
@@ -119,8 +123,6 @@ static inline void scaleXYZ(float *v, float s)
                          : : "r"(v), "r"(s) : "memory");
 }
 
-/* Parked: 18 words off (was ~190). Left: the m pointer lands in $v1 instead of $v0 and the three copies of the result pointer in the second limit block take swapped saved registers. */
-#ifdef NONMATCHING
 void GetLimitationQuaternionWithBaseAxis(float *out, float *q, float *axis, float limit)
 {
     struct { Vec4 mat[4]; Vec4 t; Vec4 diff; Vec4 up; Vec4 sc; Vec4 r; Vec4 neg; Vec4 sc2; } L;
@@ -128,10 +130,7 @@ void GetLimitationQuaternionWithBaseAxis(float *out, float *q, float *axis, floa
     float *m, *tp, *upp, *dp, *dq, *p0, *p1, *p2;
 
     m = L.mat[0];
-    __asm__("" : "+r"(m));
     matFromQuat(m, q);
-    __asm__ __volatile__("sqc2 vf0, 0x0(%0)
-" : : "r"((char *)m + 0x30) : "memory");
     tp = L.t;
     __asm__ __volatile__("lqc2 vf8, 0x0(%0)
 "
@@ -153,7 +152,7 @@ void GetLimitationQuaternionWithBaseAxis(float *out, float *q, float *axis, floa
 "
                          "sqc2 vf10, 0x0(%2)
 "
-                         : : "r"(axis), "r"(m), "r"(tp) : "memory");
+                         : : "r"(axis), "r"(L.mat[0]), "r"(tp) : "memory");
     upp = L.up;
     iosGetArbitraryUpVectorElement(upp, axis);
     dp = L.diff;
@@ -207,6 +206,7 @@ void GetLimitationQuaternionWithBaseAxis(float *out, float *q, float *axis, floa
 "
                          : : "r"(L.neg), "r"(q), "r"(p1) : "memory");
     p0 = p1;
+    __asm__("" : "+r"(p0));
     p2 = p1;
     a = iosGetACosfExact(L.r[3]);
     tw = a + a;
@@ -218,6 +218,3 @@ void GetLimitationQuaternionWithBaseAxis(float *out, float *q, float *axis, floa
     }
     quatMul(out, p1);
 }
-#else
-extern void GetLimitationQuaternionWithBaseAxis(float *out, float *q, float *axis, float limit);
-#endif

@@ -33,21 +33,20 @@ extern void func_000E5268(void *, void *, char *, char *, void *);
 extern void doit_game_camera_param_manager(char *, void *, void *, char *, float);
 extern void get_game_camera_mode_local_parameter(char *, char *);
 extern int func_000E9AA0(void *, void *, void *, int);
-extern int is_main_type_camera_lws_animation_update(void *);
+extern int is_main_type_camera_lws_animation_update(void);
 
 static void func_000EBE88(void *a, void *b, void *c)
 {
     func_000E9AA0(a, b, c, 0);
 }
 
-#ifdef NONMATCHING
+/* is_main_type_camera_lws_animation_update takes no arguments; passing a puts a and b in each other's saved registers. */
 static int func_000EBEA0(void *a, void *b, void *c)
 {
-    int v = is_main_type_camera_lws_animation_update(a);
+    int v = is_main_type_camera_lws_animation_update();
 
     return func_000E9AA0(a, b, c, v);
 }
-#endif
 
 extern float func_000ECCE8(char *);
 extern float func_000E6B00(void *);

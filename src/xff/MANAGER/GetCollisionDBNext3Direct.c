@@ -23,7 +23,7 @@ typedef struct { void *object; unsigned int packed; } CollisionReference;
 typedef struct { void *object; unsigned int packed; } CollisionNext;
 extern LayoutClass *GetLayoutClass(void *);
 #ifdef NONMATCHING
-/* Parked: 100 words differ (callee-saved register assignment of out/reference). */
+/* Parked: 61 words differ (callee-saved register assignment of out/reference). */
 int GetCollisionDBNext3Direct(CollisionNext *out0, CollisionReference *reference)
 {
     unsigned char hi = ((unsigned char *)reference)[7];
@@ -35,28 +35,30 @@ int GetCollisionDBNext3Direct(CollisionNext *out0, CollisionReference *reference
     int any;
     int ok;
     CollisionNext *dst;
+    void *obj;
     nodeIndex = hi & 0x7F;
     if (resource->nodes[nodeIndex].packed != 0) {
         unsigned short *p;
         packed = reference->packed;
         nodeIndex = packed >> 24;
+        packed &= 0xFFFFFF;
         resource = GetLayoutClass(reference->object)->collision->resource;
-        shapeIndex = packed & 0xFFFFFF;
         nodeIndex &= 0x7F;
-        p = (unsigned short *)((char *)resource->nodes[nodeIndex].shapes + shapeIndex * 0x14 + 8);
+        p = (unsigned short *)((char *)resource->nodes[nodeIndex].shapes + packed * 0x14 + 8);
         any = 0;
         dst = out0;
+        obj = reference->object;
         for (i = 2; i != -1; i--) {
             ok = 0;
             if (!(p[0] & 0x8000)) {
-                dst->object = reference->object;
+                dst->object = obj;
                 ok = 1;
                 dst->packed = p[1] | 0x80000000;
             }
-            if (ok == 0)
-                dst->object = 0;
-            else
+            if (ok != 0)
                 any = 1;
+            else
+                dst->object = 0;
             p += 2;
             dst++;
         }
@@ -64,10 +66,9 @@ int GetCollisionDBNext3Direct(CollisionNext *out0, CollisionReference *reference
     } else {
         int *p;
         packed = reference->packed;
-        nodeIndex = packed >> 24;
-        resource = GetLayoutClass(reference->object)->collision->resource;
+        nodeIndex = (packed >> 24) & 0x7F;
         shapeIndex = packed & 0xFFFFFF;
-        nodeIndex &= 0x7F;
+        resource = GetLayoutClass(reference->object)->collision->resource;
         if ((int)reference->packed < 0) {
             p = (int *)((char *)resource->nodes[nodeIndex].shapes + shapeIndex * 0x34 + 0xC);
         } else {
@@ -75,12 +76,13 @@ int GetCollisionDBNext3Direct(CollisionNext *out0, CollisionReference *reference
         }
         any = 0;
         dst = out0;
+        obj = reference->object;
         for (i = 2; i != -1; i--) {
             int a = p[1];
             ok = 0;
             if (a != -1) {
                 int v;
-                dst->object = reference->object;
+                dst->object = obj;
                 v = p[2];
                 if (v < 0)
                     dst->packed = ((v & 0x7FFFFFFF) << 24) | a | 0x80000000;
@@ -88,10 +90,10 @@ int GetCollisionDBNext3Direct(CollisionNext *out0, CollisionReference *reference
                     dst->packed = (v << 24) | a;
                 ok = 1;
             }
-            if (ok == 0)
-                dst->object = 0;
-            else
+            if (ok != 0)
                 any = 1;
+            else
+                dst->object = 0;
             p += 3;
             dst++;
         }

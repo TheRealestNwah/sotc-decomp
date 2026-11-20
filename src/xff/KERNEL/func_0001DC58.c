@@ -25,9 +25,7 @@ typedef struct {
 extern int D_00040FAC;
 extern int Sg2SepSetParam(unsigned int id, int selector, int value, int extra);
 
-#ifdef NONMATCHING
-/* Parked: 3 words differ; the volTarget arm loads vol before mtc1/cvt.s.w instead of after. */
-void func_0001DC58(SepVoice *v)
+static void func_0001DC58(SepVoice *v)
 {
     int id = v->id;
     float t;
@@ -40,6 +38,7 @@ void func_0001DC58(SepVoice *v)
         vol = v->vol;
     } else {
         t = v->volTarget;
+        __asm__ __volatile__(""); /* keeps the vol load after the volTarget conversion */
         vol = v->vol;
     }
     if (vol != t) {
@@ -86,4 +85,3 @@ void func_0001DC58(SepVoice *v)
     }
     v->f.w = 0;
 }
-#endif

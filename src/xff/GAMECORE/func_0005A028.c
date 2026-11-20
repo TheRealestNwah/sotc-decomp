@@ -1,5 +1,4 @@
-/* Parked: 2 diffs. Horse slow-down script condition: below the speed threshold, cancels any accelerate/dash/shift-up request (zeroing the input fields and clearing the shift-up, repeat-accelerate and kicked control bits) and sets the slow-down bit. Remaining: the original loads the ScriptCtrlDef_SCRHorseShiftUp pointer before the 64-bit control-flag load; ours swaps those two loads. Store order, helper inlines, mask locals and type changes did not move it. The volatile header read makes each check reload the handle word like the original. */
-#ifdef NONMATCHING
+/* Horse slow-down script condition: below the speed threshold, cancels any accelerate/dash/shift-up request (zeroing the input fields and clearing the shift-up, repeat-accelerate and kicked control bits) and sets the slow-down bit. The 64-bit control word is accessed through a long/int union so it may alias the int stores before it, which keeps its load after them. The volatile header read makes each check reload the handle word like the original. */
 extern int *DldSysUndefSymbol;
 extern char *ScriptCtrlDef_SCRAccel;
 extern char *ScriptCtrlDef_SCRHorseDash;
@@ -10,6 +9,7 @@ extern char *ScriptCtrlDef_SCRHorseRepeateAccele;
 extern char *ScriptCtrlDef_SCRHorseKicked;
 extern char *ScriptCtrlDef_SCRSlowDown;
 
+typedef union { long l; int i; } LI;
 static inline char *dldElem(unsigned int *h)
 {
     unsigned int v = *(volatile unsigned int *)h;
@@ -35,14 +35,13 @@ static int func_0005A028(char *a, int *b, char *c, char *d, float f)
                 b[16] = 0;
                 b[17] = 0;
                 b[1] = 0;
-                *(long *)(d + 0x1C0) &= ~(1L << *(int *)(ScriptCtrlDef_SCRHorseShiftUp + 4));
-                *(long *)(d + 0x1C0) &= ~(1L << *(int *)(ScriptCtrlDef_SCRHorseRepeateAccele + 4));
-                *(long *)(d + 0x1C0) &= ~(1L << *(int *)(ScriptCtrlDef_SCRHorseKicked + 4));
+                ((LI *)(d + 0x1C0))->l &= ~(1L << *(int *)(ScriptCtrlDef_SCRHorseShiftUp + 4));
+                ((LI *)(d + 0x1C0))->l &= ~(1L << *(int *)(ScriptCtrlDef_SCRHorseRepeateAccele + 4));
+                ((LI *)(d + 0x1C0))->l &= ~(1L << *(int *)(ScriptCtrlDef_SCRHorseKicked + 4));
             }
         }
-        *(long *)(d + 0x1C0) |= 1L << *(int *)(ScriptCtrlDef_SCRSlowDown + 4);
+        ((LI *)(d + 0x1C0))->l |= 1L << *(int *)(ScriptCtrlDef_SCRSlowDown + 4);
         return 1;
     }
     return 0;
 }
-#endif

@@ -41,37 +41,41 @@ static inline void *attributeAddress(CollisionReference *reference)
 }
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { char pad0[0x20]; CollisionReference ref; char tail[0x28]; } CollisionHit;
-typedef struct { char b[0x30]; } Blk30;
+typedef struct { long long b[6]; } Blk30;
 typedef struct { char b[0x30]; int have; } HitCopy;
 typedef struct { char pad0[0x30]; CollisionHit best; int have; } Finder;
 extern int ClipCollisionFinderWithKeep4DSlopeLimit(CollisionHit *, void *, void *, int, int, float, float);
-extern int ClipCollisionFinderWithKeep4DSlopeLimitCB(CollisionHit *, void *, void *, int, int, float, float);
-extern int func_000A43F8(void *, void *, void *, int, int, float, float, int, int);
+extern int ClipCollisionFinderWithKeep4DSlopeLimitCB(CollisionHit *, void *, void *, int, int, void *, void *, void *, float, float);
+extern int func_000A43F8(void *, void *, void *, int, int, float, float, void *, void *);
 
 #ifdef NONMATCHING
-int SlideCollisionFinder4DCB(char *finder, s128 *p, s128 *q, int a3, int t0, int cb, float f12, float f13)
+/* Parked: 97 words differ (the Original keeps &qc in $fp per branch and spills a3/t0). */
+int SlideCollisionFinder4DCB(char *finder, s128 *p, s128 *q, int a3, int t0, void *filter, void *user, float f12, float f13)
 {
     CollisionHit hit;
     s128 pc = *p;
     s128 qc = *q;
     HitCopy *keep = (HitCopy *)(finder + 0x30);
     int ok;
+    s128 *qq = &qc;
 
     keep->have = 0;
-    if (cb != 0)
-        ok = ClipCollisionFinderWithKeep4DSlopeLimitCB(&hit, &pc, &qc, a3, t0, f12, f13);
+    if (filter != 0)
+        ok = ClipCollisionFinderWithKeep4DSlopeLimitCB(&hit, &pc, qq, a3, t0, filter, 0, user, f12, f13);
     else
-        ok = ClipCollisionFinderWithKeep4DSlopeLimit(&hit, &pc, &qc, a3, t0, f12, f13);
+        ok = ClipCollisionFinderWithKeep4DSlopeLimit(&hit, &pc, qq, a3, t0, f12, f13);
     if (ok == 0)
         return 0;
     if (keep->have == 0) {
-        if ((int)(*(unsigned long *)attributeAddress(&hit.ref) & 1) != 0) {
-            *(Blk30 *)keep = *(Blk30 *)&hit;
+        CollisionHit *h = &hit;
+        CollisionReference *ref = &h->ref;
+        if ((int)(*(unsigned long *)attributeAddress(ref) & 1) != 0) {
+            *(Blk30 *)keep = *(Blk30 *)h;
             keep->have = 1;
         }
     }
-    return func_000A43F8(finder, &hit, &qc, a3, t0, f12, f13, 0, 0);
+    return func_000A43F8(finder, &hit, qq, a3, t0, f12, f13, filter, user);
 }
 #else
-extern int SlideCollisionFinder4DCB(char *, s128 *, s128 *, int, int, int, float, float);
+extern int SlideCollisionFinder4DCB(char *, s128 *, s128 *, int, int, void *, void *, float, float);
 #endif

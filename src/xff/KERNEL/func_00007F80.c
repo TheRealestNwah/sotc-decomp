@@ -16,7 +16,7 @@ typedef struct { int count; Undef *list; } UndefList;
 extern void *iosMallocAlign(int, int, int);
 
 #ifdef NONMATCHING
-/* Parked: 5 words differ (order of the list store and the nsects reload) */
+/* Parked: 4 words differ (the count decrement is scheduled before the list store) */
 static void func_00007F80(UndefList *out, int heap, ModInfo *info)
 {
     out->count = 0;
@@ -40,7 +40,9 @@ static void func_00007F80(UndefList *out, int heap, ModInfo *info)
             }
             s++;
         }
-        u = (out->list = iosMallocAlign(heap, out->count * 8, 4));
+        out->list = iosMallocAlign(heap, out->count * 8, 4);
+        __asm__ __volatile__("");
+        u = out->list;
         n = info->nsects;
         {RelSect *s = info->sects;
         while (n--) {

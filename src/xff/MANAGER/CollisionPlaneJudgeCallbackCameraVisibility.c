@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 74 diffs: target computes the camera, sound and kind masks before the first test */
+/* Judges whether a collision plane blocks camera visibility from its attribute bits. */
 typedef struct { char pad0[0x30]; int attribute; } FullCollisionShape;
 typedef struct { unsigned short attribute; char pad2[0x12]; } PackedCollisionShape;
 typedef struct { char pad0[0x3C]; int attribute; } CollisionPlane;
@@ -39,29 +39,16 @@ static inline void *attributeAddress(CollisionReference *reference)
     int index = collisionAttributeIndex(reference);
     return resource->attributes + index * 16;
 }
-static inline int isCameraSurface(unsigned long attr)
-{
-    unsigned long kind = attr & 0xF80000000ULL;
-    unsigned long camera = attr & 0x3C0000000000ULL;
-    unsigned long sound = attr & 0x7C000000;
-
-    if (sound == 0x30000000 || sound == 0x34000000 || sound == 0x64000000 || sound == 0x68000000
-        || sound == 0x6C000000 || sound == 0x24000000)
-        return 0;
-    if (kind == 0x300000000ULL || kind == 0x500000000ULL || kind == 0x200000000ULL || kind == 0xB80000000ULL
-        || kind == 0x80000000ULL || kind == 0x280000000ULL)
-        return 0;
-    return camera != 0x80000000000ULL;
-}
-
 int CollisionPlaneJudgeCallbackCameraVisibility(CollisionReference *reference)
 {
     unsigned long attr = *(unsigned long *)attributeAddress(reference);
+    unsigned long sound = attr & 0x7C000000;
+    unsigned long kind = attr & 0xF80000000ULL;
+    unsigned long camera = attr & 0x3C0000000000ULL;
+    int ret;
 
-    if ((attr & 0x3C0000000000ULL) == 0x40000000000ULL)
-        return 0;
-    if ((attr & 0x3C0000000000ULL) == 0x200000000000ULL)
-        return 0;
-    return isCameraSurface(attr);
+    if (camera == 0x40000000000ULL || camera == 0x200000000000ULL) return 0;
+    if (!(sound == 0x30000000 || sound == 0x34000000 || sound == 0x64000000 || sound == 0x68000000 || sound == 0x6C000000 || sound == 0x24000000) && !(kind == 0x300000000ULL || kind == 0x500000000ULL || kind == 0x200000000ULL || kind == 0xB80000000ULL || kind == 0x80000000ULL || kind == 0x280000000ULL) && camera != 0x80000000000ULL) ret = 1;
+    else ret = 0;
+    return ret;
 }
-#endif

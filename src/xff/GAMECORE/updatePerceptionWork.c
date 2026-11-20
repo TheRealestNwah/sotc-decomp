@@ -4,11 +4,9 @@ typedef union {
     float f[4];
 } Vec4;
 
-typedef struct {
-    int a;
-    int b;
-    int c;
-    int d;
+typedef union {
+    struct { int a, b, c, d; } i;
+    float f[4];
 } PercRes;
 
 typedef struct {
@@ -81,10 +79,9 @@ static inline float distXYZ(void *a, void *b)
 
 #define DT (gcGlobalVar.dt)
 
-#ifdef NONMATCHING
-/* 5 diffs: the Original keeps two loads after the preceding float store
- * (res.b after w->hTime += DT, targetLay->0x134 after w->lostTime = -p->lost);
- * gcc 2.96 hoists both above the store. Otherwise identical. */
+/* PercRes and the target layout's position pointer share unions with floats so
+ * their loads stay after the preceding float stores, as in the Original. */
+union PU { Vec4 *p; float f; };
 void updatePerceptionWork(void *obj)
 {
     PercRes res;
@@ -115,7 +112,7 @@ void updatePerceptionWork(void *obj)
         if (w->lostTime < -p->lost)
             w->lostTime = -p->lost;
     }
-    if (res.a == 0 && res.b == 0) {
+    if (res.i.a == 0 && res.i.b == 0) {
         if (getSoundBowPos(w, *(void **)(lay + 0x134))) {
             w->bowTime = p->bow;
             w->lostTime = 0.0f <= w->lostTime ? 0.0f : w->lostTime;
@@ -131,14 +128,14 @@ void updatePerceptionWork(void *obj)
             w->vTime = -p->v;
         }
     } else {
-        if (res.a)
+        if (res.i.a)
             w->hTime += DT;
-        if (res.b)
+        if (res.i.b)
             w->vTime += DT;
         if (0.0f < w->hTime || 0.0f < w->vTime) {
             w->lostTime = -p->lost;
-            w->pos.q = (*(Vec4 **)(w->targetLay + 0x134))->q;
-            w->last.q = (*(Vec4 **)(w->targetLay + 0x134))->q;
+            w->pos.q = ((union PU *)(w->targetLay + 0x134))->p->q;
+            w->last.q = ((union PU *)(w->targetLay + 0x134))->p->q;
             if (w->vTime <= 0.0f)
                 w->vTime = 0.0f;
             else if (w->hTime <= 0.0f)
@@ -152,4 +149,3 @@ void updatePerceptionWork(void *obj)
         w->lost = 0;
     }
 }
-#endif

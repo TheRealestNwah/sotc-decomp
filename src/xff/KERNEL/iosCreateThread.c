@@ -45,12 +45,13 @@ static inline void list_push(Thread **head, Thread *t)
 
 static inline Thread *iosAllocThread(void)
 {
-    Thread *t = B_00051AE0;
+    register Thread **head __asm__("$3") = &B_00051AE0;
+    Thread *t = *head;
     Thread *next;
 
     if (t != 0) {
         next = t->next;
-        B_00051AE0 = next;
+        *head = next;
         if (next != 0) {
             next->prev = 0;
         }
@@ -60,8 +61,6 @@ static inline Thread *iosAllocThread(void)
     return t;
 }
 
-/* Parked: Parked: ~65-84 words differ (inlined thread pop/push register allocation and counter base) */
-#ifdef NONMATCHING
 Thread *iosCreateThread(void (*func)(void), char *stack, int size, int prio)
 {
     Thread *t;
@@ -71,9 +70,11 @@ Thread *iosCreateThread(void (*func)(void), char *stack, int size, int prio)
     t = iosAllocThread();
     if (t != 0) {
         if (++D_000408F4 == 0) {
-            ++D_000408F4;
+            id = ++D_000408F4;
+        } else {
+            id = D_000408F4;
         }
-        t->id = D_000408F4;
+        t->id = id;
         t->info->func = func;
         t->info->stack = stack;
         memcpy(stack, "<THREAD_SP>....", 16);
@@ -91,6 +92,3 @@ Thread *iosCreateThread(void (*func)(void), char *stack, int size, int prio)
     SignalSema(iosSystemSema);
     return t;
 }
-#else
-extern Thread *iosCreateThread(void (*func)(void), char *stack, int size, int prio);
-#endif

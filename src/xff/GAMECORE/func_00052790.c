@@ -1,4 +1,4 @@
-/* Parked: 39 diffs, same size (150 words incl. the split tail func_00052A00). Path-follow step: scales o+0x140 by o+0x10C and gcGlobalVar.f190 into the move vector, accumulates it into a+0x50 and a+0x20, stores the speed (VU0 length via .word 0x4BA703BD, run through an early-clobber asm) at a+0xC, clamps the distance to a+0x40 to o+0xF0, then (when the owner has a steering table) steers a+0x18/a+0x1C by AI_GetSideSignalFromDirLev and calls iosGetSinCosf. All VU0 runs match word for word. Remaining: float register numbering (the Original keeps the clamp limit in f3 loaded after the scale value, and the speed in f2) and the order of a few float loads. */
+/* Parked: 18 diffs, same size (150 words incl. the split tail func_00052A00). Path-follow step: scales o+0x140 by o+0x10C and gcGlobalVar.f190 into the move vector, accumulates it into a+0x50 and a+0x20, stores the speed (VU0 length via .word 0x4BA703BD) at a+0xC, clamps the distance to a+0x40 to o+0xF0, then (when the owner has a steering table) steers a+0x18/a+0x1C by AI_GetSideSignalFromDirLev and calls iosGetSinCosf. The mfc1 of each scale factor and the mtc1 of each VU0 length sit inside their asm blocks, which fixes the scheduling around them. Remaining: float register numbering (the Original keeps the clamp limit in f3 and the speed in f2) and the a0/v1 choice for the first scale source. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -35,7 +35,7 @@ static inline float vlen(void *v)
     int bits;
     float f;
 
-    __asm__ __volatile__("lqc2 vf7, 0x0(%1)\n"
+    __asm__ __volatile__("lqc2 vf7, 0x0(%2)\n"
                          "vmul.xyz vf7, vf7, vf7\n"
                          "vmulax.w ACC, vf0, vf7x\n"
                          "vmadday.w ACC, vf0, vf7y\n"
@@ -43,10 +43,10 @@ static inline float vlen(void *v)
                          ".word 0x4BA703BD\n"
                          "vwaitq\n"
                          "cfc2.ni %0, $vi22\n"
-                         : "=&r"(bits)
+                         "mtc1 %0, %1\n"
+                         : "=&r"(bits), "=f"(f)
                          : "r"(v)
                          : "memory");
-    __asm__("mtc1 %1, %0" : "=f"(f) : "r"(bits));
     return f;
 }
 
@@ -55,8 +55,8 @@ static inline float vdist(void *a, void *b)
     int bits;
     float f;
 
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
-                         "lqc2 vf6, 0x0(%2)\n"
+    __asm__ __volatile__("lqc2 vf5, 0x0(%2)\n"
+                         "lqc2 vf6, 0x0(%3)\n"
                          "vsub.xyzw vf7, vf5, vf6\n"
                          "vmul.xyz vf7, vf7, vf7\n"
                          "vmulax.w ACC, vf0, vf7x\n"
@@ -65,25 +65,22 @@ static inline float vdist(void *a, void *b)
                          ".word 0x4BA703BD\n"
                          "vwaitq\n"
                          "cfc2.ni %0, $vi22\n"
-                         : "=&r"(bits)
+                         "mtc1 %0, %1\n"
+                         : "=&r"(bits), "=f"(f)
                          : "r"(a), "r"(b)
                          : "memory");
-    __asm__("mtc1 %1, %0" : "=f"(f) : "r"(bits));
     return f;
 }
 
 #define SCALE(src, dst, f)                                      \
-    do {                                                        \
-        int bits_;                                              \
-        __asm__("mfc1 %0, %1" : "=r"(bits_) : "f"(f));          \
-        __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"              \
-                             "qmtc2.ni %1, vf6\n"               \
-                             "vmulx.xyzw vf5, vf5, vf6x\n"      \
-                             "sqc2 vf5, 0x0(%2)\n"              \
-                             :                                  \
-                             : "r"(src), "r"(bits_), "r"(dst)   \
-                             : "memory");                       \
-    } while (0)
+    __asm__ __volatile__("mfc1 $2, %1\n"                        \
+                         "lqc2 vf5, 0x0(%0)\n"                  \
+                         "qmtc2.ni $2, vf6\n"                   \
+                         "vmulx.xyzw vf5, vf5, vf6x\n"          \
+                         "sqc2 vf5, 0x0(%2)\n"                  \
+                         :                                      \
+                         : "r"(src), "f"(f), "r"(dst)           \
+                         : "$2", "memory")
 
 #define ADD3(a, b, d)                                           \
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"                  \

@@ -1,7 +1,6 @@
-/* Parked: 6 diffs, same size (incl. the split tail func_0010F6D8). Root scale ratio update: clamps o->r (0x160) toward the chara's current ratio by a per-frame step, limits it to [p->f58, p->f38], eases it with getValueInterp and, when shrinking, limits it by the two analyzeMotionProperty2 speeds, then hands it to SCRSetRootScaleRatio / SCRSetCharaRootTurnScaleRatio. The analyzeMotionProperty2 prototype lists its float arguments before the pointers so gcc sets them up in the Original order. Remaining: in the second call the Original loads elem in the delay slot. */
-#ifdef NONMATCHING
+/* Root scale ratio update: clamps o->r (0x160) toward the chara's current ratio by a per-frame step, limits it to [p->f58, p->f38], eases it with getValueInterp and, when shrinking, limits it by the two analyzeMotionProperty2 speeds, then hands it to SCRSetRootScaleRatio / SCRSetCharaRootTurnScaleRatio. The analyzeMotionProperty2 prototype lists its float arguments before the pointers so gcc sets them up in the Original order. Mot's elem shares a union with a float so its load stays after the v[1] store, as in the Original. */
 typedef struct { char pad0[0x360]; char b360; char pad361[2]; char b363; char pad364[0x20C]; float f570; char pad574[0x1DC]; int i750; } Chara;
-typedef struct { char *elem; int pad4; float f8; float fC; } Mot;
+typedef struct { union { char *elem; float f0; } u; int pad4; float f8; float fC; } Mot;
 typedef struct { char pad0[0x38]; float f38; char pad3C[0x1C]; float f58; float f5C; float f60; char pad64[8]; int i6C; char pad70[4]; float f74; float f78; char pad7C[0x1C]; int i98; } Prm;
 typedef struct { char pad0[8]; int h; char padC[8]; Chara *c; char pad18[4]; Mot *m; char pad20[0xAC]; Prm *p; char padD0[0x74]; float f144; float f148; char pad14C[0x14]; float r; } Obj;
 typedef struct { char pad0[0x190]; float f190; } GV;
@@ -21,8 +20,8 @@ static void func_0010F338(Obj *o)
     float r, step, t, d;
     Chara *c;
 
-    analyzeMotionProperty(o->h, o->m->elem, 0, 0, v, 1.0f, 0.0f);
-    if (!((*(unsigned int *)(o->m->elem + 0x68) >> 4) & 1)) {
+    analyzeMotionProperty(o->h, o->m->u.elem, 0, 0, v, 1.0f, 0.0f);
+    if (!((*(unsigned int *)(o->m->u.elem + 0x68) >> 4) & 1)) {
         o->r = 1.0f;
     } else {
         c = o->c;
@@ -59,9 +58,9 @@ static void func_0010F338(Obj *o)
     if (d < 0.0f && (p->i98 != 0 || o->c->b363 != 0)) {
         if (o->m->fC != 0.0f) {
             if (v[0] != 0.0f) {
-            analyzeMotionProperty2(o->h, o->m->elem, 1.0f, 0.0f, o->m->fC, 0, 0, &v[1]);
+            analyzeMotionProperty2(o->h, o->m->u.elem, 1.0f, 0.0f, o->m->fC, 0, 0, &v[1]);
             v[1] *= cur;
-            analyzeMotionProperty2(o->h, o->m->elem, 1.0f, 0.0f, o->m->f8, 0, 0, &v[2]);
+            analyzeMotionProperty2(o->h, o->m->u.elem, 1.0f, 0.0f, o->m->f8, 0, 0, &v[2]);
             {
                 float rr = o->r, a = v[1], b = v[2];
                 float t = b * rr;
@@ -87,4 +86,3 @@ static void func_0010F338(Obj *o)
     SCRSetRootScaleRatio(o->h, o->r);
     SCRSetCharaRootTurnScaleRatio(o->h, o->r);
 }
-#endif

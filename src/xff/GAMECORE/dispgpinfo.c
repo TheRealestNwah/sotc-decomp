@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 8 diffs (the original recomputes sp+0x50 for the second GetGeometryPointerPosition and sets s0 afterwards). Reusing pos or an asm-barriered pointer was worse; permuter (25 min) found nothing. */
 typedef struct Vec4 {
     float x, y, z, w;
 } Vec4;
@@ -14,7 +12,12 @@ extern void GetGeometryPointerPosition(Vec4 *, void *);
 extern int iosInitKPrintfContext3D(float, float, float, KPrintfContext *, Vec4 *, int, int, float);
 extern void kprintfContextCentering(KPrintfContext *, unsigned char *, char *);
 extern void glColor4f(float, float, float, float);
-extern void DebugDispRadiusIndicator(Vec4 *, int, float);
+extern void DebugDispRadiusIndicator(Vec4 *, float, int);
+
+static inline void ggp(Vec4 *o, void *g)
+{
+    GetGeometryPointerPosition(o, g);
+}
 
 void dispgpinfo(char *name, void *gp, float r, float g, float b)
 {
@@ -27,8 +30,7 @@ void dispgpinfo(char *name, void *gp, float r, float g, float b)
         kprintfContextCentering(&ctx, RO_0017C108, name);
     }
     glColor4f(r, g, b, 1.0f);
-    GetGeometryPointerPosition(&p, gp);
-    DebugDispRadiusIndicator(&p, 1, 0.1f);
-    DebugDispRadiusIndicator(&p, 1, 0.03f);
+    ggp(&p, gp);
+    DebugDispRadiusIndicator(&p, 0.1f, 1);
+    DebugDispRadiusIndicator(&p, 0.03f, 1);
 }
-#endif

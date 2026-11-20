@@ -1,10 +1,9 @@
-/* Parked: 72 diffs, same size. Sibling of nico_execMinotaurA_Cloth with different anchor offsets (layout +0x158 directly, then +0x280), offsets scaled by 3.0 / -1.1 and -1.67, and size parameters -5 / 36 and -5 / 49. Remaining: callee-saved and float register numbering only. */
-#ifdef NONMATCHING
+/* Sibling of nico_execMinotaurA_Cloth with different anchor offsets (layout +0x158 directly, then +0x280), offsets scaled by 3.0 / -1.1 and -1.67, and size parameters -5 / 36 and -5 / 49. */
 extern char *GetLayoutClass(void);
 extern void iosTransMatrixF(void *, void *, float, float, float);
 extern void iosMulRotMatrixYInt16(void *, void *, int);
 extern void iosMulRotMatrixXInt16(void *, void *, int);
-extern void getClothDynamics(void *, void *, int, void *, float, float);
+extern void getClothDynamics(void *, void *, float, float, int, void *, void *);
 extern void func_0005E108(void);
 
 static inline void matInverse(float *dst, float *src)
@@ -41,6 +40,9 @@ static inline void matInverse(float *dst, float *src)
                          : : "r"(dst), "r"(src) : "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15", "memory");
 }
 
+/* Read through a union so gcc keeps each load after the preceding float stores, like the Original. */
+typedef union { char *p; float f; } PU;
+
 void nico_execMinotaurC_Cloth(int unused, int a1, float f25, float f24)
 {
     struct {
@@ -58,37 +60,39 @@ void nico_execMinotaurC_Cloth(int unused, int a1, float f25, float f24)
     float z;
     char *cl;
     char *p;
+    char *m;
+    float h;
     int n;
 
     lay = GetLayoutClass();
     L.two = 2;
     z = 0.0f;
     nz = -z;
-    f20 = *(float *)(lay + 0x90);
-    p = (char *)L.m1;
-    iosTransMatrixF(L.m1, *(char **)(lay + 0x158), f20 * nz, f20 * -1.1f, f20 * 3.0f);
+    f20 = ((PU *)(lay + 0x90))->f;
+    m = (char *)L.m1;
+    iosTransMatrixF(L.m1, ((PU *)(lay + 0x158))->p, f20 * nz, f20 * -1.1f, f20 * 3.0f);
     iosMulRotMatrixYInt16(L.m1, L.m1, 0);
     iosMulRotMatrixXInt16(L.m1, L.m1, 0);
-    matInverse(L.im1, (float *)p);
+    matInverse(L.im1, (float *)m);
     L.v80[1] = f20 * -5.0f;
     L.v80[0] = f20 * 36.0f * f20 * 0.25f;
-    f20 = *(float *)(lay + 0x90);
-    p = (char *)L.m2;
-    iosTransMatrixF(L.m2, *(char **)(lay + 0x158) + 0x280, f20 * nz, f20 * -1.67f, 2.0f * f20);
+    h = ((PU *)(lay + 0x90))->f;
+    m = (char *)L.m2;
+    iosTransMatrixF(L.m2, ((PU *)(lay + 0x158))->p + 0x280, h * nz, h * -1.67f, 2.0f * h);
     iosMulRotMatrixYInt16(L.m2, L.m2, 0);
     iosMulRotMatrixXInt16(L.m2, L.m2, 0xE38);
-    matInverse(L.im2, (float *)p);
-    L.v110[1] = f20 * -5.0f;
-    L.v110[0] = f20 * 49.0f * f20 * 0.25f;
-    cl = *(char **)(lay + 0x178);
+    matInverse(L.im2, (float *)m);
+    L.v110[1] = h * -5.0f;
+    L.v110[0] = h * 49.0f * h * 0.25f;
+    cl = ((PU *)(lay + 0x178))->p;
     n = *(short *)(cl + 4);
     p = *(char **)cl;
     if (n > 0) {
+        int i = n;
         do {
-            getClothDynamics(p, lay, a1, (**(short **)p != 0) ? 0 : (void *)func_0005E108, f25, f24);
+            getClothDynamics(p, lay, f25, f24, a1, (**(short **)p != 0) ? 0 : (void *)func_0005E108, &L);
             p += 0x90;
-            n--;
-        } while (n != 0);
+        } while (--i != 0);
     }
 }
-#endif
+

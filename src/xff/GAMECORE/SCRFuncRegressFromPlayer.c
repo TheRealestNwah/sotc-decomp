@@ -1,4 +1,3 @@
-#ifdef NONMATCHING
 /* 1 diff: the Original rematerializes the matrix address (addiu v0,sp,0x10)
    before the inverse, where this copies it from another register. */
 typedef float Vec4[4] __attribute__((aligned(16)));
@@ -57,11 +56,11 @@ static inline void quatPosToMatrix(float *out, float *quat, float *pos)
                          "sqc2 vf14, 0x0(%0)\n"
                          "sqc2 vf15, 0x10(%0)\n"
                          "sqc2 vf16, 0x20(%0)\n"
-                         : : "r"(out), "r"(quat) : "memory");
+                         : : "r"(out), "r"(quat));
     __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
-                         : : "r"(out), "r"(pos) : "memory");
+                         : : "r"(out), "r"(pos));
 }
 
 
@@ -177,4 +176,3 @@ void SCRFuncRegressFromPlayer(void *obj, float dist)
         CharaCtrlSetScriptCtrlStatus(obj, ScriptCtrlDef_SCRStop[1]);
     }
 }
-#endif
