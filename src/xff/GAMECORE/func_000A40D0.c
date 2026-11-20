@@ -32,8 +32,24 @@ static inline void scale4to(float *dst, float *v, float s)
                          : : "r"(v), "r"(si), "r"(dst) : "memory");
 }
 
-#ifdef NONMATCHING /* 77 diffs: saved-register pairs (o+0x240 $s2 vs $s1), volatile layout-pointer re-read order, sqrt.s operand regs */
-void func_000A40D0(float r, char *o, float *out0, char *obj0, int sign)
+static inline void cross3(float *dst, char *x, float *y)
+{
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)
+"
+                         "lqc2 vf6, 0x0(%2)
+"
+                         "vopmula.xyz ACC, vf5, vf6
+"
+                         "vopmsub.xyz vf7, vf6, vf5
+"
+                         "vsub.w vf7, vf7, vf7
+"
+                         "sqc2 vf7, 0x0(%0)
+"
+                         : : "r"(dst), "r"(x), "r"(y) : "memory");
+}
+
+static void func_000A40D0(float r, char *o, float *out0, char *obj0, int sign)
 {
     register float *out __asm__("$19") = out0;
     register char *obj __asm__("$20") = obj0;
@@ -52,13 +68,14 @@ void func_000A40D0(float r, char *o, float *out0, char *obj0, int sign)
     *(s128 *)a = *(s128 *)(obj + 0x30);
     if (diff < 0.0f) {
         if (*(float *)(o + 0x298) < 3.0f) {
+            char *q = o + 0x240;
             lay = GetLayoutClass(thr);
-            *(s128 *)f = **(s128 *volatile *)(lay + 0x134);
+            *(volatile s128 *)f = **(volatile s128 *volatile *)(lay + 0x134);
             __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                                  "lqc2 vf6, 0x0(%2)\n"
                                  "vadd.xyz vf5, vf5, vf6\n"
                                  "sqc2 vf5, 0x0(%0)\n"
-                                 : : "r"(g), "r"(*(char *volatile *)(lay + 0x134)), "r"(o + 0x240) : "memory");
+                                 : : "r"(g), "r"(*(char *volatile *)(lay + 0x134)), "r"(q) : "memory");
             *(s128 *)e = *(s128 *)obj;
             AI_GetHitPosPerpendicular(c, e, f, g, 0);
             __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -69,11 +86,12 @@ void func_000A40D0(float r, char *o, float *out0, char *obj0, int sign)
                                  "vaddz.x vf7, vf7, vf7z\n"
                                  "qmfc2.ni $2, vf7\n"
                                  "mtc1 $2, %0\n"
-                                 : "=f"(k) : "r"(c), "r"(e) : "$2");
-            k = r * r - k;
-            __asm__("sqrt.s %0, %1" : "=f"(k) : "f"(k));
-            *(s128 *)d = *(s128 *)(o + 0x240);
-            scale4to(d, d, k);
+                                 : "=f"(t) : "r"(c), "r"(e) : "$2");
+            {
+                register float kk __asm__("$f0") = r * r - t;
+                __asm__ __volatile__("sqrt.s %0, %1" : "=f"(kk) : "f"(kk));
+                scale4to(d, (float *)q, kk);
+            }
             __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                                  "lqc2 vf6, 0x0(%1)\n"
                                  "vadd.xyzw vf7, vf5, vf6\n"
@@ -86,28 +104,35 @@ void func_000A40D0(float r, char *o, float *out0, char *obj0, int sign)
                                  : : "r"(a), "r"(obj), "r"(d) : "memory");
             a[1] = 0.0f;
             normalize3(a);
-            *(s128 *)a = *(s128 *)(o + 0x240);
+            *(s128 *)a = *(s128 *)q;
         } else {
-            scale4to(a, a, -1.0f);
+            {
+                int si;
+                float m = -1.0f;
+                __asm__ __volatile__("mfc1 %0, %1" : "=r"(si) : "f"(m));
+                __asm__ __volatile__("lqc2 vf5, 0x0(%0)
+"
+                                     "qmtc2.ni %1, vf6
+"
+                                     "vmulx.xyzw vf5, vf5, vf6x
+"
+                                     "sqc2 vf5, 0x0(%0)
+"
+                                     : : "r"(a), "r"(si) : "memory");
+            }
         }
     }
-    if (diff < 0.0f ? sign > 0 : sign < 0)
-        axis = YUnitVectorInv;
+    if ((diff < 0.0f ? -sign : sign) >= 0)
+        cross3(b, YUnitVector, a);
     else
-        axis = YUnitVector;
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
-                         "lqc2 vf6, 0x0(%2)\n"
-                         "vopmula.xyz ACC, vf5, vf6\n"
-                         "vopmsub.xyz vf7, vf6, vf5\n"
-                         "vsub.w vf7, vf7, vf7\n"
-                         "sqc2 vf7, 0x0(%0)\n"
-                         : : "r"(b), "r"(axis), "r"(a) : "memory");
+        cross3(b, YUnitVectorInv, a);
+    k = *(float *)(*(char **)(o + 0x20) + 0xC);
     s = diff;
     if (s < 0.0f)
         s = -s;
-    t = AI_GetAreaDistScale2(*(float *)(*(char **)(o + 0x20) + 0xC), s);
+    t = AI_GetAreaDistScale2(k, s);
     {
-        int ti;
+        register int ti __asm__("$8");
         __asm__ __volatile__("mfc1 %0, %1" : "=r"(ti) : "f"(t));
         __asm__ __volatile__("qmtc2.ni %3, vf7\n"
                              "lqc2 vf5, 0x0(%1)\n"
@@ -123,4 +148,3 @@ void func_000A40D0(float r, char *o, float *out0, char *obj0, int sign)
     else
         *(s128 *)out = *(s128 *)(o + 0x240);
 }
-#endif
