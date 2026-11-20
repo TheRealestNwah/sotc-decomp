@@ -5,8 +5,6 @@ extern float iosGetSinf(float);
 extern float iosGetCosf(float);
 extern void iosGetLengthPointToLine(void *, void *, void *, void *);
 
-#ifdef NONMATCHING
-/* Parked: 6 words differ (f2/f3 swapped for lo and the 0.5f constant at 0x60-0x90). */
 void calcAttainRangeData(char *out, char *in, int flag)
 {
     *(long long *)(out + 0x0) = *(long long *)(in + 0x0);
@@ -18,7 +16,7 @@ void calcAttainRangeData(char *out, char *in, int flag)
         float dist;
         float half;
         float one = 1.0f;
-        float lo = *(float *)(out + 0x10);
+        register float lo __asm__("$f3") = *(float *)(out + 0x10);
         float hi = *(float *)(out + 0x14);
 
         ((int *)L.p)[0] = 0;
@@ -67,6 +65,3 @@ void calcAttainRangeData(char *out, char *in, int flag)
     *(int *)(out + 0x0) = 0;
     *(int *)(out + 0x8) = 0;
 }
-#else
-void calcAttainRangeData(char *out, char *in, int flag);
-#endif
