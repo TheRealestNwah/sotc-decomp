@@ -1,4 +1,4 @@
-/* 20 diffs, same length (192 words). Vertical plane through the line a-b: n = normalize(a x b), c = n x YUnitVector, out = normalize(c x n), or normalize(n x a) when flag is 0 or c is degenerate. Completes the D terms of n (through p) and out (through the inline 3-plane intersection of a, b, n). Returns 1 for a degenerate a x b, or when n is nearly horizontal-normal (|n.y| < 0.01) with a.y, b.y >= 0 and dot(a, b) <= 0. Only the float scheduling of the inlined intersection differs: the Original loads a[1] before b[3] and issues div.s two multiplies later. */
+/* 12 diffs, same length (192 words). Vertical plane through the line a-b: n = normalize(a x b), c = n x YUnitVector, out = normalize(c x n), or normalize(n x a) when flag is 0 or c is degenerate. Completes the D terms of n (through p) and out (through the inline 3-plane intersection of a, b, n). Returns 1 for a degenerate a x b, or when n is nearly horizontal-normal (|n.y| < 0.01) with a.y, b.y >= 0 and dot(a, b) <= 0. Only the float scheduling of the inlined intersection differs: the Original issues div.s two multiplies earlier and allocates the last products to different registers. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 extern float YUnitVector[4];
@@ -79,9 +79,9 @@ static inline void crossPositionOf3Plane(float *out, float *a, float *b, float *
     B = b[0] * c[2] - c[0] * b[2];
     C = b[0] * c[1] - c[0] * b[1];
     ax = a[0] * A;
-    F = b[0] * c[3] - c[0] * b[3];
-    E = b[3] * c[1] - c[3] * b[1];
     D = b[3] * c[2] - c[3] * b[2];
+    E = b[3] * c[1] - c[3] * b[1];
+    F = b[0] * c[3] - c[0] * b[3];
     inv = 1.0f / (ax - a[1] * B + a[2] * C);
     out[0] = (a[1] * D - a[3] * A - a[2] * E) * inv;
     out[1] = (a[3] * B - a[0] * D - a[2] * F) * inv;
@@ -109,6 +109,7 @@ static inline float dotXYZ(const float *a, const float *b)
 int GetVirtualVerticalPlane(float *out, float *a, float *b, float *p, int flag)
 {
     Vec4 n;
+    float ay;
     Vec4 c;
     Vec4 x;
     int r;
@@ -126,11 +127,12 @@ int GetVirtualVerticalPlane(float *out, float *a, float *b, float *p, int flag)
     }
     normalizeXYZ(out, out);
     completePlaneD(n.f, p);
+    ay = a[1];
     crossPositionOf3Plane(x.f, a, b, n.f);
     completePlaneD2(out, x.f);
     r = 0;
     if (n.f[1] < 0.0f ? -0.01f < n.f[1] : n.f[1] < 0.01f) {
-        if (0.0f <= a[1] && 0.0f <= b[1] && dotXYZ(a, b) <= 0.0f) {
+        if (0.0f <= ay && 0.0f <= b[1] && dotXYZ(a, b) <= 0.0f) {
             r = 1;
         }
     }
