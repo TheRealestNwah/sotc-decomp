@@ -1,5 +1,4 @@
-#ifdef NONMATCHING /* 2 words: with chr/in pinned to $a1/$v1 and the two global addresses to $a2/$a0, only the order of the two hoisted lui (gcGlobalVar first in the original) differs; an asm barrier on the gcGlobalVar pointer forces the full address instead */
-/* Flag note: needs per-file -fno-strict-aliasing (16 without). */
+#ifdef NONMATCHING /* 2 words: only the order of the two hoisted lui (gcGlobalVar first in the original) differs; the w->in store goes through a union so the float loads aren't moved above it */
 
 typedef struct 
 {
@@ -45,7 +44,9 @@ typedef struct
   float b4;
   float b8;
 } BmWork;
-extern char gcGlobalVar[];
+typedef union { BmInner *p; BmSub *s; float f; int i; } InOrAny;
+typedef struct { char pad[0x190]; float dt; } GcG;
+extern GcG gcGlobalVar;
 extern float chkTime2Int;
 extern int getPassageWork(int, int);
 extern BmChr *GetCharacterClass(int);
@@ -63,17 +64,16 @@ void _initBaseMoveTmpWork(int obj, BmWork *w, int *state, int path)
   w->layout = GetLayoutClass(obj);
   {
   register char *chr __asm__("$5") = (char *)w->chr;
-  register char *gp __asm__("$6") = gcGlobalVar;
   register BmInner *in __asm__("$3") = (BmInner *)(chr + 0x1C0);
-  w->in = in;
-  { register float *cp __asm__("$4") = &chkTime2Int; ct = *cp; }
+  ((InOrAny *)&w->in)->p = in;
+  ct = chkTime2Int;
   w->a4 = ((float) in->sub->deg) * 0.0174532924f;
   w->a8 = (*((float *) (chr + 0x72C))) * 0.0174532924f;
   w->aC = in->f1C;
   w->b0 = 1.0f / (((*((float *) (chr + 0x374))) * in->f1C) * (*((float *) (chr + 0x524))));
   w->b4 = *((float *) (chr + 0x574));
   w->b8 = *((float *) (chr + 0x570));
-  g = *((float *) (gp + 0x190));
+  g = gcGlobalVar.dt;
   w->dt = g;
   if (ct < g)
   {
