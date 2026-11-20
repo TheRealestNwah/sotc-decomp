@@ -1,4 +1,4 @@
-/* Parked attempt: 10 differing words (scheduling only). */
+/* Parked attempt: 2 differing words (the Original sets $a2 before $f12 for CAM_get_camera_position_by_look_at). The dst stores go through a union so they may alias the following *mode loads. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -13,6 +13,8 @@ extern void CAM_get_safety_cam_and_look_at_posi(void *, void *, void *, void *, 
 extern float func_000E6B00(void *);
 
 #define F(p, o) (*(float *)((char *)(p) + (o)))
+typedef union { float f; char *p; } FloatOrPtr;
+#define FU(p, o) (((FloatOrPtr *)((char *)(p) + (o)))->f)
 #define I(p, o) (*(int *)((char *)(p) + (o)))
 
 static void func_000EA258(char *cam, char **mode, int arg2)
@@ -58,8 +60,8 @@ static void func_000EA258(char *cam, char **mode, int arg2)
             CAM_get_safety_cam_and_look_at_posi(pos, look, pos, look, mode, arg2, 0);
         }
         CAM_get_interp_cam_and_look_at_posi(dst, dst + 0x10, base, base + 0x10, pos, look, I(cam, 0xD0), t1, t2);
-        F(dst, 0x20) = GAMEUTIL_get_interp_value(func_000E6B00(mode), F(base, 0x20), t1);
-        F(dst, 0x24) = GAMEUTIL_get_interp_value(F(*mode, 0x160), F(base, 0x24), t2);
+        FU(dst, 0x20) = GAMEUTIL_get_interp_value(func_000E6B00(mode), F(base, 0x20), t1);
+        FU(dst, 0x24) = GAMEUTIL_get_interp_value(F(*mode, 0x160), F(base, 0x24), t2);
         F(dst, 0x28) = GAMEUTIL_get_interp_value(F(*mode, 0x18C), F(base, 0x28), t2);
         break;
     case 3:
