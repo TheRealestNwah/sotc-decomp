@@ -4,10 +4,10 @@ typedef union { s128 q; float f[4]; } Vec4;
 
 static inline void loadPoint(void *point, void *position)
 {
-    __asm__ __volatile__("lqc2 vf08, 0x0(%0)\n"
-                         "lqc2 vf18, 0x0(%1)\n"
+    __asm__ __volatile__("lqc2 vf08, 0x0(%1)\n"
+                         "lqc2 vf18, 0x0(%0)\n"
                          "vmove.w vf18, vf00\n"
-                         : : "r"(point), "r"(position));
+                         : : "r"(position), "r"(point));
 }
 
 static inline void quatMatrix(void *quaternion)
@@ -123,7 +123,7 @@ static inline void basePos(Vec4 *out, void *motion, Vec4 *pos, Vec4 *quat, char 
     applyPoint(out);
 }
 
-/* 19 differing words: out/scale swap s2 and s3, and &p/&lp swap v1 and a1 in the transformPoint path. */
+/* 15 differing words: out and the hoisted scale pointer swap s2 and s3 (and the loop tail order follows). */
 static void func_00065AA8(Vec4 *out, char *cls, Entry *list, int count)
 {
     void *motion = *(void **)(cls + 0x2E8);
