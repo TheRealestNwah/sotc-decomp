@@ -75,8 +75,9 @@ static inline void vecAddXYZ(void *d, void *a, void *b)
                          : : "r"(d), "r"(a), "r"(b) : "memory");
 }
 
-/* Parked: 20 differing words (register allocation/scheduling). */
-#ifdef NONMATCHING
+/* Save-script menu: the menu state stores keep their source order, and the
+   script pointer from local.c + 8 is read into a temporary first so gcc
+   schedules its load ahead of the global address setup. */
 void memoryCardSaveScript(SpriteParam *parameters)
 {
     SpriteParam local;
@@ -100,19 +101,22 @@ void memoryCardSaveScript(SpriteParam *parameters)
     ScrSpriteParamSetup(&local, parameters);
     if (wasExec)
         vschedGameTimeExec = 0;
+    {
+    signed char *x7 = *(signed char **)(local.c + 8);
     D_0017AD10 = 1;
-    B_0018AF98.x28 = -1;
     B_0018AF98.x0 = 0;
     B_0018AF98.x4 = 0;
+    B_0018AF98.xC = -1;
     B_0018AF98.x8 = -1;
     B_0018AF98.x10 = 0;
     B_0018AF98.x14 = 0;
-    B_0018AF98.xC = -1;
     B_0018AF98.x1C = 0;
     B_0018AF98.x20 = 0;
     B_0018AF98.x24 = -1;
+    B_0018AF98.x28 = -1;
     B_0018AF98.x30 = 0;
-    B_0018AF98.x700 = *(signed char **)(local.c + 8);
+    B_0018AF98.x700 = x7;
+    }
     if (B_0018AF98.x700 != 0) {
         if (*(int *)(B_0018AF98.x700 + 4) != 0)
             _gameFlagSet(*(int *)(B_0018AF98.x700 + 4));
@@ -166,4 +170,3 @@ void memoryCardSaveScript(SpriteParam *parameters)
     ScrSpriteParamEnd(&local, 1);
     controllerAlertDisable(0);
 }
-#endif
