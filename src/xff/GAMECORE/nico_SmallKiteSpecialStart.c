@@ -20,7 +20,7 @@ extern void func_000AABE8(void);
 extern void func_000A9A10(void);
 
 #ifdef NONMATCHING
-/* Parked: ~62 words differ (callee-saved assignment: Original keeps the path pointer copy in $s2 and the partition id shares $s1 with the path). */
+/* Parked: 18 words differ. The Original keeps a second copy of the path pointer for the event-list loop in $s2, made in the delay slot of the second CharaCtrlResetCtrlStatus call; reusing c for that copy (with an empty asm barrier before Kite_SetAnimalID_KitePathWork so CSE keeps it) gives the partition id and the path $s1 as in the Original. Remaining: the work pointer and c swap $s2/$s3. */
 void nico_SmallKiteSpecialStart(void)
 {
     int i = 0;
@@ -29,7 +29,6 @@ void nico_SmallKiteSpecialStart(void)
     char *c;
     char *w;
     char *path;
-    char *path2;
 
     *(int *)(GetScriptCharacterClass(th) + 0x11FC) = part;
     CharaCtrlResetCtrlStatus(th);
@@ -38,19 +37,19 @@ void nico_SmallKiteSpecialStart(void)
     w = _SCRMallocAlign(part, 0x910, 0x10);
     *(char **)(c + 0x1200) = w;
     path = w + 0x370;
-    path2 = path;
-    __asm__("" : "+r"(path2));
+    c = path;
     CharaCtrlResetCtrlStatus(th);
     *(char **)(w + 0x20) = getEditWorkInitData(*(int *)(GetScriptClass(th) + 0x40));
     AI_InitAnimalWork(w, 8);
     func_000AA150(w);
     Kite_InitKitePathWork(path, isysGetThisSubThread(), *(float *)(*(char **)(w + 0x20) + 0xE8), *(float *)(*(char **)(w + 0x20) + 0xE4));
+    __asm__("" : "+r"(c));
     Kite_SetAnimalID_KitePathWork(path, 8);
     func_000A9D40(w);
     *(int *)(w + 0x360) = 0;
     func_000A9FA8(w);
     for (i = 0; i < 10; i++)
-        Kite_SetEventIDList(path2, 7, i);
+        Kite_SetEventIDList(c, 7, i);
     SetScriptObjDeleteCallBackFunc(isysGetThisSubThread(), func_000AABE8, w);
     isysJumpSubThread(func_000A9A10, w);
 }
