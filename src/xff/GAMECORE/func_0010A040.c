@@ -1,6 +1,11 @@
-/* Parked attempt: 6 words differ (the w->0x1C load is scheduled before the p->0x60 store; $v0/$v1/$a0 allocation in the compare). */
-#ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
+
+/* The store to p+0x60 goes through a union so it may alias the pointer
+   load from w+0x1C that follows, as in the Original. */
+typedef union {
+    float f;
+    int *q;
+} FloatOrPtr;
 
 extern char gcGlobalVar[];
 extern int *ScriptCtrlDef_SCRStop;
@@ -93,7 +98,7 @@ static void func_0010A040(char *w, int flag)
     ang = adjustCurveAngleForCollision(w, ang, 1.5707963f, 2.0f);
     dang = (ang - *(float *)(p + 0x60)) / *(float *)(gcGlobalVar + 0x190);
     spd = *(float *)(w + 0xA0);
-    *(float *)(p + 0x60) = ang;
+    ((FloatOrPtr *)(p + 0x60))->f = ang;
     lim = 0.0523598753f;
     ratio = len / *(float *)(p + 0x88);
     dang *= spd;
@@ -139,4 +144,3 @@ static void func_0010A040(char *w, int flag)
         }
     }
 }
-#endif
