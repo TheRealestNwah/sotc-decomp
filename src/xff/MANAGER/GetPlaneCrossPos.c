@@ -1,4 +1,5 @@
-#ifdef NONMATCHING /* logic matches; target copies out/p0/p1 to t1/v1/a2 and &tmp into a0 */
+/* Parked: 49 words differ. Logic matches; the Original copies p0/p1/out to v1/a2/t1 before the first planeDist and keeps the projection temp pointer in a0, one word earlier than ours. */
+#ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
 
 static inline float planeDist(float *plane, float *p)
@@ -60,14 +61,17 @@ static inline float absf(float x)
 static inline void project(float *out, float *plane, float *p)
 {
     Vec4 tmp;
+    float *t = tmp;
 
-    vecScale(tmp, plane, -planeDist(plane, p));
-    tmp[3] = 0.0f;
+    vecScale(t, plane, -planeDist(plane, p));
+    t[3] = 0.0f;
     vecAdd(out, p, tmp);
 }
 
-int GetPlaneCrossPos(float *out, float *plane, float *p0, float *p1)
+static inline int planeCross(float *out, float *plane, float *p0_, float *p1_)
 {
+    float *p0 = p0_;
+    float *p1 = p1_;
     float d0 = planeDist(plane, p0);
     float d1 = planeDist(plane, p1);
     float *p;
@@ -82,5 +86,10 @@ int GetPlaneCrossPos(float *out, float *plane, float *p0, float *p1)
     }
     project(out, plane, p);
     return 0;
+}
+
+int GetPlaneCrossPos(float *out, float *plane, float *p0, float *p1)
+{
+    return planeCross(out, plane, p0, p1);
 }
 #endif
