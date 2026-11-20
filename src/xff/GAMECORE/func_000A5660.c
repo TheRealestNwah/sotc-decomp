@@ -48,10 +48,10 @@ static inline void normalize3to(float *o, float *v)
 "
                          "sqc2 vf5, 0x0(%0)
 "
-                         : : "r"(o), "r"(v) : "memory");
+                         : : "r"(o), "r"(v) : "$2", "memory");
 }
 
-#ifdef NONMATCHING /* 11 diffs: 0.0 setup scheduled into the first call's delay slot, nv pointer in v0 instead of v1 */
+#ifdef NONMATCHING /* 9 diffs: the 0.0 mtc1 into f21 is scheduled before the GetLayoutClass call instead of after the 0x290/0x740 loads (reorders, volatile/memory barriers and a 20 min permuter run did not move it). The $2 clobber on normalize3to puts the nv pointer in v1. */
 static void func_000A5660(char *p)
 {
     Vec4 vel, pos, dir, nv;
