@@ -9,7 +9,38 @@ extern void isysGroupForExit(int *, int);
 extern char *GetScriptCharacterClass(int);
 extern int AI_CheckSightOn(int, float);
 
-#ifdef NONMATCHING /* 37 diffs: result flag ($v1 vs $v0) in the damage/arrow check, the final boolean materialization and branch-likely forms at the exits */
+#ifdef NONMATCHING /* 23 diffs: only the exits differ. The Original materializes the sight-check result and the final +0x288 test with branches (bnez; li 1; li 0) and tests the sight result again, where gcc emits sltu; the branch offsets before them follow from the length. */
+static inline int sightCheck(char *o)
+{
+    int w, found, ent;
+    int *e;
+
+    w = getSelectWeapon();
+    if (w < 8)
+    if (w >= 4) {
+        found = 0;
+        ent = 0;
+        e = isysGroupForFirst(gcGlobalVar + 0x2BC, 0);
+        while (e) {
+            char *c, *t;
+            ent = *e;
+            c = GetScriptCharacterClass(ent);
+            t = *(char **)(c + 0x1200);
+            if (t != 0 && *(int *)t == 1 && *(int *)(t + 8) == *(int *)(o + 8) && *(int *)(t + 4) == *(int *)(o + 4)
+                && *(int *)(t + 0x26C) != 0x12 && *(int *)(t + 0x260) == 0x1C
+                && AI_CheckSightOn(ent, *(float *)(o + 0x7C0)) != 0) {
+                found = 1;
+                break;
+            }
+            e = isysGroupForNext(e, 0);
+        }
+        if (ent != 0)
+            isysGroupForExit((int *)ent, 0);
+        return found != 0;
+    }
+    return 0;
+}
+
 int func_0009F470(char *o)
 {
     char buf[16] __attribute__((aligned(16)));
@@ -52,42 +83,20 @@ int func_0009F470(char *o)
     {
         void *thr = isysGetThisSubThread();
         void *a1 = pos;
-        int hit = 0;
-        if (*(int *)(o + 0x7C4) == 0) {
-            hit = AI_CheckDamage_Impact(0, thr);
-        }
-        if (!hit)
+        int hit;
+        if (*(int *)(o + 0x7C4) == 0 && AI_CheckDamage_Impact(0, thr) != 0)
+            hit = 1;
+        else
             hit = AI_CheckNearArrow(buf, a1, o + 0x7C8);
         if (hit)
             return 1;
     }
-    w = getSelectWeapon();
-    res = 0;
-    if (w < 8)
-    if (w >= 4) {
-        found = 0;
-        ent = 0;
-        e = isysGroupForFirst(gcGlobalVar + 0x2BC, 0);
-        while (e) {
-            char *c, *t;
-            ent = *e;
-            c = GetScriptCharacterClass(ent);
-            t = *(char **)(c + 0x1200);
-            if (t != 0 && *(int *)t == 1 && *(int *)(t + 8) == *(int *)(o + 8) && *(int *)(t + 4) == *(int *)(o + 4)
-                && *(int *)(t + 0x26C) != 0x12 && *(int *)(t + 0x260) == 0x1C
-                && AI_CheckSightOn(ent, *(float *)(o + 0x7C0)) != 0) {
-                found = 1;
-                break;
-            }
-            e = isysGroupForNext(e, 0);
-        }
-        if (ent != 0)
-            isysGroupForExit((int *)ent, 0);
-        res = found != 0;
-    }
-    return res;
+    if (sightCheck(o))
+        return 1;
+    return 0;
 tail:
-    v1 = *(int *)(*(char **)(o + 0x2C) + 0x288);
-    return v1 != 0;
+    if (*(int *)(*(char **)(o + 0x2C) + 0x288))
+        return 1;
+    return 0;
 }
 #endif
