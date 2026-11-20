@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* 47 diffs: branch layout of the two inlined path-state checks (original shares one 'a1 = 1' exit and uses b+nop where gcc uses beql). Early-return inlines are the closest form so far. */
 extern void *isysGetThisSubThread(void);
 extern void CharaCtrlResetAllScriptCtrlStatus(void *thread);
 extern void SCRCharaTurnDirectInput(void *thread, float x);
@@ -25,9 +23,7 @@ static inline int leaderActive(char *w)
         return 0;
     if (*(int *)(w + 0x288) == 0)
         return 0;
-    if (s == 9 || s == 0xB || s == 0xC || s == 0xD)
-        return 1;
-    if (Kite_CmpPathPoint(w + 0x600, w + 0x620))
+    if (s == 9 || s == 0xB || s == 0xC || s == 0xD || Kite_CmpPathPoint(w + 0x600, w + 0x620))
         return 1;
     return 0;
 }
@@ -38,16 +34,12 @@ static inline int childActive(char *w)
 
     if (*(int *)(w + 0x26C) == 0x12)
         return 0;
-    if (*(int *)(w + 0x38) != 0)
-        return 0;
-    if (*(int *)(w + 0x3C) == 0x24)
+    if (*(int *)(w + 0x38) != 0 || *(int *)(w + 0x3C) == 0x24)
         return 0;
     if (*(int *)(w + 0x288) == 0)
         return 0;
     s = *(int *)(w + 0x274);
-    if (s == 9 || s == 0xB || s == 0xC || s == 0xD)
-        return 1;
-    if (Kite_CmpPathPoint(w + 0x600, w + 0x620))
+    if (s == 9 || s == 0xB || s == 0xC || s == 0xD || Kite_CmpPathPoint(w + 0x600, w + 0x620))
         return 1;
     return 0;
 }
@@ -65,7 +57,7 @@ static void func_0009EB78(char *w)
     if (leaderActive(w)) {
         AI_UpdateLeaderPathWork(*(void **)(w + 0x360), w + 0x370);
     } else if (*(int *)(w + 0x360) != 0) {
-        setDataHeaderFromAreaIdx(w + 0x370);
+        setDataHeaderFromAreaIdx(*(void **)(w + 0x360));
     }
 
     if (childActive(w))
@@ -79,4 +71,3 @@ static void func_0009EB78(char *w)
                          "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(pos), "r"(w + 0x8E0) : "memory");
 }
-#endif
