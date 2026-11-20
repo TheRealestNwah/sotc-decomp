@@ -1,4 +1,4 @@
-/* ~88 diffs, 4 words longer (158 vs 154). Callback variant of FlushModifiedManager (src/xff/MANAGER/modified_manager.c): same width switch (1/2/4-byte values) clearing flags[value], but when both callback and arg are set it also calls callback(arg, value) per entry; bad widths go to the iosJumpRecoverPoint("modman:\tclear error:%d") path. The separate counter `k` for the plain loops matches the original register use (it keeps pointer/counter in $a2/$a1 there and $s0/$s1 in the callback loops). The Original has a single shared recover call site and 4 fewer words of branch glue; sharing the error path with goto produced the same code, and splitting every case into return-after-loop made it shorter (144). */
+/* Callback variant of FlushModifiedManager (src/xff/MANAGER/modified_manager.c): same width switch (1/2/4-byte values) clearing flags[value], but when both callback and arg are set it also calls callback(arg, value) per entry. Bad widths share one iosJumpRecoverPoint("modman:\tclear error:%d") call site, reached by goto from the first switch. */
 typedef struct {
     int used;
     int current;
@@ -9,7 +9,6 @@ typedef struct {
 
 extern void iosJumpRecoverPoint(const char *, ...);
 
-#ifdef NONMATCHING
 void FlushModifiedManagerCB(ModifiedManager *manager, void *arg, void (*callback)(void *, int))
 {
     int count = manager->used;
@@ -38,8 +37,7 @@ void FlushModifiedManagerCB(ModifiedManager *manager, void *arg, void (*callback
                 break;
             }
             default:
-                iosJumpRecoverPoint("modman:\tclear error:%d\n", manager->width);
-                break;
+                goto err;
             }
         } else {
             switch (manager->width) {
@@ -47,7 +45,8 @@ void FlushModifiedManagerCB(ModifiedManager *manager, void *arg, void (*callback
                 unsigned char *values = manager->data;
                 for (index = 0; index < count; index++) {
                     manager->flags[*values] = 0;
-                    callback(arg, *values++);
+                    callback(arg, *values);
+                    values++;
                 }
                 break;
             }
@@ -55,7 +54,8 @@ void FlushModifiedManagerCB(ModifiedManager *manager, void *arg, void (*callback
                 unsigned short *values = manager->data;
                 for (index = 0; index < count; index++) {
                     manager->flags[*values] = 0;
-                    callback(arg, *values++);
+                    callback(arg, *values);
+                    values++;
                 }
                 break;
             }
@@ -63,11 +63,13 @@ void FlushModifiedManagerCB(ModifiedManager *manager, void *arg, void (*callback
                 int *values = manager->data;
                 for (index = 0; index < count; index++) {
                     manager->flags[*values] = 0;
-                    callback(arg, *values++);
+                    callback(arg, *values);
+                    values++;
                 }
                 break;
             }
             default:
+            err:
                 iosJumpRecoverPoint("modman:\tclear error:%d\n", manager->width);
                 break;
             }
@@ -75,4 +77,3 @@ void FlushModifiedManagerCB(ModifiedManager *manager, void *arg, void (*callback
         manager->used = 0;
     }
 }
-#endif
