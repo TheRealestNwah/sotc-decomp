@@ -51,8 +51,10 @@ static inline void vecAdd(void *out, void *a, void *b)
 }
 
 #ifdef NONMATCHING
-/* Flag note: 12 diffs with per-file -fno-strict-aliasing (19 without); permuter with the flag found no improvement. */
-/* Parked: 19 words differ (RO copy scheduled before the ctrl call; lui s7 order; one swc1/lq swap). */
+/* Parked: 4 words differ. The RO copy follows the ctrl call behind a barrier,
+   and the v60.y store goes through a union (strict aliasing moved it past the
+   lq). Left: gcc hoists the loop-invariant gcGlobalVar lui (s7) after the
+   stack pointer setups instead of between pv60 and pn80. */
 void SCRFuncKameSetTemporaryTarget(void *obj, float a, float b)
 {
     struct { char buf[0x50]; Vec4 p50; Vec4 v60; Vec4 o70; Vec4 n80; } L;
@@ -67,9 +69,11 @@ void SCRFuncKameSetTemporaryTarget(void *obj, float a, float b)
     char *ctrl;
 
     work = GetSCRCharaAIWorkPtr(obj);
-    *(LL2 *)&L.p50 = *(LL2 *)RO_00180AD0;
     ctrl = getSCRDataCtrlWork(obj);
+    *(LL2 *)&L.p50 = *(LL2 *)RO_00180AD0;
+    __asm__ __volatile__("" : : : "memory");
     *(s128 *)&L.v60 = **(s128 **)(*(char **)(ctrl + 0x407C) + 0x134);
+    __asm__ __volatile__("" : : : "memory");
     if (ColCont2_IsColStatus(getPlayerColCont2(*(void **)(ctrl + 0x4078)), 0xFE00LL << 38, 0xB000LL << 36) != 0) {
         L.p50.x = 818.0f;
         L.p50.y = 21.0f;
@@ -106,7 +110,7 @@ sqc2 vf5, 0x0(%2)
     L.n80.y = 0.0f;
     vecNormalize(pn80);
     vecScale(pn80, pn80, b);
-    L.v60.y = L.p50.y;
+    ((union { float f; s128 q; } *)&L.v60.y)->f = L.p50.y;
     *(s128 *)&L.p50 = *(s128 *)&L.v60;
     vecAdd(pv60, pv60, pn80);
     L.v60.w = one;
