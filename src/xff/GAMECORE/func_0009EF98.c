@@ -1,6 +1,6 @@
 typedef struct { char pad[8]; float v8; } Lim;
 
-#ifdef NONMATCHING /* 106 diffs: logic and the VU0 distance match the asm; the original funnels every true/false exit through one shared `return v0` (v0 = 1 set in branch delay slots) and orders the mode tests 8 then 6, which this if-chain does not reproduce */
+#ifdef NONMATCHING /* 18 diffs: logic matches; the Original cross-jumps the mode 8 tail and the 0x580 == 0 tail into the shared `jr ra` (v0 = 1 in delay slots, bc1fl v0 = 0), where ours materializes the compare in v1, and it loads the 0.5f constant before the 0x5B4/0x594 loads */
 static inline float distXYZ(char *a, char *b)
 {
     float d;
@@ -32,27 +32,19 @@ static int func_0009EF98(char *c)
             return 1;
         if (*(float *)(c + 0x150) < 15.0f)
             return 1;
-        if (*(float *)(c + 0x158) < (*(Lim **)(c + 0x20))->v8)
-            return 1;
-        return 0;
+        return *(float *)(c + 0x158) < (*(Lim **)(c + 0x20))->v8;
     }
     if (mode == 6) {
         f0 = *(float *)(c + 0x58C);
         if (f0 > 0.0f)
             f0 = 0.0f;
-        v = *(float *)(c + 0x218) < (*(Lim **)(c + 0x20))->v8 * (1.0f - f0);
-        if (v)
+        if (*(float *)(c + 0x218) < (*(Lim **)(c + 0x20))->v8 * (1.0f - f0))
             return 1;
         if (*(float *)(c + 0x2F0) < 0.5f)
             return 1;
         return 0;
     }
-    {
-        if (*(int *)(c + 0x580) == 0) {
-            if (*(float *)(c + 0x158) < (*(Lim **)(c + 0x20))->v8)
-                return 1;
-            return 0;
-        }
+    if (*(int *)(c + 0x580) != 0) {
         f4 = *(float *)(c + 0x1B0);
         if (f4 < 50.0f) {
             float d = distXYZ(c + 0x5B0, c + 0x590);
@@ -67,12 +59,14 @@ static int func_0009EF98(char *c)
             return 1;
         if (*(float *)(c + 0x1B8) < 0.0f)
             return 1;
-        v = f4 < 15.0f;
-        if (v)
+        if (f4 < 15.0f)
             return 1;
         if (*(float *)(c + 0x2F0) < 0.5f)
             return 1;
         return 0;
     }
+    if (*(float *)(c + 0x158) < (*(Lim **)(c + 0x20))->v8)
+        return 1;
+    return 0;
 }
 #endif
