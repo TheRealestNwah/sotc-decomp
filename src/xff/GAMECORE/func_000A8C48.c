@@ -18,6 +18,11 @@ typedef struct {
 #define I(p, o) (*(int *)((char *)(p) + (o)))
 #define F(p, o) (*(float *)((char *)(p) + (o)))
 #define P(p, o) (*(char **)((char *)(p) + (o)))
+typedef union {
+    float f;
+    int i;
+} FloatOrInt;
+#define IU(p, o) (((FloatOrInt *)((char *)(p) + (o)))->i)
 
 extern void *isysGetThisSubThread(void);
 extern void func_000A33F8(char *, char *, char *, MoveParam *, char *);
@@ -40,8 +45,9 @@ extern ScriptCtrlDef *ScriptCtrlDef_SCRGlide;
 extern ScriptCtrlDef *ScriptCtrlDef_SCRStop;
 extern ScriptCtrlDef *ScriptCtrlDef_SCRDeath;
 
-/* Parked: 13 words differ (I40 load scheduled after the float constants in cases 2 and 16,
-   def pointer copy order in cases 6 and 7, beql for the I580 test in case 4) */
+/* Parked: 1 word differs (the I580 test in case 4 is beql in the Original).
+   The flag at 0x40 is read through a union so gcc may not move it past the
+   float stores (strict aliasing), as in the Original. */
 #ifdef NONMATCHING
 static void func_000A8C48(char *w)
 {
@@ -63,7 +69,7 @@ static void func_000A8C48(char *w)
         p.f04 = 1.0f;
         p.f08 = 1.0f;
         p.f10 = 0.0f;
-        if (I(w, 0x40))
+        if (IU(w, 0x40))
             p.f1C = F(P(w, 0x20), 0xF0);
         else
             p.f1C = 1.0f;
@@ -98,7 +104,7 @@ static void func_000A8C48(char *w)
             p.f08 = F(w, 0x310) + func_000A3AA0(w, F(P(w, 0x20), 0x9C));
             p.f0C = 0.5f;
             p.f10 = F(P(w, 0x20), 0x98);
-            if (I(w, 0x40)) {
+            if (IU(w, 0x40)) {
                 p.angle = F(P(w, 0x20), 0x104) * 0.01745329252f;
                 p.f1C = F(P(w, 0x20), 0xF0);
                 p.f20 = F(P(w, 0x20), 0xEC);
@@ -126,7 +132,7 @@ static void func_000A8C48(char *w)
         p.f08 = F(w, 0x310) + func_000A3AA0(w, F(P(w, 0x20), 0x9C));
         p.f0C = 2.0f;
         p.f10 = F(P(w, 0x20), 0x88);
-        if (I(w, 0x40)) {
+        if (IU(w, 0x40)) {
             p.angle = F(P(w, 0x20), 0x100) * 0.01745329252f;
             p.f1C = F(P(w, 0x20), 0xF0);
             p.f20 = F(P(w, 0x20), 0xEC);
@@ -201,7 +207,7 @@ static void func_000A8C48(char *w)
         p.f04 = 1.0f;
         p.f08 = 1.0f;
         p.f10 = 1.0f;
-        if (I(w, 0x40)) {
+        if (IU(w, 0x40)) {
             p.angle = 0.0f;
             p.f1C = F(P(w, 0x20), 0xF0);
             p.f20 = F(P(w, 0x20), 0xEC);
