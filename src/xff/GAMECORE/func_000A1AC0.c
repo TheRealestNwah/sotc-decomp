@@ -4,9 +4,6 @@ typedef union { s128 q; float f[4]; } Vec4;
 extern Vec4 YUnitVector;
 extern void GetDifferencialQuaternionWithNoRegularize(Vec4 *, Vec4 *, Vec4 *, Vec4 *);
 
-#ifdef NONMATCHING
-/* 3 diffs: the Original schedules mtc1 $zero,$f0 for the 0.0f compare before
-   the lwc1 of b.f[2] and the addiu of &tmp; gcc emits it after them. */
 static inline void subXYZ(Vec4 *out, Vec4 *a, Vec4 *b)
 {
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -27,24 +24,15 @@ static inline void addXYZ(Vec4 *out, Vec4 *a, Vec4 *b)
 
 static inline void normalize(Vec4 *v0, Vec4 *v1)
 {
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)
-"
-                         "vmul.xyz vf7, vf5, vf5
-"
-                         "vmulax.w ACC, vf0, vf7x
-"
-                         "vmadday.w ACC, vf0, vf7y
-"
-                         "vmaddz.w vf7, vf0, vf7z
-"
-                         "vrsqrt Q, vf0w, vf7w
-"
-                         "vwaitq
-"
-                         "vmulq.xyz vf5, vf5, Q
-"
-                         "sqc2 vf5, 0x0(%0)
-"
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                         "vmul.xyz vf7, vf5, vf5\n"
+                         "vmulax.w ACC, vf0, vf7x\n"
+                         "vmadday.w ACC, vf0, vf7y\n"
+                         "vmaddz.w vf7, vf0, vf7z\n"
+                         "vrsqrt Q, vf0w, vf7w\n"
+                         "vwaitq\n"
+                         "vmulq.xyz vf5, vf5, Q\n"
+                         "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(v0), "r"(v1) : "memory");
 }
 
@@ -157,11 +145,17 @@ static void func_000A1AC0(char *obj, Vec4 *out, Vec4 *add, float h)
     conjugate(&iq, &q);
     quatRotateVectorV1(&a, &q, &a);
     quatRotateVector(&b, &q, &b);
-    tmp.q = add->q;
-    if (0.0f < b.f[2])
-        tmp.f[2] += b.f[2] + h;
-    else
-        tmp.f[2] += h;
+    {
+        float z = 0.0f;
+
+        /* the Original sets up the 0.0f before loading b.f[2] */
+        __asm__ __volatile__("" : "+f"(z));
+        tmp.q = add->q;
+        if (z < b.f[2])
+            tmp.f[2] += b.f[2] + h;
+        else
+            tmp.f[2] += h;
+    }
     if (tmp.f[2] > a.f[2])
         tmp.f[2] = a.f[2] + add->f[2];
     tmp.f[3] = 1.0f;
@@ -169,4 +163,3 @@ static void func_000A1AC0(char *obj, Vec4 *out, Vec4 *add, float h)
     addXYZ(&tmp, &tmp, (Vec4 *)(obj + 0x680));
     out->q = tmp.q;
 }
-#endif
