@@ -32,8 +32,6 @@ static void func_00070E48(void *unused, void **demo)
     ReleaseGame(1);
 }
 
-/* Parked attempt: 13 words differ from the Original. Left: the GameObject_* lui/lw use $v1/$v0 swapped for the bird/girl/leaf blocks, and fadeIn's a0 = 0 is scheduled before the 1.0f load instead of in the delay slot. */
-#ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern int SDemoStationedMotOriData_OPDEMO1_BIRD_B;
 extern int SDemoStationedMotOriData_OPDEMO1_CAMERA;
@@ -106,6 +104,7 @@ void demo_op1(void)
     char *g;
     void *o;
 
+    /* The empty asm statements below keep each GameObject pointer in its own register (lui $v1, lw $v0), as the Original does. */
     *(void **)(GetScriptLayoutClass(th) + 0x2D4) = part;
     SetScriptLayoutObjLetterProcMode(th, 1);
     lc = GetScriptLayoutClass(th);
@@ -134,15 +133,15 @@ void demo_op1(void)
     *(int *)(GetScriptCharacterClass(o) + 0x1204) = 1;
     SetCharacterObjDemoMotionMode(o, SDemoStationedMotOriData_OPDEMO1_HORSE + 4, *(int *)(GetLayoutClass(th) + 0x134), 0.0f);
     isysAddGroupWithLinkParam(o, m[0], 0, 0);
-    o = *(void **)(GameObject_BIRD_B_DEMO + 8);
+    { char *gg = GameObject_BIRD_B_DEMO; __asm__("" : "+r"(gg)); o = *(void **)(gg + 8); }
     *(int *)(GetScriptCharacterClass(o) + 0x1204) = 1;
     SetCharacterObjDemoMotionMode(o, SDemoStationedMotOriData_OPDEMO1_BIRD_B + 4, *(int *)(GetLayoutClass(th) + 0x134), 0.0f);
     isysAddGroupWithLinkParam(o, m[0], 0, 0);
-    o = *(void **)(GameObject_GIRL_B + 8);
+    { char *gg = GameObject_GIRL_B; __asm__("" : "+r"(gg)); o = *(void **)(gg + 8); }
     *(int *)(GetScriptCharacterClass(o) + 0x1204) = 1;
     SetCharacterObjDemoMotionMode(o, SDemoStationedMotOriData_OPDEMO1_GIRL_B + 4, *(int *)(GetLayoutClass(th) + 0x134), 0.0f);
     isysAddGroupWithLinkParam(o, m[0], 0, 0);
-    o = *(void **)(GameObject_OP1_LEAF + 8);
+    { char *gg = GameObject_OP1_LEAF; __asm__("" : "+r"(gg)); o = *(void **)(gg + 8); }
     *(int *)(GetScriptCharacterClass(o) + 0x1204) = 1;
     SetCharacterObjDemoMotionMode(o, SDemoStationedMotOriData_OPDEMO1_LEAF + 4, *(int *)(GetLayoutClass(th) + 0x134), 0.0f);
     isysAddGroupWithLinkParam(o, m[0], 0, 0);
@@ -151,7 +150,7 @@ void demo_op1(void)
     while (demoManChkStart(*(void **)(GameObject_DEMO_OP1_STARTER + 8)) != 0)
         scrRun();
     setNowLoadingMessageDisplayFlag(0);
-    fadeIn(0, 0, 1.0f);
+    { register float one __asm__("$f12"); one = 1.0f; fadeIn(0, 0, one); }
     SetScriptObjDeleteCallBackFunc(th, 0, m);
     while (!CheckDemoCameraOrientFinished(m[0]) && !(D_0017AD48 = demoscrCheckDemoFinish())) {
         opflowSetDemoFrame(*(float *)((char *)m[0] + 0x3C));
@@ -171,4 +170,3 @@ void demo_op1(void)
     if (!D_0017AD48)
         func_00070E48(th, m);
 }
-#endif
