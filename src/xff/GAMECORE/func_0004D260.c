@@ -1,4 +1,4 @@
-/* Weak-point / trigger glow fade: eases e->level toward e->target by D_0017ABA4 per frame (scaled by gcGlobalVar+0x180 * 30), feeds 1 - level to the blend ratio of each live particle emitter in the four slots (sheet chosen by e->kind) and marks the slot state 2, then snaps level to target and returns 1 once they are within 0.01. Parked at 3 diffs (one reordered store): the Original stores e->level (swc1 $f4, 0x14($s1)) before the hoisted 1.0f constant load (lui $at, 0x3F80; mtc1 $f20); ours schedules the constant first. */
+/* Weak-point / trigger glow fade: eases e->level toward e->target by D_0017ABA4 per frame (scaled by gcGlobalVar+0x180 * 30), feeds 1 - level to the blend ratio of each live particle emitter in the four slots (sheet chosen by e->kind) and marks the slot state 2, then snaps level to target and returns 1 once they are within 0.01. The level store goes through a union so it may alias the slot loads that follow, as in the Original. */
 typedef struct {
     int emitter;
     char *owner;
@@ -23,11 +23,15 @@ extern int SParticleSheetData_S_TRIGGER_BASE;
 extern int SParticleSheetData_S_TRIGGER_PARTICLE;
 extern int SParticleSheetData_S_TRIGGER_FLARE;
 extern int SParticleSheetData_S_TRIGGER;
+typedef union {
+    float f;
+    int i;
+} FloatOrInt;
+
 extern char gcGlobalVar[];
 extern float D_0017ABA4;
 extern void set_npe_blend_ratio_particle_emitter(int sheet, int emitter, float ratio);
 
-#ifdef NONMATCHING
 static int func_0004D260(WeakPointEffect *e)
 {
     int sheets[2][4] = {
@@ -44,7 +48,7 @@ static int func_0004D260(WeakPointEffect *e)
 
     dt = *(float *)(gcGlobalVar + 0x180) * 30.0f;
 
-    e->level += (e->target - e->level) * D_0017ABA4 * dt;
+    ((FloatOrInt *)&e->level)->f = e->level + (e->target - e->level) * D_0017ABA4 * dt;
     for (i = 0; i < 4; i++, s++) {
         if (s->emitter != 0) {
             set_npe_blend_ratio_particle_emitter(sheets[e->kind][i], s->emitter, 1.0f - e->level);
@@ -58,4 +62,3 @@ static int func_0004D260(WeakPointEffect *e)
     }
     return done;
 }
-#endif
