@@ -1,6 +1,4 @@
-#ifdef NONMATCHING
-/* 2 diffs: the y and x screen-centre subtractions are scheduled in swapped
-   order around the gsRegBegin call. */
+/* Draws a text line with the font widths in D_0017A420, aligned by mode (centre, right, left) and faded by the line's position. The screen-centre offset of y is pinned to $v1 so the subtractions get the Original's registers. */
 extern int getDrawScreenWidth(void);
 extern int getDrawScreenHeight(void);
 extern void gsRegBegin(void);
@@ -61,10 +59,12 @@ static void func_00025330(int y, unsigned char *str, int mode)
     }
     alpha = alpha < 0 ? 0 : (alpha > 0x80 ? 0x80 : alpha);
     {
-        int hy = (sh >> 1) << 4;
-        int hx = (sw >> 1) << 4;
-        x -= hx;
+        register int hy __asm__("$3");
+        int hx;
+        hy = (sh >> 1) << 4;
+        hx = (sw >> 1) << 4;
         y -= hy;
+        x -= hx;
     }
     gsRegBegin();
     gsReg(1, (long)B_00188640[0] | ((long)B_00188640[1] << 8) | ((long)B_00188640[2] << 16) | ((long)alpha << 24) | 0x3F80000000000000L);
@@ -83,4 +83,4 @@ static void func_00025330(int y, unsigned char *str, int mode)
         px = func_00025188(px, y, *s);
     gsRegEnd();
 }
-#endif
+
