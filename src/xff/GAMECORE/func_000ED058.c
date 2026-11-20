@@ -25,7 +25,15 @@ extern void set_param_double_spring_interp_common(char *, float, float, float, f
 extern void reset_double_spring_interp_cntrl3D(char *, s128 *);
 extern void doit_double_spring_interp_cntrl3D(char *, s128 *, int, int, float);
 
+/* Parked: 1 word differs (the Original compares the first on == 1 against
+   the $a3 it loaded for the doit call; gcc uses $v1). The state store goes through a union so gcc may
+   not move it past the 128-bit copy (strict aliasing), as in the Original. */
 #ifdef NONMATCHING
+typedef union {
+    int i;
+    s128 q;
+} IntOrQuad;
+
 typedef struct {
     int state;
     char pad4[0xC];
@@ -41,7 +49,7 @@ static void func_000ED110(SpringPos *w, float *prm, int on, s128 *pos)
     one = 1;
     if (w->state == 0) {
         if (on == 1) {
-            w->state = on;
+            ((IntOrQuad *)&w->state)->i = on;
             w->pos = *pos;
             reset_double_spring_interp_cntrl3D(w->spring, pos);
         }

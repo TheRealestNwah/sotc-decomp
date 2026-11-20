@@ -45,7 +45,8 @@ extern ScriptCtrlDef *ScriptCtrlDef_SCRGlide;
 extern ScriptCtrlDef *ScriptCtrlDef_SCRStop;
 extern ScriptCtrlDef *ScriptCtrlDef_SCRDeath;
 
-/* Parked: 1 word differs (the I580 test in case 4 is beql in the Original).
+/* Parked: 1 word differs (gcc emits beql for the I580 test in case 4, the
+   Original beqz).
    The flag at 0x40 is read through a union so gcc may not move it past the
    float stores (strict aliasing), as in the Original. */
 #ifdef NONMATCHING
