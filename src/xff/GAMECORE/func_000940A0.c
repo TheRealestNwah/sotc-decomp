@@ -8,17 +8,46 @@ extern void iosRotMatrixY(float *, float);
 extern char ZDirVector[];
 extern int setAttainmentPosAndDirAndLock(void *, float *, float *);
 
-#ifdef NONMATCHING /* 130 diffs: saved-register assignment (orig hit=$s0 i=$s1 w=$s2 goal=$s3 lim=$s4 lim+8=$s5), frame 0xD0 vs 0xC0 */
+/* Parked attempt: 4 words differ from the Original. */
+#ifdef NONMATCHING
+/* 4 diffs: loop-top lwc1 RO_NoLimit/addu order, and the 2pi-span product lands in $f1 instead of $f0. */
 static const unsigned int RO_NoLimit = 0xFFFFFFFF;
+static inline void vecScaleXYZ(float *out, float *a, float s)
+{
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)
+"
+                         "qmtc2.ni %2, vf6
+"
+                         "vmulx.xyz vf5, vf5, vf6x
+"
+                         "sqc2 vf5, 0x0(%0)
+"
+                         : : "r"(out), "r"(a), "r"(s) : "memory");
+}
+
+static inline void vecAdd(float *out, float *a, float *b)
+{
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)
+"
+                         "lqc2 vf6, 0x0(%2)
+"
+                         "vadd.xyzw vf7, vf5, vf6
+"
+                         "sqc2 vf7, 0x0(%0)
+"
+                         : : "r"(out), "r"(a), "r"(b) : "memory");
+}
+
 int func_000940A0(void *unused, float *lim)
 {
     float v[4] __attribute__((aligned(16)));
     float m[16] __attribute__((aligned(16)));
     float p[4] __attribute__((aligned(16)));
-    char *w = getSCRDataCtrlWork(0);
+    char *w = getSCRDataCtrlWork(unused);
     float *goal = getGoalPointDataByAreaIdx(w, *(int *)(w + 0x3C90), *(int *)(w + 0x3C8C));
     float cur, lo, hi, mid;
     int i, hit = 0;
+    char *e8;
 
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
@@ -37,12 +66,16 @@ int func_000940A0(void *unused, float *lim)
                          "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(v) : "memory");
     cur = iosGetATan2fExact(v[0], v[2]);
+    e8 = (char *)lim + 8;
     for (i = 0; i < 3; i++) {
-        float a = *(float *)((char *)lim + 8 + i * 8);
-        if (a == *(const float *)&RO_NoLimit)
-            continue;
+        float nl = *(const float *)&RO_NoLimit;
+        int off = i * 8;
+        float a;
+        __asm__("" : "+r"(off));
+        a = *(float *)(e8 + off);
+        if (a != nl) {
         lo = a * 0.017453293f;
-        hi = *(float *)((char *)lim + 0xC + i * 8) * 0.017453293f;
+        hi = *(float *)((char *)lim + 0xC + off) * 0.017453293f;
         if (lo <= hi) {
             mid = lo + (hi - lo) * 0.5f;
             if (lo <= cur && cur <= mid) {
@@ -53,10 +86,10 @@ int func_000940A0(void *unused, float *lim)
                 hit = 1;
             }
         } else {
-            mid = adjustAnglePI(lo + (6.2831855f - (lo - hi)) * 0.5f);
+            mid = (6.28318548f - (lo - hi)) * 0.5f; mid = adjustAnglePI(lo + mid);
             if (mid >= 0.0f) {
                 if (lo <= cur) {
-                    cur = (cur <= mid) ? lo : hi;
+                    if (cur <= mid) cur = lo; else cur = hi;
                     hit = 1;
                 } else if (cur <= hi) {
                     cur = hi;
@@ -67,10 +100,11 @@ int func_000940A0(void *unused, float *lim)
                     cur = lo;
                     hit = 1;
                 } else if (cur <= hi) {
-                    cur = (cur <= mid) ? lo : hi;
+                    if (cur <= mid) cur = lo; else cur = hi;
                     hit = 1;
                 }
             }
+        }
         }
         if (hit)
             break;
@@ -87,26 +121,9 @@ int func_000940A0(void *unused, float *lim)
                          "vmaddw.xyzw vf10, vf17, vf8w\n"
                          "sqc2 vf10, 0x0(%0)\n"
                          : : "r"(v), "r"(ZDirVector), "r"(m) : "memory");
-    {
-        int sx = *(int *)(w + 0x3C84);
-        __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
-                             "qmtc2.ni %2, vf6\n"
-                             "vmulx.xyz vf5, vf5, vf6x\n"
-                             "sqc2 vf5, 0x0(%1)\n"
-                             "lqc2 vf5, 0x0(%1)\n"
-                             "lqc2 vf6, 0x0(%3)\n"
-                             "vadd.xyzw vf7, vf5, vf6\n"
-                             "sqc2 vf7, 0x0(%1)\n"
-                             : : "r"(v), "r"(p), "r"(sx), "r"(goal) : "memory");
-    }
-    {
-        int neg = 0xBF800000;
-        __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
-                             "qmtc2.ni %1, vf6\n"
-                             "vmulx.xyz vf5, vf5, vf6x\n"
-                             "sqc2 vf5, 0x0(%0)\n"
-                             : : "r"(v), "r"(neg) : "memory");
-    }
+    vecScaleXYZ(p, v, *(float *)(w + 0x3C84));
+    vecAdd(p, p, goal);
+    vecScaleXYZ(v, v, -1.0f);
     return setAttainmentPosAndDirAndLock(w, p, v);
 }
 #endif
