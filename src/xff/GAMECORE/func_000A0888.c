@@ -1,4 +1,4 @@
-/* Parked: 8 diffs, same size (incl. the split tail func_000A0B08). Animal approach state machine: switch on w[0] (table of six entries starting at 1; 4 and anything else end). State 1 first tries func_000A01D0 (-> 2) and func_000A0390 (-> 5), then compares xz distances (VU0 vmul.xz / vsqrt runs) from the leader's layout and the work position to the animal's position and, through AI_CheckInAnimalLayout checks, decides whether to flag w[2]; 2 and 3 use AI_CheckPathPoint (3.0 / 5.0 radius, 100.0 height) to move on to 3 / 6; 5 defers to func_000A04C8 (-> 6); 6 re-checks func_000A0390 then the path point and finally resets the state to 0 with w[2] = 1 (the tail). Fixed: the leader position pointer is loaded once for both distance runs, and case 2's path-point call sits in an inline helper so the 3.0 constant is not shared across the call in f20. Remaining: the cached position pointer is in a1 instead of v1 (with the first qmfc2 result in v0 and mtc1 scheduled after the addiu), and case 2 branches with bnel instead of bnez. */
+/* Parked: 1 diff, same size (incl. the split tail func_000A0B08). Animal approach state machine: switch on w[0] (table of six entries starting at 1; 4 and anything else end). State 1 first tries func_000A01D0 (-> 2) and func_000A0390 (-> 5), then compares xz distances (VU0 vmul.xz / vsqrt runs) from the leader's layout and the work position to the animal's position and, through AI_CheckInAnimalLayout checks, decides whether to flag w[2]; 2 and 3 use AI_CheckPathPoint (3.0 / 5.0 radius, 100.0 height) to move on to 3 / 6; 5 defers to func_000A04C8 (-> 6); 6 re-checks func_000A0390 then the path point and finally resets the state to 0 with w[2] = 1 (the tail). Fixed: the leader position pointer is loaded once for both distance runs; case 2's path-point call sits in an inline helper so the 3.0 constant is not shared across the call in f20; each VU0 distance run moves its result through $2 with mtc1 inside the asm (a $2 clobber), which puts the pointer in v1 and orders mtc1 as in the Original. Remaining: case 2 branches with bnel instead of bnez after the path-point call (reorg delay-slot choice; if/goto/ternary shapes don't change it; `w[0] = v = 3` gives bnez but puts the 3 in v1, 3 diffs). */
 #ifdef NONMATCHING
 extern void *isysGetThisSubThread(void);
 extern char *GetLayoutClass(void *);
@@ -10,7 +10,6 @@ extern int func_000A04C8(char *, char *);
 
 static inline float xzDist2(void *a, void *b)
 {
-    int bits;
     float f;
 
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -18,17 +17,16 @@ static inline float xzDist2(void *a, void *b)
                          "vsub.xyzw vf7, vf5, vf6\n"
                          "vmul.xz vf7, vf7, vf7\n"
                          "vaddz.x vf7, vf7, vf7z\n"
-                         "qmfc2.ni %0, vf7\n"
-                         : "=&r"(bits)
+                         "qmfc2.ni $2, vf7\n"
+                         "mtc1 $2, %0\n"
+                         : "=f"(f)
                          : "r"(a), "r"(b)
-                         : "memory");
-    __asm__("mtc1 %1, %0" : "=f"(f) : "r"(bits));
+                         : "$2", "memory");
     return f;
 }
 
 static inline float xzDist(void *a, void *b)
 {
-    int bits;
     float f;
 
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -38,11 +36,11 @@ static inline float xzDist(void *a, void *b)
                          "vaddz.x vf7, vf7, vf7z\n"
                          ".word 0x4A2703BD\n"
                          "vwaitq\n"
-                         "cfc2.ni %0, $vi22\n"
-                         : "=&r"(bits)
+                         "cfc2.ni $2, $vi22\n"
+                         "mtc1 $2, %0\n"
+                         : "=f"(f)
                          : "r"(a), "r"(b)
-                         : "memory");
-    __asm__("mtc1 %1, %0" : "=f"(f) : "r"(bits));
+                         : "$2", "memory");
     return f;
 }
 
