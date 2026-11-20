@@ -1,4 +1,4 @@
-/* 4 diffs, same size (134 words). Static (alabel) thread-binding update for a script character: types 6/8 bind to the current sub thread; otherwise it searches the character group (gcGlobalVar+0x2BC) for a matching live object (type 1, same +8/+4, state != 0x24, +0x26C < 0x12), then either activates (0x22, calls func_000A7630 when it was inactive) or drops (0x23, frees +0x360). Reusing prev for the +0x374 load (permuter) fixed the register numbering. Remaining: the type 6/8 block materializes 1/0x22 in swapped registers (v1/v0), and the +0x374 load lands in s4 where the Original uses v0. */
+/* Static (alabel) thread-binding update for a script character: types 6/8 bind to the current sub thread; otherwise it searches the character group (gcGlobalVar+0x2BC) for a matching live object (type 1, same +8/+4, state != 0x24, +0x26C < 0x12), then either activates (0x22, calls func_000A7630 when it was inactive) or drops (0x23, frees +0x360). */
 extern int *isysGroupForFirst(void *, int);
 extern int *isysGroupForNext(int *, int);
 extern void isysGroupForExit(int, int);
@@ -8,20 +8,19 @@ extern char *GetScriptCharacterClass(int);
 extern void iosFree(int);
 extern void func_000A7630(char *);
 
-
-#ifdef NONMATCHING
-void func_000A76F0(char *a0)
+static void func_000A76F0(char *a0)
 {
     int type;
     int self = isysGetThisSubThread();
-    int prev = *(int *)(a0 + 0x38);
+    register int prev __asm__("$20") = *(int *)(a0 + 0x38);
     int target;
     char *cls;
 
     type = *(int *)a0;
     if (type == 8 || type == 6) {
+        int one = 1;
         *(int *)(a0 + 0x3C) = 0x22;
-        *(int *)(a0 + 0x38) = 1;
+        *(int *)(a0 + 0x38) = one;
         *(int *)(a0 + 0x28) = self;
         *(char **)(a0 + 0x2C) = a0;
         return;
@@ -64,7 +63,7 @@ void func_000A76F0(char *a0)
 drop:
         *(int *)(a0 + 0x38) = 0;
         *(int *)(a0 + 0x3C) = 0x23;
-        if (prev != 0 && (prev = *(int *)(a0 + 0x374)) >= 0) {
+        if (prev != 0 && *(int *)(a0 + 0x374) >= 0) {
             int h = *(int *)(a0 + 0x360);
             if (h != 0) {
                 iosFree(h);
@@ -73,4 +72,4 @@ drop:
         }
     }
 }
-#endif
+
