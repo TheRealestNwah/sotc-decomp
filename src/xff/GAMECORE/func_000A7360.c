@@ -13,16 +13,19 @@ extern void func_000A6260(char *);
 extern void func_000A6A68(char *);
 extern void func_000A70A0(char *);
 
-#ifdef NONMATCHING /* 15 diffs, same word count: Kite_SetPathOfs argument order, and the 32-byte copies to 0x400 and 0x620 start with $v1 instead of $v0 */
+#ifdef NONMATCHING /* 13 diffs, same word count: the 32-byte copies to 0x400 and 0x620 start with $v1 instead of $v0, and the 0x580 = 1 store and the func_000A5B80 argument are scheduled after the first load of the 0x620 copy */
 void func_000A7360(char *o)
 {
     V sp;
-    char *s1 = o + 0x370;
+    char *s1;
+    char *s2;
     int thr = isysGetThisSubThread();
     char *a0, *a1, *t1, *p1, *p2;
     int st;
 
-    Kite_SetPathOfs(s1, o + 0x5D0);
+    s2 = o + 0x5D0;
+    s1 = o + 0x370;
+    Kite_SetPathOfs(s1, s2);
     if (*(int *)o == 8) {
         sp.q = **(s128 **)(GetLayoutClass(*(int *)(o + 0x24)) + 0x134);
         sp.f[1] += 20.0f;
