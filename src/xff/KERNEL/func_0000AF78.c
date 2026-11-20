@@ -19,40 +19,46 @@ extern void **isysGroupForNext(void **, int);
 extern void isysGroupForExit(void *, int);
 
 #ifdef NONMATCHING
-/* Parked: 62 words differ. Control flow and frame match except register
- * pressure: the original keeps the type constants 4 and 9 in s3/s2 and the
- * module pointer in s4 with a 0x30 frame. Permuter stalled around 1500. */
+/* Parked: 43 words differ. Control flow and frame match. A separate return
+ * variable keeps the section counter a biv, and the type checks go through a
+ * stepping pointer. The original reduces &info->sects[r] to a byte-offset giv
+ * plus a base copy (all ten t-regs busy, constants 4/9 in s3/s2, the module
+ * pointer in s4); this draft makes a second pointer biv instead. Permuter
+ * stalled. */
 static int func_0000AF78(int addr)
 {
     Module *mod = 0;
-    int r = 0;
+    int ret = 0;
     void **link;
 
     for (link = isysGroupForFirst(symbolDefModuleGroup, 0); link != 0; link = isysGroupForNext(link, 0)) {
         ModInfo *info;
+        int r;
+        RelSect *p;
         mod = *link;
         info = mod->info;
-        for (r = 0; r < info->nsects; r++) {
-            if (info->sects[r].type == 4 || info->sects[r].type == 9) {
+        p = info->sects;
+        for (r = 0; r < info->nsects; r++, p++) {
+            if (p->type == 4 || p->type == 9) {
                 RelSect *s = &info->sects[r];
                 unsigned int j;
                 Rel *rl = s->rels;
-                for (j = 0; j < s->count; j++, rl++) {
+                for (j = 0; j < p->count; j++, rl++) {
                     Sym *sym = &info->syms[rl->info >> 8];
                     if (sym->shndx == 0 && info->shdrs[s->shdr].addr + rl->offset == addr) {
-                        r = (int)(info->strtab + sym->name);
+                        ret = (int)(info->strtab + sym->name);
                         goto done;
                     }
                 }
             }
         }
-        r = 0;
+        ret = 0;
     done:
-        if (r != 0)
+        if (ret != 0)
             break;
     }
     if (mod != 0)
         isysGroupForExit(mod, 0);
-    return r;
+    return ret;
 }
 #endif
