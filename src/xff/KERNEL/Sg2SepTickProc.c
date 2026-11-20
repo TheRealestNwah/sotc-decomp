@@ -1,3 +1,4 @@
+typedef union { long l; double d; } DL;
 typedef struct Sep {
     int status;
     int unk4;
@@ -7,9 +8,9 @@ typedef struct Sep {
     int seq;
     int flags;
     int pad1C;
-    double tick;
-    double time;
-    double count;
+    DL tick;
+    DL time;
+    DL count;
     int unk38;
     int data;
     unsigned char *ptr;
@@ -37,8 +38,11 @@ extern int Sg2ModCheckSndOn(int);
 extern void Sg2ModMidiout(int, int, unsigned char *);
 
 #ifdef NONMATCHING
-/* Parked: 16 words differ (lui/addiu order before the second loop, dpadd result store
-   placement, the skip branch shape and the floatdidf join branch delay slot). */
+/* Parked: 14 words differ (tested with --asm-fill-delay-slots, which this Sg2 file
+   will need once matched). The DFmode count store stays out of the floatdidf branch's
+   delay slot like the Original. Left: lui/addiu order before the second loop, the
+   &sep->ptr base computed before the dpadd arguments, and the skip test's branch
+   shape (the Original takes it with bnel and sb in the likely slot). */
 void Sg2SepTickProc(void)
 {
     int enabled;
@@ -65,8 +69,8 @@ void Sg2SepTickProc(void)
             continue;
         B_000DE214 = 0;
         B_000DE210 = 0;
-        *(long *)&sep->time = dpadd(*(long *)&sep->time, *(long *)&sep->tick);
-        while (dpcmp(*(long *)&sep->time, *(long *)&sep->count) >= 0) {
+        sep->time.l = dpadd(sep->time.l, sep->tick.l);
+        while (dpcmp(sep->time.l, sep->count.l) >= 0) {
             if ((signed char)*sep->ptr < 0)
                 sep->cmd = *sep->ptr++;
             D_00041430[sep->cmd >> 4](sep);
@@ -86,8 +90,8 @@ void Sg2SepTickProc(void)
                 t = __floatdidf((v & 1) | (v >> 1));
                 t = dpadd(t, t);
             }
-            *(long *)&sep->count = t;
-            sep->time = 0;
+            { DL u; u.l = t; sep->count.d = u.d; }
+            sep->time.d = 0;
         }
         if (B_000DE210 != 0)
             Sg2ModMidiout(*mod, B_000DE210, B_000DE110);
