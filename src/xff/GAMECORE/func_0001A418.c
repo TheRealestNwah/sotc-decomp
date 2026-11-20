@@ -1,6 +1,7 @@
-/* ~83 diffs, same length (157 words). Stage-core load/unload cutscene helper: loads the stage core, ramps BGM volume, waits for standby, stops BGM, optionally runs the memory card save script (SavePoint_SAVE_F4) and waits 2 seconds, then restarts BGM and fades in until jumphokoraFlag bit 1 is set. Six args (stage, bgm, standby, loadarg, cont, save). The register diffs are mostly the saved-register assignment: the original keeps the lui of gcGlobalVar in s6 and the jumphokoraFlag hi in s5, ours picks fp/s5. */
-extern char gcGlobalVar[];
-extern int jumphokoraFlag[2];
+/* Stage-core load/unload cutscene helper: loads the stage core, ramps BGM volume, waits for standby, stops BGM, optionally runs the memory card save script (SavePoint_SAVE_F4) and waits 2 seconds, then restarts BGM and fades in until jumphokoraFlag bit 1 is set. */
+typedef struct { char pad[0x168]; float time; char pad2[0x40]; int flag; } GcGlobal;
+extern GcGlobal gcGlobalVar;
+extern unsigned int jumphokoraFlag[2];
 extern int B_001885C0;
 extern int B_001885C4;
 extern char rootPtn[];
@@ -20,14 +21,13 @@ extern void fadeIn(int, int, float);
 extern void bgmEnvTickProckMask(int);
 extern void stagemanager_unloadstagecore(int);
 
-#ifdef NONMATCHING
-void func_0001A418(int stage, int bgm, int standby, int a3, int cont, int save)
+static void func_0001A418(int stage, int bgm, int standby, int a3, int cont, int save)
 {
     int handle = 0;
     int h;
     float t0;
 
-    *(int *)(gcGlobalVar + 0x1AC) = 1;
+    gcGlobalVar.flag = 1;
     gameflowSheetMgrAllReqWait();
     memset(jumphokoraFlag, 0, 8);
     B_001885C0 = stage;
@@ -37,11 +37,8 @@ void func_0001A418(int stage, int bgm, int standby, int a3, int cont, int save)
         bgmChangeVol(bgm, 50.0f, 2.0f);
     gameflowSheetMgrAllReqWait();
     if (standby != 0) {
-        do {
-            handle = bgmStandby(standby, 0, 0, 0);
-            if (handle == 0)
-                scrRun();
-        } while (handle == 0);
+        while ((handle = bgmStandby(standby, 0, 0, 0)) == 0)
+            scrRun();
     }
     initPauseMenuMap();
     if (bgm != 0) {
@@ -51,14 +48,14 @@ void func_0001A418(int stage, int bgm, int standby, int a3, int cont, int save)
     }
     if (save != 0) {
         bootMemoryCardSaveScript(SavePoint_SAVE_F4);
-        t0 = *(float *)(gcGlobalVar + 0x168);
-        while (*(float *)(gcGlobalVar + 0x168) - t0 < 2.0f)
+        t0 = gcGlobalVar.time;
+        while (gcGlobalVar.time - t0 < 2.0f)
             scrRun();
     }
     gameflowSheetMgrAllReqWait();
     if (handle != 0)
         bgmPlay(handle, 100.0f);
-    *(int *)(gcGlobalVar + 0x1AC) = 0;
+    gcGlobalVar.flag = 0;
     jumphokoraFlag[0] |= 1;
     fadeIn(0, 0, 3.0f);
     while (((jumphokoraFlag[0] >> 1) & 1) == 0)
@@ -69,4 +66,4 @@ void func_0001A418(int stage, int bgm, int standby, int a3, int cont, int save)
         bgmEnvTickProckMask(0);
     stagemanager_unloadstagecore(stage);
 }
-#endif
+
