@@ -1,5 +1,6 @@
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { long long v[4]; } P32;
+typedef union { s128 q; float f[4]; } __attribute__((aligned(16))) V;
 
 extern int isysGetThisSubThread(void);
 extern char *GetLayoutClass(int);
@@ -12,10 +13,10 @@ extern void func_000A6260(char *);
 extern void func_000A6A68(char *);
 extern void func_000A70A0(char *);
 
-#ifdef NONMATCHING /* 81 diffs, same word count: float-add/constant scheduling around Kite_SetSpecialPathLayout, branch-likely form of the 0x38 test and struct-copy register choice (orig starts the 32-byte copies with $v0) */
+#ifdef NONMATCHING /* 15 diffs, same word count: Kite_SetPathOfs argument order, and the 32-byte copies to 0x400 and 0x620 start with $v1 instead of $v0 */
 void func_000A7360(char *o)
 {
-    float sp[4] __attribute__((aligned(16)));
+    V sp;
     char *s1 = o + 0x370;
     int thr = isysGetThisSubThread();
     char *a0, *a1, *t1, *p1, *p2;
@@ -23,13 +24,13 @@ void func_000A7360(char *o)
 
     Kite_SetPathOfs(s1, o + 0x5D0);
     if (*(int *)o == 8) {
-        *(s128 *)sp = **(s128 **)(GetLayoutClass(*(int *)(o + 0x24)) + 0x134);
-        sp[1] += 20.0f;
-        Kite_SetSpecialPathLayout(s1, sp, 80.0f, 5.0f);
+        sp.q = **(s128 **)(GetLayoutClass(*(int *)(o + 0x24)) + 0x134);
+        sp.f[1] += 20.0f;
+        Kite_SetSpecialPathLayout(s1, &sp, 80.0f, 5.0f);
         if (*(int *)(o + 0x274) == 7)
             *(int *)(o + 0x528) = 1;
     }
-    if (*(int *)(o + 0x38) == 0 && *(int *)(o + 0x3C) == 0x24) {
+    if (*(int *)(o + 0x38) != 0 || *(int *)(o + 0x3C) == 0x24) {
         Kite_GetPassageWork(thr, *(int *)(o + 0x360), s1, s1, 1);
     } else {
         t1 = *(char **)(o + 0x2C);
@@ -49,8 +50,8 @@ void func_000A7360(char *o)
         func_000A6A68(o);
         func_000A70A0(o);
         st = *(int *)(o + 0x274);
-        p1 = o + 0x600;
         if (st == 9 || st == 12 || st == 13) {
+            p1 = o + 0x600;
             p2 = o + 0x620;
             if (Kite_CmpPathPoint(p1, p2) == 0) {
                 *(P32 *)(o + 0x680) = *(P32 *)(o + 0x600);
@@ -62,6 +63,7 @@ void func_000A7360(char *o)
             *(long long *)(o + 0x618) = *(long long *)(o + 0x638);
             *(P32 *)(o + 0x640) = *(P32 *)(o + 0x660);
         } else {
+            p1 = o + 0x600;
             p2 = o + 0x620;
         }
         if (Kite_CmpPathPoint(p1, p2) != 0) {
@@ -75,8 +77,8 @@ void func_000A7360(char *o)
             }
         }
     } else {
-        *(int *)(o + 0x614) = 0;
         *(int *)(o + 0x580) = 0;
+        *(int *)(o + 0x614) = 0;
     }
 }
 #endif
