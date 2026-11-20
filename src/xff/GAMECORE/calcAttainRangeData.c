@@ -6,15 +6,14 @@ extern float iosGetCosf(float);
 extern void iosGetLengthPointToLine(void *, void *, void *, void *);
 
 #ifdef NONMATCHING
-/* Flag note: 28 diffs with per-file -fno-strict-aliasing (42 without); permuter with the flag reached only 760. */
-/* Parked: 42 words differ (copy/compare scheduling, stack vector order, float constant spelling). */
+/* Parked: 6 words differ (f2/f3 swapped for lo and the 0.5f constant at 0x60-0x90). */
 void calcAttainRangeData(char *out, char *in, int flag)
 {
     *(long long *)(out + 0x0) = *(long long *)(in + 0x0);
     *(long long *)(out + 0x8) = *(long long *)(in + 0x8);
     *(long long *)(out + 0x10) = *(long long *)(in + 0x10);
     *(long long *)(out + 0x18) = *(long long *)(in + 0x18);
-    if (*(float *)(out + 0x18) < 2.3561943f) {
+    if (((union { long long l; float f; } *)(out + 0x18))->f < 2.3561943f) {
         struct { float q[4]; float p[4]; float d[4]; } L;
         float dist;
         float half;
@@ -52,15 +51,21 @@ void calcAttainRangeData(char *out, char *in, int flag)
     }
     {
         float s;
-        if (flag != 0)
+        float a = *(float *)(out + 0x14);
+        float b;
+        if (flag != 0) {
             s = 0.7f;
-        else
-            s = 0.799999952f;
-        *(float *)(out + 0x14) = *(float *)(out + 0x14) * s;
-        *(float *)(out + 0x10) = *(float *)(out + 0x10) * s;
+            b = *(float *)(out + 0x10);
+        } else {
+            s = 0.7999999523162842f;
+            b = *(float *)(out + 0x10);
+        }
+        *(float *)(out + 0x10) = b * s;
+        *(float *)(out + 0x14) = a * s;
+        __asm__ __volatile__("" : : : "memory");
     }
-    *(int *)(out + 0x8) = 0;
     *(int *)(out + 0x0) = 0;
+    *(int *)(out + 0x8) = 0;
 }
 #else
 void calcAttainRangeData(char *out, char *in, int flag);
