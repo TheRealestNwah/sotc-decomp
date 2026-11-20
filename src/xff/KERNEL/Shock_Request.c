@@ -25,10 +25,8 @@ typedef struct {
 } ShockReq;
 
 extern ShockTable *D_000408F8;
-extern ShockReq *func_000070F0(void *pad, int *pattern, ShockPattern p);
+extern ShockReq *func_000070F0(void *pad, int *pattern, ShockPattern p, int arg3, int arg4);
 
-#ifdef NONMATCHING
-/* Parked: 3 words differ (the index lives in $t1 in the original, $a3 here) */
 static inline ShockSet *getSet(unsigned int k)
 {
     ShockSet *r = 0;
@@ -44,7 +42,7 @@ static inline int *getPat(ShockSet *set, unsigned int index)
         return &set->list[index];
     return 0;
 }
-ShockReq *Shock_Request(void *pad, unsigned int index, ShockPattern pattern)
+ShockReq *Shock_Request(void *pad, unsigned int index, ShockPattern pattern, int arg3, int arg4)
 {
     ShockSet *set;
     int *p;
@@ -54,9 +52,8 @@ ShockReq *Shock_Request(void *pad, unsigned int index, ShockPattern pattern)
     p = getPat(set, index);
     if (p == 0)
         return 0;
-    req = func_000070F0(pad, p, pattern);
+    req = func_000070F0(pad, p, pattern, arg3, arg4);
     if (req != 0)
         req->pattern = p;
     return req;
 }
-#endif
