@@ -1,7 +1,11 @@
-/* Parked attempt: 10 words differ from the Original. */
-#ifdef NONMATCHING
+/* Path passage work for a kite: resolves the current and previous passage point pairs. The point position is copied through an IntOrQuad union so gcc keeps it ahead of the area store (strict aliasing would reorder it otherwise). */
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef unsigned int u_long128 __attribute__((mode(TI)));
+
+typedef union {
+    int i;
+    u_long128 q;
+} IntOrQuad;
 
 typedef struct {
     Vec4 pos;
@@ -66,7 +70,7 @@ int Kite_GetPassageWork(int unused, void *owner, int *kite, PassWork *w, int fla
         p = getPointDataByAreaIdx(owner, *(short *)(pw0 + 0x14), *(int *)(pw0 + 0x1C));
         if (!p)
             return 0;
-        *(u_long128 *)a.pos = *(u_long128 *)p;
+        ((IntOrQuad *)a.pos)->q = *(u_long128 *)p;
         a.area = *(short *)(pw0 + 0x14);
         a.idx = *(int *)(pw0 + 0x1C);
         if (*kite == 6)
@@ -87,7 +91,7 @@ int Kite_GetPassageWork(int unused, void *owner, int *kite, PassWork *w, int fla
         q = getPointDataByAreaIdx(owner, *(short *)(pw1 + 0x14), *(int *)(pw1 + 0x1C));
         if (!q)
             return 0;
-        *(u_long128 *)b.pos = *(u_long128 *)q;
+        ((IntOrQuad *)b.pos)->q = *(u_long128 *)q;
         b.area = *(short *)(pw1 + 0x14);
         b.idx = *(int *)(pw1 + 0x1C);
         if (*kite == 6)
@@ -141,4 +145,3 @@ done:
     *(int *)((char *)w + 0x1B8) = 0;
     return 0;
 }
-#endif
