@@ -1,4 +1,4 @@
-/* 8 diffs: the y/x squares land in swapped float temps ($f2/$f12). */
+/* 4 diffs: the Original moves the x square from $f12 to $f21 in the bc1f delay slot and scales $f21. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 extern float D_0012FDE0;
@@ -75,14 +75,14 @@ int DEBUG_update_direction(s128 *out, s128 *in, int pad2)
             x = (x < 0.0f ? -x : x) < dx ? 0.0f : deadzone(x, atx, dx);
         }
     }
-    y = y < 0.0f ? y * -y : y * y;
-    x = x < 0.0f ? x * -x : x * x;
-    if (y == 0.0f && x == 0.0f) {
+    {float ys = y < 0.0f ? y * -y : y * y;
+    float xs = x < 0.0f ? x * -x : x * x;
+    if (ys == 0.0f && xs == 0.0f) {
         return 0;
     }
     scale = D_0012FDE0 * 6.5f;
-    y = y * scale;
-    x = x * scale;
+    x = xs * scale;
+    y = ys * scale;}
     cam = iosgluGetCameraContext() + 0x150;
     __asm__ __volatile__("lqc2 vf05, 0(%1)
 "
