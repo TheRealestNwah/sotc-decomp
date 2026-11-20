@@ -1,7 +1,7 @@
 /* Parked draft: per-frame update of the four pad-hint slots (B_0019CCD0): slot state 0 ages
    (timer counts to 5), state 3 fades out, other states fade in; when all four aged out they are
-   reset to fading (state 3). ~5 diffs: bnel vs bnez on the gameMode check, and the case-3 constant
-   vs loop-counter registers (a1/a2) plus the aged==4 compare register. Permuter queued. */
+   reset to fading (state 3). 1 diff: the gameMode check comes out as bnel where the Original has
+   bnez with the same delay slot. */
 #ifdef NONMATCHING
 typedef struct {
     float timer;
@@ -25,7 +25,7 @@ extern Slot B_0019CCD0[4];
 extern int __gameMode;
 extern GcGlobal gcGlobalVar;
 extern PadManagerData padManagerData;
-extern void func_000BC988(int, void *);
+extern void func_000BC988(int);
 
 static void func_000BCA80(float dt)
 {
@@ -35,10 +35,10 @@ static void func_000BCA80(float dt)
 
     if (((padManagerData.buttons & (1 << gcGlobalVar.padA)) || (padManagerData.buttons & (1 << gcGlobalVar.padB))) &&
         !(__gameMode & 1)) {
-        func_000BC988(4, &gcGlobalVar);
+        func_000BC988(4);
     }
     s = B_0019CCD0;
-    for (i = 3; i >= 0; i--, s++) {
+    for (i = 0; i < 4; i++, s++) {
         switch (s->state) {
         case 0:
             s->timer = s->timer + dt;
