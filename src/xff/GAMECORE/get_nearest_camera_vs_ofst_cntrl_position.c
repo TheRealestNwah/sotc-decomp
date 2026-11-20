@@ -1,8 +1,10 @@
-/* Parked draft: finds, among the control points of the ten camera-offset control tables in
-   B_0019FCF8, the one nearest to a position (VU0 squared distance); when mode == 1 points that
-   are essentially coincident with the query get a 64-unit bias. Writes the winner to out and
-   returns whether any was found. Written from the m2c draft; not yet compared closely. */
+/* Parked attempt: 16 words differ from the Original.
+   Finds, among the control points of the ten camera-offset control tables in B_0019FCF8, the
+   one nearest to pos (VU0 squared distance); when mode == 1, points essentially coincident with
+   ref get a 64-unit bias. Writes the winner to out and returns whether any was found. */
 #ifdef NONMATCHING
+/* 16 diffs: the outer loop counter takes $s7 and the hoisted constant 1 takes $fp (swapped), and
+   the Original copies table->points through $v1 into $s0. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -30,12 +32,16 @@ static inline float distSq(Vec4 *a, Vec4 *b)
     return r;
 }
 
-int get_nearest_camera_vs_ofst_cntrl_position(Vec4 *out, Vec4 *pos, int mode)
+typedef struct { float x, y, z, w; } __attribute__((aligned(8))) V4f;
+
+int get_nearest_camera_vs_ofst_cntrl_position(Vec4 *out, Vec4 *pos, int mode, Vec4 *ref)
 {
-    float best = RO_00180F60;
+    Vec4 r __attribute__((aligned(16)));
+    register float best __asm__("$f24") = RO_00180F60;
     int found = 0;
     int t;
 
+    r.q = ref->q;
     for (t = 0; t < 10; t++) {
         CtrlTable *table = B_0019FCF8[t];
         if (table != 0) {
@@ -45,13 +51,10 @@ int get_nearest_camera_vs_ofst_cntrl_position(Vec4 *out, Vec4 *pos, int mode)
                 Vec4 cand __attribute__((aligned(16)));
                 float d;
 
-                cand.f[0] = p[0];
-                cand.f[1] = p[1];
-                cand.f[2] = p[2];
-                cand.f[3] = 1.0f;
+                *(V4f *)&cand = (V4f){ p[0], p[1], p[2], 1.0f };
                 d = distSq(pos, &cand);
                 if (mode == 1) {
-                    if (GAMEUTIL_is_diff_nearly_equal_zero3D(&cand, pos, 0.001f) == mode) {
+                    if (GAMEUTIL_is_diff_nearly_equal_zero3D(&cand, &r, 0.001f) == mode) {
                         d -= 64.0f;
                         if (d < 0.0f)
                             d = 0.0f;
