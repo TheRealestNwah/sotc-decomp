@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 35 diffs (148 vs 147 words): Original keeps &IdentityQuaternion in s0 and recomputes sp+0xA0 after the call (ours keeps rot in s0); sll/negu order of the short angle; one extra nop in the clamp branch */
+#ifdef NONMATCHING /* Parked: 33 diffs (148 vs 147 words): Original keeps &IdentityQuaternion in s0 and recomputes sp+0xA0 after the call (ours keeps rot in s0); one extra nop in the clamp branch */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 /* Inverse of a rigid transform: transposed rotation, rotated negated translation. */
@@ -41,6 +41,24 @@ extern char YUnitVector[];
 extern unsigned char IdentityQuaternion[];
 extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, short, void *);
 
+static inline void mulQ(float *dst, void *a, float *b)
+{
+    __asm__ __volatile__("lqc2 vf11, 0x0(%0)\n"
+                         "lqc2 vf12, 0x0(%1)\n"
+                         "vmul.xyzw vf13, vf11, vf12\n"
+                         "vaddy.x vf13, vf13, vf13y\n"
+                         "vaddz.x vf13, vf13, vf13z\n"
+                         "vsubx.w vf13, vf13, vf13x\n"
+                         "vmulw.xyz vf14, vf12, vf11w\n"
+                         "vmulw.xyz vf15, vf11, vf12w\n"
+                         "vopmula.xyz ACC, vf12, vf11\n"
+                         "vopmsub.xyz vf16, vf11, vf12\n"
+                         "vadd.xyz vf13, vf14, vf15\n"
+                         "vadd.xyz vf13, vf13, vf16\n"
+                         "sqc2 vf13, 0x0(%2)\n"
+                         : : "r"(a), "r"(b), "r"(dst));
+}
+
 float GetTurnYLimitAngleFromGlobalDir(float *res, float *q, float *dir, float limit)
 {
     Vec4 stab;
@@ -50,6 +68,7 @@ float GetTurnYLimitAngleFromGlobalDir(float *res, float *q, float *dir, float li
     Vec4 matrix[4];
     Vec4 inverse[4];
     Vec4 rot;
+    short s;
     float ang;
     float t;
     unsigned char *iq;
@@ -107,21 +126,9 @@ float GetTurnYLimitAngleFromGlobalDir(float *res, float *q, float *dir, float li
             t = -t;
         ang = t;
     }
-    SetQuaternionByAxisRotateVWithNoRegularize(rot.f, -(short)(int)(ang * 32768.0f / 3.14159274f), YUnitVector);
-    __asm__ __volatile__("lqc2 vf11, 0x0(%0)\n"
-                         "lqc2 vf12, 0x0(%1)\n"
-                         "vmul.xyzw vf13, vf11, vf12\n"
-                         "vaddy.x vf13, vf13, vf13y\n"
-                         "vaddz.x vf13, vf13, vf13z\n"
-                         "vsubx.w vf13, vf13, vf13x\n"
-                         "vmulw.xyz vf14, vf12, vf11w\n"
-                         "vmulw.xyz vf15, vf11, vf12w\n"
-                         "vopmula.xyz ACC, vf12, vf11\n"
-                         "vopmsub.xyz vf16, vf11, vf12\n"
-                         "vadd.xyz vf13, vf14, vf15\n"
-                         "vadd.xyz vf13, vf13, vf16\n"
-                         "sqc2 vf13, 0x0(%2)\n"
-                         : : "r"(IdentityQuaternion), "r"(rot.f), "r"(res));
+    s = (int)(ang * 32768.0f / 3.14159274f);
+    SetQuaternionByAxisRotateVWithNoRegularize(rot.f, -s, YUnitVector);
+    mulQ(res, IdentityQuaternion, rot.f);
     return ang;
 }
 #endif
