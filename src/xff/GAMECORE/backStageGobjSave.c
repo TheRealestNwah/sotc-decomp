@@ -1,5 +1,4 @@
-#ifdef NONMATCHING
-/* 2 diffs, same size (131 words). Saves the stage-object pose into one of three checkpoint records picked by the object type (0x103 -> B_00183B58, 0x203 -> B_00183B7C, 0x303 -> B_00183BA0 boss slot, only when the boss test passes), storing the object id, then the position (-x, y, -z) and the Euler angles in degrees (x, -y, z). The type is read from the dld ref at o+0x10 (same decoding as the sibling backStageGobjCheckEntry). The store sequence is a static inline called once per case: gcc crossjumps the three identical tails, which gives the Original's per-case lhu in the beql delay slots. The empty asm on cp keeps the record address a register, so the id store increments it in place and the floats go at 0x0..0x14 off it; loading the Euler angles into locals first keeps their loads ahead of the record stores. The PU union load (alias set 0) makes the position pointer reload after every float store, as in the Original. Remaining diff: the Original multiplies eul[0] before eul[2] (mul.s $f4 then $f2); ours swaps the two (store order permutations, scaled locals and the permuter at -j2 for 20 minutes didn't change it). */
+/* Saves the stage-object pose into one of three checkpoint records picked by the object type (0x103 -> B_00183B58, 0x203 -> B_00183B7C, 0x303 -> B_00183BA0 boss slot, only when the boss test passes), storing the object id, then the position (-x, y, -z) and the Euler angles in degrees (x, -y, z). The store sequence is a static inline called once per case, so gcc crossjumps the three identical tails. The empty asm on cp keeps the record address a register; the PU union load (alias set 0) makes the position pointer reload after every float store. The scaled angles are computed after the position stores in the order x, z, y, which gives the Original multiply order. */
 extern int *DldSysUndefSymbol;
 static inline char *dldResolve(unsigned int *h)
 {
@@ -30,7 +29,7 @@ typedef union {
 static inline void saveCp(float *cp, unsigned char *o, float *eul)
 {
     char *lc;
-    float e0, e1, e2;
+    float e0, e1, e2, m0, m1, m2;
     __asm__("" : "+r"(cp));
     *(int *)cp++ = *(unsigned short *)(o + 0xE);
     lc = GetLayoutClass(*(void **)(o + 8));
@@ -39,9 +38,8 @@ static inline void saveCp(float *cp, unsigned char *o, float *eul)
     cp[0] = -((PU *)(lc + 0x134))->p[0];
     cp[1] = ((PU *)(lc + 0x134))->p[1];
     cp[2] = -((PU *)(lc + 0x134))->p[2];
-    cp[3] = e0 * 57.29578f;
-    cp[4] = -(e1 * 57.29578f);
-    cp[5] = e2 * 57.29578f;
+    m0 = e0 * 57.29578f; m2 = e2 * 57.29578f; m1 = -(e1 * 57.29578f);
+    cp[3] = m0; cp[4] = m1; cp[5] = m2;
 }
 void backStageGobjSave(unsigned char *o)
 {
@@ -71,4 +69,4 @@ void backStageGobjSave(unsigned char *o)
         break;
     }
 }
-#endif
+
