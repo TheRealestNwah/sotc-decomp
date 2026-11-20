@@ -44,15 +44,19 @@ static inline void quatRotateVector(Vec4 *out0, float *quat0, char *vec0)
     __asm__ __volatile__("sqc2 vf10, 0x0(%0)\n" : : "r"(out) : "memory");
 }
 
-#ifdef NONMATCHING /* 157 diffs (mostly a 3-word shift): early-exit shape and delay slots; also covers the tail at func_000A0850 */
+#ifdef NONMATCHING /* 6 diffs: the compare zero shares a register with x instead of a fresh $f2; also covers the tail at func_000A0850 */
 static float func_000A0600(char *a, char *b)
 {
     Vec4 v __attribute__((aligned(16)));
-    float dist, d, x, r1, r2, r3;
+    float z, dist, d, x, r1, r2, r3;
     float one = 1.0f;
     char *thr, *la, *lt;
 
-    if (*(int *)a == 8 && *(int *)b == 5) {
+    if (*(int *)a != 8)
+        return one;
+    if (*(int *)b != 5)
+        return one;
+    {
     thr = (char *)isysGetThisSubThread();
     la = GetLayoutClass(*(int *)(a + 0x24));
     lt = GetLayoutClass((int)thr);
@@ -61,11 +65,11 @@ static float func_000A0600(char *a, char *b)
                          "vsub.xyzw vf7, vf5, vf6\n"
                          "vmul.xz vf7, vf7, vf7\n"
                          "vaddz.x vf7, vf7, vf7z\n"
-                         ".word 0x4BA703BD\n"
+                         ".word 0x4A2703BD\n"
                          "vwaitq\n"
                          "cfc2.ni $2, $vi22\n"
                          "mtc1 $2, %0\n"
-                         : "=f"(dist) : "r"(*(char **)(lt + 0x134)), "r"(b + 0x50) : "$2");
+                         : "=f"(dist) : "r"(*(char **)(lt + 0x134)), "r"(b + 0x50) : "$2", "$4");
     quatRotateVector(&v, *(float **)(la + 0x13C), ZUnitVector);
     v.f[1] = 0.0f;
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
@@ -89,7 +93,7 @@ static float func_000A0600(char *a, char *b)
                          "mtc1 $2, %0\n"
                          : "=f"(d) : "r"(&v), "r"(a + 0x240) : "$2");
     x = 0.0f;
-    if (0.0f < d) {
+    if (d > 0.0f) {
         float len;
         __asm__ __volatile__("lqc2 vf7, 0x0(%1)\n"
                              "vmul.xyz vf7, vf7, vf7\n"
@@ -103,14 +107,15 @@ static float func_000A0600(char *a, char *b)
                              : "=f"(len) : "r"(a + 0x2E0) : "$2");
         x = d * (*(float *)(b + 0x1C) - len);
     }
-    r1 = AI_GetInterRatioOutCut(x, 0.0f, 2.0f, 0.0f, 1.0f);
+    z = 0.0f;
+    __asm__("" : "+f"(z));
+    r1 = AI_GetInterRatioOutCut(x, z, 2.0f, z, 1.0f);
     x = d * dist * *(float *)(a + 0xA0);
-    if (x < 0.0f)
-        x = 0.0f;
-    r2 = AI_GetInterRatioOutCut(x, 1.0f, 10.0f, 0.0f, 3.0f);
-    r3 = AI_GetInterRatioOutCut(*(float *)(b + 0x1C), 5.0f, 10.0f, 0.0f, 1.0f);
-    one = one + r1 + r2 * r3;
+    if (x < z)
+        x = z;
+    r2 = AI_GetInterRatioOutCut(x, 1.0f, 10.0f, z, 3.0f);
+    r3 = AI_GetInterRatioOutCut(*(float *)(b + 0x1C), 5.0f, 10.0f, z, 1.0f);
+    return one + r1 + r2 * r3;
     }
-    return one;
 }
 #endif
