@@ -1,4 +1,4 @@
-/* Parked at 5 diffs (register allocation); the permuter found nothing below its baseline. */
+/* Parked at 2 diffs: the original sets $a2 = 0x238E before zeroing $f20 for the second matrix. */
 #ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -92,6 +92,14 @@ static inline void matApply(float *out, float *m, float *v)
                          : : "r"(out), "r"(m), "r"(v) : "memory");
 }
 
+static inline float fsqrtc(float x)
+{
+    float r;
+
+    __asm__ __volatile__("sqrt.s %0, %1" : "=f"(r) : "f"(x) : "$f12");
+    return r;
+}
+
 static inline float fsqrt(float x)
 {
     float r;
@@ -153,7 +161,7 @@ int func_00080E68(float *pos, Collider *c)
         d = lenSqXY(local);
         r = c->radius + top;
         if (d < r * r) {
-            scaleXY(local, r / fsqrt(d));
+            scaleXY(local, r / fsqrtc(d));
             matApply(pos, m[0], local);
             ret = 1;
         }
