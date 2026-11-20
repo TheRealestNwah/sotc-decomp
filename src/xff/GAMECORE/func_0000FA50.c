@@ -1,12 +1,11 @@
-/* Parked: 86 diffs with -fno-strict-aliasing, same size (135 words). Boss check-point save: boss status lookup (as in bossStatStartDemo), two position records built from the status floats (negated x/z, 12-byte struct copies via ldl/ldr from a Vec3 struct, 16-byte ld/sd copies via a union with a long pair), VU0 vadd.xyz of the seamless-area centre onto two of them, then the hook call with the status byte at +0x52 as the fifth argument. Frame: one local struct (center +0, a +0x10, b +0x20, c +0x30, d +0x40, e +0x50). Remaining: the Original sets up a0/a1/a2/a3 for the shared memset/save call before the boss-status branches (gcc hoists them into the load delay), and sw zero stores are interleaved earlier. */
-#ifdef NONMATCHING
+/* Boss check-point save: boss status lookup (as in bossStatStartDemo), player and horse position records built from the status floats, offset by the seamless-area centre with VU0, then the save hook. */
 extern int *DldSysUndefSymbol;
 extern int SH_BossStatusDEFAULT[];
 extern int D_00179F90;
 extern char *D_00179F94;
 extern int _gameWorkChk(int);
 extern void *memset(void *, int, unsigned int);
-extern void gStatCheckPointSave(void *, int, int);
+extern void gStatCheckPointSave(void);
 extern void YattsukeGetSeamlessAreaCenter(void *, int);
 extern void _gameFlagSet(int);
 extern void _gameFlagCls(int);
@@ -46,7 +45,7 @@ static inline char *getBossStatus(void)
     return D_00179F94;
 }
 
-void func_0000FA50(void)
+static void func_0000FA50(void)
 {
     struct {
         Vec center;
@@ -57,30 +56,29 @@ void func_0000FA50(void)
         Vec e;
     } L __attribute__((aligned(16)));
     char *s = getBossStatus();
+    float z;
 
     if (s == 0) {
-        gStatCheckPointSave(&L.b, 0, 0x10);
+        gStatCheckPointSave();
         return;
     }
     memset(&L.b, 0, 0x10);
     L.b.x = -*(float *)(s + 0x54);
     L.b.y = *(float *)(s + 0x58);
-    L.a.l[0] = L.b.l[0];
-    *(int *)&L.c.a = 0;
     L.b.z = -*(float *)(s + 0x5C);
-    L.a.l[1] = L.b.l[1];
-    *(int *)&L.c.c = 0;
+    L.a = L.b;
+    L.c.a = 0.0f;
     L.c.b = *(float *)(s + 0x60);
+    L.c.c = 0.0f;
     *(Vec3 *)&L.b = L.c;
     memset(&L.e, 0, 0x10);
     L.e.x = -*(float *)(s + 0x64);
     L.e.y = *(float *)(s + 0x68);
-    L.d.l[0] = L.e.l[0];
-    L.e.x = 0.0f;
     L.e.z = -*(float *)(s + 0x6C);
-    L.d.l[1] = L.e.l[1];
-    L.e.z = 0.0f;
+    L.d = L.e;
+    L.e.x = 0.0f;
     L.e.y = *(float *)(s + 0x70);
+    L.e.z = 0.0f;
     L.c = *(Vec3 *)&L.e;
     YattsukeGetSeamlessAreaCenter(&L.center, *(unsigned char *)(s + 0x51));
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
@@ -101,4 +99,3 @@ void func_0000FA50(void)
     gStatChekcPointSaveHookPlayerHorsePos(&L.a, &L.b, &L.d, &L.c, *(unsigned char *)(s + 0x52));
     _gameFlagCls(0x1D);
 }
-#endif
