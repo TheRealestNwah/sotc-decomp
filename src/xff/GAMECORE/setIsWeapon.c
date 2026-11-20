@@ -1,4 +1,4 @@
-/* 22 diffs, same size (80 words). Weapon-slot cycling (SH_WeaponListDEFAULT table of 0x1C-byte entries, flag word at +4): with force set it cancels the sword effect, makes `w` the current weapon (D_0017B330) and remembers the previous one (D_0017B334), calling setWeaponSpriteStatus(w, prev); without force and when w is already current it walks to the next owned weapon (wrapping 10 -> 1), falling back to -1 (none) when it comes back to w. Returns D_0017B330. The swap sequence is inlined twice, as in the Original. Remaining diffs: $v0/$v1 swapped in the prologue's list-pointer select, $s4/$s5 swapped for the D_0017B330 base and its copy, and the second inlined swap schedules its lui of D_0017B334 later than the Original (which stores it through the D_0017B330 hi + 4). */
+/* 7 diffs, same size (80 words). Weapon-slot cycling (SH_WeaponListDEFAULT table of 0x1C-byte entries, flag word at +4): with force set it cancels the sword effect, makes `w` the current weapon (D_0017B330) and remembers the previous one (D_0017B334), calling setWeaponSpriteStatus(w, prev); without force and when w is already current it walks to the next owned weapon (wrapping 10 -> 1), falling back to -1 (none) when it comes back to w. Returns D_0017B330. The swap sequence is inlined twice, as in the Original. Writing the swap as a chained assignment (`D_0017B334 = prev = D_0017B330`) fixes the $s4/$s5 base choice and the second swap's scheduling. Remaining diffs: only $v0/$v1 swapped in the prologue's list-pointer select (SH_WeaponListDEFAULT vs DldSysUndefSymbol); compare order, ternary/if forms, int typing and extern order all leave it. */
 extern char SH_WeaponListDEFAULT[];
 extern char *DldSysUndefSymbol;
 extern int D_0017B330;
@@ -13,9 +13,8 @@ static inline void changeWeapon(int x)
     int prev;
 
     CancelSwordEffect();
-    prev = D_0017B330;
+    D_0017B334 = prev = D_0017B330;
     D_0017B330 = x;
-    D_0017B334 = prev;
     setWeaponSpriteStatus(x, prev);
 }
 
