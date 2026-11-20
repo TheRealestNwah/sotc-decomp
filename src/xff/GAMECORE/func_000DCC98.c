@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 9 words differ (prologue saves s0 before s2/f20, and gcc threads the st!=1 branch past the dispatch's first test). */
 typedef struct {
     int mode;
     int state;
@@ -16,11 +14,18 @@ extern float GAMEUTIL_increase_yaw(int *, float, float);
 extern int GAMEUTIL_is_reach_aim_yaw_angle(float *out, float a, float b, float aim);
 extern int GAMEUTIL_is_reach_aim_pitch_angle(float *out, float from, float next, float aim);
 
+/* The store to *out goes through a union so it may alias the int loads
+   from s that follow, as in the Original. */
+typedef union {
+    float f;
+    int i;
+} FloatOrInt;
+
 static int func_000DCC98(float *out, AimCtl *s, float from, float step, float aim)
 {
     int st;
 
-    *out = from;
+    ((FloatOrInt *)out)->f = from;
     if (s->mode == 0) {
         if (s->request == 1) {
             s->state = 1;
@@ -55,4 +60,3 @@ static int func_000DCC98(float *out, AimCtl *s, float from, float step, float ai
     GAMEUTIL_inc_or_dec_for_near_to_aim_pitch(from, step, aim, s->high, s->low, out, s->clip);
     return GAMEUTIL_is_reach_aim_pitch_angle(out, from, *out, aim);
 }
-#endif
