@@ -1,4 +1,4 @@
-/* Parked: 11 diffs, same size. Sibling of _sendProgramRotInput: direction from the character's position (cc+0x134 pointer) to the target, normalised with w = 1.0, transformed by the inverse of the character's quaternion matrix (cc+0x470, rows only, identity translation row stored from vf0), atan2(x, z) as the turn angle; when the character's mode (cc+0x750) equals w+0x20 it refreshes the motion ratio at w+0x110 through calcNextMotRatio (only while it still holds the sentinel RO_001814B8, an all-ones word compared as a float), otherwise switches to SCRStop and then SCRStopR / SCRStopL by angle versus the threshold (one shared call) and re-arms w+0x110 with the sentinel. Remaining: the Original rebuilds the matrix address in v0 after the identity-row store instead of copying a0, and sets a0 in each StopR/StopL arm with the script pointer loaded through v1. */
+/* Parked: 9 diffs, same size. Sibling of _sendProgramRotInput: direction from the character's position (cc+0x134 pointer) to the target, normalised with w = 1.0, transformed by the inverse of the character's quaternion matrix (cc+0x470, rows only, identity translation row stored from vf0), atan2(x, z) as the turn angle; when the character's mode (cc+0x750) equals w+0x20 it refreshes the motion ratio at w+0x110 through calcNextMotRatio (only while it still holds the sentinel RO_001814B8, an all-ones word compared as a float), otherwise switches to SCRStop and then SCRStopR / SCRStopL by angle versus the threshold (one shared call) and re-arms w+0x110 with the sentinel. Remaining: the Original rebuilds the matrix address in v0 after the identity-row store instead of copying a0, and sets a0 in each StopR/StopL arm rather than in the shared call's delay slot (the arms now load the script pointer through v0 like the Original). */
 #ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -145,15 +145,18 @@ int sendStopKeyFastLegCtrlWork(int obj, char *w, char *target, float thr)
     }
     CharaCtrlSetScriptCtrlStatus(obj, ScriptCtrlDef_SCRStop[1]);
     {
-        int *s;
+        int a;
+        register int *s __asm__("$2");
 
-        if (thr < ang)
+        if (thr < ang) {
+            a = obj;
             s = ScriptCtrlDef_SCRStopR;
-        else if (ang < -thr)
+        } else if (ang < -thr) {
+            a = obj;
             s = ScriptCtrlDef_SCRStopL;
-        else
+        } else
             return 0;
-        CharaCtrlSetScriptCtrlStatus(obj, s[1]);
+        CharaCtrlSetScriptCtrlStatus(a, s[1]);
     }
     *(float *)(w + 0x110) = RO_F;
     __asm__ __volatile__("");
