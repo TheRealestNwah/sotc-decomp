@@ -23,15 +23,15 @@ extern void func_0002E728(PcmChannel *in, int ch, int arg1, int arg2, float f0, 
 
 #ifdef NONMATCHING
 /*
- * Parked: 24 words differ. Pinning the inline's parameter copy to $s0 and the
- * filter pointer/offset to $t1/$t0 reproduces the original's `daddu $s0, $t1`
- * copy; the remaining diffs are callee-saved register assignment (original:
- * ch=s2, arg2=s3, arg1=s4, base=s0, intr=s1). Pinning base/intr to s0/s1 gets
- * to 9 but reorders the base copy after s0 is reused, so it isn't kept.
+ * Parked: 10 words differ. Pinning intr to $s1 gives the original's
+ * callee-saved assignment (ch=s2, arg2=s3, arg1=s4, base=s0, intr=s1). The
+ * remaining diffs are the filter pointer: the original builds it in $t1 and
+ * copies it to $s0 after base is passed in $a0; here it is built in $s0.
+ * Pinning the inline's copy to $s0 as well clobbers base (wrong code).
  */
 static inline void filterReset(Filter *f)
 {
-    register Filter *g __asm__("$16") = f;
+    register Filter *g = f;
     __asm__("" : "+r"(g));
     f->b = -1;
     g->d = 0;
@@ -40,7 +40,7 @@ static inline void filterReset(Filter *f)
 void Sg2ExPcmInputSetAutoFilterDirect(unsigned int port, int ch, int arg1, int arg2, float f0, float f1)
 {
     PcmChannel *base;
-    int intr;
+    register int intr __asm__("$17");
 
     if (port >= 4) {
         return;
