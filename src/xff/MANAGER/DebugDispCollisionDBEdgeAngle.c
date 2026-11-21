@@ -33,9 +33,8 @@ static inline void planeVertices(int *out, CollisionRuntime *runtime, CollisionR
 extern int RO_001407D8[];
 extern char RO_00140800[];
 extern void DebugDispCollisionDBEdge();
-extern int iosInitKPrintfContext3D(void *, void *, int, int, float, float, float, float);
+extern int iosInitKPrintfContext3D(void *, void *, int, float, float, float, float, int);
 extern void kprintfContextCentering(void *, const char *, ...);
-#ifdef NONMATCHING
 static inline void lerpv(float *out, int a, int b, float t)
 {
     __asm__ __volatile__(".set noreorder
@@ -60,7 +59,6 @@ static inline void lerpv(float *out, int a, int b, float t)
 "
                          : : "f"(t), "r"(a), "r"(b), "r"(out) : "memory", "$8");
 }
-/* Parked: 6 words differ (register/scheduling order around the pair loads). */
 void DebugDispCollisionDBEdgeAngle(CollisionReference *reference, int edge, float angle)
 {
     struct { int pair[4] __attribute__((aligned(16))); float point[4]; float ctx[16]; int vertices[4]; } L;
@@ -80,13 +78,10 @@ void DebugDispCollisionDBEdgeAngle(CollisionReference *reference, int edge, floa
     } else {
         planeVertices(vertices, &layout->runtime, layout->collision->resource, nodeIndex, shapeIndex);
     }
-    pair[0] = vertices[edge];
-    pair[1] = vertices[RO_001407D8[edge]];
+    { int *q = vertices + edge; pair[0] = *q; }
+    { int *q = vertices + RO_001407D8[edge]; pair[1] = *q; }
     lerpv(L.point, L.pair[0], L.pair[1], 0.5f);
-    if (iosInitKPrintfContext3D(L.ctx, L.point, 0, 1, 1.0f, 1.0f, 1.0f, 1.0f) != 0) {
+    if (iosInitKPrintfContext3D(L.ctx, L.point, 0, 1.0f, 1.0f, 1.0f, 1.0f, 1) != 0) {
         kprintfContextCentering(L.ctx, RO_00140800, (int)angle);
     }
 }
-#else
-void DebugDispCollisionDBEdgeAngle(CollisionReference *reference, int edge, float angle);
-#endif
