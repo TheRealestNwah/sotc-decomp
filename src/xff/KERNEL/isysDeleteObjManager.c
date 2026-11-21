@@ -33,8 +33,6 @@ extern int D_00040D5C;
 extern int D_00040D60;
 extern SysGroup B_0006D640[];
 
-/* Parked: 94 diffs: register allocation in the free-list loop (target keeps g in a0, nx in s0, keep in s1) */
-#ifdef NONMATCHING
 void isysDeleteObjManager(void)
 {
     SysGroup *g;
@@ -44,6 +42,7 @@ void isysDeleteObjManager(void)
     ObjMgr *mn;
     ObjMgr *live;
     ObjMgr *dead;
+    ObjMgr *dn;
     int tid = GetThreadId();
 
     if (tid == D_00040D5C) {
@@ -64,40 +63,52 @@ void isysDeleteObjManager(void)
         }
     }
     B_000BF6C4 = keep;
-    for (g = keep; g != 0; g = g->freeNext ? &B_0006D640[g->freeNext] : 0) {
+    {
+        SysGroup *w;
+        if (keep != 0) {
+            w = keep;
+            do {
+                w = w->freeNext ? &B_0006D640[w->freeNext] : 0;
+            } while (w != 0);
+        }
     }
     live = 0;
     dead = 0;
     for (m = B_000BF6C8; m != 0; m = mn) {
         mn = m->next;
         if (!(m->flags & 0xFFFEFF00)) {
-            for (g = m->groups ? &B_0006D640[m->groups] : 0; g != 0;
-                 g = g->objNext ? &B_0006D640[g->objNext] : 0) {
-                func_00019AA8(g);
+            SysGroup *o;
+            for (o = m->groups ? &B_0006D640[m->groups] : 0; o != 0;
+                 o = o->objNext ? &B_0006D640[o->objNext] : 0) {
+                func_00019AA8(o);
             }
             m->next = dead;
-            dead = m;
             m->groups = 0;
+            dead = m;
         } else {
             m->next = live;
             live = m;
         }
     }
     B_000BF6C8 = live;
-    for (m = dead; m != 0; m = mn) {
-        mn = m->next;
+    for (m = dead; m != 0; m = dn) {
+        dn = m->next;
         if (m->dispose != 0) {
             m->dispose(m);
         }
         iosFree(m->heap);
     }
-    for (m = live; m != 0; m = m->next) {
+    {
+        ObjMgr *w;
+        if (live != 0) {
+            w = live;
+            do {
+                w = w->next;
+            } while (w != 0);
+        }
     }
     if (--D_00040D60 == 0) {
         D_00040D5C = -1;
         SignalSema(B_000BF6CC);
     }
 }
-#else
-extern void isysDeleteObjManager(void);
-#endif
