@@ -40,7 +40,7 @@ extern Mod B_000C5C18[];
 extern int DIntr(void);
 extern int EIntr(void);
 extern int Sg2SlotCheckSlotClass(int);
-/* Parked: 24 words differ (register choice in the MIDI event lookups and the fade update) */
+/* Parked: 17 words differ (register choice in the MIDI event lookups and the fade update) */
 #ifdef NONMATCHING
 void Sg2ModTickProc(void)
 {
@@ -109,8 +109,9 @@ void Sg2ModTickProc(void)
       Mod *f = B_000C5C10;
       int s0 = f->step0;
       int d = (f->step1 < 0 ? -f->step1 : f->step1) < (s0 < 0 ? -s0 : s0) ? f->step0 : f->step1;
+      int c1 = f->cur1 + f->step1;
       f->cur0 = f->cur0 + f->step0;
-      f->cur1 = f->step1 + f->cur1;
+      f->cur1 = c1;
       if (((d > 0) && (B_000C5C10->cur0 >= B_000C5C10->tgt0)) || ((d < 0) && (B_000C5C10->cur0 <= B_000C5C10->tgt0)))
       {
         B_000C5C10->cur0 = B_000C5C10->tgt0;
