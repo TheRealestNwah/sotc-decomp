@@ -21,7 +21,7 @@ extern void updateAimIKWork(void *, void *);
 extern char *SkelFocusDef_BOSS_OPT_ATTACK;
 extern char gcGlobalVar[];
 
-#ifdef NONMATCHING /* 8 diffs. Wind-attack turn for the Yamori B boss: while its current motion is the given one, scales the leg-slow walk by the AI target's distance in the boss's local space (minus off, over the motion length) and sends a program rotation of deg degrees toward it; unless the cloak is on, aims the IK at the player when the BOSS_OPT_ATTACK node has a clear line. The tied "=r"(dst) : "0"(dst) operand on the matrix-inverse asm reproduces the Original's rematerialised sp+0x10; remaining: the Original passes that rematerialised $v0 on to the matrix-apply block (dir in $v1) while ours reuses $v1 and puts dir in $a0, and every way of feeding the asm output into the apply block falls back to 118 diffs. */
+#ifdef NONMATCHING /* 3 diffs. Wind-attack turn for the Yamori B boss: while its current motion is the given one, scales the leg-slow walk by the AI target's distance in the boss's local space (minus off, over the motion length) and sends a program rotation of deg degrees toward it; unless the cloak is on, aims the IK at the player when the BOSS_OPT_ATTACK node has a clear line. Pinning the matrix-build operands (quat $v0, pos $a0, out $v1) and the matrix-inverse pointer ($v0, returned and passed on to the apply block) gives the Original's registers; remaining: the Original loads pos before forming out (sp+0x10) and rematerialises sp+0x10 into $v0 for the inverse with addiu, where ours copies it from $v1 with daddu. */
 static inline char *dldResolve(unsigned int *h)
 {
     unsigned int v = *h;
@@ -49,6 +49,9 @@ static inline float vecLength(float *v)
 }
 static inline void quatPosToMatrix(float *out, float *quat, float *pos)
 {
+    register float *o __asm__("$3") = out;
+    register float *q __asm__("$2") = quat;
+    register float *ps __asm__("$4") = pos;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
                          "vmr32.w vf14, vf0\n"
@@ -76,16 +79,17 @@ static inline void quatPosToMatrix(float *out, float *quat, float *pos)
                          "sqc2 vf14, 0x0(%0)\n"
                          "sqc2 vf15, 0x10(%0)\n"
                          "sqc2 vf16, 0x20(%0)\n"
-                         : : "r"(out), "r"(quat) : "memory");
+                         : : "r"(o), "r"(q) : "memory");
     __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
-                         : : "r"(out), "r"(pos) : "memory");
+                         : : "r"(o), "r"(ps) : "memory");
 }
 
 
-static inline void matInverse(float *dst, float *src)
+static inline float *matInverse(float *dst, float *src)
 {
+    register float *dp __asm__("$2") = dst;
     __asm__ __volatile__("lqc2 vf24, 0x30(%1)\n"
                          "vsubw.x vf25, vf0, vf0w\n"
                          "vmulx.xyz vf28, vf24, vf25x\n"
@@ -115,7 +119,8 @@ static inline void matInverse(float *dst, float *src)
                          "sqc2 vf25, 0x10(%0)\n"
                          "sqc2 vf26, 0x20(%0)\n"
                          "sqc2 vf29, 0x30(%0)\n"
-                         : "=r"(dst) : "0"(dst), "r"(src) : "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15", "memory");
+                         : "=r"(dp) : "0"(dp), "r"(dp) : "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15", "memory");
+    return dp;
 }
 
 static inline void matApply(float *out, float *m, float *v)
@@ -153,8 +158,8 @@ void SCRFuncYamoriBProgramRotForWindAttack(void *obj, int b, int c, int d, int e
     if (dldResolve(mot) == *(char **)anim) {
         analyzeMotionProperty(obj, *(char **)anim, &len, 0, 0, 1.0f, *(float *)(anim + 0xC));
         quatPosToMatrix(m[0], *(float **)(lay + 0x13C), *(float **)(lay + 0x134));
-        matInverse(m[0], m[0]);
-        matApply(dir.f, m[0], (float *)(ai + 0x41F0));
+        { float *mi = matInverse(m[0], m[0]);
+        matApply(dir.f, mi, (float *)(ai + 0x41F0)); }
         ((int *)dir.f)[1] = 0;
         setAttainMotScaleSlowLegCtrlWork(w + 0x3D10, (vecLength(dir.f) - off) / len);
         _sendProgramRotInput(obj, w + 0x3D10, ai + 0x41F0, deg * 0.017453293f);
