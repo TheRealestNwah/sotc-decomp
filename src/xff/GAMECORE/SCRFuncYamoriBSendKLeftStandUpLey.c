@@ -7,20 +7,12 @@ extern void *DldSysUndefSymbol;
 extern char *GetLayoutClass(void);
 extern void CharaCtrlSetScriptCtrlStatus(int, int, unsigned int);
 
-#ifdef NONMATCHING /* 122 diffs, 2 words short: three VU0 asm blocks; their operand/register placement and the dld lookup shape */
-void SCRFuncYamoriBSendKLeftStandUpLey(int obj, int a1, int a2, int a3, unsigned int *ref)
+#ifdef NONMATCHING /* 1 diff, same size: blk2's matrix pointer is copied from a2 (daddu v0, a2, zero) where the Original rematerializes addiu v0, sp, 0x20 */
+static inline void blk1(float *m_, float *pb_, float *pa_)
 {
-    float v[4] __attribute__((aligned(16)));
-    float out[4] __attribute__((aligned(16)));
-    float m[16] __attribute__((aligned(16)));
-    char *lay = GetLayoutClass();
-    float *pa;
-    float *pb;
-
-    *(V128 *)v = RO_00180DA0;
-    v[1] = *(float *)(*(char **)(lay + 0x134) + 4);
-    pa = *(float **)(lay + 0x134);
-    pb = *(float **)(lay + 0x13C);
+    register float *m __asm__("$6") = m_;
+    register float *pb __asm__("$3") = pb_;
+    register float *pa __asm__("$4") = pa_;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
                          "vmr32.w vf14, vf0\n"
@@ -52,6 +44,11 @@ void SCRFuncYamoriBSendKLeftStandUpLey(int obj, int a1, int a2, int a3, unsigned
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
                          : : "r"(m), "r"(pb), "r"(pa) : "memory");
+}
+
+static inline void blk2(float *m_)
+{
+    register float *m __asm__("$2") = m_;
     __asm__ __volatile__("lqc2 vf24, 0x30(%0)\n"
                          "vsubw.x vf25, vf0, vf0w\n"
                          "vmulx.xyz vf28, vf24, vf25x\n"
@@ -82,6 +79,12 @@ void SCRFuncYamoriBSendKLeftStandUpLey(int obj, int a1, int a2, int a3, unsigned
                          "sqc2 vf26, 0x20(%0)\n"
                          "sqc2 vf29, 0x30(%0)\n"
                          : : "r"(m) : "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15", "memory");
+}
+
+static inline void blk3(float *out_, float *v, float *m_)
+{
+    register float *out __asm__("$3") = out_;
+    register float *m __asm__("$2") = m_;
     __asm__ __volatile__("lqc2 vf8, 0x0(%1)\n"
                          "lqc2 vf14, 0x0(%2)\n"
                          "lqc2 vf15, 0x10(%2)\n"
@@ -93,6 +96,33 @@ void SCRFuncYamoriBSendKLeftStandUpLey(int obj, int a1, int a2, int a3, unsigned
                          "vmaddw.xyzw vf10, vf17, vf8w\n"
                          "sqc2 vf10, 0x0(%0)\n"
                          : : "r"(out), "r"(v), "r"(m) : "memory");
+}
+
+void SCRFuncYamoriBSendKLeftStandUpLey(int obj, int a1, int a2, int a3, int a4, int a5, int a6, int a7, unsigned int *ref)
+{
+    float v[4] __attribute__((aligned(16)));
+    float out[4] __attribute__((aligned(16)));
+    float m[16] __attribute__((aligned(16)));
+    char *lay = GetLayoutClass();
+    float *pa;
+    float *pb;
+
+    register float *m6 __asm__("$6") = m;
+
+    {
+    register long long l __asm__("$5") = RO_00180DA0.lo;
+    register long long h __asm__("$4") = RO_00180DA0.hi;
+    ((V128 *)v)->hi = h;
+    ((V128 *)v)->lo = l;
+    }
+    __asm__ __volatile__("" ::: "memory");
+    v[1] = *(float *)(*(char **)(lay + 0x134) + 4);
+    __asm__ __volatile__("" ::: "memory");
+    pa = *(float **)(lay + 0x134);
+    pb = *(float **)(lay + 0x13C);
+    blk1(m6, pb, pa);
+    blk2(m);
+    blk3(out, v, m);
     if (out[2] < 0.0f) {
         unsigned int enc = *ref;
         unsigned int off = enc & 0x3FFFF;
