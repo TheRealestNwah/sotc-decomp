@@ -10,7 +10,7 @@ typedef struct {
     int x30;
     int x34;
     int x38;
-    Node *x3C;
+    union { Node *p; int i; float f; } x3C;
     Node *loop;
     int count;
 } Filt;
@@ -18,9 +18,6 @@ extern char B_000E251C[];
 extern char B_000E2368[];
 extern int DIntr(void);
 extern void EIntr(void);
-/* Parked attempt: 2 words differ (the node->time load is scheduled after the
-   x3C store instead of before it). */
-#ifdef NONMATCHING
 extern void func_0002E728(Filt *base, int i, int time, int cb, float x, float y);
 
 static void func_0002E8D8(Node *node, int ch, int a2, int a3)
@@ -70,7 +67,7 @@ static void func_0002E8D8(Node *node, int ch, int a2, int a3)
         g->x34 = a3;
         g->x30 = a2;
         t0 = node[0].time;
-        g->x3C = node;
+        g->x3C.p = node;
         x = node->x;
         y = node->y;
         if (t0 != 0x7FFFFFFF && (dd = node[1].time) != 0x7FFFFFFF)
@@ -85,4 +82,3 @@ static void func_0002E8D8(Node *node, int ch, int a2, int a3)
     if (intr)
         EIntr();
 }
-#endif
