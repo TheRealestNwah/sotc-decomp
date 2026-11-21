@@ -1,4 +1,4 @@
-/* Parked: 83 diffs, same size. Chooses the attain point for the wind attack: with 2 or 3 passage points, ray-casts between the first two (ClipCollisionDirectCallBack with pathJudgeFunc) and uses -Y as the direction, with one passage point uses the normalised vector from the layout position to the AI work's +0x41F0; then offsets +0x41F0 by -f times that direction, re-checks the collision, flags +0x41C8 when the layout is within 3f, and returns setAttainmentPosAndDir's result. The hit buffer is 0x50 bytes at sp+0x10. VU0 runs match word for word. Remaining: callee-saved save order in the prologue (the Original saves s5 first), store order of the two w=1.0 words, and operand register naming of the two position loads. */
+/* Parked: 5 diffs, same size. Chooses the attain point for the wind attack: with 2 or 3 passage points, ray-casts between the first two (ClipCollisionDirectCallBack with pathJudgeFunc) and uses -Y as the direction, with one passage point uses the normalised vector from the layout position to the AI work's +0x41F0; then offsets +0x41F0 by -f times that direction, re-checks the collision, flags +0x41C8 when the layout is within 3f, and returns setAttainmentPosAndDir's result. The hit buffer is 0x50 bytes at sp+0x10. VU0 runs match word for word. Remaining: the first branch computes &L.p60 before &YUnitVector, and the Original tail block computes &L.p60 into s3 before the mfc1 of -f, and the mfc1 goes to v1 (the C uses a0). */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -35,9 +35,10 @@ int SCRFuncYamoriBSetAttainPointForWindAttack(void *obj, float f)
     char *b;
     char *pos;
     int bits;
-    int r0;
+    register int r0 __asm__("$2");
     float lim;
     float d;
+    register char *p7 __asm__("$2");
 
     ai = GetSCRCharaAIWorkPtr();
     data = getSCRDataCtrlWork(obj);
@@ -64,7 +65,8 @@ int SCRFuncYamoriBSetAttainPointForWindAttack(void *obj, float f)
         }
     }
     if (getPassageNum(data) == 1) {
-        pos = *(char **)(GetLayoutClass(obj) + 0x134);
+        register char *pp __asm__("$3") = *(char **)(GetLayoutClass(obj) + 0x134);
+        register char *q __asm__("$4") = ai + 0x41F0;
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "lqc2 vf6, 0x0(%1)\n"
                              "vsub.xyzw vf7, vf5, vf6\n"
@@ -79,17 +81,18 @@ int SCRFuncYamoriBSetAttainPointForWindAttack(void *obj, float f)
                              "vmulq.xyz vf5, vf5, Q\n"
                              "sqc2 vf5, 0x0(%2)\n"
                              :
-                             : "r"(pos), "r"(ai + 0x41F0), "r"(&L.p60)
+                             : "r"(q), "r"(pp), "r"(&L.p60)
                              : "memory");
         found = 1;
     }
 have:
+    p7 = (char *)&L.p70;
     if (found == 0)
-        return (int)&L.p70;
+        return (int)p7;
     {
         float nf = -f;
-        char *s0 = ai + 0x41F0;
-        char *s1 = (char *)&L.p80;
+        char *s0;
+        char *s1;
         char *s3 = (char *)&L.p60;
         int r;
 
@@ -99,14 +102,16 @@ have:
                              "vmulx.xyz vf5, vf5, vf6x\n"
                              "sqc2 vf5, 0x0(%2)\n"
                              :
-                             : "r"(s3), "r"(bits), "r"(&L.p70)
+                             : "r"(s3), "r"(bits), "r"(p7)
                              : "memory");
+        s1 = (char *)&L.p80;
+        s0 = ai + 0x41F0;
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "lqc2 vf6, 0x0(%1)\n"
                              "vadd.xyz vf5, vf5, vf6\n"
                              "sqc2 vf5, 0x0(%2)\n"
                              :
-                             : "r"(s0), "r"(&L.p70), "r"(s1)
+                             : "r"(s0), "r"(p7), "r"(s1)
                              : "memory");
         L.p80.w = 1.0f;
         L.p60.w = 1.0f;
@@ -114,7 +119,7 @@ have:
         if (r != 0)
             return r;
         lim = f * 3.0f;
-        pos = *(char **)(GetLayoutClass(obj) + 0x134);
+        { register char *pq __asm__("$3") = *(char **)(GetLayoutClass(obj) + 0x134);
         __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                              "lqc2 vf6, 0x0(%2)\n"
                              "vsub.xyzw vf7, vf5, vf6\n"
@@ -126,9 +131,9 @@ have:
                              "vwaitq\n"
                              "cfc2.ni %0, $vi22\n"
                              : "=&r"(bits)
-                             : "r"(s0), "r"(pos)
-                             : "memory");
-        __asm__("mtc1 %1, %0" : "=f"(d) : "r"(bits));
+                             : "r"(s0), "r"(pq)
+                             : "memory"); }
+        { register int bb __asm__("$2") = bits; __asm__("mtc1 %1, %0" : "=f"(d) : "r"(bb)); }
         if (d < lim)
             *(int *)(ai + 0x41C8) = 1;
         return setAttainmentPosAndDir(data, s1, s3);
