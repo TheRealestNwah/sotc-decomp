@@ -13,8 +13,8 @@ extern void func_000A6260(char *);
 extern void func_000A6A68(char *);
 extern void func_000A70A0(char *);
 
-#ifdef NONMATCHING /* 13 diffs, same word count: the 32-byte copies to 0x400 and 0x620 start with $v1 instead of $v0, and the 0x580 = 1 store and the func_000A5B80 argument are scheduled after the first load of the 0x620 copy */
-void func_000A7360(char *o)
+/* Path update for a kite object: refreshes the path offsets, the special layout for state 8, then the passage work, and copies the next path points into place. The register variables keep the 32-byte copies alternating $v0/$v1 with the 1 for 0x580 in $v1, and the barrier keeps the func_000A5B80 argument and that store ahead of the 0x620 copy, as in the Original. */
+static void func_000A7360(char *o)
 {
     V sp;
     char *s1;
@@ -37,7 +37,10 @@ void func_000A7360(char *o)
         Kite_GetPassageWork(thr, *(int *)(o + 0x360), s1, s1, 1);
     } else {
         t1 = *(char **)(o + 0x2C);
-        *(P32 *)(o + 0x400) = *(P32 *)(t1 + 0x600);
+        { register long long t __asm__("$2") = *(long long *)(t1 + 0x600); *(long long *)(o + 0x400) = t; }
+        *(long long *)(o + 0x408) = *(long long *)(t1 + 0x608);
+        *(long long *)(o + 0x410) = *(long long *)(t1 + 0x610);
+        *(long long *)(o + 0x418) = *(long long *)(t1 + 0x618);
         *(P32 *)(o + 0x420) = *(P32 *)(t1 + 0x640);
         Kite_GetPassageWork(thr, *(int *)(t1 + 0x360), t1 + 0x370, s1, 0);
     }
@@ -46,9 +49,14 @@ void func_000A7360(char *o)
     if (*(int *)(a0 + 0x10) != -1)
         *(P32 *)(o + 0x660) = *(P32 *)a0;
     if (*(int *)(a1 + 0x10) != -1) {
-        *(int *)(o + 0x580) = 1;
-        *(P32 *)(o + 0x620) = *(P32 *)a1;
-        func_000A5B80(o);
+        register char *arg __asm__("$4") = o;
+        { register int one __asm__("$3") = 1; *(int *)(o + 0x580) = one; }
+        __asm__ __volatile__("" : : "r"(arg) : "memory");
+        { register long long t __asm__("$2") = *(long long *)(a1 + 0x0); *(long long *)(o + 0x620) = t; }
+        { register long long t __asm__("$3") = *(long long *)(a1 + 0x8); *(long long *)(o + 0x628) = t; }
+        { register long long t __asm__("$2") = *(long long *)(a1 + 0x10); *(long long *)(o + 0x630) = t; }
+        { register long long t __asm__("$3") = *(long long *)(a1 + 0x18); *(long long *)(o + 0x638) = t; }
+        func_000A5B80(arg);
         func_000A6260(o);
         func_000A6A68(o);
         func_000A70A0(o);
@@ -84,4 +92,3 @@ void func_000A7360(char *o)
         *(int *)(o + 0x614) = 0;
     }
 }
-#endif
