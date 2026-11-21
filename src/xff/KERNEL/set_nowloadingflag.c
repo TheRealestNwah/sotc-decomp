@@ -24,21 +24,14 @@ extern LoadElem *D_00040BCC;
 extern int D_00040BD0;
 extern int D_00040BD8;
 
-static inline void setLoadElem(LoadElem *e, LoadVec v)
-{
-    e->x = (int)(v.x * 16.0f);
-    e->y = (int)(v.y * 16.0f);
-    e->unk10 = 0;
-}
-
-/* Parked: 147 diffs: loader vector copy scheduling and register allocation differ */
-#ifdef NONMATCHING
 void set_nowloadingflag(int flag)
 {
     int i;
     float a;
+    union { LoadVec v; int i[4]; } t;
     LoadVec v;
-    LoadVec t;
+    float fi;
+    int sw;
 
     if (D_00040BD0 != 1 && flag != 0) {
         if (D_00040BCC == 0) {
@@ -46,17 +39,19 @@ void set_nowloadingflag(int flag)
         }
         if (D_00040BD0 == 0) {
             for (i = 0; i < 16; i++) {
-                a = 2.0f * ((float)i * 3.1415925f) * 0.0625f;
-                v.x = (float)(getDrawScreenWidth() / 2 - 36) +
+                fi = (float)i;
+                sw = getDrawScreenWidth();
+                a = 2.0f * (fi * 3.1415927f) * 0.0625f;
+                v.x = (float)(sw / 2 - 36) +
                       iosGetCosf(a) * 20.0f * (float)getDrawScreenWidth() / (float)getDispScreenWidth();
                 v.y = (float)(getDrawScreenHeight() / 2 - 36) +
                       iosGetSinf(a) * 20.0f * (float)getDrawScreenHeight() / (float)getDispScreenHeight();
                 v.z = 0;
                 v.w = 1.0f;
-                t = v;
-                D_00040BCC[i].x = (int)(t.x * 16.0f);
-                D_00040BCC[i].y = (int)(t.y * 16.0f);
-                D_00040BCC[i].unk10 = 0;
+                t.v = v;
+                ((int *)&D_00040BCC[i])[0] = (int)(t.v.x * 16.0f);
+                ((int *)&D_00040BCC[i])[1] = (int)(t.v.y * 16.0f);
+                ((int *)&D_00040BCC[i])[4] = 0;
             }
             D_00040BD8 = 0;
         }
@@ -69,6 +64,3 @@ void set_nowloadingflag(int flag)
         }
     }
 }
-#else
-extern void set_nowloadingflag(int flag);
-#endif
