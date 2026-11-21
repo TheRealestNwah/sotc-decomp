@@ -1,5 +1,4 @@
-/* 15 diffs, same length. Two-bone IK for the upper leg: law-of-cosines angles from the three segment lengths, then aims the base quaternion at the target and applies Z/X rotations. Union stores keep leg->node reloaded after each float store as in the Original. Remaining difference: the Original keeps the scaled direction (sp+0x20) in $a1 and the rotate output in $v0, recomputing addiu $a1,sp,0x30 for GetDifferencialQuaternionWithNoRegularize; ours holds the rotate output in $a1. Permuter (2 workers, ~1h): no improvement from 235. */
-#ifdef NONMATCHING
+/* Two-bone IK for the upper leg: law-of-cosines angles from the three segment lengths, then aims the base quaternion at the target and applies Z/X rotations. Union stores keep leg->node reloaded after each float store as in the Original. The register pins on the vecScale/quatRotate operands and the "+r" on the rotate output reproduce the Original's register choice and the recomputed sp+0x30 address. */
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef int s128 __attribute__((mode(TI)));
 
@@ -105,6 +104,8 @@ static inline void quatConj(float *out, float *q)
 
 static inline void quatRotate(float *out, float *quat, float *v)
 {
+    register float *o __asm__("$2") = out;
+    register float *vv __asm__("$5") = v;
     __asm__ __volatile__("lqc2 vf8, 0x0(%2)\n"
                          "vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
@@ -135,7 +136,7 @@ static inline void quatRotate(float *out, float *quat, float *v)
                          "vmaddaz.xyzw ACC, vf16, vf8z\n"
                          "vmaddw.xyzw vf10, vf0, vf8w\n"
                          "sqc2 vf10, 0x0(%0)\n"
-                         : : "r"(out), "r"(quat), "r"(v) : "memory");
+                         : "+r"(o) : "r"(quat), "r"(vv) : "memory");
 }
 
 static inline void quatMul(float *out, float *a, float *b)
@@ -223,4 +224,3 @@ void nico_IK_legCalcAndSetUpper(IKLeg *leg)
     }
     *(s128 *)(*(char **)(cc + 0x328) + leg->node * 0x10) = *(s128 *)(leg->quats + leg->node * 0x10);
 }
-#endif
