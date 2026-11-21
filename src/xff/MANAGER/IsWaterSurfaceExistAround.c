@@ -1,4 +1,4 @@
-/* Parked: ~53 diffs, same size (142 words). Probes the variable XZ surfaces of a group around a position with the water callback (func_0009D0B0) and reports the surface distance found. The body is ClipCollisionVariableXZSurfaceCB inlined with a local hit record, no filter callback and the result record as the callback argument. Remaining diffs: the original keeps the buffer address in s3 and computes it inside the loop (ours hoists it, costing a load-delay nop before the first GetLayoutClass call and shifting the loop by one word), and s4/s5 are swapped for the hit record and buf[1]. */
+/* Parked: 3 diffs, same size (142 words). Probes the variable XZ surfaces of a group around a position with the water callback (func_0009D0B0) and reports the surface distance found. The body is ClipCollisionVariableXZSurfaceCB inlined through the testObj/setHit helpers (as in GetWaterSurfacePositionYExtend). Remaining: in the hit record's matApply setup the original copies the buffer pointer (daddu s0, s3) after the lq of the stack Vec4 and the a0 move; ours schedules it one and two words earlier. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec4[4] __attribute__((aligned(16)));
@@ -59,6 +59,27 @@ extern int func_0009C0B0(void *, void *, void *, int, int, int, int, int);
 extern int func_0009D0B0();
 extern float RO_0011A5B4;
 
+static inline int testObj(void *buf, void *a, void *b, int obj, int t0, int t2, int t3, int arg)
+{
+    int *v = *(int **)(*(int *)(GetLayoutClass(obj) + 0x184) + 0x20);
+    if (*v >= 2 && v[14] != 0 && func_0009C0B0(buf, a, b, obj, t0, t2, t3, arg))
+        return 1;
+    return 0;
+}
+
+static inline void setHit(char *out, int obj, Vec4 *hb)
+{
+    char *cls;
+    if (out) {
+        *(s128 *)(out + 0x40) = *(s128 *)hb;
+        cls = GetLayoutClass(obj);
+        *(int *)out = obj;
+        matInverse((float *)hb[1], (float *)*(int *)(cls + 0x158));
+        matApply((float *)(out + 0x10), (float *)hb[1], (float *)hb);
+        *(int *)(out + 0x30) = 10;
+    }
+}
+
 static inline int clipSurface(char *out, void *a, void *b, int group, int t0, int (*cb)(int, int), int t2, int t3, int arg)
 {
     Vec4 buf[5];
@@ -69,23 +90,12 @@ static inline int clipSurface(char *out, void *a, void *b, int group, int t0, in
     for (g = isysGroupForFirst(group, 0); g; g = isysGroupForNext(g, 0)) {
         obj = g[0];
         {
-            if (GetLayoutClass(obj)[0x1B8] != 0 && (cb == 0 || cb(obj, arg) != 0)) {
+            if (GetLayoutClass(obj)[0x1B8] != 0 && 1) {
                 int ok;
                 char *cls;
-                int *v = *(int **)(*(int *)(GetLayoutClass(obj) + 0x184) + 0x20);
-                if (*v >= 2 && v[14] != 0 && func_0009C0B0(buf, a, b, obj, t0, t2, t3, arg))
-                    ok = 1;
-                else
-                    ok = 0;
+                ok = testObj(buf, a, b, obj, t0, t2, t3, arg);
                 if (ok) {
-                    if (out) {
-                        *(s128 *)(out + 0x40) = *(s128 *)buf;
-                        cls = GetLayoutClass(obj);
-                        *(int *)out = obj;
-                        matInverse((float *)buf[1], *(float **)(cls + 0x158));
-                        matApply((float *)(out + 0x10), (float *)buf[1], (float *)buf);
-                        *(int *)(out + 0x30) = 10;
-                    }
+                    setHit(out, obj, buf);
                     r = obj;
                     break;
                 }
