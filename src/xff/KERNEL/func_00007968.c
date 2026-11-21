@@ -1,6 +1,3 @@
-/* Parked attempt: 4 words differ (the Original loads info->undef after the
- * undefs store instead of right after the call). */
-#ifdef NONMATCHING
 typedef struct {
     int name;
     char pad4[9];
@@ -21,9 +18,9 @@ typedef struct {
     unsigned char first;
     char padD[0xF];
     int numUndef;
-    int *undef;
+    int undef;
     int numSyms;
-    Sym *syms;
+    int syms;
     char *strtab;
 } ModInfo;
 
@@ -40,7 +37,7 @@ typedef struct {
     ModInfo *info;
     int unk20;
     SymEntry *defs;
-    SymEntry *undefs;
+    int undefs;
     ModFlags flags;
 } ModObj;
 
@@ -75,7 +72,7 @@ static void func_00007968(ModObj *obj, int heap)
         p = base;
         n2 = mi->first ? mi->first + 1 : 2;
         i = mi->numSyms - n2;
-        sym = &mi->syms[n2];
+        sym = &((Sym *)mi->syms)[n2];
         while (i-- != 0) {
             if (sym->section != 0) {
                 char *name = strtab + sym->name;
@@ -99,9 +96,10 @@ static void func_00007968(ModObj *obj, int heap)
     }
     k = mi->numUndef;
     if (k != 0) {
-        p = obj->undefs = iosMallocAlign(heap, k * 16, 4);
-        idx = mi->undef;
-        syms = mi->syms;
+        obj->undefs = (int)iosMallocAlign(heap, k * 16, 4);
+        p = (SymEntry *)obj->undefs;
+        syms = (Sym *)mi->syms;
+        idx = (int *)mi->undef;
         while (k-- != 0) {
             Sym *s = &syms[*idx++];
 
@@ -117,4 +115,3 @@ static void func_00007968(ModObj *obj, int heap)
     }
     obj->flags.a = 1;
 }
-#endif
