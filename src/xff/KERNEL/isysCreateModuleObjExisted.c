@@ -43,8 +43,6 @@ extern void isysAddGroupWithLinkParam(void *, void *, int, int);
 extern void func_00007968(ModObj *, int);
 extern void func_00007F80(void *, void *, ModInfo *);
 
-/* Parked: 38 diffs: mod/info swap s2/s3 and size-calc register order */
-#ifdef NONMATCHING
 ModObj *isysCreateModuleObjExisted(ModInfo *mod, int extra, void *heap, int sym, int res, int link, int arg6)
 {
     int saved;
@@ -52,22 +50,18 @@ ModObj *isysCreateModuleObjExisted(ModInfo *mod, int extra, void *heap, int sym,
     ModInfo *r;
     ModInfo *info;
     int found;
+    int size = extra;
 
     if (link != 0) {
-        int n, d, x;
-        n = mod->first + 1;
-        if (mod->first == 0) {
-            n = 2;
-        }
+        int n, d, x, t;
+        n = mod->first ? mod->first + 1 : 2;
         d = mod->unk24 - mod->unk1C - n;
         x = d ? d * 16 + 0x33 : 0;
-        if (mod->unk1C != 0) {
-            x = x + mod->unk1C * 16 + 0x33;
-        }
-        extra = x + extra;
+        t = mod->unk1C ? x + mod->unk1C * 16 + 0x33 : x;
+        size = t + extra;
     }
     saved = 0;
-    obj = _isysCreateObj(heap, 1, 0x38, extra, (int)func_0000A350, 4);
+    obj = _isysCreateObj(heap, 1, 0x38, size, (int)func_0000A350, 4);
     obj->flags.a = 0;
     r = func_00007B78(mod, obj, obj->heap, D_0000A208, func_0000A298, DldSysUndefSymbol, func_000077C0, arg6);
     if (r != 0) {
@@ -96,6 +90,3 @@ ModObj *isysCreateModuleObjExisted(ModInfo *mod, int extra, void *heap, int sym,
     }
     return obj;
 }
-#else
-extern ModObj *isysCreateModuleObjExisted(ModInfo *mod, int extra, void *heap, int sym, int res, int link, int arg6);
-#endif
