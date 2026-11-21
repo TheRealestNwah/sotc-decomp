@@ -10,7 +10,7 @@ extern int setAttainmentPosAndDirAndLock(void *, float *, float *);
 
 /* Parked attempt: 4 words differ from the Original. */
 #ifdef NONMATCHING
-/* 4 diffs: loop-top lwc1 RO_NoLimit/addu order, and the 2pi-span product lands in $f1 instead of $f0. */
+/* 2 diffs: the 2pi-span product lands in $f1 instead of $f0 (pinning it to $f0, regrouping the expression or pinning the 2pi constant leaves 2-7). Loading `a` before the barrier on off (pinned to $v1) and a $v0 pointer for the 0xC load fix the loop-top order and registers. */
 static const unsigned int RO_NoLimit = 0xFFFFFFFF;
 static inline void vecScaleXYZ(float *out, float *a, float s)
 {
@@ -69,13 +69,13 @@ int func_000940A0(void *unused, float *lim)
     e8 = (char *)lim + 8;
     for (i = 0; i < 3; i++) {
         float nl = *(const float *)&RO_NoLimit;
-        int off = i * 8;
+        register int off __asm__("$3") = i * 8;
         float a;
-        __asm__("" : "+r"(off));
         a = *(float *)(e8 + off);
+        __asm__("" : "+r"(off));
         if (a != nl) {
         lo = a * 0.017453293f;
-        hi = *(float *)((char *)lim + 0xC + off) * 0.017453293f;
+        { register char *hp __asm__("$2") = (char *)lim + off; hi = *(float *)(hp + 0xC) * 0.017453293f; }
         if (lo <= hi) {
             mid = lo + (hi - lo) * 0.5f;
             if (lo <= cur && cur <= mid) {
