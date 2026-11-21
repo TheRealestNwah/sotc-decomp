@@ -1,4 +1,4 @@
-/* Parked: 18 diffs, same size (150 words incl. the split tail func_00052A00). Path-follow step: scales o+0x140 by o+0x10C and gcGlobalVar.f190 into the move vector, accumulates it into a+0x50 and a+0x20, stores the speed (VU0 length via .word 0x4BA703BD) at a+0xC, clamps the distance to a+0x40 to o+0xF0, then (when the owner has a steering table) steers a+0x18/a+0x1C by AI_GetSideSignalFromDirLev and calls iosGetSinCosf. The mfc1 of each scale factor and the mtc1 of each VU0 length sit inside their asm blocks, which fixes the scheduling around them. Remaining: float register numbering (the Original keeps the clamp limit in f3 and the speed in f2) and the a0/v1 choice for the first scale source. */
+/* Parked: 2 diffs, same size (150 words incl. the split tail func_00052A00). Path-follow step: scales o+0x140 by o+0x10C and gcGlobalVar.f190 into the move vector, accumulates it into a+0x50 and a+0x20, stores the speed (VU0 length via .word 0x4BA703BD) at a+0xC, clamps the distance to a+0x40 to o+0xF0, then (when the owner has a steering table) steers a+0x18/a+0x1C by AI_GetSideSignalFromDirLev and calls iosGetSinCosf. The mfc1 of each scale factor and the mtc1 of each VU0 length sit inside their asm blocks, which fixes the scheduling around them. Remaining: the lui temp for &gcGlobalVar (the Original uses v0, the C v1); the owner pointer and the first scale source are pinned to v0/v1 with local register variables. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -101,7 +101,6 @@ static void func_00052790(char *a)
         Vec dirA;
         Vec dirB;
     } L __attribute__((aligned(16)));
-    char *o;
     char *p;
     float lim;
     float len;
@@ -114,16 +113,18 @@ static void func_00052790(char *a)
     float f0;
     float f20;
 
-    o = *(char **)a;
-    lim = *(float *)(o + 0xF0);
-    SCALE(o + 0x140, &L.v, *(float *)(o + 0x10C));
+    {
+        register char *o __asm__("$2") = *(char **)a;
+        register char *src __asm__("$3") = o + 0x140;
+        lim = *(float *)(o + 0xF0);
+        SCALE(src, &L.v, *(float *)(o + 0x10C));
+    }
     SCALE(&L.v, &L.t0, gcGlobalVar.f190);
     ADD3(a + 0x50, &L.t0, a + 0x50);
     SCALE(a + 0x50, &L.t1, gcGlobalVar.f190);
     ADD3(a + 0x20, &L.t1, a + 0x20);
-    len = vlen(a + 0x50);
-    *(float *)(a + 0xC) = len;
-    *(float *)(a + 8) = *(float *)(a + 8) + len * gcGlobalVar.f190;
+    *(float *)(a + 0xC) = vlen(a + 0x50);
+    *(float *)(a + 8) = *(float *)(a + 8) + *(float *)(a + 0xC) * gcGlobalVar.f190;
     d = vdist(a + 0x20, a + 0x40);
     if (lim < d) {
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
@@ -157,24 +158,15 @@ static void func_00052790(char *a)
                              : "memory");
         f1 = (float)AI_GetSideSignalFromDirLev(&L.dirB, &L.dirA);
         len = vlen(&L.v);
-        o = *(char **)a;
-        f3 = *(float *)(a + 0x18);
-        f4 = *(float *)(a + 4);
-        f0 = -f3;
-        f1 = f1 * *(float *)(*(char **)(o + 0x114) + 0x2C);
-        f12 = *(float *)(a + 0x1C);
-        f4 = f4 + 1.0f;
-        f0 = f0 * *(float *)(*(char **)(o + 0x114) + 0x1C);
-        f1 = f1 * len;
-        f0 = f0 * f20;
-        f1 = f1 * f20;
-        f1 = f1 / f4;
-        f0 = f0 + f1;
-        f3 = f3 + f0;
-        f20 = f3 * f20;
-        *(float *)(a + 0x18) = f3;
-        f12 = f12 + f20;
-        *(float *)(a + 0x1C) = f12;
+        {
+            register char *oo __asm__("$3") = *(char **)a;
+            char *t = *(char **)(oo + 0x114);
+            f3 = *(float *)(a + 0x18);
+            f3 = f3 + (-f3 * *(float *)(t + 0x1C) * f20 + f1 * *(float *)(t + 0x2C) * len * f20 / (*(float *)(a + 4) + 1.0f));
+            *(float *)(a + 0x18) = f3;
+            f12 = *(float *)(a + 0x1C) + f3 * f20;
+            *(float *)(a + 0x1C) = f12;
+        }
         iosGetSinCosf(a + 0x30, f12);
     }
 }
