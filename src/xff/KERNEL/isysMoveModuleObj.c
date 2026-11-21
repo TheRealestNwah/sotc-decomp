@@ -62,8 +62,6 @@ extern int func_000077C0();
 extern int DldSysUndefSymbol;
 extern ModInfo *func_00007B78(ModInfo *, ModObj *, int, void *, void *, int, void *, int);
 
-/* Parked: Parked: 61 words differ (DldSysUndefSymbol address kept across the call, start index if-converted to movz) */
-#ifdef NONMATCHING
 void isysMoveModuleObj(ModObj *obj, ModInfo *info)
 {
     Sym *syms;
@@ -75,12 +73,9 @@ void isysMoveModuleObj(ModObj *obj, ModInfo *info)
     if (obj->flags.a) {
         Import *imp = obj->imports;
         if (imp != 0) {
-            int start = info->first + 1;
+            int start = info->first ? info->first + 1 : 2;
             int n;
             Sym *s;
-            if (info->first == 0) {
-                start = 2;
-            }
             n = info->nsym - start;
             syms = info->syms;
             s = &syms[start];
@@ -95,8 +90,8 @@ void isysMoveModuleObj(ModObj *obj, ModInfo *info)
                             Ref *next = r->next;
                             rs->undef = 1;
                             rs->value = DldSysUndefSymbol;
-                            r->unk8 = 0;
-                            r->next = 0;
+                            ((volatile Ref *)r)->unk8 = 0;
+                            ((volatile Ref *)r)->next = 0;
                             r = next;
                         }
                     }
@@ -117,6 +112,3 @@ void isysMoveModuleObj(ModObj *obj, ModInfo *info)
         }
     }
 }
-#else
-extern void isysMoveModuleObj(ModObj *obj, ModInfo *info);
-#endif
