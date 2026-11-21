@@ -1,6 +1,5 @@
-/* Parked attempt: 18 words differ (the Original spills heap with `sw a1,0(sp)`
- * before the saved-register stores, n swaps $a1/$a2, and one pair near 0x160 is
- * reordered). */
+/* Parked attempt: 4 words differ (the Original loads info->undef after the
+ * undefs store instead of right after the call). */
 #ifdef NONMATCHING
 typedef struct {
     int name;
@@ -60,7 +59,7 @@ static void func_00007968(ModObj *obj, int heap)
     int *idx;
     ModInfo *mi;
     Sym *syms;
-    int n;
+    int n; int n2;
     int i;
     int cnt;
     int k;
@@ -74,9 +73,9 @@ static void func_00007968(ModObj *obj, int heap)
         base = iosMallocAlign(heap, cnt * 16, 4);
         obj->defs = base;
         p = base;
-        n = mi->first ? mi->first + 1 : 2;
-        i = mi->numSyms - n;
-        sym = &mi->syms[n];
+        n2 = mi->first ? mi->first + 1 : 2;
+        i = mi->numSyms - n2;
+        sym = &mi->syms[n2];
         while (i-- != 0) {
             if (sym->section != 0) {
                 char *name = strtab + sym->name;
@@ -100,8 +99,7 @@ static void func_00007968(ModObj *obj, int heap)
     }
     k = mi->numUndef;
     if (k != 0) {
-        p = iosMallocAlign(heap, k * 16, 4);
-        obj->undefs = p;
+        p = obj->undefs = iosMallocAlign(heap, k * 16, 4);
         idx = mi->undef;
         syms = mi->syms;
         while (k-- != 0) {
