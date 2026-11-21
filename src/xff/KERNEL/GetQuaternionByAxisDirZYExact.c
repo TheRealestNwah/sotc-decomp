@@ -7,12 +7,12 @@ extern void GetDifferencialQuaternionWithNoRegularize(float *, float *, float *,
 extern float iosGetATan2fExact(float, float);
 extern void iosGetSinCosf(float *, float);
 
-/* Parked: ~90 words off. Same launder recipe as GetQuaternionByAxisDirZY; out/v land in swapped s registers and the original keeps the ZUnitVector address in $s2 across iosGetSinCosf. */
-#ifdef NONMATCHING
 void GetQuaternionByAxisDirZYExact(float *out, float *dir, float *v)
 {
     struct { Vec4 mat[4]; Vec4 t; Vec4 neg; Vec4 rot; Vec4 sc; } L;
-    float *m, *n, *r1, *r2, *zp;
+    float *m, *n, *r2;
+    register float *zp __asm__("$18");
+    register float *r1 __asm__("$17");
 
     GetDifferencialQuaternionWithNoRegularize(out, dir, ZUnitVector2, YUnitVector);
     __asm__ __volatile__("lqc2 vf14, 0x0(%0)
@@ -94,9 +94,12 @@ void GetQuaternionByAxisDirZYExact(float *out, float *dir, float *v)
                          "vmulq.xyz vf5, vf5, Q\n"
                          "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(L.t) : "memory");
-    iosGetSinCosf(L.sc, iosGetATan2fExact(L.t[0], L.t[1]) * 0.5f);
-    r1 = L.rot;
-    __asm__("" : "+r"(r1));
+    zp = ZUnitVector;
+    {
+        float a = iosGetATan2fExact(L.t[0], L.t[1]);
+        r1 = L.rot;
+        iosGetSinCosf(L.sc, a * 0.5f);
+    }
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)
 "
                          "qmtc2.ni %1, vf6
@@ -105,10 +108,8 @@ void GetQuaternionByAxisDirZYExact(float *out, float *dir, float *v)
 "
                          "sqc2 vf5, 0x0(%2)
 "
-                         : : "r"(ZUnitVector), "r"(L.sc[1]), "r"(r1) : "memory");
+                         : : "r"(zp), "r"(L.sc[1]), "r"(r1) : "memory");
     L.rot[3] = L.sc[0];
-    r2 = L.rot;
-    __asm__("" : "+r"(r2));
     __asm__ __volatile__("lqc2 vf11, 0x0(%0)\n"
                          "lqc2 vf12, 0x0(%1)\n"
                          "vmul.xyzw vf13, vf11, vf12\n"
@@ -122,7 +123,7 @@ void GetQuaternionByAxisDirZYExact(float *out, float *dir, float *v)
                          "vadd.xyz vf13, vf14, vf15\n"
                          "vadd.xyz vf13, vf13, vf16\n"
                          "sqc2 vf13, 0x0(%0)\n"
-                         : : "r"(out), "r"(r2) : "memory");
+                         : : "r"(out), "r"(r1) : "memory");
     __asm__ __volatile__("lqc2 vf14, 0x0(%0)
 "
                          "vmul.xyzw vf15, vf14, vf14
@@ -143,6 +144,3 @@ void GetQuaternionByAxisDirZYExact(float *out, float *dir, float *v)
 "
                          : : "r"(out) : "memory");
 }
-#else
-extern void GetQuaternionByAxisDirZYExact(float *out, float *dir, float *v);
-#endif
