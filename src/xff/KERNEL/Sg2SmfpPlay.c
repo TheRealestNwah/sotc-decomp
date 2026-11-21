@@ -25,8 +25,6 @@ extern double dpdiv(double, double);
 extern unsigned int Sg2CtrlGetTickMode(void);
 extern int Sg2SmfpSetParam(int, int, int, int);
 
-/* Parked attempt: 13 words differ (scheduling of the field stores after the d40 update). */
-#ifdef NONMATCHING
 int Sg2SmfpPlay(int i)
 {
     Smfp *s;
@@ -43,13 +41,13 @@ int Sg2SmfpPlay(int i)
         t = 1000000.0 / (60000000.0 / s->tempo) * s->d38;
         s->d40 = t / Sg2CtrlGetTickMode();
         s->d40 = dpmul(s->d40, s->d78) / 100.0;
+        B_000E0DC0[i].x20 = 4;
+        B_000E0DC0[i].x24 = 4;
         B_000E0DC0[i].x2C = 1;
         B_000E0DC0[i].x28 = 1;
-        B_000E0DC0[i].x20 = 4;
         B_000E0DC0[i].p60 = B_000E0DC0[i].p64;
-        B_000E0DC0[i].d58 = 0;
         B_000E0DC0[i].d48 = 0;
-        B_000E0DC0[i].x24 = 4;
+        B_000E0DC0[i].d58 = 0;
         v = 0;
         do {
             v = (v << 7) + (*s->p60 & 0x7F);
@@ -59,4 +57,3 @@ int Sg2SmfpPlay(int i)
     }
     return 0;
 }
-#endif
