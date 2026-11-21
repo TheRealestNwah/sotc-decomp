@@ -16,7 +16,8 @@ extern Vab B_000E2200[];
 extern int vab_check_alive(int id);
 
 #ifdef NONMATCHING
-/* Parked: 25 words differ (register allocation of the field addresses) */
+/* Parked: 21 words differ (register allocation of the field addresses; the f28
+   store sits later than in the Original, which a permuter run preferred) */
 int Sg2VabHdClose(int id)
 {
     if (vab_check_alive(id) == 0) {
@@ -28,10 +29,10 @@ int Sg2VabHdClose(int id)
     B_000E2200[id].f8 = 0;
     B_000E2200[id].f14 = 0;
     B_000E2200[id].fC = 0;
-    B_000E2200[id].f28 = 0;
     B_000E2200[id].f10 = 0;
     B_000E2200[id].f24 = 0;
     B_000E2200[id].f18 = 0;
+    B_000E2200[id].f28 = 0;
     B_000E2200[id].f20 = 0;
     return 0;
 }
