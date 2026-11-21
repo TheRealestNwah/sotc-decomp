@@ -5,8 +5,8 @@ typedef struct {
     Vec4 dir;
     Vec4 target;
     int node;
-    float time;
     float weight;
+    float time;
     int flag;
 } PinAttackIK;
 typedef struct {
@@ -24,7 +24,7 @@ extern void GetMotionNodeQuaternionPosToolCoord(void *, void *, int, int);
 extern char *GetCharacterClass(int);
 extern void func_00038238(void *, int, void *, void *, void *);
 
-#ifdef NONMATCHING /* 98 diffs, same shape as nico_IK_footPosCalc (tail call passes 1) */
+#ifdef NONMATCHING /* 42 diffs, same shape as nico_IK_footPosCalc (tail call passes 1): the Original's dead t0 = 1 at entry and dead andi t1, t1, 1 before the dld lookup are not reproduced */
 void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
 {
     float qv[4] __attribute__((aligned(16)));
@@ -33,28 +33,33 @@ void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
     int node;
     char *chr;
     PinAttackIK *ik;
-    int noHit = 1;
     unsigned int *ref;
     unsigned int enc;
     int off;
     char *mod;
     char *data;
+    float *tp;
+    int noHit;
+    register int si __asm__("$8") = 1;
 
     GetMotionNodeQuaternionPosToolCoord(qv, tmp, obj, f->node);
     node = f->node;
+    tp = tmp;
     chr = GetCharacterClass(obj);
     ik = 0;
     if (DldSysUndefSymbol != CharIkTypeDef_PINATTACKIK &&
         *(int *)(chr + 0x1100) == *CharIkTypeDef_PINATTACKIK)
         ik = *(PinAttackIK **)(chr + 0x1110) + (node & 0xFFFEFFFF);
+    noHit = 1;
     if (ik != 0) {
-        float t = ik->time;
-        if (t >= 0.0f && ik->weight > 0.0f) {
+        float *pt = &ik->time;
+        float *pw = &ik->weight;
+        float t = *pt;
+        if (t >= 0.0f && *pw > 0.0f) {
             t -= *(float *)(gcGlobalVar + 0x180);
-            ik->time = t;
+            *pt = t;
             if (t > 0.0f) {
-                float s = t / ik->weight;
-                int si;
+                float s = t / *pw;
                 __asm__ __volatile__("mfc1 %0, %1" : "=r"(si) : "f"(s));
                 __asm__ __volatile__("qmtc2.ni %2, vf7\n"
                                      "lqc2 vf5, 0x0(%0)\n"
@@ -63,7 +68,7 @@ void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
                                      "vmulax.xyz ACC, vf5, vf7x\n"
                                      "vmaddw.xyz vf5, vf6, vf8w\n"
                                      "sqc2 vf5, 0x0(%0)\n"
-                                     : : "r"(&ik->pos), "r"(tmp), "r"(si) : "memory");
+                                     : : "r"(&ik->pos), "r"(tp), "r"(si) : "memory");
                 noHit = 0;
                 ik->pos.f[3] = 1.0f;
                 *(s128 *)tmp = ik->pos.q;
