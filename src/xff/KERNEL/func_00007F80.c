@@ -8,15 +8,13 @@ typedef struct {
     Sym *syms;
     char pad2C[0xC];
     int nsects;
-    RelSect *sects;
+    int sects;
 } ModInfo;
 typedef struct { RelSect *sect; int idx; } Undef;
-typedef struct { int count; Undef *list; } UndefList;
+typedef struct { int count; int list; } UndefList;
 
 extern void *iosMallocAlign(int, int, int);
 
-#ifdef NONMATCHING
-/* Parked: 4 words differ (the count decrement is scheduled before the list store) */
 static void func_00007F80(UndefList *out, int heap, ModInfo *info)
 {
     out->count = 0;
@@ -24,7 +22,7 @@ static void func_00007F80(UndefList *out, int heap, ModInfo *info)
     if (info->relocatable != 0) {
         Sym *syms = info->syms;
         int n = info->nsects;
-        RelSect *s = info->sects;
+        RelSect *s = (RelSect *)info->sects;
         Undef *u;
 
         while (n--) {
@@ -40,11 +38,10 @@ static void func_00007F80(UndefList *out, int heap, ModInfo *info)
             }
             s++;
         }
-        out->list = iosMallocAlign(heap, out->count * 8, 4);
-        __asm__ __volatile__("");
-        u = out->list;
-        n = info->nsects;
-        {RelSect *s = info->sects;
+        out->list = (int)iosMallocAlign(heap, out->count * 8, 4);
+        u = (Undef *)out->list;
+        {int n = info->nsects;
+        {RelSect *s = (RelSect *)info->sects;
         while (n--) {
             if (s->type == 4 || s->type == 9) {
                 int idx = 0;
@@ -61,7 +58,6 @@ static void func_00007F80(UndefList *out, int heap, ModInfo *info)
                 }
             }
             s++;
-        }}
+        }}}
     }
 }
-#endif
