@@ -5,17 +5,14 @@ typedef struct {
     unsigned char val;
 } ShockMotor;
 
-/* Parked: 42 words differ (register allocation in the ramp calculation) */
-#ifdef NONMATCHING
 void Shock_SetMotor(unsigned char port, unsigned char level, ShockMotor *m)
 {
     int val = level;
     int cur = m->cur;
     int d = val - cur;
-    int out = val;
-    int t;
-    unsigned char o;
+    register int out __asm__("$7") = val;
     unsigned int a;
+    unsigned int c;
 
     if (d > 0) {
         if (d > 0x28) {
@@ -26,33 +23,35 @@ void Shock_SetMotor(unsigned char port, unsigned char level, ShockMotor *m)
                     out = 0xFF;
                     goto done;
                 }
-                t = (0x3C - val) * (0x3C - val) * 0xFF / 100;
+                d = 0x3C - val;
+                d = d * d * 0xFF / 100;
             } else {
-                t = d * 0xFF / 40;
+                d = d * 0xFF / 40;
             }
-            if (cur < t)
-                out = t;
+            {
+                register int up __asm__("$3") = cur < d;
+                if (up)
+                    out = d;
+            }
         }
     } else if (d < 0) {
         out = 0;
         if (d >= -0x1E) {
-            t = d * 0xFF / 30 + 0xFF;
-            out = t < cur ? t : val;
+            d = d * 0xFF / 30 + 0xFF;
+            out = d < cur ? d : val;
         }
     }
 done:
-    o = out;
-    m->acc += o;
+    level = out;
+    m->acc += level;
     if ((short)m->acc > 0x40A)
         m->acc = 0x40A;
     else if ((short)m->acc < 0)
         m->acc = 0;
     a = (short)m->acc;
+    c = (a << 8) / 1035;
     m->port = port;
-    m->val = o;
+    m->val = level;
     m->acc = a * 3 >> 2;
-    m->cur = (a << 8) / 1035;
+    m->cur = c;
 }
-#else
-extern void Shock_SetMotor(unsigned char port, unsigned char level, ShockMotor *m);
-#endif
