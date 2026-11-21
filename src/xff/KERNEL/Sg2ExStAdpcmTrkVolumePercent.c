@@ -12,8 +12,6 @@ static inline unsigned long channelMask(int channel)
 {
     return 1UL << channel;
 }
-#ifdef NONMATCHING
-/* Parked: 22 words differ (loop scheduling around the pinned stream copy in $t0) */
 int Sg2ExStAdpcmTrkVolumePercent(Stream *stream0, int trk, int left, int right)
 {
     register Stream *stream __asm__("$8") = stream0;
@@ -35,6 +33,7 @@ int Sg2ExStAdpcmTrkVolumePercent(Stream *stream0, int trk, int left, int right)
     if (stream->state < 16)
         return -1;
     n = trk;
+    __asm__("" : "+r"(trk));
     for (i = 0; i < 48; ++i) {
         if (CHANNELS(stream) & channelMask((int)i)) {
             if (--trk < 0) {
@@ -45,4 +44,3 @@ int Sg2ExStAdpcmTrkVolumePercent(Stream *stream0, int trk, int left, int right)
     }
     return -1;
 }
-#endif
