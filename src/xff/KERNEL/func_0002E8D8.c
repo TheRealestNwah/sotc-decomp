@@ -18,7 +18,8 @@ extern char B_000E251C[];
 extern char B_000E2368[];
 extern int DIntr(void);
 extern void EIntr(void);
-/* Parked attempt: 25 words differ (register allocation and scheduling). */
+/* Parked attempt: 2 words differ (the node->time load is scheduled after the
+   x3C store instead of before it). */
 #ifdef NONMATCHING
 extern void func_0002E728(Filt *base, int i, int time, int cb, float x, float y);
 
@@ -61,18 +62,24 @@ static void func_0002E8D8(Node *node, int ch, int a2, int a3)
             type -= 6;
         }
     set:
+    {
+    register Filt *g __asm__("$3") = f;
+    register int dd __asm__("$2");
+    register int t0 __asm__("$4");
         time = node->x4;
-        f->x34 = a3;
-        f->x30 = a2;
-        f->x3C = node;
+        g->x34 = a3;
+        g->x30 = a2;
+        t0 = node[0].time;
+        g->x3C = node;
         x = node->x;
         y = node->y;
-        if (node[0].time == 0x7FFFFFFF || node[1].time == 0x7FFFFFFF)
-            d = 0x7FFFFFFF;
+        if (t0 != 0x7FFFFFFF && (dd = node[1].time) != 0x7FFFFFFF)
+            dd = dd - t0;
         else
-            d = node[1].time - node[0].time;
-        f->x38 = d;
-        func_0002E728(f, sel, time, type, x, y);
+            dd = 0x7FFFFFFF;
+        g->x38 = dd;
+        func_0002E728(g, sel, time, type, x, y);
+    }
         break;
     }
     if (intr)
