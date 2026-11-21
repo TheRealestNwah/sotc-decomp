@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* 14 diffs, same length (153 words), logic matches: update of an AI actor's wander/speed fields (actor o, config block P = o+0x34, a3 = the second argument): picks a random velocity (AI_GetRandomVelocity) or copies the preset one, smooths it with AI_UpdateVelocity, derives o+0x2D0 by remapping o+0x2C8 from [P+0x20,P+0x24] to [P+0x28,P+0x2C], gets the motion velocity into o+0x330, updates o+0x2E0/0x2F8/0x2DC/0x2F4, sets the sign of o+0x314 from a3+0x10, and then either clears o+0x31C (target within P[0]/P[1] range) or draws a new random one clamped to <= 0. Fixed: float stores to 0x28C/0x27C (alias barrier so P is reloaded), a $f3-pinned 1.0 (no gcse into f20), and the range test materialized into t. Left: the Original stores 0 to o+0x2F0 after loading P and P+0x2F8 rather than before, and loads the 1.0 constant after the div. */
+/* 2 diffs, same length (153 words), logic matches: update of an AI actor's wander/speed fields (actor o, config block P = o+0x34, a3 = the second argument): picks a random velocity (AI_GetRandomVelocity) or copies the preset one, smooths it with AI_UpdateVelocity, derives o+0x2D0 by remapping o+0x2C8 from [P+0x20,P+0x24] to [P+0x28,P+0x2C], gets the motion velocity into o+0x330, updates o+0x2E0/0x2F8/0x2DC/0x2F4, sets the sign of o+0x314 from a3+0x10, and then either clears o+0x31C (target within P[0]/P[1] range) or draws a new random one clamped to <= 0. Fixed: float stores to 0x28C/0x27C (alias barrier so P is reloaded), a $f3-pinned 1.0 (no gcse into f20), P pinned to $3 in the range test and the div block, and a memory barrier between the o+0x2F0 store and the div. Left: before the AI_UpdateVelocity(o+0x2F8, o[0x340], o[0x2E0]) call the Original loads $f12 first and $f13 in the delay slot; ours loads them the other way round. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 extern void *isysGetThisSubThread(void);
@@ -32,8 +32,14 @@ static void func_000AB7C8(char *o, char *a3)
     *(float *)(o + 0x340) = PP[0xC / 4] * *(float *)(o + 0x2D0);
     AI_UpdateVelocity((float *)(o + 0x2E0), PP[0x54 / 4], PP[0x50 / 4]);
     AI_UpdateVelocity((float *)(o + 0x2F8), *(float *)(o + 0x340), *(float *)(o + 0x2E0));
-    *(int *)(o + 0x2F0) = 0;
-    *(float *)(o + 0x2CC) = *(float *)(o + 0x2F8) / PP[0xC / 4];
+    {
+        register float *q __asm__("$3") = PP;
+        float n = *(float *)(o + 0x2F8);
+        float dd = q[0xC / 4];
+        *(int *)(o + 0x2F0) = 0;
+        __asm__ __volatile__("" ::: "memory");
+        *(float *)(o + 0x2CC) = n / dd;
+    }
     {
         register float k __asm__("$f3") = 1.0f;
         f = k - (*(float *)(a3 + 0x50) + k) * 0.5f;
@@ -43,8 +49,10 @@ static void func_000AB7C8(char *o, char *a3)
     *(float *)(o + 0x314) = f;
     AI_UpdateVelocity((float *)(o + 0x2DC), 0.5f, 0.5f);
     AI_UpdateVelocity((float *)(o + 0x2F4), 1.5f, *(float *)(o + 0x2DC));
-    p = PP;
-    t = *(float *)(a3 + 0x48) - p[0] < -p[1];
+    {
+        register float *q __asm__("$3") = PP;
+        t = *(float *)(a3 + 0x48) - q[0] < -q[1];
+    }
     if (t) {
         *(float *)(o + 0x31C) = 0.0f;
         *(float *)(o + 0x274) = 3.0f;
