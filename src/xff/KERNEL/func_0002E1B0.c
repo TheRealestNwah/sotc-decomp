@@ -1,7 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 15 words differ. The original hoists the `lw x` into the beqz delay slot,
-   which a volatile local can't reproduce; without volatile the stack slot
-   disappears. */
+/* Parked: 2 words differ (the load of L.m goes to $a1 instead of $a2 before the shift). */
 typedef struct Iir Iir;
 extern void IirFilter(Iir *f, int n, float *buf);
 
@@ -23,7 +21,7 @@ typedef struct {
 
 static void func_0002E1B0(Dsp *s, int n)
 {
-    struct { volatile int x; volatile int m; } L;
+    struct { int x; volatile int m; } L;
     int i;
     L.m = n < 0 ? n + 511 : n;
     for (i = 0; i < 2; i++) {
