@@ -13,12 +13,12 @@ typedef struct ClipCamera {
 typedef struct ClipObj {
     struct { char pad0[0x20]; ClipVisual *unk20; } *unk0;
     char pad4[0x1C];
-    float unk20;
-    float unk24;
-    float unk28;
+    union { float f; struct ClipObj *p; } unk20;
+    union { float f; struct ClipObj *p; } unk24;
+    union { float f; struct ClipObj *p; } unk28;
     char pad2C[0x4];
-    float unk30;
-    float unk34;
+    union { float f; struct ClipObj *p; } unk30;
+    union { float f; struct ClipObj *p; } unk34;
     char pad38[0x64];
     float unk9C;
     char padA0[0xA0];
@@ -48,24 +48,22 @@ extern ClipCamera *iosgluGetCameraContext(void);
 extern float modelClipSolid(ClipObj *, void *);
 extern float modelClipSkin(ClipObj *, void *);
 
-#ifdef NONMATCHING
 /* 7 diffs: with -fno-strict-aliasing, the model pointer reload lands after the float-to-int conversion instead of before it. Permuter (5 workers, 25 min) only improved it by moving the modelClipSolid call out of its branch, which changes behaviour. */
 void ClipLayoutObjModel(void) {
     ClipObj *lc;
     ClipObj *info;
     ClipVisual *v;
     ClipCamera *cam;
-    float r;
     float scale;
 
     lc = GetLayoutClass();
     info = lc->unk140;
-    info->unk30 = -1.0f;
-    if (lc->unk144 != 0 && (info->unk34 = lc->unk144->unk244) < 1.0f) {
+    info->unk30.f = -1.0f;
+    if (lc->unk144 != 0 && (info->unk34.f = lc->unk144->unk244) < 1.0f) {
         v = lc->unk144->unk0->unk20;
         if (v->unk18 & 1) {
             lc->unk144->unk250.f = lc->unk9C;
-            r = modelClipSkin(lc->unk144, lc->unk160);
+            lc->unk144->unk250.b.clip = (int)modelClipSkin(lc->unk144, lc->unk160);
         } else {
             if (v->unk8 != 0 && v->unk8->unk3C != 0 && (cam = iosgluGetCameraContext()) != 0) {
                 scale = 1.0f / (cam->unkC / 500.0f);
@@ -73,13 +71,11 @@ void ClipLayoutObjModel(void) {
                 scale = 1.0f;
             }
             lc->unk144->unk250.f = lc->unk9C * scale;
-            r = modelClipSolid(lc->unk144, lc->unk15C);
+            lc->unk144->unk250.b.clip = (int)modelClipSolid(lc->unk144, lc->unk15C);
         }
-        lc->unk144->unk250.b.clip = (int)r;
-        info->unk30 = (int)lc->unk144->unk250.b.clip;
-        info->unk20 = lc->unk144->unk230;
-        info->unk28 = lc->unk144->unk238;
-        info->unk24 = lc->unk144->unk234;
+        info->unk30.f = (int)lc->unk144->unk250.b.clip;
+        info->unk20.f = lc->unk144->unk230;
+        info->unk28.f = lc->unk144->unk238;
+        info->unk24.f = lc->unk144->unk234;
     }
 }
-#endif
