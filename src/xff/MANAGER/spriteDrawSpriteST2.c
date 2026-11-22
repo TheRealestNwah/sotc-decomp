@@ -21,10 +21,6 @@ static inline int IsOutOfScreen(float *v)
     return 0;
 }
 
-/* 2 diffs, same size. The Original loads the s+0x20 word into $a2 (stored to sp+0x10 for b.s0);
-   ours picks $a1. Field-order, struct-copy, pointer and volatile variants and a 30-minute permuter
-   run (-j2) found nothing better. */
-#ifdef NONMATCHING
 /* Draws a sprite at caller-supplied screen coordinates v (x0, y0, x1, y1), skipping it when
    both corners are off the same screen edge; colour is scaled by c, alpha by fade. */
 void spriteDrawSpriteST2(unsigned char *s, float *v, float c, float scale)
@@ -32,7 +28,7 @@ void spriteDrawSpriteST2(unsigned char *s, float *v, float c, float scale)
     STPair b;
     STPair a;
 
-    a.s0 = *(int *)(s + 0x20);
+    { register int x asm("$6") = *(int *)(s + 0x20); a.s0 = x; }
     a.t0 = *(int *)(s + 0x24);
     a.s1 = *(int *)(s + 0x28);
     a.t1 = *(int *)(s + 0x2C);
@@ -72,4 +68,3 @@ void spriteDrawSpriteST2(unsigned char *s, float *v, float c, float scale)
         iosDlPopLayer();
     }
 }
-#endif
