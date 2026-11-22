@@ -19,7 +19,9 @@ typedef struct {
     PosData *data;
 } PosTrack;
 
+#ifndef NONMATCHING
 extern void func_0003A168(Vec4 *, PosTrack *, float);
+#endif
 
 static inline void subXYZ(Vec4 *out, Vec4 *a, Vec4 *b)
 {
@@ -78,6 +80,36 @@ static inline void getPos(Vec4 *o, int fmt, PosData *p, int i)
         }
     }
 }
+
+#ifdef NONMATCHING
+/* Parked: 2 diffs, same size. Remaining: the lerp's t is moved to the VU
+ * through $t0 in the Original (mfc1/qmtc2.ni) but $v1 here. Operand order,
+ * an inline wrapper, int punning and a register pin don't change it. */
+static void func_0003A168(Vec4 *out, PosTrack *trk, float t)
+{
+    Vec4 a;
+    Vec4 b;
+    int i = (int)t;
+    int j = i + 1;
+
+    t -= (float)i;
+    if (t == 0.0f) {
+        getPos(out, (trk->w >> 16) & 0xFF, trk->data, i);
+    } else {
+        getPos(&a, (trk->w >> 16) & 0xFF, trk->data, i);
+        getPos(&b, (trk->w >> 16) & 0xFF, trk->data, j);
+        __asm__ __volatile__("qmtc2.ni %0, vf7\n"
+                             "lqc2 vf5, 0x0(%1)\n"
+                             "lqc2 vf6, 0x0(%2)\n"
+                             "vsubx.w vf8, vf0, vf7x\n"
+                             "vmulax.xyz ACC, vf5, vf7x\n"
+                             "vmaddw.xyz vf5, vf6, vf8w\n"
+                             "sqc2 vf5, 0x0(%3)\n"
+                             : : "r"(t), "r"(&b), "r"(&a), "r"(out) : "memory");
+    }
+    out->v[3] = 1.0f;
+}
+#endif
 
 static void func_0003A4A8(Vec4 *out, Vec4 *cur, PosTrack *trk, int n, float t, float r)
 {
