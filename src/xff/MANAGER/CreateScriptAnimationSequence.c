@@ -56,8 +56,6 @@ extern void *memset(void *, int, unsigned int);
 extern void *CreateScriptAnimationObj(int, int, SeqCreate);
 extern void isysAddGroupWithLinkParam(void *, int, int, int);
 
-#ifdef NONMATCHING
-/* 17 diffs: store order of the SeqCreate fields and copy-loop registers */
 void *CreateScriptAnimationSequence(SeqParam *p)
 {
     SeqCreate arg;
@@ -78,6 +76,7 @@ void *CreateScriptAnimationSequence(SeqParam *p)
     c.head.w3C = 7;
     if (t == 0)
         t = info.words[6];
+    c.w7C = t;
     c.w84 = p->a28 < 0 ? 0x800 : p->a28;
     c.w88 = info.words[7];
     c.w8C = p->a18;
@@ -94,13 +93,11 @@ void *CreateScriptAnimationSequence(SeqParam *p)
     c.wB0 = 0;
     c.wB4 = 0;
     c.wB8 = 0;
-    c.w7C = t;
     arg = c;
     obj = CreateScriptAnimationObj(p->parent, 0, arg);
-    if (obj != 0) {
-        isysAddGroupWithLinkParam(obj, info.words[1], 0, 0);
-        isysAddGroupWithLinkParam(obj, info.words[3], 0, 0);
-    }
+    if (obj == 0)
+        return 0;
+    isysAddGroupWithLinkParam(obj, info.words[1], 0, 0);
+    isysAddGroupWithLinkParam(obj, info.words[3], 0, 0);
     return obj;
 }
-#endif
