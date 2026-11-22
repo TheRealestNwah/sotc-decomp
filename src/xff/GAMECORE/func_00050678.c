@@ -54,3 +54,185 @@ static void func_00050678(int a0, int *p)
     demoManEnd(GameObject_DEMO_END3_STARTER[2]);
     endingflowDemoEnd();
 }
+
+typedef struct { int frame; int vol; int seq; } SeqEnt;
+typedef struct { int i0; int status; } CtrlDef;
+typedef struct { int i0; int i4; int trig; } Pad;
+extern int AdpcmSeq_DEMO_ED5_C1, AdpcmSeq_DEMO_ED7_C2, AdpcmSeq_DEMO_ED8_C11, AdpcmSeq_DEMO_ED8_C18;
+extern char *SDemoStationedMotOriData_ENDDEMO3_CAMERA, *SDemoStationedMotOriData_ENDDEMO3_PLAYER,
+    *SDemoStationedMotOriData_ENDDEMO3_HORSE, *SDemoStationedMotOriData_ENDDEMO3_GIRL,
+    *SDemoStationedMotOriData_ENDDEMO3_SHARMAN, *SDemoStationedMotOriData_ENDDEMO3_GUARD_A,
+    *SDemoStationedMotOriData_ENDDEMO3_GUARD_B, *SDemoStationedMotOriData_ENDDEMO3_GUARD_C,
+    *SDemoStationedMotOriData_ENDDEMO3_GUARD_D, *SDemoStationedMotOriData_ENDDEMO3_GUARD_E,
+    *SDemoStationedMotOriData_ENDDEMO3_HORSE_B, *SDemoStationedMotOriData_ENDDEMO3_HORSE_C,
+    *SDemoStationedMotOriData_ENDDEMO3_HORSE_D, *SDemoStationedMotOriData_ENDDEMO3_HORSE_E,
+    *SDemoStationedMotOriData_ENDDEMO3_HORSE_F, *SDemoStationedMotOriData_ENDDEMO3_HORSE_G,
+    *SDemoStationedMotOriData_ENDDEMO3_BABY, *SDemoStationedMotOriData_ENDDEMO3_DEER,
+    *SDemoStationedMotOriData_ENDDEMO3_SQUIRREL, *SDemoStationedMotOriData_ENDDEMO3_BIRD_B,
+    *SDemoStationedMotOriData_ENDDEMO3_BIRD_C, *SDemoStationedMotOriData_ENDDEMO3_BIRD_D,
+    *SDemoStationedMotOriData_ENDDEMO3_BIRD_E, *SDemoStationedMotOriData_ENDDEMO3_BIRD_F,
+    *SDemoStationedMotOriData_ENDDEMO3_BIRD_G, *SDemoStationedMotOriData_ENDDEMO3_BIRD_H,
+    *SDemoStationedMotOriData_ENDDEMO3_LWS;
+extern CtrlDef *ScriptCtrlDef_SCRDemoCharaMaru, *ScriptCtrlDef_SCRDemoCharaBatsu, *ScriptCtrlDef_SCRDemoCharaSankaku,
+    *ScriptCtrlDef_SCRDemoCharaShikaku, *ScriptCtrlDef_SCRDemoCharaR1;
+extern int endingReady;
+extern Pad padManagerData;
+extern int DldSysUndefSymbol;
+extern char rootPtn[];
+extern int isysGetThisSubThread(void);
+extern void *iosCreatePartition(void *, int);
+extern char *GetScriptLayoutClass(int);
+extern char *GetLayoutClass(int);
+extern void SetScriptLayoutObjLetterProcMode(int, int);
+extern int *_SCRMallocAlign(void *, int, int);
+extern void endingflowStartAdpcmSeq(SeqEnt *);
+extern void endingflowTickAdpcmSeq(int);
+extern void demoManBootRequest(int);
+extern int demoManBootChk(int);
+extern void scrRun(void);
+extern int get_main_cameraman_camera_obj(void);
+extern void begin_stream_lws_movie_playing_game_camera(int);
+extern int PlayDemoCameraOrient(int, char *, int, int, int, float);
+extern void isysAddGroupWithLinkParam(int, int, int, int);
+extern int gStatGetHorseDemoISYSObj(void);
+extern int _SCRStartLwsDemoOrient(int, char *, int, int);
+extern void demoManStart(int, int);
+extern void SetScriptObjDeleteCallBackFunc(int, void *, void *);
+extern int CheckDemoCameraOrientFinished(int);
+extern int demoscrCheckDemoCutSkip(void);
+extern int demoManChkLoadFinish(int);
+extern void demoManSkip(int, int);
+extern void SetCharacterObjScriptKeyEnableFlagOnDemoOrient(int, int);
+extern void CharaCtrlSetOutsideScriptCtrlStatus(int, int);
+
+static inline char *resourceData(unsigned int *reference)
+{
+    unsigned int encoded = *reference;
+    unsigned int offset = encoded & 0x3FFFF;
+    char *module;
+
+    if (offset)
+        module = *(char **)((char *)reference - offset);
+    else
+        module = 0;
+    if (module && module != (char *)DldSysUndefSymbol) {
+        int index = (encoded >> 18) & 0xFFF;
+        return *(char **)(module + 0x10) + index * *(int *)(*(char **)(module + 8) + 0xC);
+    }
+    return 0;
+}
+
+#define SETUP(o, d)                                                                        \
+    *(int *)(GetScriptCharacterClass(o) + 0x1204) = 1;                                     \
+    SetCharacterObjDemoMotionMode(o, (int)((d) + 4), *(int *)(GetLayoutClass(th) + 0x134), 0.0f); \
+    isysAddGroupWithLinkParam(o, m[0], 0, 0)
+
+#define SETUPG(g, d)            \
+    {                           \
+        int *gg = (g);          \
+        int o;                  \
+        __asm__("" : "+r"(gg)); \
+        o = gg[2];              \
+        SETUP(o, d);            \
+    }
+
+#define PAD(bit, def)                                                   \
+    if (padManagerData.trig & (bit)) {                                  \
+        CharaCtrlSetOutsideScriptCtrlStatus(GameObject_GIRL_END3[2], (def)->status); \
+        CharaCtrlSetOutsideScriptCtrlStatus(GameObject_BABY[2], (def)->status); \
+    }
+
+void demo_end3(void)
+{
+    SeqEnt seq[5] = { { 0, 0x3E7, AdpcmSeq_DEMO_ED5_C1 }, { 0x26, 0x36, AdpcmSeq_DEMO_ED7_C2 },
+                     { 0x35, 0x3B, AdpcmSeq_DEMO_ED8_C11 }, { 0x3A, 0x3E7, AdpcmSeq_DEMO_ED8_C18 },
+                     { 0, 0x3E7, 0 } };
+    int starter = GameObject_DEMO_END3_STARTER[2];
+    int th = isysGetThisSubThread();
+    void *part = iosCreatePartition(rootPtn, 0x47);
+    char *lc;
+    int *m;
+    int cam;
+    char *lay;
+    float f;
+    int o;
+    int frame;
+
+    *(void **)(GetScriptLayoutClass(th) + 0x2D4) = part;
+    SetScriptLayoutObjLetterProcMode(th, 1);
+    lc = GetScriptLayoutClass(th);
+    m = _SCRMallocAlign(part, 0x14, 0x10);
+    *(int **)(lc + 0x2D8) = m;
+    m[3] = 0;
+    m[4] = 0;
+    endingflowStartAdpcmSeq(seq);
+    demoManBootRequest(starter);
+    while (demoManBootChk(starter) != 1)
+        scrRun();
+    endingReady |= 2;
+    while (endingReady != 3)
+        scrRun();
+    cam = get_main_cameraman_camera_obj();
+    lay = GetLayoutClass(th);
+    if (*(unsigned int **)(GetScriptLayoutClass(GameObject_DEMO_END3_STARTER[2]) + 0x2DC) != 0)
+        f = *(float *)(resourceData(*(unsigned int **)(GetScriptLayoutClass(GameObject_DEMO_END3_STARTER[2]) + 0x2DC)) + 0x10);
+    else
+        f = 1.0f;
+    m[0] = PlayDemoCameraOrient(cam, SDemoStationedMotOriData_ENDDEMO3_CAMERA + 4, *(int *)(lay + 0x134), th,
+                                GameObject_DEMO_END3_STARTER[2], f);
+    begin_stream_lws_movie_playing_game_camera(get_game_camera(get_main_cameraman()));
+    o = GameObject_PLAYER_A_DEMO[2];
+    SETUP(o, SDemoStationedMotOriData_ENDDEMO3_PLAYER);
+    o = gStatGetHorseDemoISYSObj();
+    m[2] = o;
+    SETUP(o, SDemoStationedMotOriData_ENDDEMO3_HORSE);
+    { register int *gg __asm__("$3") = GameObject_GIRL_END3; o = gg[2]; }
+    SETUP(o, SDemoStationedMotOriData_ENDDEMO3_GIRL);
+    SETUPG(GameObject_SHARMAN, SDemoStationedMotOriData_ENDDEMO3_SHARMAN);
+    SETUPG(GameObject_GUARD_A, SDemoStationedMotOriData_ENDDEMO3_GUARD_A);
+    SETUPG(GameObject_GUARD_B, SDemoStationedMotOriData_ENDDEMO3_GUARD_B);
+    SETUPG(GameObject_GUARD_C, SDemoStationedMotOriData_ENDDEMO3_GUARD_C);
+    SETUPG(GameObject_GUARD_D, SDemoStationedMotOriData_ENDDEMO3_GUARD_D);
+    SETUPG(GameObject_GUARD_E, SDemoStationedMotOriData_ENDDEMO3_GUARD_E);
+    SETUPG(GameObject_HORSE_B, SDemoStationedMotOriData_ENDDEMO3_HORSE_B);
+    SETUPG(GameObject_HORSE_C, SDemoStationedMotOriData_ENDDEMO3_HORSE_C);
+    SETUPG(GameObject_HORSE_D, SDemoStationedMotOriData_ENDDEMO3_HORSE_D);
+    SETUPG(GameObject_HORSE_E, SDemoStationedMotOriData_ENDDEMO3_HORSE_E);
+    SETUPG(GameObject_HORSE_F, SDemoStationedMotOriData_ENDDEMO3_HORSE_F);
+    SETUPG(GameObject_HORSE_G, SDemoStationedMotOriData_ENDDEMO3_HORSE_G);
+    { register int *gg __asm__("$3") = GameObject_BABY; o = gg[2]; }
+    SETUP(o, SDemoStationedMotOriData_ENDDEMO3_BABY);
+    SETUPG(GameObject_DEER, SDemoStationedMotOriData_ENDDEMO3_DEER);
+    SETUPG(GameObject_SQUIRREL, SDemoStationedMotOriData_ENDDEMO3_SQUIRREL);
+    SETUPG(GameObject_BIRD_B_DEMO, SDemoStationedMotOriData_ENDDEMO3_BIRD_B);
+    SETUPG(GameObject_BIRD_C_DEMO, SDemoStationedMotOriData_ENDDEMO3_BIRD_C);
+    SETUPG(GameObject_BIRD_D_DEMO, SDemoStationedMotOriData_ENDDEMO3_BIRD_D);
+    SETUPG(GameObject_BIRD_E_DEMO, SDemoStationedMotOriData_ENDDEMO3_BIRD_E);
+    SETUPG(GameObject_BIRD_F_DEMO, SDemoStationedMotOriData_ENDDEMO3_BIRD_F);
+    SETUPG(GameObject_BIRD_G_DEMO, SDemoStationedMotOriData_ENDDEMO3_BIRD_G);
+    SETUPG(GameObject_BIRD_H_DEMO, SDemoStationedMotOriData_ENDDEMO3_BIRD_H);
+    m[1] = _SCRStartLwsDemoOrient(m[0], SDemoStationedMotOriData_ENDDEMO3_LWS + 4, *(int *)(GetLayoutClass(th) + 0x134), th);
+    demoManStart(GameObject_DEMO_END3_STARTER[2], m[0]);
+    SetScriptObjDeleteCallBackFunc(th, func_00050678, m);
+    while (!CheckDemoCameraOrientFinished(m[0])) {
+        frame = *(int *)(m[0] + 0x40);
+        if (demoscrCheckDemoCutSkip() && demoManChkLoadFinish(GameObject_DEMO_END3_STARTER[2]))
+            demoManSkip(GameObject_DEMO_END3_STARTER[2], m[0]);
+        if (frame >= 0x30) {
+            if (m[3] == 0) {
+                SetCharacterObjScriptKeyEnableFlagOnDemoOrient(GameObject_GIRL_END3[2], 1);
+                SetCharacterObjScriptKeyEnableFlagOnDemoOrient(GameObject_BABY[2], 1);
+                m[3] = 1;
+            }
+            PAD(0x20, ScriptCtrlDef_SCRDemoCharaMaru);
+            PAD(0x40, ScriptCtrlDef_SCRDemoCharaBatsu);
+            PAD(0x10, ScriptCtrlDef_SCRDemoCharaSankaku);
+            PAD(0x80, ScriptCtrlDef_SCRDemoCharaShikaku);
+            PAD(0x08, ScriptCtrlDef_SCRDemoCharaR1);
+        }
+        scrRun();
+        endingflowTickAdpcmSeq(*(int *)(m[0] + 0x40));
+    }
+    func_00050678(th, m);
+    SetScriptObjDeleteCallBackFunc(th, 0, 0);
+}
