@@ -18,11 +18,6 @@ static inline int dldResolve(unsigned int *h)
     return 0;
 }
 
-#ifdef NONMATCHING
-/*
- * Parked at 2 differing words: the Original schedules the hoisted
- * lui of D_00139F78 before the first loop's d = &arr->data, ours after.
- */
 typedef struct {
     unsigned int ref;
     int data;
@@ -40,14 +35,13 @@ static int *func_000ED160(unsigned int *ref)
     int status[8];
 
     if (D_00139F7C != 0) {
-        CtrlEntry *p;
-        int *d;
-        for (d = &arr->data, p = arr; (def = dldResolve(&p->ref)) != 0; p++, d += 2) {
+        int i = 0;
+        for (; (def = dldResolve(&arr[i].ref)) != 0; i++) {
             if (def != elseAlways) {
-                if (CheckControlDef((void *)D_00139F78, (void *)D_00139F7C, (char *)D_00139F7C + 0x760, &p->ref) <= 0)
+                if (CheckControlDef((void *)D_00139F78, (void *)D_00139F7C, (char *)D_00139F7C + 0x760, &arr[i].ref) <= 0)
                     continue;
             }
-            return d;
+            return &arr[i].data;
         }
         return 0;
     }
@@ -74,4 +68,3 @@ static int *func_000ED160(unsigned int *ref)
     }
     return 0;
 }
-#endif
