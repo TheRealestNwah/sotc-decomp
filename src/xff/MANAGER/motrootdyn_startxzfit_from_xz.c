@@ -1,5 +1,4 @@
-/* Parked: 6 diffs. Refreshes the parent geometry, parents the layout object to the character's F70 geometry when its surface plane matches the C0 one (|dot - 1| < 0.001), applies the limit-mode overrides from the dld flag word, fits the root quaternion, takes the parent offset, runs the shared startxzfit setup and clears the Y of the copied B30 offset. Remaining: the dot result goes through $f3/$f1 instead of $f0 in the three |dot - 1| evaluations. */
-#ifdef NONMATCHING
+/* Refreshes the parent geometry, parents the layout object to the character's F70 geometry when its surface plane matches the C0 one (|dot - 1| < 0.001), applies the limit-mode overrides from the dld flag word, fits the root quaternion, takes the parent offset, runs the shared startxzfit setup and clears the Y of the copied B30 offset. */
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } __attribute__((aligned(8))) F4;
 typedef union { s128 q; F4 f; } Vec4;
@@ -64,7 +63,11 @@ static inline float innerProduct(void *a, void *b)
                          "vmaddz.x vf6, vf7, vf6z\n"
                          "qmfc2.ni %0, vf6\n"
                          : "=r"(r) : "r"(a), "r"(b));
-    return r;
+    {
+        register float f __asm__("$f0") = r;
+        __asm__ __volatile__("" : "+f"(f));
+        return f;
+    }
 }
 
 #define ABS(x) ((x) < 0.0f ? -(x) : (x))
@@ -131,4 +134,3 @@ void motrootdyn_startxzfit_from_xz(void *m, char *cls)
     ((Vec4 *)(cls + 0x6D0))->f.z = ((Vec4 *)(cls + 0xB30))->f.y;
     ((Vec4 *)(cls + 0x6D0))->f.x = ((Vec4 *)(cls + 0xB30))->f.y;
 }
-#endif
