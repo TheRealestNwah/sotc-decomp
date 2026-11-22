@@ -1,10 +1,3 @@
-/*
- * Parked at 5 diffs. In the second VU add (local offset), the Original
- * loads l->0x134 into v0 and &tmp into v1; this version uses a0 and v0.
- * Operand swaps, inline helpers, block temps and 3-operand adds didn't
- * change it.
- */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { s128 quat; s128 pos; } QuatPos;
 typedef union { s128 q; char *p[4]; } QU;
@@ -87,7 +80,11 @@ int UpdateLayoutClassParentGeometry(char *l, float *offset, float *local)
         VU_QUAT_MUL(*(char **)(l + 0x13C), &qp.quat, l + 0x60);
         if (local != 0) {
             quatRotate((float *)&tmp, *(float **)(l + 0x13C), local);
-            VU_ADD_XYZ(*(char **)(l + 0x134), &tmp);
+            {
+                register char *d asm("$2") = *(char **)(l + 0x134);
+                register s128 *t asm("$3") = &tmp;
+                VU_ADD_XYZ(d, t);
+            }
         }
         obj = GetGeometryPointerObject(l + 0xC0);
         if (obj != 0) {
@@ -115,4 +112,3 @@ int UpdateLayoutClassParentGeometry(char *l, float *offset, float *local)
     }
     return 0;
 }
-#endif
