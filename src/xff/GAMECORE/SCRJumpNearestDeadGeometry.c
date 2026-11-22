@@ -14,7 +14,7 @@ extern int ClipCollisionDirect(void *, void *, void *, int);
 extern void ParentLayoutObj(void *, void *);
 extern void SetCharacterObjDemoCutFinishFlag(void *, int);
 
-/* Parked: ~54 words differ; the original rematerializes the matrix address (121 words vs 120) and orders the vd0 copy differently. */
+/* Parked: 45 diffs, same size. Remaining: the original rematerializes the matrix address (sp+0x90) for xformPos, where ours reuses the mkMat register (a0, then copied to v1 by the "+r"), and schedules the vd0 copy before the swc1. */
 #ifdef NONMATCHING
 static inline void mkMat(float *mat, float *q)
 {
@@ -45,8 +45,7 @@ static inline void mkMat(float *mat, float *q)
                              "sqc2 vf14, 0x0(%0)\n"
                              "sqc2 vf15, 0x10(%0)\n"
                              "sqc2 vf16, 0x20(%0)\n"
-                             : : "r"(mat), "r"(q) : "memory");
-    __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(mat + 12) : "memory");
+                             : "+r"(mat) : "r"(q) : "memory");
 }
 
 static inline void xformPos(float *mat, float *v)
@@ -104,6 +103,7 @@ int SCRJumpNearestDeadGeometry(void *obj)
         ((Pair *)L.vd0)->y = L.ve0.y;
         ((Pair *)L.vd0)->x = L.ve0.x;
         mkMat((float *)L.mat, L.q);
+        __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(L.mat[3]) : "memory");
         xformPos((float *)L.mat, L.vd0);
         vecAdd(L.a1, pos, L.vd0);
         vecSubSub(L.a2, pos, L.vd0);
