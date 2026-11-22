@@ -1,5 +1,3 @@
-/* Parked: 3 diffs, same size (142 words). Probes the variable XZ surfaces of a group around a position with the water callback (func_0009D0B0) and reports the surface distance found. The body is ClipCollisionVariableXZSurfaceCB inlined through the testObj/setHit helpers (as in GetWaterSurfacePositionYExtend). Remaining: in the hit record's matApply setup the original copies the buffer pointer (daddu s0, s3) after the lq of the stack Vec4 and the a0 move; ours schedules it one and two words earlier. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -57,7 +55,6 @@ extern void isysGroupForExit(int, int);
 extern char *GetLayoutClass(int);
 extern int func_0009C0B0(void *, void *, void *, int, int, int, int, int);
 extern int func_0009D0B0();
-extern float RO_0011A5B4;
 
 static inline int testObj(void *buf, void *a, void *b, int obj, int t0, int t2, int t3, int arg)
 {
@@ -71,11 +68,14 @@ static inline void setHit(char *out, int obj, Vec4 *hb)
 {
     char *cls;
     if (out) {
-        *(s128 *)(out + 0x40) = *(s128 *)hb;
-        cls = GetLayoutClass(obj);
+        s128 t = *(s128 *)hb;
+        int o = obj;
+        Vec4 *h = hb;
+        *(s128 *)(out + 0x40) = t;
+        cls = GetLayoutClass(o);
         *(int *)out = obj;
-        matInverse((float *)hb[1], (float *)*(int *)(cls + 0x158));
-        matApply((float *)(out + 0x10), (float *)hb[1], (float *)hb);
+        matInverse((float *)h[1], (float *)*(int *)(cls + 0x158));
+        matApply((float *)(out + 0x10), (float *)h[1], (float *)h);
         *(int *)(out + 0x30) = 10;
     }
 }
@@ -121,7 +121,7 @@ int IsWaterSurfaceExistAround(float *out, float *pos, int group, float f12, floa
     struct Res res;
 
     res.found = 0;
-    res.dist = RO_0011A5B4;
+    res.dist = 3.4028235e38f;
     *(s128 *)res.pos = *(s128 *)pos;
     res.lo = f12;
     res.hi = f13;
@@ -130,4 +130,3 @@ int IsWaterSurfaceExistAround(float *out, float *pos, int group, float f12, floa
         *out = res.dist;
     return res.found;
 }
-#endif
