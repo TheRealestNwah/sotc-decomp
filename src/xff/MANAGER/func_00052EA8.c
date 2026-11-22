@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 4 words differ (was 13; permuter: call arg via pointer to e, register allocation) */
+/* Parked: 3 diffs. Was 4; the slot address is now int arithmetic for the addu operand order. Remaining: in the inlined findSlot loop the Original copies n to a1 and keeps e in a3; ours copies e. Register pins inside the inline and swapped parameter order make it worse. Permuter tried earlier. */
 extern int DldSysUndefSymbol;
 typedef struct { char pad0[0xC]; int size; } DldType;
 typedef struct { char pad0[8]; DldType *type; char padC[4]; char *data; } DldTable;
@@ -69,7 +69,7 @@ static void func_00052EA8(void *w, unsigned char *o, unsigned char *m)
         if (i >= 0)
             ok = 1;
     } else {
-        char *q = (char *)&s[i] + 4;
+        char *q = (char *)(i * 128 + (int)s) + 4;
         t = *(float *)(m + 0xC);
         len = *(float *)(q + 8);
         if (!(t < 0.0f))
