@@ -1,5 +1,4 @@
-/* 4 diffs: the Original moves the x square from $f12 to $f21 in the bc1f delay slot and scales $f21. */
-#ifdef NONMATCHING
+/* Debug camera direction update from the pad sticks: dead-zoned, squared and scaled stick values rotate the camera. */
 typedef int s128 __attribute__((mode(TI)));
 extern float D_0012FDE0;
 extern int D_0012FDE4;
@@ -76,12 +75,13 @@ int DEBUG_update_direction(s128 *out, s128 *in, int pad2)
         }
     }
     {float ys = y < 0.0f ? y * -y : y * y;
-    float xs = x < 0.0f ? x * -x : x * x;
-    if (ys == 0.0f && xs == 0.0f) {
+    register float xs __asm__("$f12"); if (x < 0.0f) { register float n __asm__("$f0") = -x; xs = x * n; } else xs = x * x;
+    x = xs;
+    if (ys == 0.0f && x == 0.0f) {
         return 0;
     }
     scale = D_0012FDE0 * 6.5f;
-    x = xs * scale;
+    x = x * scale;
     y = ys * scale;}
     cam = iosgluGetCameraContext() + 0x150;
     __asm__ __volatile__("lqc2 vf05, 0(%1)
@@ -195,4 +195,3 @@ int DEBUG_update_direction(s128 *out, s128 *in, int pad2)
     }
     return 0;
 }
-#endif
