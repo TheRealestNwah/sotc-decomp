@@ -146,3 +146,12 @@ int GetMotionResourceOriginalFrames(unsigned int *h)
     }
     return 0;
 }
+
+void *GetAnimObjResource(unsigned int *h)
+{
+    if ((int *)dldObj(h)[2] == &_AnimObjDef)
+        return getAnimObjResource(h);
+    if ((int *)dldObj(h)[2] == &_BlendMotionDef)
+        return getAnimObjResource((unsigned int *)getBlendLastMotion((char *)h));
+    return 0;
+}
