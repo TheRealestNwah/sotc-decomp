@@ -9,8 +9,8 @@ typedef struct {
     float e;
     int f;
     int g;
-    float ratio;
-    float inv;
+    union { float f; int i; } ratio;
+    union { float f; int i; } inv;
 } AnimClass;
 
 typedef struct {
@@ -49,12 +49,6 @@ static inline MotShift *getShift(char *mot)
     return 0;
 }
 
-#ifdef NONMATCHING
-/*
- * Parked at 3 differing words: in the mot == 0 branch the Original stores
- * anim->inv and anim->ratio and loads chara+0x1140 after them, ours
- * hoists the 0x1140 load above the two stores.
- */
 void *ForceAcceptMotion(char *chara, char *mot, float frame)
 {
     AnimClass *anim = (AnimClass *)(chara + 0x1C0);
@@ -71,8 +65,8 @@ void *ForceAcceptMotion(char *chara, char *mot, float frame)
         frames = GetMotionResourceFrames(res);
         ratio = GetMotionStretchRatio(res);
         f = frame * ratio;
-        anim->ratio = ratio;
-        anim->inv = 1.0f / ratio;
+        anim->ratio.f = ratio;
+        anim->inv.f = 1.0f / ratio;
         if ((float)frames <= f)
             *(float *)(chara + 0x720) = (float)frames;
         else
@@ -81,8 +75,8 @@ void *ForceAcceptMotion(char *chara, char *mot, float frame)
             *(float *)(chara + 0x740) = f;
     } else {
         *(float *)(chara + 0x720) = 0.0f;
-        anim->inv = 1.0f;
-        anim->ratio = 1.0f;
+        anim->ratio.f = 1.0f;
+        anim->inv.f = 1.0f;
         if (*(float *)(*(char **)(chara + 0x1140) + 0x138) == 0.0f)
             *(float *)(chara + 0x740) = 0.0f;
         res = mot + 0x50;
@@ -107,4 +101,3 @@ void *ForceAcceptMotion(char *chara, char *mot, float frame)
     anim->e = 1.0f;
     return res;
 }
-#endif
