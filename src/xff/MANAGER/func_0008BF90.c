@@ -1,5 +1,3 @@
-/* Parked: 6 diffs. Only the frame-rate multiply differs: the Original puts the converted frame count in $f0 and the 0x374 scale in $f1 (else arm: scale in $f0, 30.0f in $f1); gcc swaps the two registers in both arms. Tried two-mul, x/y temporaries, ternary, int temp, compound assignment and reusing rate. */
-#ifdef NONMATCHING
 extern void *GetLayoutClass(void *);
 extern void *GetGeometryPointerObject(void *);
 extern char *GetCharacterClass(void *);
@@ -40,10 +38,13 @@ static int func_0008BF90(unsigned char *obj, float delta)
             char *m = *(char **)a;
             float k = *(float *)(a + 0x1C);
             float t;
-            if (m != 0)
-                t = *(float *)(cc + 0x374) * (float)*(int *)(m + 0x5C);
-            else
-                t = 30.0f * *(float *)(cc + 0x374);
+            if (m != 0) {
+                register float x asm("$f0") = (float)*(int *)(m + 0x5C);
+                t = x * *(float *)(cc + 0x374);
+            } else {
+                register float x asm("$f0") = *(float *)(cc + 0x374);
+                t = x * 30.0f;
+            }
             rate = t * k * s;
         }
     }
@@ -87,4 +88,3 @@ static int func_0008BF90(unsigned char *obj, float delta)
         *link = *(int *)(anim + 0x20);
     return ret;
 }
-#endif
