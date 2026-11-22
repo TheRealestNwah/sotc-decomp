@@ -1,5 +1,4 @@
-/* Parked: 3 diffs. Picks the parent geometry (0xF70, 0xC0 or 0xEF0), puts the A80 offset through the geometry matrix into *134, and aligns the root quaternion so its local Y follows the surface plane, flipping 180 degrees about X when it faces away. Remaining: the address of the local X direction temp (sp+0x70) is held in v1 instead of a3. */
-#ifdef NONMATCHING
+/* Picks the parent geometry (0xF70, 0xC0 or 0xEF0), puts the A80 offset through the geometry matrix into *134, and aligns the root quaternion so its local Y follows the surface plane, flipping 180 degrees about X when it faces away. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -14,6 +13,7 @@ extern Vec4 XUnitVector;
 
 static inline void dirX(Vec4 *out, Vec4 *q)
 {
+    register Vec4 *o asm("$7") = out;
     __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmul.xyzw vf5, vf4, vf4\n"
                          "vmr32.xyzw vf6, vf4\n"
@@ -31,7 +31,7 @@ static inline void dirX(Vec4 *out, Vec4 *q)
                          "vmulw.xyz vf6, vf6, vf5w\n"
                          "vaddw.x vf6, vf6, vf0w\n"
                          "sqc2 vf6, 0x0(%0)\n"
-                         : : "r"(out), "r"(q) : "memory");
+                         : : "r"(o), "r"(q) : "memory");
 }
 
 static inline int dirY(Vec4 *out, Vec4 *q)
@@ -206,4 +206,3 @@ void motrootdyn_parent_from_falldown(void *m, char *cls)
     flip(&q, &q, innerProduct(&dy, plane));
     SetLayoutClassRootQuaternion(cls, &q);
 }
-#endif
