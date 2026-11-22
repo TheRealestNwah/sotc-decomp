@@ -1,5 +1,4 @@
-/* Parked: 2 diffs. Removes every emitter node whose key matches from a linked list, releasing the emitter (callback, work list) and freeing the node. Remaining: the original uses bne + nop at 0x44 where gcc emits bnel with the next load in its delay slot. */
-#ifdef NONMATCHING
+/* Removes every emitter node whose key matches from a linked list, releasing the emitter (callback, work list) and freeing the node. */
 typedef union GWork {
     struct {
         char pad0[0xA8];
@@ -130,22 +129,20 @@ static void func_000BF688(EmitterNode **list, int key)
     if (cur != 0) {
         one = 1;
         do {
-            if (*(int *)cur == key) {
+            EmitterNode *c = cur;
+            if (*(int *)c == key) {
                 removeNode(list, &cur, prev, one);
+                c = cur;
             }
-            {
-                register EmitterNode *c asm("v1") = cur;
-                if (c == 0) {
-                    prev = 0;
-                    c = *list;
-                    cur = c;
-                } else {
-                    prev = c;
-                    c = c->next;
-                    cur = c;
-                }
+            if (c == 0) {
+                prev = 0;
+                c = *list;
+                cur = c;
+            } else {
+                prev = c;
+                c = c->next;
+                cur = c;
             }
         } while (cur != 0);
     }
 }
-#endif
