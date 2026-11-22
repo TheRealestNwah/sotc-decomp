@@ -6,8 +6,6 @@ extern void (*B_00151830)(void *, int, int);
 extern void (*B_00151834)(void *, int);
 extern int D_00139F08;
 
-#ifdef NONMATCHING
-/* 11 diffs: jalr target registers and argument setup order. Permuter (5 workers, 25 min): no improvement. */
 static void T_000E1AD0(void *fs)
 {
     int size0;
@@ -22,15 +20,16 @@ static void T_000E1AD0(void *fs)
     i = 0;
     sheetFsDataRead(fs, &size0, 4);
     p = iosMallocAlign(B_00151820, size0, 0x10);
-    p0 = p;
+
     sheetFsDataRead(fs, p, size0);
+    p0 = p;
     sheetFsDataRead(fs, &size1, 4);
     p = iosMallocAlign(B_00151820, size1, 0x10);
     sheetFsDataRead(fs, p, size1);
     sheetFsDataRead(fs, &count, 4);
-    B_00151830(p0, 0, count);
-    B_0015182C(p, size1, 0);
-    for (; i < count; i++) {
+    { register void (*f)(void *, int, int) __asm__("$7") = B_00151830; f(p0, 0, count); }
+    { register void (*g)(void *, int, int) __asm__("$2") = B_0015182C; g(p, size1, 0); }
+    { register int c __asm__("$3") = count; if (c <= 0) return; } for (; i < count; i++) {
         sheetFsDataRead(fs, &nameLen, 4);
         sheetFsDataRead(fs, &size2, 4);
         {
@@ -42,4 +41,3 @@ static void T_000E1AD0(void *fs)
         }
     }
 }
-#endif
