@@ -1,5 +1,3 @@
-/* Parked: 7 diffs, the same residue as sheetFsLoadSegmentIndex (the body is that function inlined with a fixed name):
-   register order in the language-table address and the s0/s5 setup before the search loop. */
 extern int D_00139F04;
 extern int B_001517D8;
 extern char *B_001517E0;
@@ -25,7 +23,6 @@ typedef struct {
     int *langTab;
 } SegEntry;
 
-#ifdef NONMATCHING
 static inline void loadSeg(char *name, int idx, void (*cb)(int, int))
 {
     struct {
@@ -50,15 +47,10 @@ static inline void loadSeg(char *name, int idx, void (*cb)(int, int))
     if (pos < 0) {
         int i = 0;
         e = 0;
-        if (B_001517D8 > 0) {
-            int off = 0;
-            do {
-                e = (SegEntry *)(B_001517E0 + off);
-                off += 0x1C;
-                if (strcmp(name, e->name) == 0)
-                    goto found;
-                i++;
-            } while (i < B_001517D8);
+        for (; i < B_001517D8; i++) {
+            e = &((SegEntry *)B_001517E0)[i];
+            if (strcmp(name, e->name) == 0)
+                goto found;
         }
         iosJumpRecoverPoint(RO_001419F8, name);
     found:
@@ -68,11 +60,11 @@ static inline void loadSeg(char *name, int idx, void (*cb)(int, int))
                 pos = *(int *)((char *)e->tab + m * 8);
             else {
                 int lang = sheetFsLanguageCode;
-                char *t = (char *)e->langTab;
-                char *t2;
+                int t = (int)e->langTab;
+                int t2;
                 m &= 0x7FFF;
-                t2 = t + m * 8;
-                pos = *(int *)(t2 + lang * 8 - 8);
+                t2 = m * 8 + t;
+                pos = *(int *)(lang * 8 + t2 - 8);
             }
         }
     }
@@ -85,4 +77,3 @@ void sheetFsLoadStageTex(int idx, void (*cb)(int, int))
 {
     loadSeg("stagetexseg_def", idx, cb);
 }
-#endif
