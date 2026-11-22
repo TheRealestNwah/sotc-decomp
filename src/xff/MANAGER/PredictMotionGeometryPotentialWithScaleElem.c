@@ -15,8 +15,7 @@ static inline void unitQuat(void *q)
     __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(q) : "memory");
 }
 
-#ifdef NONMATCHING
-/* Parked: 6 diffs (was ~96). TImode stack buffers keep their addresses rematerialized like the Original, and end, m and vel are pinned. Remaining: the stack slots of p1 and q0 are swapped (gcc gives slots in first-address-taken order: p0, q0, p1, q1; the Original has p0, p1, q0, q1). */
+/* The empty asm taking &p0 and &p1 gives the stack slots the Original order p0, p1, q0, q1. */
 char *PredictMotionGeometryPotentialWithScaleElem(Vec4 *quat, Vec4 *vel_, int obj, int motion, float t0, float t1)
 {
     register Vec4 *vel __asm__("$16") = vel_;
@@ -37,6 +36,7 @@ char *PredictMotionGeometryPotentialWithScaleElem(Vec4 *quat, Vec4 *vel_, int ob
     } else if (frames < t0) {
         goto zero;
     }
+    __asm__ __volatile__("" : : "X"(&p0), "X"(&p1));
     GetMotionRootFloatFrame(&p0, m, t0);
     if (GetMotionRootDirInfo(&q0, m, t0) == 0) {
         void *q = &q0;
@@ -65,6 +65,3 @@ zero:
                          : : "r"(vel), "r"(scale) : "memory");
     return scale;
 }
-#else
-char *PredictMotionGeometryPotentialWithScaleElem(Vec4 *quat, Vec4 *vel, int obj, int motion, float t0, float t1);
-#endif
