@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 16 words differ (float register choice) */
 typedef struct { float x, y, z, w; } Vec4;
 typedef struct { int type; int pad[3]; int target; int power; int pad18[2]; char geom[0x40]; } DamageMsg;
 typedef struct { int target; float p[3]; float q[4]; float s[3]; int power; } BoxHead;
@@ -29,9 +27,11 @@ void SendDamageBoxLetter(int target, int dest, int power, float *pos, float *qua
     body = 0;
     letter = create_letter(&head, &body, D_00139F64, 0, dest);
     u.target = target;
-    u.p[0] = pos[0];
-    u.p[1] = pos[1];
-    u.p[2] = pos[2];
+    { register float x __asm__("$f6"); register float yy __asm__("$f1"); register float zz __asm__("$f0");
+    x = pos[0]; yy = pos[1]; zz = pos[2];
+    u.p[0] = x;
+    u.p[1] = yy;
+    u.p[2] = zz; }
     u.q[0] = quat[0];
     u.q[1] = quat[1];
     u.q[2] = quat[2];
@@ -51,4 +51,3 @@ void SendDamageBoxLetter(int target, int dest, int power, float *pos, float *qua
     init_letter(letter, &head, &body);
     send_letter(&letter);
 }
-#endif
