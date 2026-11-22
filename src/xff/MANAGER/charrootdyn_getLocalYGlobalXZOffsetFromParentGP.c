@@ -1,5 +1,4 @@
-/* Parked at 2 diffs: the Original copies local into v (sq) before the first zero store to local; here the sq is scheduled one slot later. Register pins on the matrix pointers and q fix the rest (was 24). */
-#ifdef NONMATCHING
+/* Computes the local offset (Y kept) and the global XZ offset of a point from its parent's geometry pointer through the parent's rotation matrix and its inverse. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 #define VU_INVERSE_MATRIX(dst, src) \
@@ -110,9 +109,10 @@ void charrootdyn_getLocalYGlobalXZOffsetFromParentGP(Vec4 *local, Vec4 *global, 
     }
     { register Vec4 *ip __asm__("$3") = inv; VU_INVERSE_MATRIX(ip, m); }
     VU_APPLY(local, inv, &v);
-    v.q = local->q;
     {
         float z = 0.0f;
+        v.q = local->q;
+        __asm__ __volatile__("" ::: "memory");
         local->f[3] = z;
         local->f[2] = z;
         local->f[0] = z;
@@ -122,4 +122,3 @@ void charrootdyn_getLocalYGlobalXZOffsetFromParentGP(Vec4 *local, Vec4 *global, 
         global->f[1] = z;
     }
 }
-#endif
