@@ -1,4 +1,3 @@
-#ifdef NONMATCHING
 /* 5 diffs, same length (129 words). Draft from GAMEUTIL_act_yaw_rot (nearlyZero/rot-matrix idiom) and the pitch limits in GAMEUTIL_increase_pitch_limit_clip. Signature (out, cur, axis, speed, lo, hi): act_pitch_rot, then clamp the resulting pitch to +-85 deg and, if it is past lo or hi, re-aim out at that (clamped) limit. Remaining diffs: gcc caches the Matrix address in $s0 across the calls where the Original recomputes sp each time (empty-asm +r tricks and a shared-matrix/goto structure were worse: 6 and 48). The 'float zero' local is what moves the 0.0f into $f20. Permuter (12 workers, 25 min): no improvement. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -29,22 +28,20 @@ notNearZero:
     return 0;
 }
 
-static inline void applyLimit(Vec4 *out, Matrix *mp, float limit)
-{
-#define matrix (*mp)
-
-    if (nearlyZero(limit, 0.0001f) == 1) {
-        out->q = ZUnitVector.q;
-    } else {
-        if (1.4835299f < limit)
-            limit = 1.4835299f;
-        else if (limit < -1.4835299f)
-            limit = -1.4835299f;
-        iosRotMatrixX(matrix.f, -limit);
-        iosApplyRotMatrix(out, &matrix, &ZUnitVector);
-    }
-#undef matrix
-}
+/* Clamp limit to +-85 deg and re-aim out at it; a macro so the matrix is addressed from $sp at each use. */
+#define applyLimit(L) ({                          \
+    float limit = (L);                            \
+    if (nearlyZero(limit, 0.0001f) == 1) {        \
+        out->q = ZUnitVector.q;                   \
+    } else {                                      \
+        if (1.4835299f < limit)                   \
+            limit = 1.4835299f;                   \
+        else if (limit < -1.4835299f)             \
+            limit = -1.4835299f;                  \
+        iosRotMatrixX(m.f, -limit);               \
+        iosApplyRotMatrix(out, &m, &ZUnitVector); \
+    }                                             \
+})
 
 int GAMEUTIL_act_pitch_rot_limit_clip(Vec4 *out, Vec4 *cur, int axis, float speed, float lo, float hi)
 {
@@ -60,12 +57,11 @@ int GAMEUTIL_act_pitch_rot_limit_clip(Vec4 *out, Vec4 *cur, int axis, float spee
     else if (p < -1.4835299f)
         p = -1.4835299f;
     if (lo < p) {
-        applyLimit(out, &m, lo);
+        applyLimit(lo);
         r = 1;
     } else if (p < hi) {
-        applyLimit(out, &m, hi);
+        applyLimit(hi);
         r = 1;
     }
     return r;
 }
-#endif
