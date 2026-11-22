@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 3 diffs (was 23; permuter: sib = sibling after the return): zero-store pointer in a0 not v0; sibling call args hoisted above the beq */
+#ifdef NONMATCHING /* Parked: 1 diff (was 3; zero-store pointer pinned to v0). Remaining: the permuter shape reads an uninitialized sib (sp+0x54) where the Original reloads the spilled sibling (sp+0x50); reading sibling directly hoists the sibling call args above the beq (21 diffs). */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -77,9 +77,8 @@ void func_0003D508(int idx, Vec4 *out, Tree *tree, Vec4 *quats, Vec4 *scale)
         "sqc2 vf15, 0x10(%1)\n"
         "sqc2 vf16, 0x20(%1)\n"
         : : "r"(q), "r"(matrix) : "memory");
-    m = matrix[3].f;
-    __asm__ __volatile__("sqc2 vf0, 0x0(%0)
-" : : "r"(m) : "memory");
+    { register float *z asm("$2") = matrix[3].f; __asm__ __volatile__("sqc2 vf0, 0x0(%0)
+" : : "r"(z) : "memory"); }
     m = matrix[4].f;
     __asm__ __volatile__(
         "lqc2 vf5, 0x0(%0)\n"
