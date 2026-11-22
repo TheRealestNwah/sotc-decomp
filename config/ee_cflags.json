@@ -315,5 +315,8 @@
   ],
   "src/xff/KERNEL/func_00025028.c": [
     "--asm-fill-delay-slots"
+  ],
+  "src/xff/MANAGER/windowSetMouseStatus.c": [
+    "-fno-strict-aliasing"
   ]
 }
