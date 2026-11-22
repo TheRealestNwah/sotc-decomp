@@ -1,5 +1,3 @@
-/* 2 words: the original stores flags before a; this order puts a first. */
-#ifdef NONMATCHING
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -47,13 +45,16 @@ void sheetMgrAdpcmIntLoad(int a, int b, int c, int d, int e, int f, int *result)
 {
     Req *r;
     ReqList *q;
+    unsigned fl;
 
+    register int aa asm("$18") = a;
     WaitSema(B_00151860);
     r = getSheetMgrReqEmpty();
+    fl = r->flags;
     r->type = 7;
-    r->a = a;
-    r->flags &= ~1;
+    *(volatile unsigned *)&r->flags = fl & ~1;
     q = B_00155470;
+    *(volatile int *)&r->a = aa;
     r->b = b;
     r->c = c;
     r->d = d;
@@ -72,4 +73,3 @@ void sheetMgrAdpcmIntLoad(int a, int b, int c, int d, int e, int f, int *result)
     } while (0);
     SignalSema(B_00151860);
 }
-#endif
