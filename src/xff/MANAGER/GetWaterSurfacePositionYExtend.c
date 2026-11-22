@@ -1,5 +1,3 @@
-/* Parked: 3 diffs. Finds the water surface height under a point by clipping a vertical segment (pos with y = lo and y = hi) against each group object's variable XZ surface, with the water callback func_000AE150 and a depth limit (lim when mode is 1). The body is ClipCollisionVariableXZSurfaceCB inlined, with the object test and the hit record as nested inlines. Remaining: the copy of the buffer pointer for the hit record's matApply (daddu s0, s2) is scheduled before the lq instead of after the GetLayoutClass argument move; the permuter found nothing better in 30 minutes. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -69,11 +67,14 @@ static inline void setHit(char *out, int obj, Vec4 *hb)
 {
     char *cls;
     if (out) {
-        *(s128 *)(out + 0x40) = *(s128 *)hb;
-        cls = GetLayoutClass(obj);
+        s128 t = *(s128 *)hb;
+        int o = obj;
+        Vec4 *h = hb;
+        *(s128 *)(out + 0x40) = t;
+        cls = GetLayoutClass(o);
         *(int *)out = obj;
-        matInverse((float *)hb[1], (float *)*(int *)(cls + 0x158));
-        matApply((float *)(out + 0x10), (float *)hb[1], (float *)hb);
+        matInverse((float *)h[1], (float *)*(int *)(cls + 0x158));
+        matApply((float *)(out + 0x10), (float *)h[1], (float *)h);
         *(int *)(out + 0x30) = 10;
     }
 }
@@ -129,4 +130,3 @@ int GetWaterSurfacePositionYExtend(float *out, float *pos, int group, int mode, 
     }
     return 0;
 }
-#endif
