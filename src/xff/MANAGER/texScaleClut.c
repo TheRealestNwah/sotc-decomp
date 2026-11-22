@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 7 diffs: addu operand order (a0 = a1 + t3) and the following a0/v1 swap in the first clamp block */
 typedef struct Rgba {
     unsigned char r, g, b, a;
 } Rgba;
@@ -28,11 +27,13 @@ typedef struct IColor {
 static inline IColor scaleColor(Rgba *c, float *s)
 {
     IColor r;
+    /* Pinning the source pointer to $a0 gives the Original's register allocation. */
+    register Rgba *cc __asm__("$4") = c;
 
-    r.r = c->r * s[0];
-    r.g = c->g * s[1];
-    r.b = c->b * s[2];
-    r.a = c->a * s[3];
+    r.r = cc->r * s[0];
+    r.g = cc->g * s[1];
+    r.b = cc->b * s[2];
+    r.a = cc->a * s[3];
     return r;
 }
 
@@ -59,8 +60,7 @@ void texScaleClut(TexObject *object, float *scale)
     }
     if (count) {
         for (i = 0; i < count; i++) {
-            Rgba *sp = &src[i];
-            IColor c = scaleColor(sp, scale);
+            IColor c = scaleColor(&src[i], scale);
             dest[i].r = CLAMP(c.r);
             dest[i].g = CLAMP(c.g);
             dest[i].b = CLAMP(c.b);
@@ -68,4 +68,3 @@ void texScaleClut(TexObject *object, float *scale)
         }
     }
 }
-#endif
