@@ -1,5 +1,4 @@
-#ifdef NONMATCHING
-/* ~2 diffs, same length (150 words). Feedback-blur screen pass (template: drawDemoBar): skip while D_00130420 counts down, else under layer 0x1D writes GS regs (alpha via 0x42, TEX0 from the disp-buffer TBP with TW of the disp height and width as TBW dispW/64, two sprite-corner XYZ pairs around 0x800 +- half the draw size, UV box dispW*16+8 / dispH*16+8) and pops the layer. Matches except which register holds alpha<<32 (Original: $v1, reusing the D_00130420 address register; C: $v0). Needed: getTWH returning int (as in KERNEL), int tbp/twl/twh widened in the TEX0 or-chain in TBP, TBW, TW, TH order, getTWH(dispH) first, an inline_fn add for the +0x800 corners (stops gcc distributing the *16), and `return` after iosDlPopLayer so it becomes the tail call. */
+/* Feedback-blur screen pass: skips while D_00130420 counts down, else writes the GS alpha, TEX0 and two sprite corners around the screen centre under layer 0x1D. */
 extern int D_00130420;
 extern int getDispScreenWidth(void);
 extern int getDispScreenHeight(void);
@@ -43,7 +42,7 @@ void feedbackBlur(int alpha)
         m = m << 0x20;
         iosDlPushLayer(0x1D);
         gsRegBegin();
-        gsReg(0x42, (((long)alpha) << 0x20) | 0x64);
+        { register long t __asm__("$3") = ((long)alpha) << 0x20; gsReg(0x42, t | 0x64); }
         gsReg(0x47, 0x31001);
         gsReg(0x49, 0);
         gsReg(0x3B, (0x80L << 0x20) | 0x80);
@@ -66,4 +65,3 @@ void feedbackBlur(int alpha)
         return;
     }
 }
-#endif
