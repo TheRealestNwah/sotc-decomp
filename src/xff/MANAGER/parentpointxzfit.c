@@ -35,6 +35,9 @@ extern void charrootdyn_getvelocity(void *, void *, void *, float);
 
 static inline void rotatePoint(void *point, void *quaternion, void *out)
 {
+    /* Pinning the output pointer to $v1 gives the Original's register allocation. */
+    register void *oo __asm__("$3") = out;
+
     __asm__ __volatile__("lqc2 vf08, 0x0(%1)\n"
                          "vaddw.xyz vf12, vf00, vf00w\n"
                          "lqc2 vf11, 0x0(%2)\n"
@@ -65,7 +68,7 @@ static inline void rotatePoint(void *point, void *quaternion, void *out)
                          "vmaddaz.xyzw ACC, vf16, vf08z\n"
                          "vmaddw.xyzw vf10, vf00, vf08w\n"
                          "sqc2 vf10, 0x0(%0)\n"
-                         : : "r"(out), "r"(point), "r"(quaternion) : "memory");
+                         : : "r"(oo), "r"(point), "r"(quaternion) : "memory");
 }
 
 static inline void addXYZ(void *out, void *a, void *b)
@@ -86,9 +89,9 @@ static inline void subXYZ(void *out, void *a, void *b)
                          : : "r"(out), "r"(a), "r"(b) : "memory");
 }
 
-/* Parked at 8 diffs: the Original computes &L.off separately for the
-   rotation output and for the later adds/subs (gcc CSEs them here, 6 words),
-   and schedules the getWaterStatus self argument differently (2 words). */
+/* Parked: 4 diffs (was 8). Remaining: the Original recomputes &L.off into $s0
+   after the rotation (we copy it from $v1), and schedules the getWaterStatus
+   self argument before the table address (we put it in the delay slot). */
 #ifdef NONMATCHING
 void parentpointxzfit(int id, float *vel, float t, float unused, float dt)
 {
