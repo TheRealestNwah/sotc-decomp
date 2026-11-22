@@ -1,5 +1,6 @@
 #ifdef NONMATCHING
-/* Parked: 8 diffs (same length, 38 words). Only the mfc1 order and registers for the asm inputs differ: the original uses a3/t0/t1 with both muls scheduled first; ours a3/a2/t0. */
+/* Parked: 3 diffs (was 8). Clobbering $a2 in the asm gives the Original's a3/t0/t1 inputs.
+ * Remaining: the Original schedules both mul.s before the mfc1 of d; ours moves that mfc1 first. */
 static int func_000C6F08(float *out, char *p)
 {
     float a = *(float *)(p + 0x44);
@@ -43,7 +44,7 @@ static int func_000C6F08(float *out, char *p)
 "
                              "sqc2 vf10, 0x0(%6)
 "
-                             : : "r"(a - d), "r"(d), "r"(d * 0.5f * d), "r"(p + 0x20), "r"(p + 0x30), "r"(p), "r"(out) : "memory");
+                             : : "r"(a - d), "r"(d), "r"(d * 0.5f * d), "r"(p + 0x20), "r"(p + 0x30), "r"(p), "r"(out) : "$6", "memory");
         return 1;
     }
     return 0;
