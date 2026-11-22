@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* case 7 allocates p/t to a1/a0 instead of a2/a1 and loads t before addiu v0,sp,0x40 (5 diffs, same size) */
+#ifdef NONMATCHING /* Parked: 2 diffs (was 5). Remaining: in case 7 the Original schedules addiu v0,sp,0x40 before lw a1,4(s2); ours loads t first. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union {
     s128 q;
@@ -62,6 +62,16 @@ static inline void setTrans(Vec4 *m, Vec4 *t)
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
                          : : "r"(m), "r"(t) : "memory");
+}
+
+static inline void setTransA1(Vec4 *m, Vec4 *t)
+{
+    /* Pinning t to $a1 for case 7 only gives the Original's registers there. */
+    register Vec4 *tt __asm__("$5") = t;
+    __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
+                         "vmove.w vf4, vf0\n"
+                         "sqc2 vf4, 0x30(%0)\n"
+                         : : "r"(m), "r"(tt) : "memory");
 }
 
 static inline void applyMatrix(Vec4 *out, Vec4 *m, Vec4 *v)
@@ -136,7 +146,7 @@ void GetGeometryPointerQuatPos(QuatPos *out, GeometryPointer *g)
         Vec4 *t = g->p4;
         Vec4 *q = g->p0;
         quatToMatrix(m, q);
-        setTrans(m, t);
+        setTransA1(m, t);
         __asm__ __volatile__("" : : );
         applyMatrix(p, m, &g->v10);
         out->quat.q = g->v20.q;
