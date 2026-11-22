@@ -44,7 +44,7 @@ static inline void mulCurrentMatrix(Matrix *src)
 }
 
 #ifdef NONMATCHING
-/* 7 diffs: rotation matrix stores scheduled in a different order (this store order is the best of 150 random orders). Permuter (4 workers, 25 min) only improved it by moving the m[5] store after the matrix is used, which changes behaviour. */
+/* Parked: 4 diffs (was 7). The s/c locals with s = -s make the negation reuse $f0 like the Original; this store order is the best of about 400 random orders plus single moves. Remaining: the Original stores m[0] and m[7] before m[10] and fills the memset delay slot with the m[9] store (we fill it with the m[0] store). */
 void glRotatex(float angle)
 {
     float sc[4];
@@ -53,15 +53,21 @@ void glRotatex(float angle)
 
     iosGetSinCosf(sc, angle);
     memset(&rot.m[0], 0, 0x10);
-    rot.m[5] = sc[0];
-    rot.m[10] = sc[0];
-    rot.m[4] = 0.0f;
-    rot.m[8] = 0.0f;
-    rot.m[7] = 0.0f;
-    rot.m[0] = 1.0f;
-    rot.m[9] = -sc[1];
-    rot.m[6] = sc[1];
-    rot.m[11] = 0.0f;
+    {
+        float s = sc[1];
+        float c = sc[0];
+
+        rot.m[5] = c;
+        rot.m[4] = 0.0f;
+        rot.m[8] = 0.0f;
+        rot.m[7] = 0.0f;
+        rot.m[11] = 0.0f;
+        rot.m[0] = 1.0f;
+        rot.m[6] = s;
+        rot.m[10] = c;
+        s = -s;
+        rot.m[9] = s;
+    }
     memset(&rot.m[12], 0, 0x10);
     rot.m[15] = 1.0f;
     tmp = rot;
