@@ -21,8 +21,6 @@ extern void func_0009AE78(void **, int, void *, void *, void *, CollisionNode *,
 extern s128 *getLayoutClassCollisionIndepSurfBoundary(LayoutClass *, int, int);
 extern void EntryModifiedManager(void *, int);
 
-#ifdef NONMATCHING
-/* Parked: 2 words differ (the Original moves the float through $t0 for mfc1/qmtc2, ours uses $v0). */
 void GetCollisionDBSurfBoundary(Vec4 *out, CollisionReference *reference)
 {
     unsigned int packed = reference->packed;
@@ -51,6 +49,7 @@ void GetCollisionDBSurfBoundary(Vec4 *out, CollisionReference *reference)
                                  "lqc2 vf5, 0x0(%1)\n"
                                  "lqc2 vf6, 0x0(%2)\n"
                                  : : "r"(v[0]), "r"(v[1]), "r"(v[2]) : "memory");
+            { register float t8 __asm__("$8") = third;
             __asm__ __volatile__("qmtc2.ni %0, vf8\n"
                                  "vadd.xyz vf7, vf4, vf5\n"
                                  "vadd.xyz vf7, vf7, vf6\n"
@@ -71,12 +70,9 @@ void GetCollisionDBSurfBoundary(Vec4 *out, CollisionReference *reference)
                                  "vmaxx.x vf8, vf8, vf6x\n"
                                  "vmulx.w vf7, vf0, vf8x\n"
                                  "sqc2 vf7, 0x0(%1)\n"
-                                 : : "r"(third), "r"(entry) : "memory");
+                                 : : "r"(t8), "r"(entry) : "memory"); }
             EntryModifiedManager(cache, plane);
         }
         out->q = *entry;
     }
 }
-#else
-void GetCollisionDBSurfBoundary(Vec4 *out, CollisionReference *reference);
-#endif
