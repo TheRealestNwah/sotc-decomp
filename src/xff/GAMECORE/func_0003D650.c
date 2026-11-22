@@ -1,13 +1,14 @@
-/* ~116 diffs, same length (156 words). Boss damage application: scales incoming hit (hit+0x1C) against a limit from func_0003D488, caps damage for types 1/2/4 so hp stays above the threshold ratio, resets attack power for types 0/5, adds the pending-hit sum, then signals DEAD_BOSS when hp <= 0. The original keeps 0.0 in f24 across the whole function (zero local gets it from 140 to 116) and orders the incoming args as s1=h, s2=hit, s3=a3; ours still swaps registers around the func_0003D488 call. */
+/* Parked: 14 diffs, same size. Boss damage application: scales the incoming hit (hit+0x1C) by func_0003D488's result, caps damage for types 1/2/4 so hp stays above the threshold ratio, resets attack power for types 0/5, adds the pending-hit sum, then signals DEAD_BOSS when hp <= 0. Remaining: the original loads hit+0x1C and the func_0003D488 out value before the 1.0f constant (ratio and tmp swap f3/f4), and stores a3[1]/a3[0] before loading h+0x48. */
 extern int playerEnableDeath;
 extern int ScrIntrDef_DEAD_BOSS;
 extern char *GetDamageClass(void *);
 extern char *GetLayoutClass(void *);
-extern void func_0003D488(void *, void *, int, float *);
+extern float func_0003D488(void *, void *, int, float *);
 extern void resetAttackPower(void);
 extern void scriptIntrSignal(int);
 
 #ifdef NONMATCHING
+
 float func_0003D650(void *obj, char *h, char *hit, float *a3)
 {
     int type = *(int *)(GetDamageClass(obj) + 0x60);
@@ -15,32 +16,35 @@ float func_0003D650(void *obj, char *h, char *hit, float *a3)
     float hp = *(float *)(h + 0x44);
 
     if (zero < hp) {
-        float dmg = zero;
+        float dmg;
         float diff = *(float *)(hit + 0x1C) - a3[0];
         float max = *(float *)(h + 0x40);
         float f4;
         float ratio;
         float lim;
         float tmp;
+        float r;
 
-        func_0003D488(obj, hit, type, &tmp);
+        r = func_0003D488(obj, hit, type, &tmp);
         f4 = tmp;
         ratio = hp / max;
         lim = *(float *)(hit + 0x1C) * (1.0f - f4);
+        dmg = *(float *)(hit + 0x1C) * r;
         if (lim < diff) {
             if ((*(long *)(hit + 0x28) & 0xC0000000000000L) != 0 || 0.4f < ratio) {
                 float t = diff - lim;
-                dmg = *(float *)(hit + 0x1C) * a3[0];
-                if (dmg < t)
+                if (!(dmg < t))
                     dmg = t;
             } else {
                 dmg = zero;
             }
+        } else {
+            dmg = zero;
         }
         if (type == 2 || type == 4 || type == 1) {
             float one = 1.0f - f4;
             if (ratio <= one) {
-                dmg = zero;
+                dmg = 0.0f;
             } else if ((hp - dmg) / max <= one) {
                 dmg = hp - max * one;
             }
@@ -51,13 +55,13 @@ float func_0003D650(void *obj, char *h, char *hit, float *a3)
         a3[0] = a3[0] + dmg;
         if (*(int *)(h + 0x48) != 0 && (type == 5 || type == 0)) {
             float t = *(float *)(hit + 0x1C) - a3[0];
-            if (zero < t) {
+            if (0.0f < t) {
                 a3[1] = dmg + t;
                 a3[0] = *(float *)(hit + 0x1C);
             }
         }
         {
-            float sum = zero;
+            float sum = 0.0f;
             int n = *(int *)(h + 0x54);
             if (n > 0) {
                 float *p = (float *)(*(char **)(h + 0xE8) + 0x24);
@@ -70,8 +74,8 @@ float func_0003D650(void *obj, char *h, char *hit, float *a3)
         }
     }
     *(float *)(h + 0x44) = hp;
-    if (hp <= zero) {
-        *(float *)(h + 0x44) = zero;
+    if (hp <= 0.0f) {
+        *(float *)(h + 0x44) = 0.0f;
         *(int *)(GetLayoutClass(obj) + 0x1AC) = 1;
         playerEnableDeath = 0;
         scriptIntrSignal(ScrIntrDef_DEAD_BOSS);
