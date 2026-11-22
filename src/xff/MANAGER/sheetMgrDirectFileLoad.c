@@ -1,5 +1,3 @@
-/* Parked: 2 diffs (same store-order problem as sheetMgrAdpcmIntLoad: the original stores flags at +4 before the first argument at +0x10; gcc schedules the argument first). Uses the popReq/getSheetMgrReqEmpty helpers from sheetMgrAdpcmIntLoad; the earlier hand-inlined draft was 54 diffs. A 25-minute permuter run found nothing better. */
-#ifdef NONMATCHING
 typedef struct Req {
     int type;
     unsigned int flags;
@@ -49,13 +47,14 @@ void sheetMgrDirectFileLoad(int a, int b, int c, int d, int *result)
     ReqList *q;
     unsigned fl;
 
+    register int aa asm("$18") = a;
     WaitSema(B_00151860);
     r = getSheetMgrReqEmpty();
     fl = r->flags;
     r->type = 8;
-    r->a = a;
-    r->flags = fl & ~1;
+    *(volatile unsigned *)&r->flags = fl & ~1;
     q = B_00155470;
+    *(volatile int *)&r->a = aa;
     r->b = b;
     r->c = c;
     r->d = d;
@@ -72,4 +71,3 @@ void sheetMgrDirectFileLoad(int a, int b, int c, int d, int *result)
     } while (0);
     SignalSema(B_00151860);
 }
-#endif
