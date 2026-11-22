@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 5 diffs: the Original hoists only %hi(D_00139F40) and uses %lo in the lw/sw; ours hoists the full address */
 typedef struct {
     char *mot;
     int a;
@@ -58,7 +57,7 @@ static int boot_camera_lws_animation(AnimObj *anim, void *geo, void (*cb)(void *
         return -1;
     for (i = 0, e = B_0015DBD0; i < 10; i++, e++) {
         if (e->id == 0) {
-            { int d = D_00139F40; if (isMain == 1) d = isMain; D_00139F40 = d; }
+            if (isMain == 1) D_00139F40 = isMain;
             res = initAnimationObjResource((char *)anim + 4);
             if (res != 0) {
                 e->id = (int)anim;
@@ -79,4 +78,3 @@ static int boot_camera_lws_animation(AnimObj *anim, void *geo, void (*cb)(void *
     }
     return -1;
 }
-#endif
