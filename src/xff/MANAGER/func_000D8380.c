@@ -1,6 +1,4 @@
 /* Clamps the mouse cursor into the object's window rectangle and moves the cursor if it changed. */
-#ifdef NONMATCHING
-/* Parked attempt: 6 differing words (register allocation and scheduling). Permuter 25 min found nothing better. */
 typedef struct {
     float x;
     float y;
@@ -86,8 +84,7 @@ static void func_000D8380(CursorObj *o)
         CursorPos *c = &D_00139B80.cur;
 
         mouseSetCursorPosition(c->x, c->y);
-        D_00139B80.pos->x = c->x;
+        *(volatile float *)&D_00139B80.pos->x = c->x;
         D_00139B80.pos->y = c->y;
     }
 }
-#endif
