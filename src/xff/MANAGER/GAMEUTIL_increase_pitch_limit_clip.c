@@ -31,25 +31,24 @@ static inline float increase_pitch(int *changed, int clamp, float pitch, float a
         if (max < pitch) {
             if (add < 0.0f) {
                 out = pitch + add;
-                r = 1;
                 if (out < max && clamp != 0) {
                     out = max;
                 }
+                r = 1;
             }
         } else if (pitch < min) {
             if (add > 0.0f) {
                 out = pitch + add;
-                r = 1;
                 if (min < out && clamp != 0) {
                     out = min;
                 }
+                r = 1;
             }
         } else {
             out = pitch + add;
             if (max < out) {
                 out = max;
-            }
-            if (out < min) {
+            } else if (out < min) {
                 out = min;
             }
             r = 1;
@@ -61,8 +60,6 @@ static inline float increase_pitch(int *changed, int clamp, float pitch, float a
     return out;
 }
 
-#ifdef NONMATCHING
-/* 7 diffs (was 43, same fixes as GAMEUTIL_increase_pitch: goto nearlyZero idiom, two independent ifs on the unclamped path): the inlined copy keeps the same clamp-tail bnel shapes as the standalone one */
 float GAMEUTIL_increase_pitch_limit_clip(int *changed, int clamp, float pitch, float add, float max, float min)
 {
     int r;
@@ -81,4 +78,3 @@ float GAMEUTIL_increase_pitch_limit_clip(int *changed, int clamp, float pitch, f
     }
     return out;
 }
-#endif
