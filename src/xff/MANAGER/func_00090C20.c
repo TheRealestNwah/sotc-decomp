@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 2 diffs (cb reloaded into v0 instead of v1 for the jalr); flip/p1/p4 temps from the permuter, was 30; a second 40-min permuter run from the 2-diff base found nothing. */
 extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, short, float *);
 extern void SetGeometryPointerNodePosState(void *, int, int, float *, void *);
 extern float XUnitVector[4];
@@ -22,7 +20,7 @@ static inline void quatMul(float *out, float *a, float *b)
                          : : "r"(a), "r"(b), "r"(out) : "memory");
 }
 
-static void func_00090C20(void (*cb)(void *, void *, void *, void *, void *), void *p1, void *p2, void *p3,
+static int func_00090C20(int (*cb)(void *, void *, void *, void *, void *), void *p1, void *p2, void *p3,
                           void *p4, int node, int kind, float *rot, void *extra)
 {
     char state[0x40] __attribute__((aligned(16)));
@@ -38,6 +36,5 @@ static void func_00090C20(void (*cb)(void *, void *, void *, void *, void *), vo
     quatMul(q, rot, flip);
     SetGeometryPointerNodePosState(state, node, kind, pq, extra);
     v1 = p4;
-    cb(v2, p2, p3, v1, state);
+    return cb(v2, p2, p3, v1, state);
 }
-#endif
