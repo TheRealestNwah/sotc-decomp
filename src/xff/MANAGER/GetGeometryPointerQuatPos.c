@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* Parked: 2 diffs (was 5). Remaining: in case 7 the Original schedules addiu v0,sp,0x40 before lw a1,4(s2); ours loads t first. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union {
     s128 q;
@@ -143,9 +142,12 @@ void GetGeometryPointerQuatPos(QuatPos *out, GeometryPointer *g)
     case 7: {
         Vec4 m[4];
         Vec4 *p = &out->pos;
-        Vec4 *t = g->p4;
-        Vec4 *q = g->p0;
-        quatToMatrix(m, q);
+        Vec4 *t;
+        Vec4 *q;
+        Vec4 *mm = m;
+        q = g->p0;
+        t = g->p4;
+        quatToMatrix(mm, q);
         setTransA1(m, t);
         __asm__ __volatile__("" : : );
         applyMatrix(p, m, &g->v10);
@@ -192,4 +194,3 @@ void GetGeometryPointerQuatPos(QuatPos *out, GeometryPointer *g)
         break;
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* case 7 schedules the q/t loads before addiu v0,sp,0x40 (3 diffs, same size) */
 typedef int s128 __attribute__((mode(TI)));
 typedef union {
     s128 q;
@@ -100,9 +99,10 @@ void GetGeometryPointerPosition(Vec4 *out, GeometryPointer *g)
     }
     case 7: {
         Vec4 m[4];
-        Vec4 *t = g->p4;
+        Vec4 *mm = m;
         Vec4 *q = g->p0;
-        quatToMatrix(m, q);
+        Vec4 *t = g->p4;
+        quatToMatrix(mm, q);
         setTrans(m, t);
         __asm__ __volatile__("" : : );
         applyMatrix(out, m, &g->v10);
@@ -147,4 +147,3 @@ void GetGeometryPointerPosition(Vec4 *out, GeometryPointer *g)
     }
     out->f[3] = 1.0f;
 }
-#endif
