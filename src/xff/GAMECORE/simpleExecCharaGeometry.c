@@ -1,4 +1,5 @@
-extern char gcGlobalVar[];
+typedef struct { char pad[0x178]; float f178; char pad2[0xC]; float f188; char pad3[0x1E4]; char geo[1]; } G;
+extern G gcGlobalVar;
 extern char *GetCharacterClass(int);
 extern char *GetLayoutClass(int);
 extern int get_main_cameraman_camera_obj(void);
@@ -9,56 +10,41 @@ extern int ExecCharaGeometryPreprocess(int, float, float, float);
 extern void ExecCharaGeometry(int, void *);
 extern void ExecCharaGeometryPostprocess(int);
 
-#ifdef NONMATCHING /* 81 diffs: structure and field widths right; the original keeps only the %hi of gcGlobalVar live in $s3 across the calls (+%lo added per use), ours materializes the full pointer, and the area-flag temporaries sit in other registers */
+static inline int isLegalParent(char *l)
+{
+    char *p;
+
+    if (l != 0 && *(int *)(l + 0x124) != 0
+        && (p = SCRGetGetGeometryPointerLegalParentObj(l + 0xC0)) != 0) {
+        switch (*(unsigned char *)(p + 8)) {
+        case 9:
+        case 0xD:
+        case 0x16:
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void simpleExecCharaGeometry(int a0)
 {
     int run = 0;
-    char *g = gcGlobalVar;
     char *c = GetCharacterClass(a0);
-    float clip = ViewIntervalClip(a0, get_main_cameraman_camera_obj(), *(float *)(g + 0x188));
-    char *l;
-    char *p;
-    int ok;
+    float clip = ViewIntervalClip(a0, get_main_cameraman_camera_obj(), gcGlobalVar.f188);
 
-    if (*(signed char *)(c + 0x534) != 0) {
-        if (*(int *)(GetCharacterClass(a0) + 0x1170) != 0
-            && StageManagerCheckAreaExist(*(int *)(GetLayoutClass(a0) + 0x134)) == 0
-            && *(short *)(c + 0x370) != 4) {
-            l = GetLayoutClass(a0);
-            ok = 0;
-            if (l != 0) {
-                if (*(int *)(l + 0x124) == 0) {
-                    ok = 0;
-                } else {
-                    p = SCRGetGetGeometryPointerLegalParentObj(l + 0xC0);
-                    if (p == 0) {
-                        ok = 0;
-                    } else {
-                        unsigned char t = *(unsigned char *)(p + 8);
-
-                        ok = 1;
-                        if (t != 0xD) {
-                            if (t < 0xE) {
-                                if (t != 9)
-                                    ok = 0;
-                            } else if (t != 0x16) {
-                                ok = 0;
-                            }
-                        }
-                    }
-                }
-            }
-            if (ok != 0 || *(unsigned char *)(c + 0xD90) == 1 || *(int *)(c + 0x1070) == 1 || *(short *)(c + 0x370) == 0xB)
-                run = ExecCharaGeometryPreprocess(a0, *(float *)(g + 0x178), clip, 1.0f / clip);
-        } else {
-            run = ExecCharaGeometryPreprocess(a0, *(float *)(g + 0x178), clip, 1.0f / clip);
-        }
-    }
+    if (*(signed char *)(c + 0x534) != 0
+        && (*(int *)(GetCharacterClass(a0) + 0x1170) == 0
+            || StageManagerCheckAreaExist(*(int *)(GetLayoutClass(a0) + 0x134)) != 0
+            || *(short *)(c + 0x370) == 4
+            || isLegalParent(GetLayoutClass(a0))
+            || *(unsigned char *)(c + 0xD90) == 1
+            || *(int *)(c + 0x1070) == 1
+            || *(short *)(c + 0x370) == 0xB))
+        run = ExecCharaGeometryPreprocess(a0, gcGlobalVar.f178, clip, 1.0f / clip);
     if (run != 0) {
         c = GetCharacterClass(a0);
-        ExecCharaGeometry(a0, g + 0x370);
+        ExecCharaGeometry(a0, (char *)&gcGlobalVar + 0x370);
         *(char *)(c + 0x539) = StageManagerCheckAreaExist(*(int *)(GetLayoutClass(a0) + 0x134));
     }
     ExecCharaGeometryPostprocess(a0);
 }
-#endif
