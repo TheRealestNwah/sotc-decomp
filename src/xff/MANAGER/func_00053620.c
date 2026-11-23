@@ -1,5 +1,3 @@
-/* 4 diffs, same size (443 words). Builds a jump velocity from a JumpVelocityDef (gravity -14.7, optionally scaled), rotates it by the character orientation (cc+0x13C) about Y by def->angle, or falls back to a motion velocity or the current velocity, then limits it against the floor speed and adds it into cc+0x30. Remaining diffs are in the else branch quaternion apply: the Original puts the output (sp) pointer in $v1 and cc+0x13C in $v0; ours swaps them. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -170,7 +168,7 @@ static inline void rotateY(Vec4 *out, Vec4 *q, short ang)
     quatMul(out, q, &t);
 }
 
-int func_00053620(void *obj, int *ref, int *vref, float scale)
+static int func_00053620(void *obj, int *ref, int *vref, float scale)
 {
     Vec4 vel;
     Vec4 src;
@@ -237,7 +235,11 @@ int func_00053620(void *obj, int *ref, int *vref, float scale)
             ret = 0;
         }
     } else if (in != 0) {
-        quatApply(&vel, *(Vec4 **)(cc + 0x13C), in);
+        {
+            register Vec4 *o __asm__("$3") = &vel;
+            __asm__ __volatile__("" : "+r"(o));
+            quatApply(o, *(Vec4 **)(cc + 0x13C), in);
+        }
     } else {
         vel.q = ((Vec4 *)(cc + 0x30))->q;
     }
@@ -302,4 +304,3 @@ int func_00053620(void *obj, int *ref, int *vref, float scale)
     }
     return ret;
 }
-#endif
