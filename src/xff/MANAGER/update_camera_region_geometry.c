@@ -1,6 +1,3 @@
-/* Parked: 4 diffs (ee-gcc 2.96 -O2 -G0; permuter found no improvement).
- * Remaining: v0/v1 swap for &p vs matrix copy in quat-to-matrix translation block. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { float f[4]; s128 q; } Vec4;
 
@@ -27,7 +24,7 @@ static inline void vecMul(void *dst, void *a, void *b)
 
 static inline void quatMatrix(void *dst0, void *q, void *t)
 {
-    void *dst = dst0;
+    register void *dst __asm__("$3") = dst0;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
                          "vmr32.w vf14, vf0\n"
@@ -157,4 +154,3 @@ void update_camera_region_geometry(void *obj, void *target, int node, char *para
         break;
     }
 }
-#endif
