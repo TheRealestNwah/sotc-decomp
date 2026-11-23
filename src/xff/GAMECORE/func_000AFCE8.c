@@ -65,8 +65,6 @@ extern SObjNode *getSObjNode(int);
 extern void gexsFlagSet(int, int);
 extern void SetLayoutObjAccessSwitch(int, int);
 
-#ifdef NONMATCHING
-/* 6 diffs: the ControlMode_GEX_RE_* loads in case 23 swap $v0/$v1. */
 static inline int isSteep(Vec4 *n)
 {
     char *lay = GetLayoutClass(isysGetThisSubThread());
@@ -79,13 +77,12 @@ static inline int isSteep(Vec4 *n)
 
 static inline int isReFall(int m)
 {
-    int r = 1;
-    if (m != ControlMode_GEX_RE_FALL && m != ControlMode_GEX_RE_FALL_DEATH && m != ControlMode_GEX_RE_CUT_TAIL)
-        r = m == ControlMode_GEX_RE_FALL_CUT_TAIL;
-    return r;
+    if (m == ControlMode_GEX_RE_FALL) return 1;
+    if (m == ControlMode_GEX_RE_FALL_DEATH) return 1;
+    if (m == ControlMode_GEX_RE_CUT_TAIL) return 1;
+    return m == ControlMode_GEX_RE_FALL_CUT_TAIL;
 }
-
-void func_000AFCE8(GexWork *w)
+static void func_000AFCE8(GexWork *w)
 {
     Vec4 t;
     Vec4 n;
@@ -188,4 +185,3 @@ void func_000AFCE8(GexWork *w)
         break;
     }
 }
-#endif
