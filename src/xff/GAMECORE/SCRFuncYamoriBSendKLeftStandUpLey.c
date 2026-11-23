@@ -7,7 +7,6 @@ extern void *DldSysUndefSymbol;
 extern char *GetLayoutClass(void);
 extern void CharaCtrlSetScriptCtrlStatus(int, int, unsigned int);
 
-#ifdef NONMATCHING /* 1 diff, same size: blk2's matrix pointer is copied from a2 (daddu v0, a2, zero) where the Original rematerializes addiu v0, sp, 0x20 */
 static inline void blk1(float *m_, float *pb_, float *pa_)
 {
     register float *m __asm__("$6") = m_;
@@ -40,10 +39,16 @@ static inline void blk1(float *m_, float *pb_, float *pa_)
                          "sqc2 vf14, 0x0(%0)\n"
                          "sqc2 vf15, 0x10(%0)\n"
                          "sqc2 vf16, 0x20(%0)\n"
-                         "lqc2 vf4, 0x0(%2)\n"
+                         : : "r"(m), "r"(pb), "r"(pa) : "memory");
+}
+static inline void blk1b(float *m_, float *pa_)
+{
+    register float *m __asm__("$6") = m_;
+    register float *pa __asm__("$4") = pa_;
+    __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
-                         : : "r"(m), "r"(pb), "r"(pa) : "memory");
+                         : : "r"(m), "r"(pa));
 }
 
 static inline void blk2(float *m_)
@@ -121,6 +126,7 @@ void SCRFuncYamoriBSendKLeftStandUpLey(int obj, int a1, int a2, int a3, int a4, 
     pa = *(float **)(lay + 0x134);
     pb = *(float **)(lay + 0x13C);
     blk1(m6, pb, pa);
+    blk1b(m, pa);
     blk2(m);
     blk3(out, v, m);
     if (out[2] < 0.0f) {
@@ -137,4 +143,3 @@ void SCRFuncYamoriBSendKLeftStandUpLey(int obj, int a1, int a2, int a3, int a4, 
             CharaCtrlSetScriptCtrlStatus(obj, *(int *)(data + 4), enc);
     }
 }
-#endif
