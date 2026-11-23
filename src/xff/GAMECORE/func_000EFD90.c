@@ -1,5 +1,3 @@
-/* Parked attempt, 17 diffs, same size. Blends two poses field by field (out = wa * a + wb * b), with the angle at 0x40 wrapped through 360 and the fields at 0x7C/0x80 blended only when both are positive and b's is not 0.001. Remaining: register allocation in the angle block; the Original loads b->ang first and keeps both copies (x in f1, y in f6, d in f2), ours loads a->ang first and swaps f2/f4/f5. A 30-minute permuter run found nothing better. */
-#ifdef NONMATCHING
 typedef struct {
     int k;
     float a[15];
@@ -9,28 +7,28 @@ typedef struct {
     float d;
 } Pose;
 
-static inline float angBlend(float wa, float pa, float wb, float pb)
+static inline float angBlend(float wa, float wb, float pb, float pa)
 {
     float x;
     float y;
     float d;
     float r;
 
-    y = pa;
     x = pb;
+    y = pa;
     d = x - y;
     if ((d < 0.0f) ? (-180.0f <= d) : (d <= 180.0f)) {
-        r = wa * pa + wb * pb;
+        x = wa * pa + wb * pb;
     } else {
         if (pa < 0.0f)
             y = pa + 360.0f;
         else if (pb < 0.0f)
             x = pb + 360.0f;
-        r = wa * y + wb * x;
-        if (180.0f < r)
-            r -= 360.0f;
+        x = wa * y + wb * x;
+        if (180.0f < x)
+            x -= 360.0f;
     }
-    return r;
+    return x;
 }
 
 static void func_000EFD90(Pose *out, float wa, Pose *a, float wb, Pose *b, void *x)
@@ -50,7 +48,7 @@ static void func_000EFD90(Pose *out, float wa, Pose *a, float wb, Pose *b, void 
     out->a[12] = wa * a->a[12] + wb * b->a[12];
     out->a[13] = wa * a->a[13] + wb * b->a[13];
     out->a[14] = wa * a->a[14] + wb * b->a[14];
-    out->ang = angBlend(wa, a->ang, wb, b->ang);
+    out->ang = angBlend(wa, wb, b->ang, a->ang);
     out->b[0] = wa * a->b[0] + wb * b->b[0];
     out->b[1] = wa * a->b[1] + wb * b->b[1];
     out->b[2] = wa * a->b[2] + wb * b->b[2];
@@ -70,4 +68,3 @@ static void func_000EFD90(Pose *out, float wa, Pose *a, float wb, Pose *b, void 
     if (0.0f < a->d && 0.0f < b->d && b->d != 0.001f)
         out->d = wa * a->d + wb * b->d;
 }
-#endif
