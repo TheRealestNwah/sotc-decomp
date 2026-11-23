@@ -1,5 +1,3 @@
-/* 2 diffs: register choice for &pkt temp (a3 vs v0) at 0x1A0 */
-#ifdef NONMATCHING
 typedef unsigned long u64 __attribute__((mode(DI)));
 typedef unsigned int u128 __attribute__((mode(TI)));
 typedef union { u64 d; float f[2]; int i[2]; void *p[2]; } PKT;
@@ -64,7 +62,12 @@ static void func_00015310(float *r, unsigned char *s, unsigned int (*fn)(int))
     }
     gsRegEnd();
     top = iosGetPacketPtrPath1();
-    pkt = top + 4;
+    {
+        register PKT *t __asm__("$7") = top + 4;
+
+        __asm__("" : "+r"(t));
+        pkt = t;
+    }
     while (*s) {
         if (*s < 0x20) {
             switch (*s) {
@@ -115,4 +118,3 @@ static void func_00015310(float *r, unsigned char *s, unsigned int (*fn)(int))
         iosDlChainTailCurrent(top);
     }
 }
-#endif
