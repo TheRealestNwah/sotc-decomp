@@ -6,19 +6,20 @@ extern int AI_CheckNormZero(void *);
 extern float AI_GetInterRatioOutCut(float, float, float, float, float);
 extern void func_000B0160(void *, void *, int, float);
 
-#ifdef NONMATCHING /* 40 diffs: a laundered local 3.0f gets it close; the original loads 1.0f into $f20 then 3.0f straight into $f13 before the horse-parent branch, ours routes them through $f14/$f13 copies */
+/* Pins 1.0f to $f20 like the original so 3.0f loads straight into $f13. */
 static void func_000B0D08(char *c)
 {
     Vec4 v;
     float ratio;
     float f12;
-    float one = 1.0f;
-    float three = 3.0f;
+    register float one __asm__("$f20") = 1.0f;
+    float three;
+    int r;
 
     *(int *)(c + 0x1A0) = 0x28;
     v.q = *(s128 *)(c + 0xC0);
     v.f[1] = 0.0f;
-    __asm__("" : "+f"(three));
+    three = 3.0f;
     if (AI_CheckHorseParent(*(int *)(c + 0x44)) != 0) {
         ratio = AI_GetInterRatioOutCut(*(float *)(c + 0x140), 0.0f, one, one, 1.0999999047f);
     } else {
@@ -27,8 +28,9 @@ static void func_000B0D08(char *c)
     if (*(float *)(c + 0x200) < ratio) {
         *(float *)(c + 0x200) = ratio;
     }
+    r = AI_CheckNormZero(&v);
     f12 = 0.0f;
-    if (AI_CheckNormZero(&v) != 0) {
+    if (r != 0) {
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "vmul.xyz vf7, vf5, vf5\n"
                              "vmulax.w ACC, vf0, vf7x\n"
@@ -43,4 +45,3 @@ static void func_000B0D08(char *c)
     }
     func_000B0160(c, c + 0xD0, 0xC, f12);
 }
-#endif
