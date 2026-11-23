@@ -1,11 +1,11 @@
 /*
- * Parked: 4 diffs. Global, called from InitSpriteObj (creates one sprite
+ * Parked: 2 diffs. Global, called from InitSpriteObj (creates one sprite
  * per definition and applies its position, UVs, colour, scale, rotation
  * and blend mode).
- * Remaining: after spriteCreateObject, the Original schedules the
- * `move a0, s1` and the list->sprites[i] store before the d->sprite store
- * and the 0xC float load; ours stores d->sprite first. The permuter (one
- * 30-minute run) and the assignment orders tried did not change it.
+ * Remaining: the list->sprites load and the i*4 shift swap registers
+ * (Original: v1 = list->sprites, v0 = i << 2). The empty asm statements
+ * force the Original's order of the slot address, the `move a0, s1` and
+ * the two stores before the 0xC float load.
  */
 #ifdef NONMATCHING
 extern int sheetFsLanguageCode;
@@ -59,9 +59,18 @@ void func_00098A88(void *heap, int unused, SpriteList *list, SpriteDef *d)
         if (list->max < d->layer + 1)
             list->max = d->layer + 1;
         sp = spriteCreateObject(heap, tex);
-        list->sprites[i] = sp;
-        d->sprite = sp;
-        spriteSetPosition(sp, d->x, d->y);
+        {
+            void **slot = &list->sprites[i];
+            __asm__ __volatile__("" : : "r"(slot));
+            {
+                register void *a __asm__("$4") = sp;
+                __asm__ __volatile__("" : "+r"(a));
+                *slot = sp;
+                d->sprite = sp;
+                __asm__ __volatile__("" : : );
+                spriteSetPosition(a, d->x, d->y);
+            }
+        }
         spriteSetTextureCoordinateUV(sp, d->u0, d->v0, d->u1, d->v1);
         spriteSetColor(sp, (unsigned char)(unsigned int)d->r, (unsigned char)(unsigned int)d->g,
                        (unsigned char)(unsigned int)d->b, (unsigned char)(unsigned int)d->a);
