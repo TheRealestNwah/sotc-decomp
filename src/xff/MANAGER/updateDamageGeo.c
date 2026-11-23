@@ -1,9 +1,9 @@
 /*
- * Parked: 5 diffs, same size (268 words).
+ * Parked: 3 diffs, same size (268 words).
  * Remaining: type-3 GetMotionNodeQuaternionPosToolCoord argument setup order
- * (addiu a0,sp,0x60 before daddu a3,s2), and the branch-2 quatMatrix copy order
- * (addiu v0,sp,0x60 before daddu v1,a1). Permuter (-j2, 30 min) gave the sf
- * pointer change only.
+ * (the Original puts addiu a0,sp,0x60 in the bnez delay slot and before
+ * daddu a3,s2; ours does a3 first). Branch 2 uses quatMatrix2, which pins
+ * the source pointer to $v0 so it is set before the destination copy.
  */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
@@ -20,6 +20,44 @@ static inline void quatMatrix(void *dst0, void *q, void *t)
     void *dst = dst0;
     void *qq = q;
     void *tt = t;
+    __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
+                         "lqc2 vf11, 0x0(%1)\n"
+                         "vmr32.w vf14, vf0\n"
+                         "vmr32.w vf15, vf0\n"
+                         "vmr32.w vf16, vf0\n"
+                         "vopmula.xyz ACC, vf11, vf12\n"
+                         "vmadd.xyz vf11, vf0, vf0\n"
+                         "vmadd.xyz vf10, vf11, vf12\n"
+                         "vmul.xyz vf13, vf11, vf10\n"
+                         "vopmula.xyz ACC, vf11, vf10\n"
+                         "vmaddw.xyz vf15, vf10, vf11w\n"
+                         "vmsubw.xyz vf16, vf10, vf11w\n"
+                         "vopmula.xyz ACC, vf13, vf12\n"
+                         "vmadd.xyz vf17, vf13, vf12\n"
+                         "vopmula.xyz ACC, vf15, vf12\n"
+                         "vmadd.xyz vf15, vf0, vf0\n"
+                         "vsub.xyz vf14, vf12, vf17\n"
+                         "vmove.yz vf17, vf14\n"
+                         "vmove.y vf14, vf16\n"
+                         "vmove.y vf16, vf15\n"
+                         "vmove.y vf15, vf17\n"
+                         "vmove.z vf14, vf15\n"
+                         "vmove.z vf15, vf16\n"
+                         "vmove.z vf16, vf17\n"
+                         "sqc2 vf14, 0x0(%0)\n"
+                         "sqc2 vf15, 0x10(%0)\n"
+                         "sqc2 vf16, 0x20(%0)\n"
+                         : : "r"(dst0), "r"(qq) : "memory");
+    __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
+                         "vmove.w vf4, vf0\n"
+                         "sqc2 vf4, 0x30(%0)\n"
+                         : : "r"(dst), "r"(tt) : "memory");
+}
+static inline void quatMatrix2(void *dst0, void *q, void *t)
+{
+    register void *tt __asm__("$2") = t;
+    void *qq = q;
+    void *dst = dst0;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
                          "vmr32.w vf14, vf0\n"
@@ -194,7 +232,7 @@ int updateDamageGeo(void *a0, void *obj, int node, char *geo, int power, int typ
                 GetMotionNodeQuaternionPosToolCoord(nq, &b, obj, node, 1);
                 mtx = m;
                 __asm__ __volatile__("" : : "r"(mtx));
-                quatMatrix(mtx, nq, &b);
+                quatMatrix2(mtx, nq, &b);
             }
             quatMul(oq, nq, gq);
             quatNormalize(oq, oq);
