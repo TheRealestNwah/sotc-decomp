@@ -21,7 +21,8 @@ extern void updateAimIKWork(void *, void *);
 extern char *SkelFocusDef_BOSS_OPT_ATTACK;
 extern char gcGlobalVar[];
 
-#ifdef NONMATCHING /* 3 diffs. Wind-attack turn for the Yamori B boss: while its current motion is the given one, scales the leg-slow walk by the AI target's distance in the boss's local space (minus off, over the motion length) and sends a program rotation of deg degrees toward it; unless the cloak is on, aims the IK at the player when the BOSS_OPT_ATTACK node has a clear line. Pinning the matrix-build operands (quat $v0, pos $a0, out $v1) and the matrix-inverse pointer ($v0, returned and passed on to the apply block) gives the Original's registers; remaining: the Original loads pos before forming out (sp+0x10) and rematerialises sp+0x10 into $v0 for the inverse with addiu, where ours copies it from $v1 with daddu. */
+/* Wind-attack turn for the Yamori B boss: while its current motion is the given one, scales the leg-slow walk by the AI target's distance in the boss's local space (minus off, over the motion length) and sends a program rotation of deg degrees toward it; unless the cloak is on, aims the IK at the player when the BOSS_OPT_ATTACK node has a clear line. The pos-store asm has no "memory" clobber, so the Original's
+ * reload order (pos before out, sp+0x10 rematerialised for the inverse) falls out. */
 static inline char *dldResolve(unsigned int *h)
 {
     unsigned int v = *h;
@@ -83,7 +84,7 @@ static inline void quatPosToMatrix(float *out, float *quat, float *pos)
     __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
-                         : : "r"(o), "r"(ps) : "memory");
+                         : : "r"(o), "r"(ps));
 }
 
 
@@ -170,4 +171,3 @@ void SCRFuncYamoriBProgramRotForWindAttack(void *obj, int b, int c, int d, int e
             updateAimIKWork(obj, *(void **)(*(char **)(w + 0x407C) + 0x134));
     }
 }
-#endif
