@@ -4,7 +4,8 @@
    func_000B4690 reports done, then 3), runs func_000B48A8, and by state keeps the tail points
    (+0x50/+0x60/+0x70) in sync with the layout (state 1 also forwards bow/sound-bow damage to the
    owner). When the layout falls below y = -1000 it disables layout access and idles forever.
-   Written from the m2c draft; not yet compared closely. */
+   32 diffs left: the armed check computes sltu where the Original branches, layout/owner sit in
+   swapped s-registers, and gcc reuses the +0x13C pointer load the Original reloads after the store. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -22,6 +23,28 @@ extern int func_000B4690(char *, char *, char *);
 extern void func_000B48A8(char *);
 extern int isysGetThisSubThread(void);
 extern void scrRunM(int);
+
+static inline char isArmed(int owner)
+{
+    char *cc = *(char **)(GetScriptCharacterClass(owner) + 0x1200);
+    int *sub;
+
+    if (cc == 0)
+        return 0;
+    sub = *(int **)(cc + 0x10);
+    if (sub == 0)
+        return 0;
+    if (*sub != 0)
+        return 1;
+    return 0;
+}
+
+static inline int isDone(char *p, char *pos, char *aux)
+{
+    if (*(int *)(GetCharacterClass(isysGetThisSubThread()) + 0x750) == ControlMode_GEX_TAIL_DEATH)
+        return 1;
+    return (*(int *)(p + 0x2C) = func_000B4690(p, pos, aux)) != 0;
+}
 
 static void func_000B4A80(char *p)
 {
@@ -42,41 +65,22 @@ static void func_000B4A80(char *p)
             int owner = *(int *)(p + 0x20);
             int ok = 1;
 
-            if (owner != 0) {
-                char *cc = *(char **)(GetScriptCharacterClass(owner) + 0x1200);
-                int armed = 0;
-
-                if (cc != 0) {
-                    int *sub = *(int **)(cc + 0x10);
-                    if (sub != 0) {
-                        if (*sub != 0)
-                            armed = 1;
-                        else
-                            armed = 0;
-                    }
-                }
-                ok = armed != 0;
-            }
+            if (owner != 0)
+                ok = isArmed(owner);
             if (ok != 0)
                 *(int *)(p + 0x28) = 2;
             break;
         }
-        case 2: {
-            int ok = 1;
-
-            if (*(int *)(GetCharacterClass(isysGetThisSubThread()) + 0x750) != ControlMode_GEX_TAIL_DEATH) {
-                int r = func_000B4690(p, pos, aux);
-                *(int *)(p + 0x2C) = r;
-                ok = r != 0;
-            }
-            if (ok != 0)
+        case 2:
+            if (isDone(p, pos, aux))
                 *(int *)(p + 0x28) = 3;
             break;
-        }
+        case 0:
+            break;
         }
         func_000B48A8(p);
-        next = *(int *)(p + 0x28);
         layout = GetLayoutClass(isysGetThisSubThread());
+        next = *(int *)(p + 0x28);
         switch (next) {
         case 1: {
             int owner = *(int *)(p + 0x20);
