@@ -1,8 +1,5 @@
-/* Parked draft: draws a window's title text, faded by the window's fade table entry, truncated to
-   the visible width, with the font board's flag cleared around the kPrintf call. 5 diffs, same
-   size: only the float register pair for the two kPrintf coordinates is swapped. Permuter found no
-   improvement in 25 minutes. */
-#ifdef NONMATCHING
+/* Draws a window's title text, faded by the window's fade table entry, truncated to the visible
+   width, with the font board's flag cleared around the kPrintf call. */
 typedef struct {
     unsigned int r;
     unsigned int g;
@@ -25,7 +22,7 @@ static inline void printAt(float x, float y, const char *s)
     kPrintf((int)x, (int)y, s);
 }
 
-void func_000D5A90(char *w)
+static void func_000D5A90(char *w)
 {
     char buf[0x100];
     float fade;
@@ -55,8 +52,11 @@ void func_000D5A90(char *w)
         saved = *board;
         *board = 0;
         __asm__ volatile("" ::: "memory");
-        printAt(((float *)(w + 0x264))[0], ((float *)(w + 0x264))[9], buf);
+        {
+            float y = ((float *)(w + 0x264))[9];
+            __asm__ __volatile__("" : "+f"(y));
+            printAt(((float *)(w + 0x264))[0], y, buf);
+        }
         *board = saved;
     }
 }
-#endif
