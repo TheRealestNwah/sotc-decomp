@@ -1,10 +1,7 @@
-/* Parked: 16 diffs, same size. Save-point map icons. For every save point whose flag is set it
+/* Save-point map icons. For every save point whose flag is set it
    converts the point's world position (plus the seamless-area centre) to the map plane with
-   getPosOnMap and draws one icon sprite there, scaled by the map zoom. Remaining: the SH ternary
-   comes out as movn instead of movz (v0/v1 swapped), and the count/list pointer go straight to
-   s5/s2 instead of through a0/v0. Writing it as `sh = SH; if (Undef == SH) sh = 0;` gives the
-   movz but swaps a1/v1 and drops two words. */
-#ifdef NONMATCHING
+   getPosOnMap and draws one icon sprite there, scaled by the map zoom.
+   The list pointer is loaded before the count; the SH ternary keeps the Undef test as written. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -37,12 +34,13 @@ typedef struct { float x, y, z, w; } V4h __attribute__((aligned(8)));
 static void func_000CE620(char *map)
 {
     int *sh = DldSysUndefSymbol != SH_SavePointDEFAULT ? SH_SavePointDEFAULT : 0;
+    char *list = (char *)sh[4];
     int count = sh[3];
     char *p;
     int i;
 
     if (count > 0) {
-        p = (char *)sh[4];
+        p = list;
         i = count;
         do {
             if (p[3] != 0 && _gameFlagChk(*(int *)(p + 4)) != 0) {
@@ -88,4 +86,4 @@ static void func_000CE620(char *map)
         } while (--i);
     }
 }
-#endif
+
