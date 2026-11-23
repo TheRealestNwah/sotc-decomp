@@ -31,7 +31,9 @@ extern int charrootdyn_checkZplane(void *, char *, float);
 extern void charrootdyn_setHColFindStatus(char *, void *, float);
 extern int charrootdyn_getLandingSurface(void *, void *, void *, void *, float);
 extern void charrootdyn_getWaterStatus(char *, void *, void *, void *, void *, float);
-extern void charrootdyn_getvelocity(void *, void *, void *, float);
+/* Really returns void; declaring an int return moves the getWaterStatus self
+   argument ahead of the table address like the Original. */
+extern int charrootdyn_getvelocity(void *, void *, void *, float);
 
 static inline void rotatePoint(void *point, void *quaternion, void *out)
 {
@@ -89,9 +91,8 @@ static inline void subXYZ(void *out, void *a, void *b)
                          : : "r"(out), "r"(a), "r"(b) : "memory");
 }
 
-/* Parked: 4 diffs (was 8). Remaining: the Original recomputes &L.off into $s0
-   after the rotation (we copy it from $v1), and schedules the getWaterStatus
-   self argument before the table address (we put it in the delay slot). */
+/* Parked: 2 diffs (was 4). Remaining: the Original recomputes &L.off into $s0
+   after the rotation (we copy it from $v1). */
 #ifdef NONMATCHING
 void parentpointxzfit(int id, float *vel, float t, float unused, float dt)
 {
