@@ -1,6 +1,4 @@
-/* Parked attempt, 24 diffs, same size. Blends two camera parameter blocks field by field (out = wa * a + wb * b), with the angle at 0x4C wrapped through 360, and blends 0x94..0xCC from b or from the base block depending on the boss layout check. Remaining: the angle block loads a->ang first (the Original loads b->ang first) and allocates f1/f2/f4/f5/f6 differently; the use flag lands in a1 instead of v1. Passing sel to GAMEUTIL_get_boss_obj (which takes no argument) only steers sel into a0 like the Original; with the real prototype it is 30 diffs. A 30-minute permuter run found nothing better. */
-#ifdef NONMATCHING
-extern void *GAMEUTIL_get_boss_obj(int);
+extern void *GAMEUTIL_get_boss_obj(void);
 extern char *GetLayoutClass(void *);
 extern int strcmp(const char *, const char *);
 extern const char RO_001812B8[];
@@ -14,7 +12,7 @@ typedef struct {
     float c[14];
     float d;
     float e;
-    int sel;
+    union { int i; float f; } sel;
     float g[14];
     float h;
 } Pose;
@@ -31,28 +29,28 @@ typedef struct {
     float e;
 } Base;
 
-static inline float angBlend(float wa, float pa, float wb, float pb)
+static inline float angBlend(float wa, float wb, float pb, float pa)
 {
     float x;
     float y;
     float d;
     float r;
 
-    y = pa;
     x = pb;
+    y = pa;
     d = x - y;
     if ((d < 0.0f) ? (-180.0f <= d) : (d <= 180.0f)) {
-        r = wa * pa + wb * pb;
+        x = wa * pa + wb * pb;
     } else {
         if (pa < 0.0f)
             y = pa + 360.0f;
         else if (pb < 0.0f)
             x = pb + 360.0f;
-        r = wa * y + wb * x;
-        if (180.0f < r)
-            r -= 360.0f;
+        x = wa * y + wb * x;
+        if (180.0f < x)
+            x -= 360.0f;
     }
-    return r;
+    return x;
 }
 
 static inline int useOwn(int sel, char *cam)
@@ -63,12 +61,13 @@ static inline int useOwn(int sel, char *cam)
         return 0;
     if (sel == 1)
         return 1;
-    if (*(int *)(cam + 0x1360) != 4)
-        return 1;
-    boss = GAMEUTIL_get_boss_obj(sel);
-    if (boss == 0)
-        return 0;
-    return strcmp(*(char **)(GetLayoutClass(boss) + 0x130), RO_001812B8) != 0;
+    if (*(int *)(cam + 0x1360) == 4) {
+        boss = GAMEUTIL_get_boss_obj();
+        if (boss == 0)
+            return 0;
+        return strcmp(*(char **)(GetLayoutClass(boss) + 0x130), RO_001812B8) != 0;
+    }
+    return 1;
 }
 
 static void func_000F01B8(Pose *out, float wa, Pose *a, float wb, Pose *b, Base *x, char *cam)
@@ -96,7 +95,7 @@ static void func_000F01B8(Pose *out, float wa, Pose *a, float wb, Pose *b, Base 
     out->b[9] = wa * a->b[9] + wb * b->b[9];
     out->b[10] = wa * a->b[10] + wb * b->b[10];
     out->b[11] = wa * a->b[11] + wb * b->b[11];
-    out->ang = angBlend(wa, a->ang, wb, b->ang);
+    out->ang = angBlend(wa, wb, b->ang, a->ang);
     out->c[0] = wa * a->c[0] + wb * b->c[0];
     out->c[1] = wa * a->c[1] + wb * b->c[1];
     out->c[2] = wa * a->c[2] + wb * b->c[2];
@@ -116,7 +115,7 @@ static void func_000F01B8(Pose *out, float wa, Pose *a, float wb, Pose *b, Base 
     if (0.0f < a->e && 0.0f < b->e && b->e != 0.001f)
         out->e = wa * a->e + wb * b->e;
 
-    use = useOwn(b->sel, cam);
+    use = useOwn(b->sel.i, cam);
 
     if (use == 1) {
         out->g[0] = wa * a->g[0] + wb * b->g[0];
@@ -152,4 +151,3 @@ static void func_000F01B8(Pose *out, float wa, Pose *a, float wb, Pose *b, Base 
         out->h = wa * a->h + wb * x->e;
     }
 }
-#endif
