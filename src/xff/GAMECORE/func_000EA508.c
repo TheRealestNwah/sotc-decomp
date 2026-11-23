@@ -1,4 +1,4 @@
-/* Parked attempt, 9 diffs, same size. Builds the look direction for the subjective camera by mode. Remaining: case 4 hoists the dir[3] zero store above the float stores; case 5 swaps f0/f1 for the 0xE0/0xE4 loads. */
+/* Parked attempt, 4 diffs, same size. Builds the look direction for the subjective camera by mode. Remaining: case 5 swaps f0/f1 for the 0xE0/0xE4 loads. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } __attribute__((aligned(8))) V;
@@ -26,7 +26,10 @@ static void func_000EA508(float *dir, float *pos, char *mode, char *cam)
 {
     V buf;
     V tmp;
-    float yaw, pitch;
+    float yaw;
+    V *bp;
+    float pitch;
+    float *yp;
     int ok = 0;
     int t = *(int *)(mode + 0xDC);
 
@@ -36,9 +39,10 @@ static void func_000EA508(float *dir, float *pos, char *mode, char *cam)
             ok = 1;
     } else if (t == 2 || t == 3) {
         if (GAMEUTIL_get_boss_interest_position(&buf, 1) == 1) {
+            yp = &yaw;
             vecSub(dir, &buf, pos);
             if (GAMEUTIL_check_and_get_normalize_vector(dir, 0, dir) == 1
-                && GAMEUTIL_get_yaw_pitch_by_direction(&yaw, &pitch, dir) == 1) {
+                && GAMEUTIL_get_yaw_pitch_by_direction(yp, &pitch, dir) == 1) {
                 if (*(int *)(mode + 0xDC) == 3)
                     pitch = *(float *)(cam + 0xF34);
                 ok = 1;
@@ -52,7 +56,7 @@ static void func_000EA508(float *dir, float *pos, char *mode, char *cam)
         dir[0] = *(float *)(mode + 0xE0);
         dir[1] = *(float *)(mode + 0xE4);
         dir[2] = *(float *)(mode + 0xE8);
-        *(int *)&dir[3] = 0;
+        dir[3] = 0.0f;
         GAMEUTIL_convert_from_lw_to_game_coord(dir);
         if (GAMEUTIL_check_and_get_normalize_vector(dir, 0, dir) == 1)
             ok = 1;
@@ -62,8 +66,8 @@ static void func_000EA508(float *dir, float *pos, char *mode, char *cam)
         tmp.z = *(float *)(mode + 0xE8);
         tmp.w = 1.0f;
         buf = tmp;
-        GAMEUTIL_convert_from_lw_to_game_coord(&buf);
-        GAMEUTIL_get_add_cur_stage_ofst_position(&buf, &buf);
+        GAMEUTIL_convert_from_lw_to_game_coord(bp = &buf);
+        GAMEUTIL_get_add_cur_stage_ofst_position(bp, bp);
         vecSub(dir, &buf, pos);
         ok = GAMEUTIL_check_and_get_normalize_vector(dir, 0, dir) == 1;
     }
