@@ -1,12 +1,7 @@
-/* Parked: 10 diffs, same size. Remaining: register swaps only. The vector
- * subtract's destination (sp+0x10) and the position pointer trade $v0/$v1,
- * and so do the quaternion and output pointers of the matrix build. The
- * permuter (30 min) found nothing better.
- *
+/*
  * Steers a Yamori-type character toward a fixed point (-965, -69.5, 950)
  * while its current animation is the one resolved from the Dld handle. */
 
-#ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef unsigned int u_long128 __attribute__((mode(TI)));
 typedef union { u_long128 q; Vec4 f; } VecQ;
@@ -57,11 +52,13 @@ static inline void vecNormalize(float *v)
 
 static inline void vecSub(float *d, float *a, float *b)
 {
+    register float *dd __asm__("$2") = d;
+    register float *bb __asm__("$3") = b;
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
                          "vsub.xyzw vf7, vf5, vf6\n"
                          "sqc2 vf7, 0x0(%0)\n"
-                         : : "r"(d), "r"(a), "r"(b) : "memory");
+                         : : "r"(dd), "r"(a), "r"(bb) : "memory");
 }
 
 static inline void vecZero(float *v)
@@ -93,6 +90,8 @@ static inline float vecDot(float *a, float *b)
 
 static inline void quatToMatrix(float *out, float *quat)
 {
+    register float *o __asm__("$3") = out;
+    register float *qq __asm__("$2") = quat;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
                          "vmr32.w vf14, vf0\n"
@@ -120,7 +119,7 @@ static inline void quatToMatrix(float *out, float *quat)
                          "sqc2 vf14, 0x0(%0)\n"
                          "sqc2 vf15, 0x10(%0)\n"
                          "sqc2 vf16, 0x20(%0)\n"
-                         : : "r"(out), "r"(quat) : "memory");
+                         : : "r"(o), "r"(qq) : "memory");
 }
 
 static inline void matInverse(float *dst, float *src)
@@ -239,4 +238,4 @@ void SCRFuncYamoriAdjustment(void *obj, float f, int a1, int a2, int a3, int t0,
         SCRCharaTurnDirectInput(obj, v);
     }
 }
-#endif
+
