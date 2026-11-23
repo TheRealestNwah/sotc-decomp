@@ -1,0 +1,97 @@
+/* Parked: 20 diffs, same size. Remaining: float parameter registers
+ * (Original keeps width in $f20, velA in $f21, velB in $f22; this has
+ * width and velB swapped), mul operand order for r * velB, and argument
+ * scheduling around CAM_is_inside_of_region_aim_angle_rot and func_000E16F0. */
+
+#ifdef NONMATCHING
+
+extern int CAM_is_inside_of_region_aim_angle_rot(float *, float *, void *, float, float, float);
+extern float GAMEUTIL_doit_interp_ratio_cntrl(void *, float);
+extern float GAMEUTIL_get_difference_pitch_and_pitch(float, float);
+extern float GAMEUTIL_get_difference_yaw_and_yaw(float, float);
+extern float GAMEUTIL_get_interp_ratio_interp_ratio_cntrl(void *);
+extern void GAMEUTIL_reset_interp_ratio_cntrl(void *);
+extern int func_000DCC98(float *, void *, float, float, float);
+extern float func_000E15F8(float, float);
+extern void func_000E1650(void *);
+extern void func_000E1658(void *, float, float, float, float);
+extern float func_000E16F0(void *, float, float, float);
+extern float powf(float, float);
+
+typedef struct {
+    int pitch;
+    int active;
+    int done;
+    float maxVel;
+    char pad10[0x10];
+    int busy;
+    char ratio[1];
+} AimRot;
+
+float CAM_doit_aim_angle_rot(AimRot *w, int mode, float cur, float center, float a2, float width,
+                             float velA, float velB, float range, float expo, float dt)
+{
+    float rs, re;
+    float out;
+    float r, vA, vB, target, vel, lo, hi, half, d;
+    int ret;
+
+    out = cur;
+    if (mode == 1 && w->busy == 0) {
+        GAMEUTIL_doit_interp_ratio_cntrl(w->ratio, dt);
+    } else if (GAMEUTIL_doit_interp_ratio_cntrl(w->ratio, -dt) <= 0.0f) {
+        w->busy = 0;
+        GAMEUTIL_reset_interp_ratio_cntrl(w->ratio);
+    }
+    func_000E1658(w, cur, center, a2, width);
+    if (w->active == 0) {
+        w->done = 1;
+    } else {
+        w->done = 0;
+        ret = CAM_is_inside_of_region_aim_angle_rot(&rs, &re, w, cur, center, width);
+        if (ret == 1) {
+            w->done = ret;
+            w->active = 0;
+        } else {
+            r = GAMEUTIL_get_interp_ratio_interp_ratio_cntrl(w->ratio);
+            velB = r * velB;
+            velA = r * velA;
+            target = func_000E16F0(w, rs, re, cur);
+            if (w->pitch == 0) {
+                half = range * 0.5f * 0.017453292519943295f;
+                lo = velB * 0.017453292519943295f;
+                hi = velA * 0.017453292519943295f;
+                d = GAMEUTIL_get_difference_yaw_and_yaw(cur, target);
+                hi = hi - lo;
+                vel = lo + hi * powf(func_000E15F8(d, half), expo);
+            } else {
+                float t;
+                half = range * 0.5f * 0.017453292519943295f;
+                hi = velA * 0.017453292519943295f;
+                d = GAMEUTIL_get_difference_pitch_and_pitch(cur, target);
+                lo = velB * 0.017453292519943295f;
+                t = 1.0f;
+                if (!(half <= d))
+                    t = d / half;
+                vel = lo + (hi - lo) * powf(t, expo);
+            }
+            if (w->maxVel >= 0.0f && w->maxVel < vel)
+                vel = w->maxVel;
+            ret = func_000DCC98(&out, w, cur, vel * dt, target);
+            if (ret == 1) {
+                w->done = ret;
+                w->active = 0;
+            }
+            if (GAMEUTIL_get_interp_ratio_interp_ratio_cntrl(w->ratio) <= 0.0f)
+                w->active = 0;
+        }
+    }
+    if (w->active == 0 && w->done == 1) {
+        func_000E1650(w);
+        w->busy = 0;
+        GAMEUTIL_reset_interp_ratio_cntrl(w->ratio);
+    }
+    return out;
+}
+
+#endif
