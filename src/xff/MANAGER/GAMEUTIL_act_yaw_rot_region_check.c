@@ -1,5 +1,4 @@
-#ifdef NONMATCHING
-/* 121 diffs, 2 words longer (136 vs 134). Draft from GAMEUTIL_act_yaw_rot (rot-matrix idiom) plus the matched is_yaw_dir_sandwich / get_difference_radi_yaw_dir; callee protos for is_yaw_dir_inside_of_region and get_rot_dir_for_near_to_aim_yaw_dir are guesses from their call sites. Semantics: rotate 'in' by angle (or copy if ~0), then if rotated, clip the result against the yaw region [v10,v20] (inside + sandwich checks, else pick the nearer edge v30 and cancel the rotation when it points the wrong way). The Original keeps &v0 (sp+0) cached in $s0 and shares sp+0x30 between the Matrix and v30; ours caches the matrix address. Frame size matches (0xC0). Permuter (12 workers, 25 min): 1130 -> 940 only. */
+/* Rotates in by angle (or copies it when angle is ~0), then clips the result against the yaw region [v10,v20]. The rotation goes through an inline helper taking the matrix by pointer, so gcc recomputes its stack address per call; pv keeps &v0 in $s0 like the Original. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef union { s128 q[4]; float f[16]; } Matrix;
@@ -30,9 +29,16 @@ notNearZero:
     return 0;
 }
 
+static inline void rotApplyM(Matrix *mm, Vec4 *out, float a, Vec4 *in)
+{
+    iosRotMatrixY(mm->f, a);
+    iosApplyRotMatrix(out, mm, in);
+}
+
 int GAMEUTIL_act_yaw_rot_region_check(Vec4 *out, Vec4 *in, int a2, int a3, float angle, float limit)
 {
     Vec4 v0;
+    Vec4 *pv = &v0;
     Vec4 v10;
     Vec4 v20;
     Matrix m;
@@ -40,11 +46,10 @@ int GAMEUTIL_act_yaw_rot_region_check(Vec4 *out, Vec4 *in, int a2, int a3, float
 
     v0.q = in->q;
     if (nearlyZero(angle, 0.0001f) == 1) {
-        out->q = v0.q;
+        out->q = pv->q;
         r = 0;
     } else {
-        iosRotMatrixY(m.f, angle);
-        iosApplyRotMatrix(out, &m, &v0);
+        rotApplyM(&m, out, angle, pv);
         r = 1;
     }
     if (r == 1) {
@@ -77,4 +82,3 @@ int GAMEUTIL_act_yaw_rot_region_check(Vec4 *out, Vec4 *in, int a2, int a3, float
     }
     return r;
 }
-#endif
