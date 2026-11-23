@@ -1,4 +1,9 @@
-/* Parked attempt: 21 words differ from the Original. */
+/* Parked: 6 diffs (func_000DB558 4, func_000DB6C0 2).
+ * Remaining: func_000DB558 holds coef in v0 instead of t0 for the lerp's
+ * qmtc2, and sets up check_and_get_normalize_vector's a1/a2 in the other
+ * order; func_000DB6C0 loads the pos copy into v0 instead of v1. The
+ * union entry stops float stores from passing the copies, and the memory
+ * barrier keeps the pos load after the p0 store like the Original. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec[4] __attribute__((aligned(16)));
@@ -17,7 +22,8 @@ typedef struct {
     float d;
     Q p0;
     Q p1;
-} VisibleAngleEntry;
+} VisibleAngleEntryS;
+typedef union { VisibleAngleEntryS s; s128 q[3]; } VisibleAngleEntry;
 
 typedef struct {
     int count;
@@ -84,17 +90,20 @@ static int func_000DB558(float *yaw, float *pitch, LostTarget *t, char *cam)
     float dist;
     float y;
     float p;
-    char *c60 = cam + 0x60;
+    char *c60;
     char *target = cam + 0x520;
     char *look;
 
     if (t->state != 0) {
+        c60 = cam + 0x60;
         vecScale(v, t->dir, -1.0f);
         vecAdd(pos, target, v);
         look = cam + 0x70;
         GAMEUTIL_get_cross_position_coefficient_t_by_dist_factor(&coef, &dist, look, target, *(float *)(c60 + 0x38), pos);
-        vecLerp(mid, pos, target, coef);
-        vecSub(v, look, mid);
+        do {
+            vecLerp(mid, pos, target, coef);
+            vecSub(v, look, mid);
+        } while (0);
         if (GAMEUTIL_check_and_get_normalize_vector(v, (void *)0, v) == 1) {
             GAMEUTIL_get_yaw_pitch_by_direction(&y, &p, v);
             if (1.48352981f < p)
@@ -131,21 +140,22 @@ static void func_000DB6C0(VisibleAngleManager *m, char *cam, void *c)
     yaw = GAMEUTIL_increase_yaw(0, yaw, d);
     GAMEUTIL_get_direction_by_yaw_pitch(dir, yaw, pitch);
     CAM_get_camera_position_by_look_at(pos, dir, cam + 0x70, *(float *)(c60 + 0x38));
-    e = &m->entries[m->count];
-    e->hit = 0;
-    e->pitch = 0;
-    e->yaw = 0;
-    e->d = 0;
-    e->p0 = ZeroPoint;
-    e->p1 = ZeroPoint;
+    e = (VisibleAngleEntry *)((m->count * 0x30 + (int)m) + 0x10);
+    e->s.hit = 0;
+    e->s.pitch = 0;
+    e->s.yaw = 0;
+    e->s.d = 0;
+    e->s.p0 = ZeroPoint;
+    e->s.p1 = ZeroPoint;
     r = CAM_act_ray_check_for_camera(0, target, pos, c, 0, CAM_get_target_riding_obj(cam + 0x23C));
-    e->hit = r;
+    e->s.hit = r;
     if (r == 1) {
-        e->yaw = yaw;
-        e->pitch = pitch;
-        e->d = 0;
-        e->p0 = *(Q *)target;
-        e->p1 = *(Q *)pos;
+        e->s.yaw = yaw;
+        e->s.pitch = pitch;
+        e->s.d = 0;
+        e->s.p0 = *(Q *)target;
+        __asm__ __volatile__("" ::: "memory");
+        e->s.p1 = *(Q *)pos;
     }
     m->count++;
 }
