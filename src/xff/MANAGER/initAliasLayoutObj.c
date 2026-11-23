@@ -1,4 +1,4 @@
-/* ~92 diffs, 21 words short (184 vs 205). Builds an alias layout-object definition (initAliasLayoutObj, lowercase variant; the capitalised InitAliasScriptLayoutObj calls the matched InitAliasLayoutObj): resolves the dld handles at def+4 / def+0xC (module-size words at +8), then fills a 0x28-byte AliasDef (def[0], the short at layout+0x1B4, resolved def+8 / def+0x10, 0x1000 at +0x1C, ...), passes it by value to func_00082838 together with a 0xB0 scratch buffer, calls CreateAliasScriptLayoutObj(owner, 0, buf, layout) and, when the def+8 handle resolved and CheckLayoutObjChainExist, adds the object to the group at D_00136C10 + 0x18. Remaining diff: the Original builds the struct in a local at sp+0x40 and copies it into the outgoing argument area with ldl/ldr/sdl/sdr pairs (then reads the def+8 pointer back from the argument slot after the call), ours constructs it straight in the argument slot and so omits the copy. */
+/* Parked: 9 diffs, same size (205 words). Builds an alias layout-object definition: resolves the dld handles at def+4 / def+0xC, fills a 0x28-byte AliasDef in a temporary and struct-assigns it to the by-value argument of func_00082838 (this reproduces the Original's ldl/sdl block copy into the outgoing argument area), then calls CreateAliasScriptLayoutObj and adds the object to the D_00136C10 + 0x18 group when the def+8 handle resolved. Remaining: register allocation around the GetLayoutClass short load and the def+8 dld resolve (Original: a1 = def+8, a2 = handle, a0 = mask, lh into v1 after the and; ours: a2/a3/a0 with the lh scheduled earlier). One 30-minute permuter run found nothing better. */
 extern int DldSysUndefSymbol;
 extern int D_00136C10;
 typedef struct {
@@ -31,7 +31,9 @@ static inline char *dldResolve(unsigned int *h)
 #ifdef NONMATCHING
 void *initAliasLayoutObj(void *owner, int *def, void *a2, int a3, void *layout, void *t1, int t2)
 {
-    struct { AliasDef a; AliasDef pad; char buf[0xB0]; } L;
+    AliasDef ad;
+    AliasDef tmp;
+    char buf[0xB0];
     char *r1;
     char *r2;
     int s7;
@@ -46,20 +48,23 @@ void *initAliasLayoutObj(void *owner, int *def, void *a2, int a3, void *layout, 
     s3 = 0;
     if (r2 != 0)
         s3 = *(int *)(r2 + 8);
-    L.a.w0 = def[0];
-    L.a.w4 = *(short *)(GetLayoutClass(layout) + 0x1B4);
-    L.a.w8 = dldResolve((unsigned int *)(def + 2));
-    L.a.wC = dldResolve((unsigned int *)(def + 4));
-    L.a.w10 = 0;
-    L.a.w14 = 0;
-    L.a.w18 = a3;
-    L.a.w1C = 0x1000;
-    L.a.w20 = 0;
-    L.a.w24 = 0;
-    func_00082838(L.buf, (void *)s7, (void *)s3, owner, L.a, a2, 0, t1, 0, t2);
-    obj = CreateAliasScriptLayoutObj(owner, 0, L.buf, layout);
-    if (obj != 0 && L.a.w8 != 0 && CheckLayoutObjChainExist(obj) != 0)
+    tmp.w4 = *(short *)(GetLayoutClass(layout) + 0x1B4);
+    tmp.w0 = def[0];
+    tmp.w8 = dldResolve((unsigned int *)(def + 2));
+    tmp.wC = dldResolve((unsigned int *)(def + 4));
+    tmp.w10 = 0;
+    tmp.w14 = 0;
+    tmp.w18 = a3;
+    tmp.w1C = 0x1000;
+    tmp.w20 = 0;
+    tmp.w24 = 0;
+    ad = tmp;
+    func_00082838(buf, (void *)s7, (void *)s3, owner, ad, a2, 0, t1, 0, t2);
+    obj = CreateAliasScriptLayoutObj(owner, 0, buf, layout);
+    if (obj != 0 && ad.w8 != 0 && CheckLayoutObjChainExist(obj) != 0)
         isysAddGroupWithLinkParam(obj, D_00136C10 + 0x18, 0, 0);
     return obj;
 }
+#else
+extern void *initAliasLayoutObj(void *owner, int *def, void *a2, int a3, void *layout, void *t1, int t2);
 #endif
