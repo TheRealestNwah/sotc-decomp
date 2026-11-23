@@ -1,5 +1,3 @@
-/* Parked attempt, 17 diffs, same size. Blends two camera pose blocks by weight, taking the g[] fields from the base block unless the boss layout class says otherwise. Remaining: the angle block loads a->ang before b->ang (the Original loads b->ang into $f5 first), shifting registers through the 360-degree wrap. sel is read through a union so gcc does not hoist it above the float stores. */
-#ifdef NONMATCHING
 extern void *GAMEUTIL_get_boss_obj(void);
 extern char *GetLayoutClass(void *);
 extern int strcmp(const char *, const char *);
@@ -32,28 +30,28 @@ typedef struct {
     float e;
 } Base;
 
-static inline float angBlend(float wa, float pa, float wb, float pb)
+static inline float angBlend(float wa, float wb, float pb, float pa)
 {
     float x;
     float y;
     float d;
     float r;
 
-    y = pa;
     x = pb;
+    y = pa;
     d = x - y;
     if ((d < 0.0f) ? (-180.0f <= d) : (d <= 180.0f)) {
-        r = wa * pa + wb * pb;
+        x = wa * pa + wb * pb;
     } else {
         if (pa < 0.0f)
             y = pa + 360.0f;
         else if (pb < 0.0f)
             x = pb + 360.0f;
-        r = wa * y + wb * x;
-        if (180.0f < r)
-            r -= 360.0f;
+        x = wa * y + wb * x;
+        if (180.0f < x)
+            x -= 360.0f;
     }
-    return r;
+    return x;
 }
 
 static inline int useOwn(int sel, char *cam)
@@ -98,7 +96,7 @@ static void func_000F09E8(Pose *out, float wa, Pose *a, float wb, Pose *b, Base 
     out->b[10] = wa * a->b[10] + wb * b->b[10];
     out->b[11] = wa * a->b[11] + wb * b->b[11];
     out->b[12] = wa * a->b[12] + wb * b->b[12];
-    out->ang = angBlend(wa, a->ang, wb, b->ang);
+    out->ang = angBlend(wa, wb, b->ang, a->ang);
     out->c[0] = wa * a->c[0] + wb * b->c[0];
     out->c[1] = wa * a->c[1] + wb * b->c[1];
     out->c[2] = wa * a->c[2] + wb * b->c[2];
@@ -158,4 +156,3 @@ static void func_000F09E8(Pose *out, float wa, Pose *a, float wb, Pose *b, Base 
         out->h = wa * a->h + wb * x->e;
     }
 }
-#endif
