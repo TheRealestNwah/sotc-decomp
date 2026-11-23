@@ -1,4 +1,4 @@
-/* Parked: 10 diffs, same size. kd-tree right-child visit (sibling of func_000B1208): splits the segment p0-p1 at node->split * ctx->scale on axis flags & 3, hands leaves (flags < 0) to func_000B0BC8 and recurses through func_000B69F0 with a VU0 lerp to the crossing. Remaining: the Original sets r = 0 after the scale load and keeps the axis index in $v0 (the reuse of ax for the child index puts it in $t0), adds index + base instead of base + index for the p0/p1 loads, and moves the lerp parameter through $t0 instead of $v0. */
+/* Parked: 8 diffs, same size. kd-tree right-child visit (sibling of func_000B1208): splits the segment p0-p1 at node->split * ctx->scale on axis flags & 3, hands leaves (flags < 0) to func_000B0BC8 and recurses through func_000B69F0 with a VU0 lerp to the crossing. Remaining: the Original sets r = 0 after the scale load and keeps the axis index in $v0 (the reuse of ax for the child index puts it in $t0), and moves the lerp parameter through $t0 instead of $v0. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -31,8 +31,8 @@ static int func_000B1380(Hit *hit, Vec4 *p0, Vec4 *p1, Tree *tree, Node *node, C
     unsigned int f = node->flags;
     int ax = f & 3;
     float s = node->split * c->scale;
-    float a = p0->f[ax];
-    float b = p1->f[ax];
+    float a = *(p0->f + ax);
+    float b = *(p1->f + ax);
     int i0 = s <= a;
     int i1 = s <= b;
     if (i0 || i1) {
