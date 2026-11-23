@@ -1,7 +1,3 @@
-#ifdef NONMATCHING
-/* 19 diffs, all register allocation in the button-mask block: the Original keeps
-   &gcGlobalVar in $a1, &padManagerData in $a0, 1 in $a3, the btnA mask in $a2 and
-   padManagerData.on in $t0; this compiles to other registers. Everything else matches. */
 extern void *GAMEUTIL_get_player_obj(void);
 extern void *GAMEUTIL_get_boss_obj(void);
 extern int get_boss_subjective_camera_lws_animation_param(void);
@@ -26,8 +22,9 @@ static inline float distXZsq(void *a, void *b)
                          "vsub.xyzw vf7, vf5, vf6\n"
                          "vmul.xz vf7, vf7, vf7\n"
                          "vaddz.x vf7, vf7, vf7z\n"
-                         "qmfc2.ni %0, vf7\n"
-                         : "=r"(d) : "r"(a), "r"(b));
+                         "qmfc2.ni $2, vf7\n"
+                         "mtc1 $2, %0\n"
+                         : "=f"(d) : "r"(a), "r"(b) : "$2");
     return d;
 }
 
@@ -98,4 +95,3 @@ void check_and_boot_boss_subjective_camera_lws_animation(float nearDist, float f
         return;
     }
 }
-#endif
