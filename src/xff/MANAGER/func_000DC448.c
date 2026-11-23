@@ -1,4 +1,3 @@
-/* Parked: 4 diffs (v0/v1 swapped between the free-list head and the list-loop pointers). */
 typedef struct { int pad; } Ptn;
 
 typedef struct AdpcmBuf {
@@ -25,7 +24,7 @@ extern void *memset(void *, int, int);
 extern void Sg2ExStAdpcmWorkClear(void *, int);
 extern void *sceSifAllocSysMemory(int, int, void *);
 extern void iosJumpRecoverPoint(char *);
-extern void LoaderSysEntryExternalIopMemoryList(void *);
+extern int LoaderSysEntryExternalIopMemoryList(int);
 extern void *iosMallocAlign(Ptn *, int, int);
 extern void iosEE2IopRequest(void *, void *, int, int *);
 extern int iosEE2IopEndChk(int);
@@ -35,7 +34,6 @@ extern int D_00139BE0;
 extern int D_00139BE4;
 extern AdpcmSlot B_0014E898[3];
 
-#ifdef NONMATCHING
 static void func_000DC448(void)
 {
     int i;
@@ -43,6 +41,7 @@ static void func_000DC448(void)
     int spu;
     AdpcmSlot *s;
     void *tmp;
+    void *buf;
     int id;
 
     memset(B_0014E898, 0, sizeof(B_0014E898));
@@ -53,9 +52,10 @@ static void func_000DC448(void)
         s->iopBuf = sceSifAllocSysMemory(0, D_00139BE4, 0);
         if (s->iopBuf == 0)
             iosJumpRecoverPoint("adpcmFileInit: iop buf not allocate\n");
+        buf = s->iopBuf;
         s->spuAddr = spu;
-        s->iopEnd = (char *)s->iopBuf + D_00139BE4;
-        LoaderSysEntryExternalIopMemoryList(s->iopBuf);
+        s->iopEnd = (char *)buf + D_00139BE4;
+        LoaderSysEntryExternalIopMemoryList((int)s->iopBuf);
         s->free = s->bufs;
         s->unk26C = 0;
         s->unk268 = 0;
@@ -74,4 +74,3 @@ static void func_000DC448(void)
         spu += 0x8000;
     }
 }
-#endif
