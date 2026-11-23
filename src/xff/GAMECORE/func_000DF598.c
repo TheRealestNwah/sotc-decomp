@@ -69,7 +69,7 @@ static inline void vapply(float *out, float *m, float *v)
                          : : "r"(out), "r"(m), "r"(v) : "memory");
 }
 
-void func_000DF598(float *dst, char *w, float *v, char **pp)
+static void func_000DF598(float *dst, char *w, float *v, char **pp)
 {
     float d0[4] __attribute__((aligned(16)));
     float d1[4] __attribute__((aligned(16)));
