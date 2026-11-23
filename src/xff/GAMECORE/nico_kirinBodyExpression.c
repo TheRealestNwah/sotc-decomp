@@ -1,3 +1,6 @@
+/* The prototypes list float parameters before some integer ones. The EABI
+ * assigns the same registers either way, but gcc 2.96 copies the arguments
+ * in that order, which is the Original's. */
 typedef struct {
     int pad0;
     unsigned int bits;
@@ -6,8 +9,8 @@ typedef struct {
 
 extern char *GetCharacterClass(void *);
 extern float getexpressiondatapoint(int, int);
-extern void _setRootXYZHPB(int, int, void *, void *, void *, float, float, float, float, float, float);
-extern void _setNodeHPBIllegal(int, int, int, void *, float, float, float);
+extern void _setRootXYZHPB(int, int, void *, void *, float, float, float, float, float, float, void *);
+extern void _setNodeHPBIllegal(int, float, float, float, int, int, void *);
 extern NodeDef *MotRootHeightAdjustNodeDef_KIRIN_FRONT_RIGHT;
 extern NodeDef *MotRootHeightAdjustNodeDef_KIRIN_FRONT_LEFT;
 extern NodeDef *MotRootHeightAdjustNodeDef_KIRIN_REAR_RIGHT;
@@ -33,7 +36,7 @@ static inline float MIN(float a, float b)
     return r;
 }
 
-#ifdef NONMATCHING /* 13 diffs: same length; the original materializes the float argument copies (mov.s $f14,$f27 for the HARA call, mov.s $f12,$f23 for KATA_L) before the integer argument copies, plus one mov.s $f14,$f20 placement and one addiu $t0,$s1,0x90 position */
+
 void nico_kirinBodyExpression(void *obj)
 {
     char *c = GetCharacterClass(obj);
@@ -54,16 +57,16 @@ void nico_kirinBodyExpression(void *obj)
     float y = ((fr + rr * 5.0f - fl - rl * 5.0f) * k);
     float z = fb * k;
 
-    _setRootXYZHPB(a0, a1, p, c + 0x40, c + 0x90, y, x, z, side + rside * 3.0f, fb, -(fl + rl - fr - rr));
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_HARA->node, a0, a1, p, 0.0f, MIN(fl, fr) * -2.0f, side);
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_MUNE->node, a0, a1, p, side * 2.0f, MIN(fl, fr) * -2.0f + rear, -((fr - fl) * 4.0f));
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KUBI->node, a0, a1, p, (fr - fl) * 5.0f + (rl - rr) * 2.0f, MIN(fl, fr) * 2.0f, 0.0f);
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KUBI_B->node, a0, a1, p, 0.0f, 0.0f, -(side * 3.0f));
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KATA_L->node, a0, a1, p, fl, fl * -8.0f + fr * -3.0f, fl * 20.0f);
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KATA_R->node, a0, a1, p, -fr, -(fr * 8.0f) - fl * 3.0f, fr * -20.0f);
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KOSI->node, a0, a1, p, 0.0f, MIN(rl, rr) * -4.0f, -((rl - rr) * 5.0f));
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_MATA_L->node, a0, a1, p, rl * 5.0f, rl * -10.0f, rl * -10.0f);
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_MATA_R->node, a0, a1, p, rr * -5.0f, rr * -10.0f, rr * 10.0f);
-    _setNodeHPBIllegal(SkelFocusDef_BOSS_TAIL_A->node, a0, a1, p, rside * 3.0f, MIN(rl, rr), 0.0f);
+    _setRootXYZHPB(a0, a1, p, c + 0x40, y, x, z, side + rside * 3.0f, fb, -(fl + rl - fr - rr), c + 0x90);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_HARA->node, 0.0f, MIN(fl, fr) * -2.0f, side, a0, a1, p);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_MUNE->node, side * 2.0f, MIN(fl, fr) * -2.0f + rear, -((fr - fl) * 4.0f), a0, a1, p);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KUBI->node, (fr - fl) * 5.0f + (rl - rr) * 2.0f, MIN(fl, fr) * 2.0f, 0.0f, a0, a1, p);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KUBI_B->node, 0.0f, 0.0f, -(side * 3.0f), a0, a1, p);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KATA_L->node, fl, fl * -8.0f + fr * -3.0f, fl * 20.0f, a0, a1, p);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KATA_R->node, -fr, -(fr * 8.0f) - fl * 3.0f, fr * -20.0f, a0, a1, p);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_KOSI->node, 0.0f, MIN(rl, rr) * -4.0f, -((rl - rr) * 5.0f), a0, a1, p);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_MATA_L->node, rl * 5.0f, rl * -10.0f, rl * -10.0f, a0, a1, p);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_GENERALBone_MATA_R->node, rr * -5.0f, rr * -10.0f, rr * 10.0f, a0, a1, p);
+    _setNodeHPBIllegal(SkelFocusDef_BOSS_TAIL_A->node, rside * 3.0f, MIN(rl, rr), 0.0f, a0, a1, p);
 }
-#endif
+
