@@ -1,6 +1,3 @@
-/* Parked at 2 diffs: the yellow highlight DebugDispTriangleVectorPointerArray call schedules
-   'addiu $a1, 1' before 'mov.s $f15, $f20'; the Original has them the other way round. */
-#ifdef NONMATCHING
 typedef struct { char pad0[0x30]; int attribute; } FullCollisionShape;
 typedef struct { unsigned short attribute; char pad2[0x12]; } PackedCollisionShape;
 typedef struct { char pad0[0x3C]; int attribute; } CollisionPlane;
@@ -26,7 +23,7 @@ typedef struct { void *object; unsigned int packed; } CollisionReference;
 extern LayoutClass *GetLayoutClass(void *);
 extern void func_000999E0(int *, void *, LayoutClass *, int, int);
 extern void func_0009AE78(int *, void *, void *, void *, void *, CollisionNode *, void *, CollisionPlane *);
-extern void DebugDispTriangleVectorPointerArray(int *, int, float, float, float, float);
+extern void DebugDispTriangleVectorPointerArray(int *, float, float, float, float, int);
 extern int iosInitKPrintfContext3D(void *, void *, int, float, float, float, float, int);
 extern void kprintfContextCentering(void *, const char *, ...);
 extern char RO_001407F8[];
@@ -76,16 +73,16 @@ static void func_000A6240(CollisionReference *reference, int highlight, int numb
         unsigned long etc = *(unsigned long *)attributeAddress(reference) & 0xF80000000UL;
         drawn = 1;
         if (etc == 0x200000000UL || etc == 0xB80000000UL) {
-            DebugDispTriangleVectorPointerArray(L.vertices, 1, 1.0f, 1.0f, 0.0f, a);
+            DebugDispTriangleVectorPointerArray(L.vertices, 1.0f, 1.0f, 0.0f, a, 1);
         } else {
             drawn = 0;
         }
     }
     if (!drawn) {
         if (reference->packed & 0x80000000) {
-            DebugDispTriangleVectorPointerArray(L.vertices, 1, r1, g1, b1, a);
+            DebugDispTriangleVectorPointerArray(L.vertices, r1, g1, b1, a, 1);
         } else {
-            DebugDispTriangleVectorPointerArray(L.vertices, 1, r2, g2, b2, a);
+            DebugDispTriangleVectorPointerArray(L.vertices, r2, g2, b2, a, 1);
         }
     }
     if (number >= 0) {
@@ -111,4 +108,3 @@ static void func_000A6240(CollisionReference *reference, int highlight, int numb
         }
     }
 }
-#endif
