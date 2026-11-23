@@ -1,6 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 3 diffs (was 8). Clobbering $a2 in the asm gives the Original's a3/t0/t1 inputs.
- * Remaining: the Original schedules both mul.s before the mfc1 of d; ours moves that mfc1 first. */
 static int func_000C6F08(float *out, char *p)
 {
     float a = *(float *)(p + 0x44);
@@ -18,35 +15,24 @@ static int func_000C6F08(float *out, char *p)
         sq = sq * d;
         rest = x;
         half = sq;
-        __asm__ __volatile__("lqc2 vf7, 0x0(%3)
-"
-                             "qmtc2.ni %0, vf4
-"
-                             "lqc2 vf8, 0x0(%4)
-"
-                             "lqc2 vf9, 0x0(%5)
-"
-                             "qmtc2.ni %1, vf5
-"
-                             "qmtc2.ni %2, vf6
-"
-                             "vmulx.xyz vf11, vf7, vf4x
-"
-                             "vaddx.xyz vf11, vf8, vf11x
-"
-                             "vmulx.xyz vf11, vf11, vf5x
-"
-                             "vsub.xyz vf10, vf9, vf11
-"
-                             "vmulx.xyz vf11, vf7, vf6x
-"
-                             "vsub.xyz vf10, vf10, vf11
-"
-                             "sqc2 vf10, 0x0(%6)
-"
-                             : : "r"(a - d), "r"(d), "r"(d * 0.5f * d), "r"(p + 0x20), "r"(p + 0x30), "r"(p), "r"(out) : "$6", "memory");
+        __asm__ __volatile__("mfc1 $7, %0\n"
+                             "mfc1 $8, %1\n"
+                             "mfc1 $9, %2\n"
+                             "lqc2 vf7, 0x0(%3)\n"
+                             "qmtc2.ni $7, vf4\n"
+                             "lqc2 vf8, 0x0(%4)\n"
+                             "lqc2 vf9, 0x0(%5)\n"
+                             "qmtc2.ni $8, vf5\n"
+                             "qmtc2.ni $9, vf6\n"
+                             "vmulx.xyz vf11, vf7, vf4x\n"
+                             "vaddx.xyz vf11, vf8, vf11x\n"
+                             "vmulx.xyz vf11, vf11, vf5x\n"
+                             "vsub.xyz vf10, vf9, vf11\n"
+                             "vmulx.xyz vf11, vf7, vf6x\n"
+                             "vsub.xyz vf10, vf10, vf11\n"
+                             "sqc2 vf10, 0x0(%6)\n"
+                             : : "f"(a - d), "f"(d), "f"(d * 0.5f * d), "r"(p + 0x20), "r"(p + 0x30), "r"(p), "r"(out) : "$6", "$7", "$8", "$9", "memory");
         return 1;
     }
     return 0;
 }
-#endif
