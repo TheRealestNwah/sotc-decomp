@@ -1,4 +1,4 @@
-/* Parked at 12 diffs: the Original uses non-likely bne (li v0 in the delay slot) where a call result is stored into 0x16C (4 sites), orders the case-2 AI_UpdateVelocity argument setup (a0 before the 0x5C load), uses bc1fl in the case-7 random choice, and stores 0x170 before loading 2.0f and 0x194 before 0x190. */
+/* Parked at 6 diffs: the Original uses non-likely bne (li v0 in the delay slot) where a call result is stored into 0x16C (4 sites) and orders the case-2 AI_UpdateVelocity argument setup (a0 before the 0x5C load). Case 7 uses if/else for the bc1fl choice and a memory barrier after the 0x170 store to keep the 2.0f load after it. */
 #ifdef NONMATCHING
 typedef struct { int pad0; int status; } ScriptCtrlDef;
 extern ScriptCtrlDef *ScriptCtrlDef_SCRStop;
@@ -171,7 +171,8 @@ static void func_000BA980(char *w)
             rnd = iosGetRandom();
             isysGetThisSubThread();
             if (F(0x190) < F(0x194)) {
-                I(0x170) = rnd < 0.5f ? 0x11 : !(rnd < 1.0f) ? 0x10 : 0x12;
+                if (rnd < 0.5f) I(0x170) = 0x11; else if (rnd < 1.0f) I(0x170) = 0x12; else I(0x170) = 0x10;
+                __asm__("" ::: "memory");
                 I(0x194) = 0;
                 F(0x190) = 2.0f;
             }
