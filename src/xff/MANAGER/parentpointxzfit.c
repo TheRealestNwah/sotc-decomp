@@ -70,7 +70,8 @@ static inline void rotatePoint(void *point, void *quaternion, void *out)
                          "vmaddaz.xyzw ACC, vf16, vf08z\n"
                          "vmaddw.xyzw vf10, vf00, vf08w\n"
                          "sqc2 vf10, 0x0(%0)\n"
-                         : : "r"(oo), "r"(point), "r"(quaternion) : "memory");
+                         /* No "memory" clobber, so &L.off is formed afresh afterwards like the Original. */
+                         : : "r"(oo), "r"(point), "r"(quaternion));
 }
 
 static inline void addXYZ(void *out, void *a, void *b)
@@ -91,9 +92,6 @@ static inline void subXYZ(void *out, void *a, void *b)
                          : : "r"(out), "r"(a), "r"(b) : "memory");
 }
 
-/* Parked: 2 diffs (was 4). Remaining: the Original recomputes &L.off into $s0
-   after the rotation (we copy it from $v1). */
-#ifdef NONMATCHING
 void parentpointxzfit(int id, float *vel, float t, float unused, float dt)
 {
     struct {
@@ -133,8 +131,13 @@ void parentpointxzfit(int id, float *vel, float t, float unused, float dt)
         charrootdyn_restoreposition(pos, id, *(void **)(cls + 0x13C), pos, cls + 0x700, 0);
         charrootdyn_parentpointxzfitstab(cls, *pp, 0);
         rotatePoint(cls + 0xE00, quat, &L.off);
-        po = &L.off;
-        addXYZ(&L.a, prev, po);
+        {
+            s128 *aa = &L.a;
+            po = &L.off;
+            /* Forms &L.a before &L.off, as the Original does. */
+            __asm__ __volatile__("" : "+r"(po) : "r"(aa));
+            addXYZ(aa, prev, po);
+        }
         addXYZ(&L.b, pos, po);
         if (charrootdyn_slidecollision(&L.r, &L.a, &L.b, &ZeroVector, db, 0, parent, *(float *)(cls + 0xE0C), 0.01f) != 0) {
             charrootdyn_setkeepcolhitstatus(cls, &L.r.q20, &L.r, &L.r.q30, &L.r.q40, *(float *)(cls + 0x3E4));
@@ -158,4 +161,3 @@ end:
     charrootdyn_getWaterStatus(cls, &L.r, *(char **)(cls + 0xE38) + *(short *)(cls + 0x370) * 4, db, pos, -*(float *)(cls + 0x3DC));
     charrootdyn_getvelocity(cls + 0x30, pos, prev, dt);
 }
-#endif
