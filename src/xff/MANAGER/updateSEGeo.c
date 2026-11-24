@@ -1,9 +1,3 @@
-/*
- * Parked: 11 diffs, same size.
- * Remaining: target and the 0x134 output pointer swap s3/s4; the second
- * quatMatrix loads 0x13C/0x134 into a0/v1 instead of v1/a0.
- */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { float f[4]; s128 q; } Vec4;
 
@@ -23,6 +17,44 @@ static inline void quatMatrix(void *dst0, void *q, void *t)
     void *dst = dst0;
     void *qq = q;
     void *tt = t;
+    __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
+                         "lqc2 vf11, 0x0(%1)\n"
+                         "vmr32.w vf14, vf0\n"
+                         "vmr32.w vf15, vf0\n"
+                         "vmr32.w vf16, vf0\n"
+                         "vopmula.xyz ACC, vf11, vf12\n"
+                         "vmadd.xyz vf11, vf0, vf0\n"
+                         "vmadd.xyz vf10, vf11, vf12\n"
+                         "vmul.xyz vf13, vf11, vf10\n"
+                         "vopmula.xyz ACC, vf11, vf10\n"
+                         "vmaddw.xyz vf15, vf10, vf11w\n"
+                         "vmsubw.xyz vf16, vf10, vf11w\n"
+                         "vopmula.xyz ACC, vf13, vf12\n"
+                         "vmadd.xyz vf17, vf13, vf12\n"
+                         "vopmula.xyz ACC, vf15, vf12\n"
+                         "vmadd.xyz vf15, vf0, vf0\n"
+                         "vsub.xyz vf14, vf12, vf17\n"
+                         "vmove.yz vf17, vf14\n"
+                         "vmove.y vf14, vf16\n"
+                         "vmove.y vf16, vf15\n"
+                         "vmove.y vf15, vf17\n"
+                         "vmove.z vf14, vf15\n"
+                         "vmove.z vf15, vf16\n"
+                         "vmove.z vf16, vf17\n"
+                         "sqc2 vf14, 0x0(%0)\n"
+                         "sqc2 vf15, 0x10(%0)\n"
+                         "sqc2 vf16, 0x20(%0)\n"
+                         : : "r"(dst0), "r"(qq) : "memory");
+    __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
+                         "vmove.w vf4, vf0\n"
+                         "sqc2 vf4, 0x30(%0)\n"
+                         : : "r"(dst), "r"(tt) : "memory");
+}
+static inline void quatMatrixP(void *dst0, void *q, void *t)
+{
+    void *dst = dst0;
+    register void *qq asm("$3") = q;
+    register void *tt asm("$4") = t;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
                          "vmr32.w vf14, vf0\n"
@@ -121,8 +153,9 @@ void updateSEGeo(int a0, void *obj, int a2, void *target, int node, Vec4 *geo, i
 {
     char *lc = GetLayoutClass(obj);
 
-    calcNode(*(Vec4 **)(lc + 0x134), target, node, geo);
-    quatMatrix(*(void **)(lc + 0x158), *(void **)(lc + 0x13C), *(void **)(lc + 0x134));
+    /* The pins keep the Original register choice. */
+    { register Vec4 *o asm("$20") = *(Vec4 **)(lc + 0x134); calcNode(o, target, node, geo); }
+    quatMatrixP(*(void **)(lc + 0x158), *(void **)(lc + 0x13C), *(void **)(lc + 0x134));
     if (flag) {
         char *g = (char *)(geo + 1);
         char b0 = g[0];
@@ -140,6 +173,3 @@ void updateSEGeo(int a0, void *obj, int a2, void *target, int node, Vec4 *geo, i
         kickEffect(handle, a2, target, a0, gp);
     }
 }
-#else
-extern void updateSEGeo();
-#endif
