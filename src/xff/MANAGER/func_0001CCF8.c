@@ -1,4 +1,4 @@
-/* Parked: 7 diffs, same size (306 words). Remaining: the switch range check, where the Original uses beql with dsll in the likely slot and gcc emits beqz with sll in the delay slot. Called from modelClipSolid and modelClipSkin. */
+/* LOD factor for a clip visual by its distance mode. Called from modelClipSolid and modelClipSkin. */
 typedef int u_long128 __attribute__((mode(TI)));
 
 typedef union Vec4 {
@@ -109,7 +109,6 @@ static inline float dot3(Vec4 *a, float *b)
     return r;
 }
 
-#ifdef NONMATCHING
 static float func_0001CCF8(ClipVisual *vis, ClipObj *obj, void *mtx, float lod)
 {
     float m[16];
@@ -171,6 +170,9 @@ static float func_0001CCF8(ClipVisual *vis, ClipObj *obj, void *mtx, float lod)
             d = pos.v.z - iosgluGetCameraContext()->pos[2];
         break;
     }
+    /* Keeps gcc from stealing the next dsll into a beql likely slot on the
+       switch range check; the Original fills the slot from the jump table. */
+    __asm__ __volatile__("");
     if ((int)((vis->unk18 << 26) >> 32) & 1) {
         memset(&dir, 0, 16);
         dir.v.z = -1.0f;
@@ -194,6 +196,3 @@ static float func_0001CCF8(ClipVisual *vis, ClipObj *obj, void *mtx, float lod)
         return -3.0f;
     return lod;
 }
-#else
-static float func_0001CCF8(ClipVisual *vis, ClipObj *obj, void *mtx, float lod);
-#endif
