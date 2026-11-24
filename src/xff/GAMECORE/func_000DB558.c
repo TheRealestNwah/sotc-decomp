@@ -1,11 +1,8 @@
-/* Parked: 2 diffs (func_000DB558 2, func_000DB6C0 0).
- * Remaining: func_000DB558 sets up check_and_get_normalize_vector's a1/a2
- * in the other order (the Original fills the jal delay slot with a1 = 0).
- * The $8 mfc1 into vecLerpI and the $3 pos copy fix the coef and pos
+/* The $8 mfc1 into vecLerpI and the $3 pos copy fix the coef and pos
  * registers. The union entry stops float stores from passing the copies,
  * and the memory barrier keeps the pos load after the p0 store like the
- * Original. */
-#ifdef NONMATCHING
+ * Original. The check_and_get_normalize_vector arguments are pinned to a0
+ * and a2 ahead of an empty barrier so a1 = 0 fills the jal delay slot. */
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec[4] __attribute__((aligned(16)));
 typedef struct { s128 q; } Q;
@@ -124,7 +121,7 @@ static int func_000DB558(float *yaw, float *pitch, LostTarget *t, char *cam)
             { register int c8 __asm__("$8"); float *mp = mid; __asm__("mfc1 %0, %1" : "=r"(c8) : "f"(coef)); vecLerpI(mp, pos, target, c8); }
             vecSub(v, look, mid);
         } while (0);
-        if (GAMEUTIL_check_and_get_normalize_vector(v, (void *)0, v) == 1) {
+        if (({ int r_; register float *v1 __asm__("$4") = v; register float *v2 __asm__("$6") = v; __asm__ __volatile__(""); r_ = GAMEUTIL_check_and_get_normalize_vector(v1, (void *)0, v2); r_; }) == 1) {
             GAMEUTIL_get_yaw_pitch_by_direction(&y, &p, v);
             if (1.48352981f < p)
                 p = 1.48352981f;
@@ -179,6 +176,3 @@ static void func_000DB6C0(VisibleAngleManager *m, char *cam, void *c)
     }
     m->count++;
 }
-
-int use_db(float *a, float *b, LostTarget *t, char *c) { func_000DB6C0((void *)a, c, b); return func_000DB558(a, b, t, c); }
-#endif
