@@ -11,11 +11,12 @@ typedef struct {
     int v[9];
 } PathPoint;
 
-/* Parked: 15 diffs. Original keeps the loop index i separate from the gcGlobalVar+0x2EC address (no strength reduction into a pointer). */
+/* Parked: 6 diffs. Reading `it` through its address (from the permuter) makes the inner loop match; left: the s2/s3 order of the off/i zeroing and one lw 0x3C scheduled two slots late. */
 #ifdef NONMATCHING
 void updatePathInfo(void)
 {
     int first;
+    void ***pit;
     int i;
     char *e;
     char *w;
@@ -55,13 +56,14 @@ void updatePathInfo(void)
                 pt->v[4] = *(int *)(obj + 0x48);
                 pt->v[5] = *(int *)(obj + 0x4C);
                 pt->v[6] = *(int *)(obj + 0x50);
+                pit = &it;
                 pt->v[7] = *(int *)(obj + 0x54);
                 pt->v[8] = *(int *)(obj + 0x58);
                 if (cnt != 0) {
                     *(int *)(e + 0x94) = *(int *)(e + 0x94) + *cnt;
                 }
                 *(int *)(e + 0x90) = *(int *)(e + 0x90) + 1;
-                it = isysGroupForNext(it, 0);
+                it = isysGroupForNext(*pit, 0);
             } while (it != 0);
         }
         if (obj != 0) {
