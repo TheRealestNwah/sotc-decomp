@@ -1,6 +1,4 @@
-#ifdef NONMATCHING
 /* Sets the current vertex's color: lit through the two VU0 matrices when lighting is fully enabled, flat otherwise. */
-/* Parked: 13 diffs. Remaining: the Original keeps vtx in a3 and m1 in t2 (ours t2 and a3), so 255.0f goes through f1/a3 instead of f0/v1, and the flat branch adds g + n*64 with the operands the other way round. Declaring the five pointers inside the lit branch (color, normal, m0, m1, vtx) gets the flat branch its own lq 0x90($a2) and the Original pointer order. Not yet permuted. */
 typedef int u128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -61,11 +59,11 @@ static void func_000120C8(int lit)
 
     g->b.f3 = lit;
     if ((g->w.all & 0xB) == 0xB) {
+        float *m1 = g->h.mat1[0];
         u128 *color = &g->h.color;
         float *normal = g->h.normal;
         float *m0 = g->h.mat0[0];
-        float *m1 = g->h.mat1[0];
-        u128 *vtx = g->v.v[0];
+        register u128 *vtx __asm__("$7") = g->v.v[0];
         u128 *dst = &vtx[g->n.n * 4];
 
         __asm__ __volatile__("lqc2 vf24, 0x0(%0)\n"
@@ -76,6 +74,13 @@ static void func_000120C8(int lit)
                              "lqc2 vf29, 0x30(%2)\n"
                              :
                              : "r"(color), "r"(normal), "r"(m0));
+        {
+        /* 255.0f is loaded into f1 and moved to a3 for the qmtc2. */
+        register float kf_ __asm__("$f1") = 255.0f;
+        register int k_ __asm__("$7");
+
+        __asm__("mfc1 %0, %1" : "=r"(k_) : "f"(kf_));
+
         __asm__ __volatile__("qmtc2.ni %2, vf30\n"
                              "vmulax.xyzw ACC, vf26, vf25x\n"
                              "vmadday.xyzw ACC, vf27, vf25y\n"
@@ -94,10 +99,10 @@ static void func_000120C8(int lit)
                              "vminix.xyzw vf24, vf24, vf30x\n"
                              "sqc2 vf24, 0x0(%1)\n"
                              :
-                             : "r"(m1), "r"(dst), "r"(255.0f)
-                             : "memory");
+                             : "r"(m1), "r"(dst), "r"(k_)
+                             : "memory"); }
     } else {
-        g->v.v[g->n.n][0] = g->h.color;
+        { int n_ = g->n.n; u128 (*vv)[4] = g->v.v; vv[n_][0] = g->h.color; }
     }
     if (D_00130480.h.texture != 0) {
         D_00130480.a.v[D_00130480.n.n].s = D_00130480.h.s;
@@ -105,4 +110,3 @@ static void func_000120C8(int lit)
     }
     D_00130480.b.f0 = 0;
 }
-#endif
