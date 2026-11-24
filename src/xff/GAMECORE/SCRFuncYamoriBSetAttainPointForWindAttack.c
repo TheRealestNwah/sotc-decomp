@@ -1,5 +1,3 @@
-/* Parked: 5 diffs, same size. Chooses the attain point for the wind attack: with 2 or 3 passage points, ray-casts between the first two (ClipCollisionDirectCallBack with pathJudgeFunc) and uses -Y as the direction, with one passage point uses the normalised vector from the layout position to the AI work's +0x41F0; then offsets +0x41F0 by -f times that direction, re-checks the collision, flags +0x41C8 when the layout is within 3f, and returns setAttainmentPosAndDir's result. The hit buffer is 0x50 bytes at sp+0x10. VU0 runs match word for word. Remaining: the first branch computes &L.p60 before &YUnitVector, and the Original tail block computes &L.p60 into s3 before the mfc1 of -f, and the mfc1 goes to v1 (the C uses a0). */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
 typedef union {
@@ -51,14 +49,17 @@ int SCRFuncYamoriBSetAttainPointForWindAttack(void *obj, float f)
         b = getPassageWork(data, 1);
         if (ClipCollisionDirectCallBack(L.hit, a, b, getPathColiGroup(data), 0, 0, 0, pathJudgeFunc, 0) != 0) {
             float m1 = -1.0f;
+            register char *dp __asm__("$3") = (char *)&L.p60;
+            register char *yv __asm__("$2") = (char *)&YUnitVector;
 
+            __asm__("" : "+r"(dp));
             __asm__("mfc1 %0, %1" : "=r"(bits) : "f"(m1));
             __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                                  "qmtc2.ni %1, vf6\n"
                                  "vmulx.xyzw vf5, vf5, vf6x\n"
                                  "sqc2 vf5, 0x0(%2)\n"
                                  :
-                                 : "r"(&YUnitVector), "r"(bits), "r"(&L.p60)
+                                 : "r"(yv), "r"(bits), "r"(dp)
                                  : "memory");
             found = 1;
             goto have;
@@ -96,13 +97,15 @@ have:
         char *s3 = (char *)&L.p60;
         int r;
 
-        __asm__("mfc1 %0, %1" : "=r"(bits) : "f"(nf));
+        register int b3 __asm__("$3");
+
+        __asm__ __volatile__("mfc1 %0, %1" : "=r"(b3) : "f"(nf));
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "qmtc2.ni %1, vf6\n"
                              "vmulx.xyz vf5, vf5, vf6x\n"
                              "sqc2 vf5, 0x0(%2)\n"
                              :
-                             : "r"(s3), "r"(bits), "r"(p7)
+                             : "r"(s3), "r"(b3), "r"(p7)
                              : "memory");
         s1 = (char *)&L.p80;
         s0 = ai + 0x41F0;
@@ -139,4 +142,3 @@ have:
         return setAttainmentPosAndDir(data, s1, s3);
     }
 }
-#endif
