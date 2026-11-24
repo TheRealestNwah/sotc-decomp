@@ -89,10 +89,11 @@ static inline void evalKey(unsigned char *a, int type, void *data, int n, float 
     }
 }
 
-/* Parked: 10 diffs (built on func_00035A20's inlines).
- * Remaining: the first call's argument setup (all 10 words). The Original loads
- * frac into $f12 before the jal and fills the delay slot with &trk->data1 ($s1);
- * gcc 2.96 sets $s1 up early and puts the frac load in the delay slot.
+/* Parked: 4 diffs (was 10; built on func_00035A20's inlines).
+ * Remaining: argument setup order before the first jal. The Original emits
+ * lw a1,0(s3); daddu a0,s6; lw a3,0x30(sp); addiu s2,s6,0x10, gcc 2.96 puts
+ * each daddu/addiu before its load. The empty asm on `o` keeps out+0x10 out of
+ * the first call's delay slot.
  * The dead `(float)n < t2` test reproduces the Original's unused c.lt.s. */
 #ifdef NONMATCHING
 static void func_00034B30(Out *out, Track *trk, int n, float t, float t2)
@@ -106,7 +107,11 @@ static void func_00034B30(Out *out, Track *trk, int n, float t, float t2)
     if ((float)n < t2)
         m = 1;
     func_00033868(out, (trk->types >> 12) & 0xF, trk->data0, i0, i1, frac);
-    interpRot((char *)out + 0x10, (trk->types >> 8) & 0xF, &trk->data1, i0, i1, frac);
+    {
+        char *o = (char *)out + 0x10;
+        __asm__ ("" : "+r"(o));
+        interpRot(o, (trk->types >> 8) & 0xF, &trk->data1, i0, i1, frac);
+    }
     evalKey(out->flags, (trk->types >> 4) & 0xF, trk->data2, n, t, t2);
     out->f40 = trk->data3[(int)t] * (1.0f / 255.0f) * 2.0f + -1.0f;
     switch (((unsigned char *)trk)[3] & 6) {
