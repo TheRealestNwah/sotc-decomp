@@ -1,10 +1,6 @@
-/* 17 diffs. Moves the character's pending motion-root offset (cleared after reading) into out, limited by
+/* Moves the character's pending motion-root offset (cleared after reading) into out, limited by
    the dld limit table from the parent node (node+0x20) or the motion (motion+0xB0): rotates the stab XZ
-   vector into the stab Y-rotation frame, scales it, clamps Z and X by the per-sign limits and rotates back.
-   Remaining: in quatPosToMatrix the Original holds the matrix pointer in $v1 and the quaternion in $v0,
-   then recomputes &mat[3] from $sp; ours swaps them and derives &mat[3] from the matrix pointer. The
-   second block's X clamp branch is laid out inverted (bc1tl vs bc1fl). */
-#ifdef NONMATCHING
+   vector into the stab Y-rotation frame, scales it, clamps Z and X by the per-sign limits and rotates back. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 /* Inverse of a rigid transform: transposed rotation, rotated negated translation. */
@@ -72,7 +68,6 @@ static inline void quatPosToMatrix(Vec4 *out, Vec4 *quat, Vec4 *pos)
                          "sqc2 vf15, 0x10(%0)\n"
                          "sqc2 vf16, 0x20(%0)\n"
                          : : "r"(out), "r"(quat));
-    __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(&out[3]));
 }
 typedef struct DldType { char pad[0xC]; int size; } DldType;
 typedef struct DldTable { char pad[8]; DldType *type; char pad2[4]; char *data; } DldTable;
@@ -138,7 +133,7 @@ typedef struct {
 
 #define SCALE_RES() do { \
         if (res.f[2] >= 0) res.f[2] *= lim[1]; else res.f[2] *= lim[2]; \
-        if (res.f[0] >= 0) res.f[0] *= lim[3]; else res.f[0] *= lim[4]; \
+        res.f[0] *= (res.f[0] >= 0) ? lim[3] : lim[4]; \
     } while (0)
 
 #define APPLY_OFFSET()                                                  \
@@ -147,7 +142,9 @@ typedef struct {
         iosGetStabXZVector(&stab, &v);                                  \
         GetStabYRotQuaternion(&quat, s);                                \
         __asm__ __volatile__("" : : "f"(scale));                        \
-        { Vec4 *mp = mat; quatPosToMatrix(mp, &quat, 0); }                                 \
+        { Vec4 *mp = mat; quatPosToMatrix(mp, &quat, 0); }             \
+        __asm__ __volatile__("" : : : "memory");                        \
+        __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(&mat[3])); \
         VU_INVERSE_MATRIX(inv, mat);                                    \
         vecScale(stab.f, stab.f, lim[0] * scale);                       \
         matApply(&res, inv, &stab);                                     \
@@ -185,4 +182,3 @@ void charrootdyn_acceptMotionRootOffset(Vec4 *out, Chara *obj, float scale)
     }
     __asm__ __volatile__("sq $0, 0(%0)" : : "r"(out));
 }
-#endif
