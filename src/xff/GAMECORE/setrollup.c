@@ -13,8 +13,7 @@ typedef struct
 } RollupState;
 extern RollupState B_0019CD10;
 extern void func_000BC988(int);
-#ifdef NONMATCHING
-/* Parked: 1 word differs (bc1f vs bc1fl before the epilogue load); permuter best score 200. */
+/* The empty asm clobbering $31 at the start of the inner block tells reorg that $ra is dead there, so the branch over it stays a plain bc1f with the epilogue ld $ra in its delay slot, as in the Original. */
 void setrollup(float v)
 {
   float prev;
@@ -30,12 +29,10 @@ void setrollup(float v)
     {
       float c1 = 0.6f;
       float c2 = 0.5f;
+      __asm__("" ::: "$31");
       func_000BC988(4);
  do { B_0019CD10.flag = 1; B_0019CD10.c = *((float *) (gcGlobalVar + 0x178)); B_0019CD10.a = c1; } while (0);
       B_0019CD10.b = c2;
     }
   }
 }
-#else
-void setrollup(float v);
-#endif
