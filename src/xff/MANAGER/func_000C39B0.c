@@ -1,4 +1,4 @@
-/* Parked: 23 diffs. Builds a particle display list: for each live particle with a projected position writes a vertex record, then builds the matrix, brightness-clamped env and vertex packets and returns the list. Remaining: register swaps only (i/n in s5/s6, dl in s6/s7), mul.s/mfc1 order at 0x134 and the second branch UV stack slot (0x60 vs 0x80). */
+/* Parked: 7 diffs. Builds a particle display list: for each live particle with a projected position writes a vertex record, then builds the matrix, brightness-clamped env and vertex packets and returns the list. Remaining: p/q = dl/dl+0x20 setup order at 0xD4, mul.s/mfc1 order at 0x134 and the second branch UV stack slot (0x60 vs 0x80). */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } QVec;
@@ -109,27 +109,27 @@ static void func_000C39B0(char *e, char *a1, char *a2)
     float m[16] __attribute__((aligned(16)));
     Env env;
     char *col;
-    char *dl;
     char *src;
     char *p;
     char *q;
-    unsigned i;
-    int n;
     float b;
     float c;
 
     src = *(char **)(e + 0x128);
     if (*(int *)(a1 + 0x1B4) == 0) {
+        char *dl;
         dl = (char *)ptclDisplayListGet(*(int *)(a2 + 0x1C));
         b = *(float *)(a2 + 0xB8) * gluGetBrightness(e + 0x80);
         c = 1.0f < b ? 1.0f : (b < 0.0f ? 0.0f : b);
         if (dl != 0) {
-            n = 0;
+            unsigned i;
+            int n;
             i = 0;
+            n = 0;
             env = (Env){ c, 1.0f - c, 0.0f, *(float *)(a2 + 0xB4) };
             if (*(unsigned *)(e + 0x124) != 0) {
-                p = dl;
                 q = dl + 0x20;
+                p = dl;
                 do {
                     if (*(float *)(src + 0x40) != 0.0f) {
                         if (calcPos(q, src)) {
@@ -166,12 +166,15 @@ static void func_000C39B0(char *e, char *a1, char *a2)
             }
         }
     } else {
+        char *dl;
         dl = (char *)ptclDisplayListGet(*(int *)(a2 + 0x1C));
         b = *(float *)(a2 + 0xB8) * gluGetBrightness(e + 0x80);
         c = 1.0f < b ? 1.0f : (b < 0.0f ? 0.0f : b);
         if (dl != 0) {
-            n = 0;
+            unsigned i;
+            int n;
             i = 0;
+            n = 0;
             env = (Env){ c, 1.0f - c, 0.0f, *(float *)(a2 + 0xB4) };
             if (*(unsigned *)(e + 0x124) != 0) {
                 p = dl;
