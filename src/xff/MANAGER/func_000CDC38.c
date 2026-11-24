@@ -40,8 +40,7 @@ extern int iosMcChDir(int, int, const char *);
 extern int iosMcGetDir(int, int, const char *, unsigned int, int, McDirEntry *, int *);
 extern int iosMcWriteFile(int, int, const char *, void *, int, int);
 
-#ifdef NONMATCHING
-/* 18 diffs: slot pointer and file offset swap s0/s1. Loading index into offset first (permuter) narrowed it from 22. */
+/* Writes an empty save slot for the current index to the memory card file. */
 static void func_000CDC38(McWork *w)
 {
     int port = w->port;
@@ -60,15 +59,19 @@ static void func_000CDC38(McWork *w)
     if (w->result != 0)
         return;
     file = RO_00140D58;
-    offset = w->index;
-    s = &w->data->slot[offset];
-    offset = offset * 0x5800 + 0x800;
+    {
+        int idx = w->index;
+
+        /* The slot offset is computed before the base is added. */
+        s = (McSaveSlot *)(idx * sizeof(McSaveSlot));
+        s = (McSaveSlot *)((char *)s + (int)w->data->slot);
+        offset = idx * 0x5800 + 0x800;
+    }
     memset(s, 0, sizeof(McSaveSlot));
-    memcpy(s->name2, RO_00140D48, 10);
     memcpy(s->name, RO_00140D48, 10);
+    memcpy(s->name2, RO_00140D48, 10);
     w->result = iosMcWriteFile(port, slot, file, s, offset, sizeof(McSaveSlot));
     if (w->result != 0)
         return;
     w->result = 0;
 }
-#endif
