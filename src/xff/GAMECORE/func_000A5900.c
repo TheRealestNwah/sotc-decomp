@@ -39,7 +39,7 @@ static inline void normalize3to(float *dst, float *v)
                          : : "r"(dst), "r"(v) : "memory");
 }
 
-#ifdef NONMATCHING /* 24 diffs, same word count: the 1.0f constant is materialized before the first call (orig: after the second), the dir pointer is set up later, and the final 0x304/0x318 stores are reordered */
+#ifdef NONMATCHING /* 22 diffs, same word count: the 1.0f constant is materialized before the first call (orig: after the second) and the dir pointer is set up later */
 static void func_000A5900(char *p_)
 {
     register char *p __asm__("$18") = p_;
@@ -89,8 +89,8 @@ static void func_000A5900(char *p_)
     *(s128 *)(p + 0x2E0) = ZeroVector;
     normalize3to(nw, (float *)(p + 0x730));
     *(float *)(p + 0x304) = iosGetASinfExact(nw[1]);
-    *(float *)(p + 0x30C) = 1.0f;
     *(float *)(p + 0x314) = 1.0f;
+    *(float *)(p + 0x30C) = 1.0f;
     *(float *)(p + 0x318) = 0.0f;
 }
 #endif
