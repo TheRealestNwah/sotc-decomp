@@ -1,4 +1,4 @@
-/* Parked: 10 diffs, same size. Boss damage application: scales the incoming hit (hit+0x1C) by func_0003D488's result, caps damage for types 1/2/4 so hp stays above the threshold ratio, resets attack power for types 0/5, adds the pending-hit sum, then signals DEAD_BOSS when hp <= 0. Computing dmg before lim takes it from 14 to 10. Remaining: ratio and tmp swap f3/f4 (reordering ratio, declaration order and a struct for h made no difference), and the original stores a3[1]/a3[0] before loading h+0x48 (union stores change the length). */
+/* Boss damage application: scales the incoming hit (hit+0x1C) by func_0003D488's result, caps damage for types 1/2/4 so hp stays above the threshold ratio, resets attack power for types 0/5, adds the pending-hit sum, then signals DEAD_BOSS when hp <= 0. The empty asm keeps the h+0x48 load after the a3 stores, as in the Original. */
 extern int playerEnableDeath;
 extern int ScrIntrDef_DEAD_BOSS;
 extern char *GetDamageClass(void *);
@@ -7,9 +7,8 @@ extern float func_0003D488(void *, void *, int, float *);
 extern void resetAttackPower(void);
 extern void scriptIntrSignal(int);
 
-#ifdef NONMATCHING
 
-float func_0003D650(void *obj, char *h, char *hit, float *a3)
+static float func_0003D650(void *obj, char *h, char *hit, float *a3)
 {
     int type = *(int *)(GetDamageClass(obj) + 0x60);
     float zero = 0.0f;
@@ -19,17 +18,16 @@ float func_0003D650(void *obj, char *h, char *hit, float *a3)
         float dmg;
         float diff = *(float *)(hit + 0x1C) - a3[0];
         float max = *(float *)(h + 0x40);
-        float f4;
+        
         float ratio;
         float lim;
         float tmp;
         float r;
 
         r = func_0003D488(obj, hit, type, &tmp);
-        f4 = tmp;
         ratio = hp / max;
         dmg = *(float *)(hit + 0x1C) * r;
-        lim = *(float *)(hit + 0x1C) * (1.0f - f4);
+        lim = *(float *)(hit + 0x1C) * (1.0f - tmp);
         if (lim < diff) {
             if ((*(long *)(hit + 0x28) & 0xC0000000000000L) != 0 || 0.4f < ratio) {
                 float t = diff - lim;
@@ -42,7 +40,7 @@ float func_0003D650(void *obj, char *h, char *hit, float *a3)
             dmg = zero;
         }
         if (type == 2 || type == 4 || type == 1) {
-            float one = 1.0f - f4;
+            float one = 1.0f - tmp;
             if (ratio <= one) {
                 dmg = 0.0f;
             } else if ((hp - dmg) / max <= one) {
@@ -53,6 +51,7 @@ float func_0003D650(void *obj, char *h, char *hit, float *a3)
             resetAttackPower();
         a3[1] = dmg;
         a3[0] = a3[0] + dmg;
+        __asm__ __volatile__("");
         if (*(int *)(h + 0x48) != 0 && (type == 5 || type == 0)) {
             float t = *(float *)(hit + 0x1C) - a3[0];
             if (0.0f < t) {
@@ -82,4 +81,3 @@ float func_0003D650(void *obj, char *h, char *hit, float *a3)
     }
     return *(float *)(h + 0x44);
 }
-#endif
