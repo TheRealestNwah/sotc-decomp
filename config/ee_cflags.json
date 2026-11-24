@@ -318,5 +318,8 @@
   ],
   "src/xff/MANAGER/windowSetMouseStatus.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/func_000C0178.c": [
+    "-fno-strict-aliasing"
   ]
 }
