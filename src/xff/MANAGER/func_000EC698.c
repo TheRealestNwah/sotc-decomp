@@ -49,10 +49,12 @@ typedef struct {
     int data;
 } Entry;
 
-/* Parked: 10 diffs (28 before permuter runs; passing the entry as CheckControlDef's fourth
- * argument took it from 13 to 10). Remaining: the D_00139F7C walk sets up its loop constants
- * (lui s5/s4, addiu s0, daddu s2) in a different order and keeps the entry pointer in a3
- * where gcc uses a0. */
+/* Parked: 7 diffs (28 before permuter runs; passing the entry as CheckControlDef's fourth
+ * argument took it from 13 to 10, and deriving ent from q took it to 7). Remaining: the
+ * D_00139F7C walk sets up its loop constants (lui s5/s4, addiu s0, daddu s2) in a different
+ * order, and the Original recomputes ent as first + i (addu a3) at the top of the body,
+ * with the loop test using its own a0 = i + first, where gcc derives ent from q. Computing
+ * ent as first + i gets CSE'd with the loop test (10 diffs). */
 #ifdef NONMATCHING
 static int func_000EC698(unsigned int *list, void *ctx)
 {
@@ -69,7 +71,7 @@ static int func_000EC698(unsigned int *list, void *ctx)
         char *q = (char *)first + 4;
         for (i = 0; (e = dldEntry((unsigned int *)((char *)first + i))) != 0; q += 8, i += 8) {
             if (e != elseAlways) {
-                Entry *ent = (Entry *)((char *)first + i);
+                Entry *ent = (Entry *)(q - 4);
                 if (*(char **)(dldModule(&ent->ref) + 8) == _ControlDef) {
                     def = D_00139F7C;
                     if (CheckControlDef(D_00139F78, D_00139F7C, def + 0x760, ent) <= 0)
