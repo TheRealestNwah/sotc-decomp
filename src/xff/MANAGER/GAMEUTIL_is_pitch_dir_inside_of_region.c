@@ -1,5 +1,4 @@
-/* Parked: 8 diffs. Tests whether a pitch direction lies inside the region between two bounding directions: splits the region into lo/hi vectors, projects dir and both bounds onto the y/z plane and checks the signs of three VU0 outer products. Remaining: the stack slots of b and t[0] are swapped (sp+0x20 vs sp+0x40), which also reorders the four address setups. Declaration order does not fix it (all 24 orders tried); the `pc` copy of &c came from a 25-minute permuter run. */
-#ifdef NONMATCHING
+/* Tests whether a pitch direction lies inside the region between two bounding directions: splits the region into lo/hi vectors, projects dir and both bounds onto the y/z plane and checks the signs of three VU0 outer products. */
 typedef struct { float x, y, z, w; } __attribute__((aligned(16))) V4;
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Q4;
@@ -28,8 +27,12 @@ int GAMEUTIL_is_pitch_dir_inside_of_region(Q4 *out0, Q4 *out1, float *dir, Q4 *b
         V4 b = (V4){lo.f[1], 0.0f, lo.f[2], 0.0f};
         V4 c = (V4){hi.f[1], 0.0f, hi.f[2], 0.0f};
         V4 t[3];
-        V4 *pc = &c;
-        outer(&t[0], &b, &a);
+        /* Pinned so the address setups land in the Original's registers. */
+        register V4 *pa __asm__("$7") = &a;
+        register V4 *pb __asm__("$4") = &b;
+        register V4 *pc __asm__("$6") = &c;
+        register V4 *pt __asm__("$5") = t;
+        outer(pt, pb, pa);
         outer(&t[1], &b, &c);
         if (t[0].y * t[1].y > 0.0f) {
             outer(&t[2], &a, pc);
@@ -38,4 +41,3 @@ int GAMEUTIL_is_pitch_dir_inside_of_region(Q4 *out0, Q4 *out1, float *dir, Q4 *b
     }
     return 0;
 }
-#endif
