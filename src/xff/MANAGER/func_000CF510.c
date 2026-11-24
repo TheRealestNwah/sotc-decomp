@@ -27,8 +27,7 @@ static inline int bit(int v, int m)
     return (v & m) != 0;
 }
 
-#ifdef NONMATCHING /* 9 diffs: temporaries for the flag bit tests land in v0/v1 swapped */
-int func_000CF510(MouseData *d)
+static int func_000CF510(MouseData *d)
 {
     Mouse *m = &B_0014DBB8;
     Mouse *m2;
@@ -42,15 +41,15 @@ int func_000CF510(MouseData *d)
     now = iosGetSecondFromTCount(iosGetTCountExtension());
     D_00137724 = now;
     d1 = 0;
-    o4 = bit(m->prev, 4);
-    o2 = bit(m->prev, 2);
     o1 = m->prev & 1;
+    o2 = bit(m->prev, 2);
+    o4 = bit(m->prev, 4);
     m->x += (float)d->s.dx;
     m->y += (float)d->s.dy;
     m->z += (float)d->s.dz;
+    n1 = d->s.buttons & 1;
     n2 = bit(d->s.buttons, 2);
     n4 = bit(d->s.buttons, 4);
-    n1 = d->s.buttons & 1;
     r1 = o1 ? !n1 : 0;
     r2 = o2 ? !n2 : 0;
     r4 = o4 ? !n4 : 0;
@@ -88,4 +87,3 @@ int func_000CF510(MouseData *d)
     B_0014DBB8.prev = d->s.buttons;
     return 1;
 }
-#endif
