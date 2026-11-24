@@ -1,7 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 3 diffs, same size. Remaining: the original reloads offset (0xA4) for the
-   second call before storing max (0xA8), with the f14 setup between them; gcc 2.96
-   schedules the store first. Permuter (25 min) found nothing. */
 extern float GAMEUTIL_increase_pitch(int, int, float, float, float, float);
 extern void GAMEUTIL_set_parameter_move_angle(float *, float, float, float, float, float, float);
 
@@ -19,8 +15,13 @@ void set_offset_pitch_parameter_nico_yaw_pitch_cntrl(YawPitchCntrl *p, float a, 
 {
     float k = 0.017453293f;
     p->offset = a * k;
-    p->max = GAMEUTIL_increase_pitch(0, 0, p->offset, b * k, PITCH_MAX, -PITCH_MAX);
+    {
+        float m = GAMEUTIL_increase_pitch(0, 0, p->offset, b * k, PITCH_MAX, -PITCH_MAX);
+
+        /* Held so the store to max is scheduled after the offset reload. */
+        __asm__("" : "+f"(m));
+        p->max = m;
+    }
     p->min = GAMEUTIL_increase_pitch(0, 0, p->offset, c * k, PITCH_MAX, -PITCH_MAX);
     GAMEUTIL_set_parameter_move_angle(p->move, d, e, f, g, h, i);
 }
-#endif
