@@ -1,12 +1,6 @@
-/* Parked: 13 diffs, same size (332 words).
- * Samples a motion node's rotation, translation and scale keys at a float frame,
+/* Samples a motion node's rotation, translation and scale keys at a float frame,
  * wrapping the frame into the key range and interpolating between neighbouring
- * keys (quaternion slerp-like lerp + normalize on VU0, vector lerp otherwise).
- * Remaining: the Original keeps q (a0) in s3 and i1 in s4 where gcc swaps them
- * (10 words), and the frames == 1 test uses bnel with $v0 where gcc emits bne
- * with $v1 (3 words).
- */
-#ifdef NONMATCHING
+ * keys (quaternion slerp-like lerp + normalize on VU0, vector lerp otherwise). */
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float off0, scale0, off1, scale1, off2, scale2; short *tbl; } PackVec;
 typedef union { float f[4]; short h[8]; s128 q; } VecU;
@@ -90,7 +84,9 @@ static inline void GetKey(VecU *q, VecU *v, VecU *s, MotionOption *opt, int i)
 }
 static void func_00032E98(VecU *q, VecU *v, VecU *s, MotionOption *opt, int frames, float frame)
 {
-    int i0, i1;
+    int i0;
+    /* Pinned: gcc otherwise gives i1 $s3 and q $s4, the reverse of the Original. */
+    register int i1 asm("$20");
     float frac;
     if ((float)frames < frame) {
         if (frames == 1) {
@@ -113,6 +109,3 @@ static void func_00032E98(VecU *q, VecU *v, VecU *s, MotionOption *opt, int fram
         VecInter(s, &sa[1], &sa[0], frac);
     }
 }
-#else
-extern void func_00032E98(void *, void *, void *, void *, int, float);
-#endif
