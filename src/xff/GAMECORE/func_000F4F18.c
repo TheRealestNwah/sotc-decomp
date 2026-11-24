@@ -1,4 +1,4 @@
-/* Parked: 23 diffs, same size. Appends the path from the current point to the goal onto the way list: walks the parent chain from func_000FA7E0's node to count its depth (giving up past the group's max), then fills the free way slots back to front from the chain, and appends the goal position itself when the last way is the goal point. Remaining: the order of the way-entry stores in both inlined initWay copies, and the argument registers in the final goal append; a 40-minute permuter run found nothing better. */
+/* Parked: 5 diffs, same size. Appends the path from the current point to the goal onto the way list: walks the parent chain from func_000FA7E0's node to count its depth (giving up past the group's max), then fills the free way slots back to front from the chain, and appends the goal position itself when the last way is the goal point. The two inlined initWay copies are separate helpers with their own store orders, and the goal append passes -1 through a local with a barrier before g->n++. Remaining: the store order of idx/link and x10/x18 in the first (setWay) copy, and one addu operand order before it. */
 #ifdef NONMATCHING
 typedef unsigned int u128 __attribute__((mode(TI)));
 
@@ -61,14 +61,25 @@ static inline void initWay(Way *w, u128 *pos, int area, int idx, int link)
     w->area = area;
     w->idx = idx;
     w->link = link;
-    w->x10 = 0;
     w->x18 = 0;
+    w->x10 = 0;
+}
+
+static inline void initWayA(Way *w, u128 *pos, int area, int idx, int link)
+{
+    w->x1A = 1;
+    w->x10 = 0;
+    w->link = link;
+    w->idx = idx;
+    w->x18 = 0;
+    w->pos = *pos;
+    w->area = area;
 }
 
 static inline int setWay(PathCtrl *g, int k, u128 *pos, int area, int idx, int link)
 {
     if (k < 20) {
-        initWay(&g->way[k], pos, area, idx, link);
+        initWayA(&g->way[k], pos, area, idx, link);
         return 1;
     }
     return 0;
@@ -133,8 +144,11 @@ static int func_000F4F18(PathCtrl *g)
     }
     if (g->n < 19 && g->area == g->way[g->n - 1].area && g->idx == g->way[g->n - 1].idx) {
         u128 *src = &g->pos;
+        int nl;
 
-        initWay(getWay(g, g->n), src, g->area, g->idx, -1);
+        nl = -1;
+        initWay(getWay(g, g->n), src, g->area, g->idx, nl);
+        __asm__ __volatile__("" ::: "memory");
         g->n++;
     }
     return 1;
