@@ -1,6 +1,3 @@
-/* Parked: 15 diffs (r1 temp from permuter; was 27). Built from the matched between_yaw body; the original's two-bool
-   result reuse of $v1/$a0 is not reproduced. */
-#ifdef NONMATCHING
 static inline int between_yaw(float yaw, float yaw0, float yaw1)
 {
     float diff = yaw0 - yaw1;
@@ -28,11 +25,8 @@ static inline int between_yaw(float yaw, float yaw0, float yaw1)
 
 int GAMEUTIL_is_between_yaw_and_yaw_extend_abs(float yaw, float base, float yaw1, float yaw2)
 {
-    {
-        int r1 = between_yaw(yaw, base, yaw1);
-        return r1 == 1 || between_yaw(yaw, base, yaw2) == 1;
+    if (between_yaw(yaw, base, yaw1) == 1 || between_yaw(yaw, base, yaw2) == 1) {
+        return 1;
     }
+    return 0;
 }
-#else
-extern int GAMEUTIL_is_between_yaw_and_yaw_extend_abs(float, float, float, float);
-#endif
