@@ -1,5 +1,3 @@
-/* Parked: 12 diffs. Builds a stabilising quaternion from the collision edge at obj+0xC0 (type 4 only): copies the DB plane out if asked, then either aligns q to the edge direction crossed with Y (vertex points, VU0 cross product and normalise, GetQuaternionByAxisDirZY) or defers to func_00067068; with exchange set, q is multiplied by a half turn about Y. Remaining: s3/s4 hold obj and useEdge the other way round, and the argument moves before the func_00067068 call are ordered differently. The `pp` copy of pts came from a 25-minute permuter run. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
 extern float YUnitVector[];
@@ -7,7 +5,7 @@ extern s128 *GetCollisionDBPlane(void *);
 extern void GetCollisionEdgePointerVertexPoint(int *, void *);
 extern void GetQuaternionByAxisDirZY(float *, float *, float *);
 extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, short, float *);
-extern void func_00067068(float *, s128 *, int, int, char *, int, int, int, float, float, float);
+extern void func_00067068(float *, s128 *, int, int, char *, float, float, float, int, int, int);
 
 int charrootdyn_edgepointstab(float *q, s128 *plane, int a2, int a3, char *obj, int t1, int t2, int useEdge,
                               int exchange, int a9, float f0, float f1, float f2)
@@ -16,6 +14,7 @@ int charrootdyn_edgepointstab(float *q, s128 *plane, int a2, int a3, char *obj, 
     float dir[4] __attribute__((aligned(16)));
     int pts[2];
     int *pp;
+    register int ue __asm__("$19") = useEdge;
     char *edge = obj + 0xC0;
 
     if (*(int *)(edge + 0x30) != 4)
@@ -23,13 +22,13 @@ int charrootdyn_edgepointstab(float *q, s128 *plane, int a2, int a3, char *obj, 
     if (plane != 0)
         *plane = *GetCollisionDBPlane(edge);
     pp = pts;
-    if (useEdge != 0) {
+    if (ue != 0) {
         GetCollisionEdgePointerVertexPoint(pp, edge);
-        __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
-                             "lqc2 vf6, 0x0(%1)\n"
+        __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                             "lqc2 vf6, 0x0(%2)\n"
                              "vsub.xyz vf5, vf5, vf6\n"
-                             "sqc2 vf5, 0x0(%2)\n"
-                             : : "r"(pts[1]), "r"(pts[0]), "r"(dir) : "memory");
+                             "sqc2 vf5, 0x0(%0)\n"
+                             : : "r"(dir), "r"(pts[1]), "r"(pts[0]) : "memory");
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "lqc2 vf6, 0x0(%1)\n"
                              "vopmula.xyz ACC, vf5, vf6\n"
@@ -51,7 +50,7 @@ int charrootdyn_edgepointstab(float *q, s128 *plane, int a2, int a3, char *obj, 
                              : : "r"(cross), "r"(cross) : "memory");
         GetQuaternionByAxisDirZY(q, cross, YUnitVector);
     } else {
-        func_00067068(q, plane, a2, a3, obj, t1, t2, a9, f0, f1, f2);
+        func_00067068(q, plane, a2, a3, obj, f0, f1, f2, t1, t2, a9);
     }
     if (exchange != 0) {
         SetQuaternionByAxisRotateVWithNoRegularize(cross, -0x8000, YUnitVector);
@@ -72,4 +71,3 @@ int charrootdyn_edgepointstab(float *q, s128 *plane, int a2, int a3, char *obj, 
     }
     return 1;
 }
-#endif
