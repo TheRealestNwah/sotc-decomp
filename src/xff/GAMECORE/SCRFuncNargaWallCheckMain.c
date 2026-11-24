@@ -1,4 +1,4 @@
-/* Parked: 7 diffs, same size. Narga wall check: derives the facing axis from the layout quaternion (+0x13C) and the unit direction to the player's layout (data+0x407C), tests their dot against cos(f21 degrees), then ray-casts f20 units along the player direction (ClipCollisionDirectCallBack with getRealColJudgeFunc) and writes the verdict (1 wall hit within range, 2 too close, 3 no hit) plus the hit position and direction into the AI work at +0x5A80..+0x5AA0. VU0 runs match word for word; the third vector gets its own pointer (s2), set through new_var before the cos test (from the permuter), the post-clip distance asm pins its operands, and an empty barrier ends the no-hit branch so gcc does not cross-jump the two store tails. Remaining: the s0 load (addiu s0,sp,0x30) and mfc1 swap after the cos test, and the scheduling of the stores in both tail branches (the Original writes the verdict word first in the hit path and loads 3 into a0 in the no-hit path). */
+/* Parked: 3 diffs, same size. Narga wall check: derives the facing axis from the layout quaternion (+0x13C) and the unit direction to the player's layout (data+0x407C), tests their dot against cos(f21 degrees), then ray-casts f20 units along the player direction (ClipCollisionDirectCallBack with getRealColJudgeFunc) and writes the verdict (1 wall hit within range, 2 too close, 3 no hit) plus the hit position and direction into the AI work at +0x5A80..+0x5AA0. VU0 runs match word for word; the third vector gets its own pointer (s2), set through new_var before the cos test (from the permuter), the post-clip distance asm pins its operands, and an empty barrier ends the no-hit branch so gcc does not cross-jump the two store tails. The no-hit tail loads its 3 through a variable pinned to $4 before the copies and copies v10 through a quad pinned to $3. Remaining: in the hit tail gcc schedules the lq of the hit position ahead of the verdict store (li/sw 1), which the Original writes first. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct {
@@ -137,10 +137,11 @@ void SCRFuncNargaWallCheckMain(void *obj, float f23, float f22, float f20, float
                     }
                 }
             } else {
+                { register int t __asm__("$4") = 3;
                 *(s128 *)(ai + 0x5A80) = *(s128 *)&L.v30;
                 __asm__ __volatile__("");
-                *(int *)(ai + 0x5AA0) = 3;
-                *(s128 *)(ai + 0x5A90) = *(s128 *)&L.v10;
+                *(int *)(ai + 0x5AA0) = t; }
+                { register s128 q __asm__("$3") = *(s128 *)&L.v10; *(s128 *)(ai + 0x5A90) = q; }
                 __asm__ __volatile__("");
             }
         }
