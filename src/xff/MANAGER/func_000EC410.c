@@ -1,4 +1,12 @@
-/* Parked: 9 diffs, same size (167 words) (14 before). p, count and unset are initialised as statements before the first walk and the walk advances p before count, which fixes the init move order. rand() is evaluated before acc/share are initialised, the first walk uses its own pointer `p`, and an empty memory asm keeps `e = first` out of the beqz delay slot. Remaining: `i = 0` is hoisted above the blez with `e = first` in its delay slot (the Original has i = 0 there and moves e = first after the constant loads); other placements of e/acc were worse. */
+/* Parked: 3 diffs, same size (161 words) (was 9). p, count and unset are
+ * initialised as statements before the first walk and the walk advances p
+ * before count, which fixes the init move order. rand() is evaluated before
+ * acc/share are initialised and the first walk uses its own pointer `p`.
+ * Indexing the second walk as &first[i] makes e a strength-reduced giv, so
+ * i = 0 fills the blez delay slot like the Original.
+ * Remaining: the giv init `e = first` lands after the two hoisted lui
+ * (dldEntry's symbols) instead of before them; first + i, char-offset,
+ * late-assign and reversed-compare spellings stayed at 3. */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern unsigned char RO_00141E70[];
@@ -59,10 +67,9 @@ static void func_000EC410(unsigned int *list, void *ctx)
     share = 0.0f;
     if (remaining >= 0.0f && unset != 0 && !(remaining < 0.0f))
         share = remaining / (float)unset;
-    __asm__ volatile("" ::: "memory");
-    e = first;
-    for (i = 0; i < count; i++, e++) {
+    for (i = 0; i < count; i++) {
         float w = share;
+        e = &first[i];
         if (!(e->weight < 0.0f))
             w = e->weight;
         acc += w * 0.01f;
