@@ -82,10 +82,11 @@ static inline void quatMul(void *dst, void *a, void *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-#ifdef NONMATCHING /* 15 diffs: v0/v1 numbering of the (idx<<N)+base address temps, $f0 vs $f1 for the sd*sb product, and 0.0f/$f21 init order */
+#ifdef NONMATCHING /* 11 diffs: reading ld through a pointer (from the permuter) fixes the product registers; left: v0/v1 numbering of the (idx<<N)+base address temps, the 0.0f/$f21 init order and one lui scheduled early */
 float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip)
 {
     Vec4 d __attribute__((aligned(16)));
+    float *new_var;
     Vec4 n __attribute__((aligned(16)));
     Vec4 r __attribute__((aligned(16)));
     Vec4 c __attribute__((aligned(16)));
@@ -94,7 +95,7 @@ float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip
     register float lb __asm__("$f24");
     register float ld __asm__("$f22");
     register float sa __asm__("$f26");
-    register float sb __asm__("$f1");
+    float sb;
     register float sd __asm__("$f20");
     register float ang1 __asm__("$f21");
     register float ang2 __asm__("$f25");
@@ -117,9 +118,10 @@ float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip
         float x1, x2;
         sd = sd + sd;
         x1 = (ld + lb - la) / (sd * sb);
+        new_var = &ld;
         sd = sd * sa;
         ang1 = iosGetACosfExact(x1);
-        x2 = (ld + la - lb) / sd;
+        x2 = (*new_var + la - lb) / sd;
         ang2 = iosGetACosfExact(x2);
         ang1 = ang2 + ang1;
         if (flip) {
