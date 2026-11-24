@@ -1,7 +1,5 @@
-/* Parked: 8 diffs, same size. Remaining: register choice for x41C / -1 in the
- * way[0] setup (a2/a3 swapped), the x10 store scheduled before the pos store,
- * and the g->x60 store scheduled before n = 1 instead of into the bnez delay
- * slot.
+/* Parked: 2 diffs, same size. Remaining: the way[0] x10 store is scheduled
+ * before the pos store (the Original stores pos first).
  *
  * Called once a user path is down to its last way: when the straight segment
  * to it is blocked (ClipEdgeLinkDBFinder), and the wall faces against the move
@@ -275,7 +273,8 @@ static void func_000F7908(PathCtrl *g, int obj)
     rp = &r;
     if (hit) {
         Way *w;
-        int area, idx;
+        register int area __asm__("$6");
+        int idx;
 
         vecSub(rp, g, &h);
         vecNormalize(rp, &r);
@@ -292,11 +291,11 @@ static void func_000F7908(PathCtrl *g, int obj)
         ((U *)&w->pos)->q = r.q;
         ((U *)&w->x18)->s = 0;
         ((U *)&w->x10)->i = 0;
+        g->n = 1;
         g->x60 = r.q;
         ((U *)&g->x70)->q = r.q;
         g->x80 = g->x41C;
         g->x84 = g->x420;
-        g->n = 1;
         if (g->xE0 == 0) {
             char *c = GetCharacterClass(obj);
             if (*(int *)(c + 0x750) != _getStopCtrlModeBaseMoveWork(getSCRDataCtrlWork(obj) + 0x3D10)) {
