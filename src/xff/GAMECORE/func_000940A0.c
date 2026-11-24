@@ -8,9 +8,6 @@ extern void iosRotMatrixY(float *, float);
 extern char ZDirVector[];
 extern int setAttainmentPosAndDirAndLock(void *, float *, float *);
 
-/* Parked attempt: 4 words differ from the Original. */
-#ifdef NONMATCHING
-/* 2 diffs: the 2pi-span product lands in $f1 instead of $f0 (pinning it to $f0, regrouping the expression or pinning the 2pi constant leaves 2-7). Loading `a` before the barrier on off (pinned to $v1) and a $v0 pointer for the 0xC load fix the loop-top order and registers. */
 static const unsigned int RO_NoLimit = 0xFFFFFFFF;
 static inline void vecScaleXYZ(float *out, float *a, float s)
 {
@@ -38,14 +35,14 @@ static inline void vecAdd(float *out, float *a, float *b)
                          : : "r"(out), "r"(a), "r"(b) : "memory");
 }
 
-int func_000940A0(void *unused, float *lim)
+static int func_000940A0(void *unused, float *lim)
 {
     float v[4] __attribute__((aligned(16)));
     float m[16] __attribute__((aligned(16)));
     float p[4] __attribute__((aligned(16)));
     char *w = getSCRDataCtrlWork(unused);
     float *goal = getGoalPointDataByAreaIdx(w, *(int *)(w + 0x3C90), *(int *)(w + 0x3C8C));
-    float cur, lo, hi, mid;
+    float cur, lo, hi, mid, h;
     int i, hit = 0;
     char *e8;
 
@@ -77,7 +74,7 @@ int func_000940A0(void *unused, float *lim)
         lo = a * 0.017453293f;
         { register char *hp __asm__("$2") = (char *)lim + off; hi = *(float *)(hp + 0xC) * 0.017453293f; }
         if (lo <= hi) {
-            mid = lo + (hi - lo) * 0.5f;
+            h = (hi - lo) * 0.5f; mid = lo + h;
             if (lo <= cur && cur <= mid) {
                 cur = lo;
                 hit = 1;
@@ -86,7 +83,8 @@ int func_000940A0(void *unused, float *lim)
                 hit = 1;
             }
         } else {
-            mid = (6.28318548f - (lo - hi)) * 0.5f; mid = adjustAnglePI(lo + mid);
+            /* Both branches go through h, so the 2pi-span half lands in $f0 like the (hi - lo) one. */
+            h = (6.28318548f - (lo - hi)) * 0.5f; mid = adjustAnglePI(lo + h);
             if (mid >= 0.0f) {
                 if (lo <= cur) {
                     if (cur <= mid) cur = lo; else cur = hi;
@@ -126,4 +124,3 @@ int func_000940A0(void *unused, float *lim)
     vecScaleXYZ(v, v, -1.0f);
     return setAttainmentPosAndDirAndLock(w, p, v);
 }
-#endif
