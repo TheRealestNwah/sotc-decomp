@@ -4,7 +4,6 @@ extern int *isysGroupForNext(int *, int);
 extern void isysGroupForExit(int, int);
 extern char *GetScriptCharacterClass(int);
 
-#ifdef NONMATCHING /* 16 diffs: second half matches; only the near-check result lands in $v1 (ours) instead of $v0 and its exit uses bnez instead of bnel, plus the final return branches */
 static inline float distSq(char *a, char *b)
 {
     float d;
@@ -27,6 +26,7 @@ static inline int near3(char *c)
     return distSq(c + 0x40, c + 0x4F0) <= r * r;
 }
 
+/* The shared `ret0` label keeps gcc from folding both result tails into sltu/sltiu: the Original branches to separate li 1 / li 0 blocks. */
 static int func_0009BFA0(char *c)
 {
     int ok;
@@ -67,8 +67,10 @@ static int func_0009BFA0(char *c)
             isysGroupForExit(last, 0);
         if (ok == 0)
             return 0;
-        if (*(int *)(c + 0x270) != 0 && near3(c) != 0)
-            return 0;
+        if (*(int *)(c + 0x270) == 0)
+            goto ret0;
+        if (near3(c) != 0)
+            goto ret0;
         return 1;
     }
     a1 = 0;
@@ -85,9 +87,8 @@ static int func_0009BFA0(char *c)
             }
         }
     }
-    __asm__("" : "+r"(a1));
     if (a1 != 0)
         return 1;
+ret0:
     return 0;
 }
-#endif
