@@ -1,4 +1,4 @@
-/* Parked: 9 diffs, same size. Narga wall check: derives the facing axis from the layout quaternion (+0x13C) and the unit direction to the player's layout (data+0x407C), tests their dot against cos(f21 degrees), then ray-casts f20 units along the player direction (ClipCollisionDirectCallBack with getRealColJudgeFunc) and writes the verdict (1 wall hit within range, 2 too close, 3 no hit) plus the hit position and direction into the AI work at +0x5A80..+0x5AA0. VU0 runs match word for word; the third vector gets its own pointer (s2), the post-clip distance asm pins its operands, and an empty barrier ends the no-hit branch so gcc does not cross-jump the two store tails. Remaining: the s0 load (addiu s0,sp,0x30) and mfc1 swap after the cos test, and the scheduling of the stores in both tail branches (the Original writes the verdict word first in the hit path and loads 3 into a0 in the no-hit path). */
+/* Parked: 7 diffs, same size. Narga wall check: derives the facing axis from the layout quaternion (+0x13C) and the unit direction to the player's layout (data+0x407C), tests their dot against cos(f21 degrees), then ray-casts f20 units along the player direction (ClipCollisionDirectCallBack with getRealColJudgeFunc) and writes the verdict (1 wall hit within range, 2 too close, 3 no hit) plus the hit position and direction into the AI work at +0x5A80..+0x5AA0. VU0 runs match word for word; the third vector gets its own pointer (s2), set through new_var before the cos test (from the permuter), the post-clip distance asm pins its operands, and an empty barrier ends the no-hit branch so gcc does not cross-jump the two store tails. Remaining: the s0 load (addiu s0,sp,0x30) and mfc1 swap after the cos test, and the scheduling of the stores in both tail branches (the Original writes the verdict word first in the hit path and loads 3 into a0 in the no-hit path). */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct {
@@ -31,6 +31,7 @@ static inline void normalize(void *v)
 
 void SCRFuncNargaWallCheckMain(void *obj, float f23, float f22, float f20, float f21)
 {
+    Vec4 *new_var;
     struct {
         Vec4 v10;
         Vec4 v20;
@@ -74,6 +75,7 @@ void SCRFuncNargaWallCheckMain(void *obj, float f23, float f22, float f20, float
         L.v20.y = 0.0f;
         normalize(s0);
         s1 = (char *)&L.v10;
+        new_var = &L.v30;
         __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                              "lqc2 vf6, 0x0(%2)\n"
                              "vsub.xyzw vf7, vf5, vf6\n"
@@ -93,7 +95,7 @@ void SCRFuncNargaWallCheckMain(void *obj, float f23, float f22, float f20, float
                              : "=&r"(bits) : "r"(s0), "r"(s1) : "memory");
         __asm__("mtc1 %1, %0" : "=f"(dot) : "r"(bits));
         if (cs < dot) {
-            s2 = (char *)&L.v30;
+            s2 = (char *)new_var;
             __asm__("mfc1 %0, %1" : "=r"(bits) : "f"(f20));
             __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                                  "qmtc2.ni %1, vf6\n"
