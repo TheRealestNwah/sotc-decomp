@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* 9 diffs, same length (123 words): only the callee-saved assignment differs. Draft from the asm; sibling of SCRFuncStartEventDemoGameModeCheck (same createScrEventDemoManager call, float args through cvt.w.s, tail-called). The ninth parameter is the stack argument p6 (read at 0x80($sp)) that is passed straight on as the call argument. The Original holds the long a3 in $s5 and p6 in $s6; ours swaps them, which moves the sign-extend (dsll32) and the final register shuffle. Tried: int n = (int)a3 first, temporaries for the casts, a permuter run (12 workers, 15 min: best 140). */
+/* 9 diffs, same length (123 words): only the callee-saved assignment differs. Draft from the asm; sibling of SCRFuncStartEventDemoGameModeCheck (same createScrEventDemoManager call, float args through cvt.w.s, tail-called). The ninth parameter is the stack argument p6 (read at 0x80($sp)) that is passed straight on as the call argument. The Original holds the long a3 in $s5 and p6 in $s6; ours swaps them, which moves the sign-extend (dsll32) and the final register shuffle. Tried: an int copy of a3 (worse: 71 diffs, 121 words), register pins on a3/p6, temporaries for the casts, a permuter run (12 workers, 15 min: best 140). */
 extern int *DldSysUndefSymbol;
 
 static inline char *dldBase(unsigned int *h)
@@ -26,12 +26,11 @@ extern void createScrEventDemoManager(int, int, int, int, int, int, int, int, fl
 
 void SCRFuncStartEventDemo(int a0, int flag, int a2, long a3, int unused, unsigned int *ref1, unsigned int *ref2, int cond, int p6, float f0, float f1, float f2, float f3)
 {
-    int n = (int)a3;
 
     if (flag != 0 && _gameFlagChk(flag) != 0)
         return;
     if (execCondition((void *)a0, cond) == 0)
         return;
-    createScrEventDemoManager(a0, (int)dldBase(ref1), a2, (int)dldResolve(ref2), flag, (int)f1, p6, (int)f2, f0, n, (int)f3);
+    createScrEventDemoManager(a0, (int)dldBase(ref1), a2, (int)dldResolve(ref2), flag, (int)f1, p6, (int)f2, f0, (int)a3, (int)f3);
 }
 #endif
