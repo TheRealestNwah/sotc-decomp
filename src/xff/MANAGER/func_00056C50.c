@@ -1,8 +1,10 @@
 /*
- * Parked: 12 diffs. Static, called from GetMainAnimation (same Original
- * source file, declared static in GetMainAnimation.c).
+ * Parked: 4 diffs. Static, called from GetMainAnimation (same Original
+ * source file, declared static in GetMainAnimation.c). A copy loop that
+ * increments i before its byte-offset loads, with the pointers declared
+ * da, sa, db, sb, gives the Original's base registers.
  * Remaining: the 0x724 load is scheduled after the 0x43C store and the
- * copy loop's base registers (t0/t1) and its addu operand order differ.
+ * i = 0 move (and lands in $f1).
  */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
@@ -48,13 +50,18 @@ static int func_00056C50(int id, float dt)
         F(c, 0x740) = F(src, 0x740);
         U8(c, 0xC40) = U8(src, 0xC40);
         {
-            int *da = (int *)(c + 0xC44), *db = (int *)(c + 0xC48);
-            int *sa = (int *)(src + 0xC44), *sb = (int *)(src + 0xC48);
-            for (i = 0; i < 1; i++) {
-                da[i * 2] = sa[i * 2];
-                db[i * 2] = sb[i * 2];
+            int *da = (int *)(c + 0xC44);
+            int *sa = (int *)(src + 0xC44);
+            int *db = (int *)(c + 0xC48);
+            int *sb = (int *)(src + 0xC48);
+            i = 0;
+            do {
+                int o = i * 8;
+                i++;
+                *(int *)((char *)da + o) = *(int *)((char *)sa + o);
+                *(int *)((char *)db + o) = *(int *)((char *)sb + o);
                 __asm__("" : "+r"(i));
-            }
+            } while (i <= 0);
         }
         break;
     }
