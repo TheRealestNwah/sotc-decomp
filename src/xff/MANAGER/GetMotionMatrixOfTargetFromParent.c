@@ -1,4 +1,9 @@
-#ifdef NONMATCHING /* parked draft: 14 diffs, register allocation only (VU0 helpers as in GetMotionMatrixOfChildsFromTarget.c) */
+#ifdef NONMATCHING
+/* Parked: 7 diffs, same size (VU0 helpers as in GetMotionMatrixOfChildsFromTarget.c).
+ * Pinning g to $a0 and writing the parent matrix as p * 64 + mtx give the
+ * Original's registers. Remaining: scheduling only. The Original computes
+ * &rot[idx] before &nodes[idx].pos and &mtx[idx], and loads node->parent
+ * before the lui of D_001365B0. */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -165,7 +170,7 @@ void GetMotionMatrixOfTargetFromParent(Mtx *mtx, Vec *qout, Motion *mot, Vec *ro
     Vec *pq;
     Vec *q;
     Mtx *gm;
-    Vec *g;
+    register Vec *g asm("$4");
     int p;
     Mtx *pp;
 
@@ -180,7 +185,7 @@ void GetMotionMatrixOfTargetFromParent(Mtx *mtx, Vec *qout, Motion *mot, Vec *ro
     p = node->parent;
     g = &D_001365B0;
     gm = (Mtx *)(g - 3);
-    pp = &mtx[p];
+    pp = (Mtx *)(p * 64 + (int)mtx);
     if (p < 0) {
         *(s128 *)g = *(s128 *)root;
         mtxMul(pm, gm, &m);
