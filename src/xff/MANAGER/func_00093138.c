@@ -1,7 +1,9 @@
 /* Samples a keyframe curve of (t, v) pairs at c->t, wrapping or clamping t past the last key, and stores the interpolated value in c->val. */
 typedef struct {
     char pad0[8];
-    int flags;
+    unsigned int lo : 27;
+    unsigned int anim : 4;
+    unsigned int loop : 1;
     float t;
     float val;
 } Ctl;
@@ -11,9 +13,10 @@ typedef struct {
     float v;
 } Key;
 
-#ifdef NONMATCHING
-/* Parked: 11 diffs, same size. Remaining: the flag update uses $v0 instead of $v1, the key loop keeps c->t in one register (the Original copies it to $f0 for the == test), sets prev before loading the first key (the Original sets it in the delay slot), and puts k second in the prev*8 + k add. */
-float func_00093138(Ctl *c, Key *k, int n)
+/* The flags word holds a 4-bit animation field at bit 27 and a loop flag in the
+ * sign bit. The empty asm keeps a copy of c->t for the == test, as the Original
+ * does, and orders n - 1 before it. */
+static float func_00093138(Ctl *c, Key *k, int n)
 {
     Key *p;
     Key *q;
@@ -21,12 +24,13 @@ float func_00093138(Ctl *c, Key *k, int n)
     int prev;
     int nm1;
     float pt;
+    float ct;
 
     if (c && k) {
         while (c->t > k[n - 1].t) {
-            if (c->flags >= 0) {
+            if (!c->loop) {
                 c->t = 0.0f;
-                c->flags = (c->flags & 0x87FFFFFF) | 0x08000000;
+                c->anim = 1;
             } else if (k[n - 1].t == 0.0f) {
                 c->t = 0.0f;
             } else {
@@ -35,14 +39,16 @@ float func_00093138(Ctl *c, Key *k, int n)
         }
         nm1 = n - 1;
         p = k;
+        ct = c->t;
+        __asm__ ("" : "+f"(ct) : "r"(nm1));
         i = 0;
         if (i < n) {
-            prev = nm1;
             pt = p->t;
+            prev = nm1;
             goto test;
         loop:
             if (c->t < pt) {
-                q = &k[prev];
+                q = (Key *)(prev * 8 + (int)k);
                 return c->val = q->v + (p->v - q->v) * (c->t - q->t) / (pt - q->t);
             }
             i++;
@@ -56,7 +62,7 @@ float func_00093138(Ctl *c, Key *k, int n)
                 prev = nm1;
             }
         test:
-            if (c->t != pt) {
+            if (ct != pt) {
                 goto loop;
             }
             return c->val = p->v;
@@ -65,6 +71,3 @@ float func_00093138(Ctl *c, Key *k, int n)
 end:
     return 1.0f;
 }
-#else
-extern float func_00093138(Ctl *c, Key *k, int n);
-#endif
