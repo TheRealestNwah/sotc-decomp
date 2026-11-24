@@ -15,7 +15,6 @@ static inline float distSq(char *a, char *b)
     return d;
 }
 
-#ifdef NONMATCHING /* 5 diffs: in case 3 the original keeps the constant 1 in v0 and the copy in v1, storing 0x26C and 0x270 before the sq in the branch delay slot; ours swaps the registers and schedules sw 0x26C into the delay slot */
 static inline int near3(char *c)
 {
     float r = *(float *)(*(char **)(c + 0x20) + 0x2C);
@@ -25,6 +24,8 @@ static inline int near3(char *c)
     return 0;
 }
 
+/* In case 3 the copy is pinned to v1 and the empty asm keeps both flag stores
+ * ahead of the sq, which fills the branch delay slot as in the Original. */
 static void func_0009DA40(char *c, char *out0)
 {
     register char *out __asm__("$7") = out0;
@@ -38,9 +39,11 @@ static void func_0009DA40(char *c, char *out0)
         return;
     case 3:
         if (near3(c)) {
-            *(int *)(c + 0x26C) = 1;
+            { register s128 t __asm__("$3") = *(s128 *)(c + 0x40);
             *(int *)(c + 0x270) = 1;
-            *(s128 *)out = *(s128 *)(c + 0x40);
+            *(int *)(c + 0x26C) = 1;
+            __asm__ __volatile__("");
+            *(s128 *)out = t; }
             off = 0.5f;
             goto add;
         }
@@ -63,4 +66,3 @@ static void func_0009DA40(char *c, char *out0)
     }
     *(s128 *)out = *(s128 *)(c + 0x4A0);
 }
-#endif
