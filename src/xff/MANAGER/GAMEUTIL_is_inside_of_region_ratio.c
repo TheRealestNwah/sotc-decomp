@@ -1,4 +1,4 @@
-/* 11 diffs. Type 0 returns 1 - GAMEUTIL_get_dist_ratio(VU0 distance), types 1 and 3 build a matrix from quat+center and call GetRateInOutEllipticalSphereVolume / GetRateInOutCubeVolume with (x,y,z,1) inner/outer vectors, other types hit break 0. Remaining: the Original schedules the addiu/daddu of the vector addresses before lui 1.0, and stores the w components in offset order (0x5C/0x7C in the delay slot; ours puts 0x4C/0x6C there). A permuter run found nothing better (best = base). */
+/* Parked: 8 diffs, same size. Type 0 returns 1 - GAMEUTIL_get_dist_ratio(VU0 distance), types 1 and 3 build a matrix from quat+center and call GetRateInOutEllipticalSphereVolume / GetRateInOutCubeVolume with (x,y,z,1) inner/outer vectors, other types hit break 0. Writing the outer vector's w first puts the type 1 stores in the Original's order. Remaining: the Original schedules the type compare and pos copy before lui 1.0 in the type 1 path, and in the type 3 path stores cin.w (0x6C) before cout's x/y/z; all 56 placements of the two w stores leave that at 4. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -23,14 +23,6 @@ static inline float distance(Vec4 *a, Vec4 *b)
                          "mtc1 $2, %0\n"
                          : "=f"(d) : "r"(a), "r"(b) : "$2");
     return d;
-}
-
-static inline void setVec(Vec4 *v, float x, float y, float z, float w)
-{
-    v->f[3] = w;
-    v->f[0] = x;
-    v->f[1] = y;
-    v->f[2] = z;
 }
 
 static inline void quatPosToMatrix(Vec4 *m, Vec4 *qp, Vec4 *pos)
@@ -82,14 +74,26 @@ float GAMEUTIL_is_inside_of_region_ratio(int type, Vec4 *pos, Vec4 *center, Vec4
         __asm__("" : "+r"(mp));
         quatPosToMatrix(mp, quat, center);
         if (type == 1) {
-            setVec(&ein, x0, y0, z0, 1.0f);
-            setVec(&eout, x1, y1, z1, 1.0f);
+            eout.f[3] = 1.0f;
+            ein.f[0] = x0;
+            ein.f[1] = y0;
+            ein.f[2] = z0;
+            ein.f[3] = 1.0f;
+            eout.f[0] = x1;
+            eout.f[1] = y1;
+            eout.f[2] = z1;
             r = GetRateInOutEllipticalSphereVolume(m, pos, &ein, &eout);
         } else if (type == 2) {
             __asm__ __volatile__("break 0");
         } else if (type == 3) {
-            setVec(&cin, x0, y0, z0, 1.0f);
-            setVec(&cout, x1, y1, z1, 1.0f);
+            cout.f[3] = 1.0f;
+            cin.f[0] = x0;
+            cin.f[1] = y0;
+            cin.f[2] = z0;
+            cin.f[3] = 1.0f;
+            cout.f[0] = x1;
+            cout.f[1] = y1;
+            cout.f[2] = z1;
             r = GetRateInOutCubeVolume(m, pos, &cin, &cout);
         } else {
             __asm__ __volatile__("break 0");
