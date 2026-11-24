@@ -1,4 +1,4 @@
-/* Parked: 17 diffs, same size. Per-frame update of the slow-leg move controller: builds a base-move work block on the stack, turns the character quaternion into a matrix and its inverse, steers by direct input, then either keeps the passage target, clears it (no target), or checks whether the layout target is reached; when not reached it re-checks from the work position with the layout block temporarily swapped, picks the motion with func_0010E5A8 and applies scale. Remaining: the quaternion pointer and matrix output take v0/v1 swapped, the two func_0010F110/F710 a1 moves are scheduled differently, and the layout block restore orders ld 0x1F0(sp), swc1 0x1C4 and the last sd differently. */
+/* Parked: 9 diffs, same size. Per-frame update of the slow-leg move controller: builds a base-move work block on the stack, turns the character quaternion into a matrix and its inverse, steers by direct input, then either keeps the passage target, clears it (no target), or checks whether the layout target is reached; when not reached it re-checks from the work position with the layout block temporarily swapped, picks the motion with func_0010E5A8 and applies scale. Remaining: the quaternion pointer and matrix output take v0/v1 swapped. The x1C4 store goes through a union with long so it aliases the layout block's ld/sd copy and stays before the restore. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -195,7 +195,7 @@ void updateSlowLegCtrlWork(void *th, Ctrl *ctrl, Lay *lay, int arg3)
                     save = *bp;
                     *bp = p->blk;
                     r = chkAttainExecLayout(lay, &p->pos, b->x18, b->chr);
-                    p->x1C4 = *(float *)((char *)bp + 0x14);
+                    ((union { float f; long l; } *)&p->x1C4)->f = *(float *)((char *)bp + 0x14);
                     *bp = save;
                 } else {
                     p->x1C4 = *(float *)((char *)bp + 0x14);
