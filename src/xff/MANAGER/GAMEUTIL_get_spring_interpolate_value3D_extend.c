@@ -1,6 +1,6 @@
-/* Parked: 13 diffs (scheduling). Remaining: ZeroVector/d address setup uses v0 instead of v1,
-   mov.s f12/f13 order before GAMEUTIL_is_nearly_equal_zero(len, eps), and store/load order
-   around the GAMEUTIL_get_increase_value calls. */
+/* Parked: 7 diffs (scheduling). Storing out[] through a float/int union keeps the flag loads
+   after each store as in the Original. Remaining: ZeroVector/d address setup uses v0 instead
+   of v1, and the mov.s f12/f13 order before GAMEUTIL_is_nearly_equal_zero(len, eps). */
 #ifdef NONMATCHING
 extern int GAMEUTIL_is_nearly_equal_zero(float, float);
 extern float GAMEUTIL_get_difference_value(float, float, int);
@@ -54,6 +54,7 @@ static inline float limit_speed(float v, float max, float dt)
     return v;
 }
 
+typedef union { float f[4]; int i[4]; } FU;
 typedef int s128 __attribute__((mode(TI)));
 extern s128 ZeroVector;
 
@@ -140,9 +141,9 @@ void GAMEUTIL_get_spring_interpolate_value3D_extend(float *out, float *cur, floa
     } else {
         *(s128 *)vel = ZeroVector;
     }
-    out[0] = GAMEUTIL_get_increase_value(cur[0], vel[0], flag[0]);
-    out[1] = GAMEUTIL_get_increase_value(cur[1], vel[1], flag[1]);
-    out[2] = GAMEUTIL_get_increase_value(cur[2], vel[2], flag[2]);
-    out[3] = cur[3];
+    ((FU *)out)->f[0] = GAMEUTIL_get_increase_value(cur[0], vel[0], flag[0]);
+    ((FU *)out)->f[1] = GAMEUTIL_get_increase_value(cur[1], vel[1], flag[1]);
+    ((FU *)out)->f[2] = GAMEUTIL_get_increase_value(cur[2], vel[2], flag[2]);
+    ((FU *)out)->f[3] = cur[3];
 }
 #endif
