@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 12 diffs: obj and the attribute resource swap s5/s6 */
+/* Walks every shape and plane of a layout object's collision resource and returns 1 when judge accepts one's attribute. */
 typedef struct { char pad0[0x30]; int attribute; } FullCollisionShape;
 typedef struct { unsigned short attribute; char pad2[0x12]; } PackedCollisionShape;
 typedef struct { char pad0[0x3C]; int attribute; } CollisionPlane;
@@ -41,8 +41,10 @@ static inline void *attributeAddress(CollisionReference *reference)
     int index = collisionAttributeIndex(reference);
     return resource->attributes + index * 16;
 }
-int GetLayoutObjCollisionDBWithTargetAttributeJudgeFunc(CollisionReference *ref, void *obj, int (*judge)(void *))
+int GetLayoutObjCollisionDBWithTargetAttributeJudgeFunc(CollisionReference *ref, void *obj0, int (*judge)(void *))
 {
+    /* Pinned: gcc otherwise gives obj $s6 and the attribute resource $s5, the reverse of the Original. */
+    register void *obj asm("$21") = obj0;
     LayoutClass *lc;
     CollisionResource *res;
     CollisionNode *node;
@@ -73,4 +75,3 @@ int GetLayoutObjCollisionDBWithTargetAttributeJudgeFunc(CollisionReference *ref,
     }}
     return 0;
 }
-#endif
