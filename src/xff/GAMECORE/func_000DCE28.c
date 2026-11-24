@@ -1,4 +1,4 @@
-/* Parked attempt: 17 words differ from the Original. */
+/* Parked attempt: 10 words differ from the Original, same size. Remaining: the is_reset != 1 test is a bnel whose likely slot holds a dead lw v0,0x30(s2), and the get_cur_status test is bnel v0 (st != 0) rather than beql on flag. */
 #ifdef NONMATCHING
 extern int GAMEUTIL_get_pre_status_status_manager(void *);
 extern int GAMEUTIL_get_cur_status_status_manager(void *);
@@ -11,7 +11,7 @@ extern int GAMEUTIL_doit_position_filter(void *, void *, int);
 
 static inline int anyRecord(char *rec)
 {
-    int n = 2;
+    register int n __asm__("$19") = 2;
     int i;
 
     if (*(int *)(rec + 0xC) < n)
@@ -28,7 +28,7 @@ static void func_000DCE28(char *ctx, void *pos, char *cam, void *arg)
 {
     char *sm = ctx + 0x34;
     char *c = cam + 0x23C;
-    int flag;
+    register int flag __asm__("$21");
     int st;
 
     if ((GAMEUTIL_get_pre_status_status_manager(sm) && !GAMEUTIL_get_cur_status_status_manager(sm)) || *(int *)(ctx + 0x130) == 1)
