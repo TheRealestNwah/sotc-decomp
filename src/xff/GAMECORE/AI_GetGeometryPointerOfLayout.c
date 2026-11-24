@@ -1,5 +1,4 @@
-/* Parked: 8 diffs, same size. Random ground point around a layout position: picks a random angle and radius in [min, max], rotates the XZ offset by the quaternion from YUnitVector to dir, then casts a ray of +/-len along dir through ClipCollisionDirectCallBack (gcGlobalVar+0x230, AI_JudgeNotCharaObjFunc/AI_JudgeColAttrFunc) and copies the 64-byte hit to out. Remaining: the Original keeps dir in s2 and the quaternion pointer in s1, ours swaps them. The quatRotate helper must be non-void (returning the vector) or the rotated-vector address is reused instead of rematerialized. */
-#ifdef NONMATCHING
+/* Random ground point around a layout position: picks a random angle and radius in [min, max], rotates the XZ offset by the quaternion from YUnitVector to dir, then casts a ray of +/-len along dir through ClipCollisionDirectCallBack and copies the 64-byte hit to out. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef struct { long long w[8]; } Hit;
@@ -85,6 +84,7 @@ Hit *AI_GetGeometryPointerOfLayout(Hit *out, Vec4 *pos, Vec4 *dir, float min, fl
     float ang;
     float r;
     short s;
+    Vec4 *a;
 
     isysGetThisSubThread();
     max -= min;
@@ -100,12 +100,12 @@ Hit *AI_GetGeometryPointerOfLayout(Hit *out, Vec4 *pos, Vec4 *dir, float min, fl
     vadd(&L.a, pos, &L.v);
     L.b.q = L.a.q;
     vscale(&L.t1, dir, len);
+    a = &L.a;
     vscale(&L.t2, dir, -len);
-    vadd(&L.a, &L.a, &L.t2);
+    vadd(a, a, &L.t2);
     vadd(&L.b, &L.b, &L.t1);
-    if (ClipCollisionDirectCallBack(&L.hit, &L.a, &L.b, gcGlobalVar + 0x230, AI_JudgeNotCharaObjFunc, 0, 0, AI_JudgeColAttrFunc, 0) == 0)
+    if (ClipCollisionDirectCallBack(&L.hit, a, &L.b, gcGlobalVar + 0x230, AI_JudgeNotCharaObjFunc, 0, 0, AI_JudgeColAttrFunc, 0) == 0)
         return 0;
     *out = L.hit;
     return out;
 }
-#endif
