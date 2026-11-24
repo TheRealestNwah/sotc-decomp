@@ -1,7 +1,7 @@
-/* SendVolumeShapeDamageLetter: parked at 16 diffs, like its siblings
- * SendDamageBoxLetter and SendDamageCylinderLetter. Remaining: float register
- * numbering (pos[0] lands in $f8 instead of $f2) and the order of the target/b
- * stores. */
+/* SendVolumeShapeDamageLetter: Parked: 2 diffs. Pinning pos[0] to $f2 (as
+ * SendDamageBoxLetter pins its pos loads) fixes the float register numbering.
+ * Remaining: the Original stores target (0x40) before b (0x78); every order of
+ * the target/a/b assignments tried still schedules b first. */
 #ifdef NONMATCHING
 typedef struct { int type; int pad[3]; int target; int a; int pad18[2]; char geom[0x40]; } DamageMsg;
 typedef struct { int target; float p[3]; float q[4]; float s[3]; float r[2]; int a; int b; } VolHead;
@@ -31,7 +31,7 @@ void SendVolumeShapeDamageLetter(int target, int dest, int a, int b, float *pos,
     body = 0;
     letter = create_letter(&head, &body, D_00139F64, 0, dest);
     u.target = target;
-    u.p[0] = pos[0];
+    { register float x __asm__("$f2") = pos[0]; u.p[0] = x; }
     u.p[1] = pos[1];
     u.p[2] = pos[2];
     u.q[0] = quat[0];
