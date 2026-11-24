@@ -1,5 +1,4 @@
-/* Parked: 1 diff, same size (incl. the split tail func_000A0B08). Animal approach state machine: switch on w[0] (table of six entries starting at 1; 4 and anything else end). State 1 first tries func_000A01D0 (-> 2) and func_000A0390 (-> 5), then compares xz distances (VU0 vmul.xz / vsqrt runs) from the leader's layout and the work position to the animal's position and, through AI_CheckInAnimalLayout checks, decides whether to flag w[2]; 2 and 3 use AI_CheckPathPoint (3.0 / 5.0 radius, 100.0 height) to move on to 3 / 6; 5 defers to func_000A04C8 (-> 6); 6 re-checks func_000A0390 then the path point and finally resets the state to 0 with w[2] = 1 (the tail). Fixed: the leader position pointer is loaded once for both distance runs; case 2's path-point call sits in an inline helper so the 3.0 constant is not shared across the call in f20; each VU0 distance run moves its result through $2 with mtc1 inside the asm (a $2 clobber), which puts the pointer in v1 and orders mtc1 as in the Original. Remaining: case 2 branches with bnel instead of bnez after the path-point call (reorg delay-slot choice; if/goto/ternary shapes don't change it; `w[0] = v = 3` gives bnez but puts the 3 in v1, 3 diffs). */
-#ifdef NONMATCHING
+/* Animal approach state machine: switch on w[0] (table of six entries starting at 1; 4 and anything else end). State 1 first tries func_000A01D0 (-> 2) and func_000A0390 (-> 5), then compares xz distances (VU0 vmul.xz / vsqrt runs) from the leader's layout and the work position to the animal's position and, through AI_CheckInAnimalLayout checks, decides whether to flag w[2]; 2 and 3 use AI_CheckPathPoint (3.0 / 5.0 radius, 100.0 height) to move on to 3 / 6; 5 defers to func_000A04C8 (-> 6); 6 re-checks func_000A0390 then the path point and finally resets the state to 0 with w[2] = 1 (the tail). The leader position pointer is loaded once for both distance runs; case 2's path-point call sits in an inline helper so the 3.0 constant is not shared across the call in f20; each VU0 distance run moves its result through $2 with mtc1 inside the asm (a $2 clobber), which puts the pointer in v1 and orders mtc1 as in the Original. The empty asm clobbering $2 on case 2's fall-through marks v0 dead there, so reorg steals the `v0 = 3` into a plain bnez delay slot instead of a bnel. */
 extern void *isysGetThisSubThread(void);
 extern char *GetLayoutClass(void *);
 extern int AI_CheckInAnimalLayout(void *, void *);
@@ -94,6 +93,7 @@ static void func_000A0888(char *obj, int *w)
         break;
     case 2:
         if (atPoint(w) == 0) {
+            __asm__("" ::: "$2");
             if (func_000A0390(obj, (char *)w)) {
                 w[0] = 5;
                 break;
@@ -131,4 +131,3 @@ static void func_000A0888(char *obj, int *w)
         break;
     }
 }
-#endif
