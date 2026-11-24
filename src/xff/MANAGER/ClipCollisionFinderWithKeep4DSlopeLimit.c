@@ -1,5 +1,9 @@
-/* ~117 diffs. Clips a 4D segment against the keep list (keep[0x20] entries of stride 0x14 at keep[0x24], via func_0009D8F8 + func_000A2B30) and then against the finder entries (min(f[0], f[1]) entries of stride 8 at f[3], via func_0009D8F8 + func_000A0DE8, falling back to func_000A1580 when the first returns 0), keeping the nearest hit in out (quad, quad, and the 2-int tag at out+0x20) and returning the last hit code. The Original keeps keep=$s3, out=$s4, finder=$s5, start=$s6, ret=$s7, cur=$s0, n=$s1 and the out+0x20 tag pointer in $s2 with -1 in $fp; ours allocates a different order (register pins for all of them made it worse: 133). */
+/* 2 diffs: the Original copies the start vector with lq/sq through $v1 (lq $v1, 0($s4); sq $v1, 0x70($sp)) where ours uses $v0; everything else matches. The permuter found nothing better in ~2700 iterations. */
 typedef int s128 __attribute__((mode(TI)));
+typedef union { s128 q; float f[4]; } Vec4;
+typedef struct { int f0; int id; } FinderEntry;
+typedef struct { Vec4 position; Vec4 auxiliary; FinderEntry geometry; } KeepResult;
+typedef struct { Vec4 geometry[4]; Vec4 position; } CollisionPoint;
 
 extern void func_0009D8F8(void *, void *, void *, int);
 extern int func_000A2B30(void *, void *, void *, void *, void *, float, void *);
@@ -7,70 +11,94 @@ extern int func_000A0DE8(void *, void *, void *, void *, void *, float);
 extern int func_000A1580(void *, void *, void *, void *, void *, float);
 
 #ifdef NONMATCHING
-int ClipCollisionFinderWithKeep4DSlopeLimit(char *out, s128 *start, s128 *end, int *finder, int *keep, float f12)
+static inline int clip_finder_entry(void *aux, void *e, void *start, void *pos, void *entry, float slope)
 {
-    struct { s128 e; s128 q10; s128 q20; s128 pad30; s128 pad40; s128 q50; s128 q60; s128 q70; } L;
-    s128 *p60;
-    int ret = 0;
-    int n;
-    char *cur;
-    int r;
-    int ok;
-    int one;
+    return func_000A0DE8(aux, e, start, pos, entry, slope);
+}
 
-    *(s128 *)out = *end;
-    if (keep != 0 && (n = keep[0x20 / 4]) != 0) {
-        cur = (char *)keep[0x24 / 4];
-        n--;
-        if (n != -1) {
-            L.e = *start;
-            do {
-                func_0009D8F8(&L.q70, cur, &L.e, 1);
-                r = func_000A2B30(&L.q20, &L.q10, &L.q70, out, cur, f12, keep);
+static inline int clip_keep_entry(void *pt, void *aux, void *e, void *out, void *entry, float slope, void *keep)
+{
+    return func_000A2B30(pt, aux, e, out, entry, slope, keep);
+}
+
+static inline void to_local(void *d, void *e, void *s)
+{
+    func_0009D8F8(d, e, s, 1);
+}
+
+static inline void copy_finder_header(FinderEntry *destination, FinderEntry *source)
+{
+    destination->f0 = source->f0;
+    destination->id = source->id;
+}
+
+int ClipCollisionFinderWithKeep4DSlopeLimit(KeepResult *out, Vec4 *start, Vec4 *end, int *finder, int *keep, float f12)
+{
+    Vec4 e;
+    Vec4 aux;
+    CollisionPoint pt;
+    Vec4 tmp;
+    int ret = 0;
+    FinderEntry *cur;
+    int n;
+    FinderEntry *cur2;
+    int n2;
+    int r;
+    int r2;
+    int ok;
+
+    out->position.q = end->q;
+    if (keep != 0) {
+        n = keep[0x20 / 4];
+        if (n != 0) {
+            e.q = start->q;
+            n--;
+            cur = (FinderEntry *)keep[0x24 / 4];
+            while (n != -1) {
+                to_local(&tmp, cur, &e);
+                r = clip_keep_entry(&pt, &aux, &tmp, out, cur, f12, keep);
                 if (r != 0) {
                     if (r - 5 < 2U)
-                        L.e = L.q60;
+                        e.q = pt.position.q;
                     ret = r;
-                    *(s128 *)out = L.q60;
-                    *(s128 *)(out + 0x10) = L.q10;
-                    *(int *)(out + 0x20) = *(int *)cur;
-                    *(int *)(out + 0x24) = *(int *)(cur + 4);
+                    out->position.q = pt.position.q;
+                    out->auxiliary.q = aux.q;
+                    copy_finder_header(&out->geometry, cur);
                 }
-                cur += 0x14;
-            } while (--n != -1);
+                n--;
+                cur = (FinderEntry *)((char *)cur + 0x14);
+            }
         }
     }
-    n = finder[0] < finder[1] ? finder[0] : finder[1];
-    if (n != 0) {
-        n--;
-        if (n != -1) {
-            p60 = &L.q60;
-            cur = (char *)finder[3];
-            do {
-                if (*(int *)cur != 0) {
-                    func_0009D8F8(&L.q60, cur, start, 1);
-                    L.q70 = *(s128 *)out;
-                    r = func_000A0DE8(&L.q10, &L.e, p60, &L.q70, cur, f12);
-                    one = 1;
-                    ok = 0;
-                    if (r == 1) {
-                        L.q70 = L.q50;
-                        ok = 1;
-                    }
-                    if (r == 0) {
-                        if (func_000A1580(&L.q10, &L.e, &L.q60, &L.q70, cur, f12) != 0)
-                            ok = one;
-                    }
-                    if (ok != 0) {
-                        ret = ok;
-                        *(s128 *)out = L.q50;
-                        *(s128 *)(out + 0x10) = L.e;
-                        *(int *)(out + 0x20) = *(int *)cur;
-                        *(int *)(out + 0x24) = *(int *)(cur + 4);
-                    }
+    n2 = finder[0];
+    if (finder[1] < n2)
+        n2 = finder[1];
+    if (n2 != 0) {
+        n2--;
+        cur2 = (FinderEntry *)finder[3];
+        while (n2 != -1) {
+            if (cur2->f0 != 0) {
+                to_local(&pt.position, cur2, start);
+                tmp.q = out->position.q;
+                r2 = clip_finder_entry(&aux, &e, &pt.position, &tmp, cur2, f12);
+                ok = 0;
+                if (r2 == 1) {
+                    ok = 1;
+                    tmp.q = pt.geometry[3].q;
                 }
-                cur += 8;
-            } while (--n != -1);
+                if (r2 == 0) {
+                    if (func_000A1580(&aux, &e, &pt.position, &tmp, cur2, f12) != 0)
+                        ok = 1;
+                }
+                if (ok != 0) {
+                    ret = ok;
+                    out->position.q = pt.geometry[3].q;
+                    out->auxiliary.q = e.q;
+                    copy_finder_header(&out->geometry, cur2);
+                }
+            }
+            n2--;
+            cur2++;
         }
     }
     return ret;
