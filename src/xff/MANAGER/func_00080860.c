@@ -1,9 +1,11 @@
 /* Creates the layout object, light or wind/part/cam animation for each sub-object of an LWS orient object and links it to the group. */
 #ifdef NONMATCHING
-/* Parked: 10 diffs, same size (281 words). func_0007F5A0 takes its floats after the fourth argument, which
-   places the f13 move before t1 as in the Original. Remaining: the param.one/link/two stores (0x98-0xA0) are
-   ordered link, two, one, and the loop-head loads and argument moves for GetObjectAnimationFloatFrame
-   (0x114-0x138) use a0/v1 instead of a1/a0 and are scheduled differently. */
+/* Parked: 0 diffs, same size (281 words): try_compilers says MATCH, but the splice can't place its .rodata.
+   func_0007F5A0 takes its floats after the fourth argument, which places the f13 move before t1 as in the
+   Original. Remaining: in the Original the strings start at .rodata+0x4928, right after func_0007FD48's jump
+   table (.rodata+0x4920), and this jump table sits at +0x4A30 (16-aligned relative to that object start).
+   Alone, the C file puts the table 8 bytes too early. It needs func_0007FD48 (and GetLwsOrientWorkSize) in
+   the same C file, and the function made static (Placeholder name). */
 typedef struct { float x, y, z, w; } __attribute__((aligned(16))) Vec;
 typedef int u_long128 __attribute__((mode(TI)));
 
@@ -80,6 +82,8 @@ void func_00080860(void *obj, int *def, char *cls, void *tail, char *info, int *
     param.one = 1;
     param.link = def2[21];
     param.two = 2;
+    /* Keeps the one/link/two stores in field order, like the Original. */
+    __asm__ volatile("" : : "m"(param));
     param.pad0[0] = 0;
     param.pad0[1] = 0;
     param.pad0[2] = 0;
@@ -112,7 +116,7 @@ void func_00080860(void *obj, int *def, char *cls, void *tail, char *info, int *
             int *ent;
 
             w->sub = 0;
-            ent = (int *)(*(char **)(res + 0x10) + i * 12);
+            ent = (int *)(*(int *)(res + 0x10) + i * 12);
             GetObjectAnimationFloatFrame(anim, getAnimObjResource(dp[31] + 0x50), i, 0.0f, 0.0f);
             switch (sd->type = *ent) {
             case 1:
