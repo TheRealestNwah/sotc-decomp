@@ -1,6 +1,6 @@
 typedef struct { char pad[8]; float v8; } Lim;
 
-#ifdef NONMATCHING /* 18 diffs: logic matches; the Original cross-jumps the mode 8 tail and the 0x580 == 0 tail into the shared `jr ra` (v0 = 1 in delay slots, bc1fl v0 = 0), where ours materializes the compare in v1, and it loads the 0.5f constant before the 0x5B4/0x594 loads */
+#ifdef NONMATCHING /* 11 diffs: logic matches; the Original cross-jumps the mode 8 tail and the 0x580 == 0 tail into the shared `jr ra` (v0 = 1 in delay slots, bc1fl v0 = 0), where ours materializes the compare in v1. The 0.5f threshold is a local so it is loaded before the 0x5B4/0x594 loads like the Original */
 static inline float distXYZ(char *a, char *b)
 {
     float d;
@@ -48,8 +48,9 @@ static int func_0009EF98(char *c)
         f4 = *(float *)(c + 0x1B0);
         if (f4 < 50.0f) {
             float d = distXYZ(c + 0x5B0, c + 0x590);
+            float h = 0.5f;
 
-            v = (*(float *)(c + 0x5B4) - *(float *)(c + 0x594)) / d > 0.5f;
+            v = (*(float *)(c + 0x5B4) - *(float *)(c + 0x594)) / d > h;
             if (v != 0)
                 return 1;
         }
