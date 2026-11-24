@@ -1,9 +1,4 @@
-/* Parked: 17 diffs. Permuter-found shape (the (unsigned short) offset and
- * the pp/one temporaries) fixes the s0/s1 swap of the plain version (40 diffs).
- * Remaining: l + 0x1A4 is kept in s0 across the second DeleteAllTwoWayLink
- * call (one extra addiu) instead of reloading lw 0x1A4(s1) after it, and the
- * li 1 / lw / beqz / sb tail is scheduled differently. */
-#ifdef NONMATCHING
+/* Releases a layout object's attachments (release callback, display model, cloth, collision, two-way links) immediately. */
 extern char *GetScriptLayoutClass(void *);
 extern void *dynamic_cast_to_camera_obj(void *);
 extern char *get_camera_obj_layout_class(void *);
@@ -55,14 +50,13 @@ static inline int callRelease(char *l)
 
 void FlushLayoutObjImmediate(unsigned char *o)
 {
-    char **pp;
-    int one;
     char *l = layoutClass(o);
     int w;
 
     if (callRelease(l))
         *(int *)(l + 0x190) = 0;
-    if (*(void **)(l + (unsigned short)0x144) != 0) {
+    __asm__ volatile("" : "+r"(o));
+    if (*(void **)(l + 0x144) != 0) {
         modelDeleteDispModelClass(*(void **)(l + 0x144));
         _isysDeleteGroup(o, GetLayoutDispObjGroup(), 0);
     }
@@ -77,15 +71,12 @@ void FlushLayoutObjImmediate(unsigned char *o)
         }
     }
     DeleteAllTwoWayLink(layoutClass(o) + 0x10C, D_000783E0);
-    pp = (char **)(l + 0x1A4);
     DeleteAllTwoWayLink(l + 0x118, func_000783D8);
     {
-        char *p;
-        one = 1;
-        p = *pp;
-        *(char *)(l + 0x151) = one;
-        if (p != 0)
+        register char *p __asm__("$2");
+        *(char *)(l + 0x151) = 1;
+        p = *(char **)(l + 0x1A4);
+        if (p)
             *(int *)(p + 8) = 0;
     }
 }
-#endif
