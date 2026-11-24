@@ -1,6 +1,5 @@
-/* Parked: 2 diffs, same size. Remaining: the init block stores button
- * (0x1C) before button10 (0x10); the Original stores 0x10 first. Writing
- * state, button, button10 in that order is the closest of the six orders. */
+/* The init block writes f18, state, button10, button, f14 in that order so
+ * the stores schedule like the Original. */
 typedef struct {
     int state;
     int pad4;
@@ -59,8 +58,7 @@ extern int func_000CF8E8(void *, char *, PauseWork *);
 
 #define G(type, o) (*(type *)((char *)&gcGlobalVar + (o)))
 
-#ifdef NONMATCHING
-void func_000CFA70(int *menu)
+static void func_000CFA70(int *menu)
 {
     PauseWork w;
     char *cls;
@@ -78,10 +76,10 @@ void func_000CFA70(int *menu)
         scrRun();
     }
     w.f18 = 2.25f;
-    w.f14 = 1.0f;
     w.state = 1;
-    w.button = 3;
     w.button10 = 1;
+    w.button = 3;
+    w.f14 = 1.0f;
     w.pad4 = 0;
     w.done = 0;
     w.sel = 0;
@@ -142,4 +140,3 @@ void func_000CFA70(int *menu)
     else
         scriptIntrSignal(ScrIntrDef_MENU_CONTINUE);
 }
-#endif
