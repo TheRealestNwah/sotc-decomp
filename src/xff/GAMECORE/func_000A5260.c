@@ -1,9 +1,8 @@
-/* func_000A5260: Parked attempt, 17 diffs, same size.
- * The 0.1f constant is CSE'd into $f20 and reused across the three calls,
- * where the Original rematerializes lui/ori/mtc1 before each one; the
- * memory barrier also makes p+0x2F8 reload instead of reusing $f0.
+/* func_000A5260.
+ * The second AI_GetRotVelocity call goes through an inline wrapper: its
+ * return label ends the basic block, so the 0.1f argument is not CSE'd with
+ * the next AI_UpdateVelocity call and is rematerialized like the Original.
  */
-#ifdef NONMATCHING
 typedef struct { char pad[0x190]; float dt; } GcGlobal;
 extern GcGlobal gcGlobalVar;
 extern void *isysGetThisSubThread(void);
@@ -52,6 +51,11 @@ static inline float vecLength(void *a)
     return len;
 }
 
+static inline float rotv(float a, float b, float c, float d)
+{
+    return AI_GetRotVelocity(a, b, c, d);
+}
+
 static void func_000A5260(char *p, char *trg)
 {
     float dir[4];
@@ -80,8 +84,7 @@ static void func_000A5260(char *p, char *trg)
     else if (a < -1.5707963f)
         a = -1.5707963f;
     F(p, 0x300) = a;
-    F(p, 0x2F8) = AI_GetRotVelocity(F(p, 0x2F8), a - *ry, 3.0f, 0.1f);
-    __asm__ __volatile__("" ::: "memory");
+    F(p, 0x2F8) = rotv(F(p, 0x2F8), a - *ry, 3.0f, 0.1f);
     *ry = *ry + F(p, 0x2F8) * gcGlobalVar.dt;
     AI_UpdateVelocity(rv, *ry, 0.1f);
     o = *(char **)(p + 0x20);
@@ -103,4 +106,3 @@ static void func_000A5260(char *p, char *trg)
     AI_UpdateVelocity(u2, w * (r * r) * k2, 2.0f);
     F(p, 0x30C) = *u1 + *u2 + 0.0f;
 }
-#endif
