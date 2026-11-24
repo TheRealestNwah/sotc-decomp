@@ -11,7 +11,7 @@ extern void iosGetSinCosf(float *out, float angle);
                          : : "r"(v), "r"(s) : "memory")
 
 /*
- * Parked: 4 diffs (2 per loop). Remaining: in both loops the second
+ * Parked: 2 diffs (1 per loop). Remaining: in both loops the second
  * iosGetSinCosf call takes its argument from the hoisted copy of &b
  * ($s0) instead of recomputing addiu $a0,$sp,0x10 in the delay slot.
  */
@@ -27,7 +27,10 @@ static inline void vtx(float *v, float ang, float r, float y)
 
 static inline void vtx2(float *v, float ang, float r, float y)
 {
-    iosGetSinCosf(v, ang);
+    /* Sets $f12 before the jal, as the Original does. */
+    float a2 = ang;
+    __asm__ __volatile__("" : "+f"(a2));
+    iosGetSinCosf(v, a2);
     VSCALE(v, r);
     glVertex3f(v[1], y, v[0]);
 }
