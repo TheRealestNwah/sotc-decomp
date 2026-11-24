@@ -20,9 +20,14 @@ extern int iosSetCurrentMatrix(void *);
 extern int iosPopCurrentMatrix(void);
 
 #ifdef NONMATCHING
-/* 15 diffs (iosPushCurrentMatrix returns int): saved registers rotate (off/child/count get s1/s2/s3, target s2/s3/s1). void-return ios externs give 20; permuter (25 min) found only a dead if(node) duplicate. */
-static void func_0003DB80(int idx, Model *model, char *mats, NodeCallback cb, float a, float b, void *ctx, int *count)
+/* Parked: 3 diffs. Pinning count to $17 fixes the saved-register rotation
+ * (was 15). Remaining: in the recursive call's argument setup the Original
+ * moves b into $f13 in the beq delay slot after $t0/$t1; ours schedules it
+ * first. void-return ios externs, else-first branches, and temporaries for
+ * b or count don't change it. */
+static void func_0003DB80(int idx, Model *model, char *mats, NodeCallback cb, float a, float b, void *ctx, int *count_)
 {
+    register int *count __asm__("$17") = count_;
     Node *node;
     int sibling;
     int child;
