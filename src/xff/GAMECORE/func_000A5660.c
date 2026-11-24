@@ -51,7 +51,7 @@ static inline void normalize3to(float *o, float *v)
                          : : "r"(o), "r"(v) : "$2", "memory");
 }
 
-#ifdef NONMATCHING /* 9 diffs: the 0.0 mtc1 into f21 is scheduled before the GetLayoutClass call instead of after the 0x290/0x740 loads (reorders, volatile/memory barriers and a 20 min permuter run did not move it). The $2 clobber on normalize3to puts the nv pointer in v1. */
+#ifdef NONMATCHING /* 8 diffs: the 0.0 mtc1 into f21 is scheduled before the GetLayoutClass call instead of after the 0x290/0x740 loads; reading t/lim into locals behind an empty asm and making the zero asm take obj fixes the c.le.s/lui order (reorders, volatile/memory barriers and a 20 min permuter run did not move it). The $2 clobber on normalize3to puts the nv pointer in v1. */
 static void func_000A5660(char *p)
 {
     Vec4 vel, pos, dir, nv;
@@ -60,13 +60,17 @@ static void func_000A5660(char *p)
     register float zero __asm__("$f21");
     char *obj = GetLayoutClass((int)isysGetThisSubThread());
 
+    {
+    float lim;
     t = *(float *)(p + 0x290);
+    lim = *(float *)(p + 0x740);
+    __asm__("" : "+f"(t), "+f"(lim));
     zero = 0.0f;
     z2 = zero;
-    __asm__("" : "+f"(zero));
+    __asm__("" : "+f"(zero) : "r"(obj));
     one = 1.0f;
     *(float *)(p + 0x30C) = one;
-    if (t <= *(float *)(p + 0x740)) {
+    if (t <= lim) {
         AI_GetVelocity3XYZ(vel.f, (float *)(p + 0x6B0), (float *)(p + 0x6C0), (float *)(p + 0x6D0), (float *)(p + 0x6E0), t);
         AI_GetPosition3XYZ(pos.f, (float *)(p + 0x6B0), (float *)(p + 0x6C0), (float *)(p + 0x6D0), (float *)(p + 0x700), (float *)(p + 0x6E0), t);
         AI_GetVelocity3(*(float *)(p + 0x748), *(float *)(p + 0x74C), *(float *)(p + 0x750), zero, t);
@@ -108,6 +112,7 @@ static void func_000A5660(char *p)
         *(float *)(p + 0x304) = iosGetASinfExact(nv.f[1]);
     } else {
         AI_UpdateVelocity((float *)(p + 0x2F4), zero, one);
+    }
     }
     *(s128 *)(p + 0x2E0) = ZeroVector;
 }
