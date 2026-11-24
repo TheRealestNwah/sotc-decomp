@@ -45,8 +45,8 @@ static inline void cameraRegion(int obj, int target, GeoHeader *geo)
     update_camera_region_geometry(obj, target, 0, geo, geo->type);
 }
 
-static void func_0007F5A0(int obj, int target, GeoHeader *geo, int d, GeoRef *ref, GeoExtra *ex, int arg,
-                          GeoOwner *owner, float unused, float f)
+static void func_0007F5A0(int obj, int target, GeoHeader *geo, int d, float unused, float f, GeoRef *ref,
+                          GeoExtra *ex, int arg, GeoOwner *owner)
 {
     switch (geo->type) {
     case 1:
