@@ -71,6 +71,7 @@ inline static float dot4(void *a, void *b)
 {
 
     register float r __asm__("$f0");
+    register int ri __asm__("$2");
 __asm__ __volatile__("lqc2 vf14, 0x0(%1)\n"
                          "lqc2 vf15, 0x0(%2)\n"
                          "vmul.xyzw vf15, vf14, vf15\n"
@@ -78,7 +79,8 @@ __asm__ __volatile__("lqc2 vf14, 0x0(%1)\n"
                          "vaddz.x vf15, vf15, vf15z\n"
                          "vaddw.x vf15, vf15, vf15w\n"
                          "qmfc2.ni %0, vf15\n"
-                         : "=r"(r) : "r"(a), "r"(b));
+                         : "=r"(ri) : "r"(a), "r"(b));
+  __asm__ ("mtc1 %1, %0" : "=f"(r) : "r"(ri));
   return r;
 }
 
@@ -133,7 +135,8 @@ inline static void getGlobalRest(Vec4 *out, IkTarget *ik, int obj, int idx)
   }
 }
 
-#ifdef NONMATCHING /* 2 diffs: the tgt copy's lq temp lands in v0 instead of v1; permuter stuck at 10 */
+/* Register-pinned temps (the tgt copy in v1, the dot4 result in v0) give the
+ * Original's allocation. */
 void nico_IK_setTargetQFromSkeletonRestWithLimit(IkTarget *ik, void *base, int open, float rate)
 {
   Vec4 q;
@@ -168,7 +171,7 @@ void nico_IK_setTargetQFromSkeletonRestWithLimit(IkTarget *ik, void *base, int o
   cur = (Vec4 *)((ik->idx << 4) + (int)ik->q);
   src = (Vec4 *)((idx << 4) + *(int *)(cc + 0x328));
   t = *w;
-  tgt.q = cur->q;
+  { register s128 tq __asm__("$3") = cur->q; tgt.q = tq; }
   d.f = dot4(src, &tgt);
   if (d.i < 0)
   {
@@ -178,4 +181,3 @@ void nico_IK_setTargetQFromSkeletonRestWithLimit(IkTarget *ik, void *base, int o
   normalize4(&ik->q[ik->idx]);
   ((float *) (*((char **) (cc + 0x324))))[idx] = 2.0f;
 }
-#endif
