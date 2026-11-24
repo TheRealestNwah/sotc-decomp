@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* quat pointer allocated to $a2 instead of $v1 */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -8,6 +7,10 @@ extern int ClipCollisionFinder(int, Vec4 *, Vec4 *, char *);
 
 static inline void quatPosToMatrix(Vec4 *m, Vec4 *qp, Vec4 *pos)
 {
+    /* Pinned like the Original: m in $v0, pos in $a1, the quaternion in $v1. */
+    register Vec4 *q asm("$3") = qp;
+    register Vec4 *mm asm("$2") = m;
+    register Vec4 *pp asm("$5") = pos;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%2)\n"
                          "vmr32.w vf14, vf0\n"
@@ -38,7 +41,7 @@ static inline void quatPosToMatrix(Vec4 *m, Vec4 *qp, Vec4 *pos)
                          "lqc2 vf4, 0x0(%1)\n"
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
-                         : : "r"(m), "r"(pos), "r"(qp));
+                         : : "r"(mm), "r"(pp), "r"(q));
 }
 
 static inline void matrixApply(Vec4 *out, Vec4 *m, Vec4 *v)
@@ -75,7 +78,11 @@ int charrootdyn_checkZplane(int arg, char *obj, float height)
     Vec4 *quat = *(Vec4 **)(obj + 0x13C);
     Vec4 *pos = *(Vec4 **)(obj + 0x134);
     quatPosToMatrix(matrix, quat, pos);
-    v.q = ZeroPoint.q;
+    {
+        /* The Original addresses ZeroPoint through $v1 and copies it through $v0. */
+        register Vec4 *zp asm("$3") = &ZeroPoint;
+        v.q = zp->q;
+    }
     v.f[2] = *(float *)(obj + 0xE34);
     matrixApply(&to, matrix, &v);
     offset.q = ZeroVector.q;
@@ -85,4 +92,3 @@ int charrootdyn_checkZplane(int arg, char *obj, float height)
     addXYZ(&from, *(Vec4 **)(obj + 0x138), &offset);
     return ClipCollisionFinder(arg, &from, &to, obj + 0xE20);
 }
-#endif
