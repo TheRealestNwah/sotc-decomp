@@ -1,11 +1,12 @@
-/* Parked at 25 diffs: the Original builds the dead-zone zero in $f1 and
- * compares against the result register $f21, where gcc propagates $f12
- * everywhere (14 words), and the limit-speed tail loads the
- * GAMEUTIL_get_increase_value arguments in a different order (11 words). */
+/* Parked: 5 diffs. The dead-zone zero is pinned to $f1 and the result to
+ * $f21, and GAMEUTIL_get_increase_value is declared (float, float, int) so
+ * the tail call sets $a0 last, as in GAMEUTIL_get_spring_interpolate_value_extend.
+ * Remaining: the Original sets $f12 (cur) before the speed-limit branches and
+ * duplicates the $f13 move into each path; gcc hoists $f13 instead. */
 #ifdef NONMATCHING
 extern int GAMEUTIL_is_nearly_equal_zero(float, float);
 extern float GAMEUTIL_get_difference_value(int, float, float);
-extern float GAMEUTIL_get_increase_value(int, float, float);
+extern float GAMEUTIL_get_increase_value(float, float, int);
 
 static inline float dead_zone(float x, float min, float max)
 {
@@ -69,9 +70,18 @@ static inline float dead_zone2(float x, float min, float max)
 static inline float value_extend(float k, float max_speed, float cur, int flag, float target, float eps, float dt)
 {
     float d = GAMEUTIL_get_difference_value(flag, cur, target);
-    float w = 0.0f;
+    register float w __asm__("$f1") = 0.0f;
+    float x = w - d;
     register float res __asm__("$f21") = w;
-    float e = dead_zone2(w - d, -w, res);
+    float e;
+    w = -w;
+    if (res < x) {
+        e = x - res;
+    } else if (x < w) {
+        e = x - w;
+    } else {
+        e = res;
+    }
 
     if (!GAMEUTIL_is_nearly_equal_zero(e, eps)) {
         res += spring_step(e, k, dt);
@@ -86,7 +96,7 @@ static inline float value_extend(float k, float max_speed, float cur, int flag, 
             res = -lim;
         }
     }
-    return GAMEUTIL_get_increase_value(flag, cur, res);
+    return GAMEUTIL_get_increase_value(cur, res, flag);
 }
 
 static inline float reset_double_spring_interp_cntrl(char *p, float v)
