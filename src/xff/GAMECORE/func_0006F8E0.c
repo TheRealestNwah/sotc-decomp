@@ -1,5 +1,4 @@
-/* Parked: 8 diffs, same size. Sight-on base yaw driver: forces mode 1 when +0x14C is set, otherwise runs func_0006FC58, then (while +0x290 is set) picks the turn state through func_00070788/func_00070760/func_000708C0, either from is_predict_to_acting_base_yaw_rot_nico_yaw_pitch_cntrl (mode 1) or from the yaw gap to +0x150 (15 degree threshold when the motion is still, 10 degrees plus SCRPlayableCharaTurnDirectInput scaled by GAMEUTIL_get_dist_ratio otherwise), records +0x1A0, then resets the base yaw from the actor's local Z direction. Mode 2 sets the temporary stop flag before doit_nico_yaw_pitch_cntrl. Remaining: the Original starts the yaw/pitch join block with the I(4) load (copied into the three branch delay slots), ours schedules the zero stores first. */
-#ifdef NONMATCHING
+/* Sight-on base yaw driver: forces mode 1 when +0x14C is set, otherwise runs func_0006FC58, then (while +0x290 is set) picks the turn state through func_00070788/func_00070760/func_000708C0, either from is_predict_to_acting_base_yaw_rot_nico_yaw_pitch_cntrl (mode 1) or from the yaw gap to +0x150 (15 degree threshold when the motion is still, 10 degrees plus SCRPlayableCharaTurnDirectInput scaled by GAMEUTIL_get_dist_ratio otherwise), records +0x1A0, then resets the base yaw from the actor's local Z direction. Mode 2 sets the temporary stop flag before doit_nico_yaw_pitch_cntrl. In the yaw/pitch join block the actor load comes first (the Original copies it into the three branch delay slots) and the dir address is pinned to $4 ahead of the zero stores, held there by an empty asm. */
 extern int is_predict_to_acting_base_yaw_rot_nico_yaw_pitch_cntrl(void *, float, float);
 extern float get_base_yaw_nico_yaw_pitch_cntrl(void *);
 extern float GAMEUTIL_get_move_radi_from_yaw1_to_yaw2(float, float);
@@ -100,9 +99,12 @@ static void func_0006F8E0(char *w, float a, float b)
             }
             func_000707B0(w, prev, 0);
         }
+        { int o = I(4);
+        register float *dp __asm__("$4") = dir;
+        __asm__ __volatile__("" : : "r"(dp));
         yaw = 0.0f;
         pitch = 0.0f;
-        GAMEUTIL_get_local_directionZ(dir, I(4));
+        GAMEUTIL_get_local_directionZ(dp, o); }
         GAMEUTIL_get_yaw_pitch_by_direction(&yaw, &pitch, dir);
         set_base_yaw_nico_yaw_pitch_cntrl(c, yaw);
     }
@@ -114,4 +116,3 @@ stop:
     }
     doit_nico_yaw_pitch_cntrl(c, a, b);
 }
-#endif
