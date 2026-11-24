@@ -41,6 +41,7 @@ static inline void setFrame(int *i0, int *i1, float *frac, float t, int n, float
             f = t - (float)*i0;
         }
         *frac = f;
+        __asm__ __volatile__("" ::: "memory");
     }
 }
 
@@ -57,8 +58,10 @@ static inline void lerp3(void *out, void *a, void *b, float t)
                          : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
 }
 
-static inline void interpRot(void *out, int type, void **data, int i0, int i1, float frac)
+static inline void interpRot(void *out, int type_, void **data_, int i0, int i1, float frac)
 {
+    register void **data __asm__("$17") = data_;
+    register int type __asm__("$16") = type_;
     s128 v[2];
 
     if (frac == 0.0f) {
@@ -95,10 +98,11 @@ static inline void interpScale(void *out, int type, void *data, int i0, int i1, 
     }
 }
 
-/* Parked at 15 diffs. The dead c.lt.s on t2 comes from setFrame's identical arms.
- * frac's store and reload: the Original stores it before setting up the position call
- * and reloads $f12 from the stack, but gcc 2.96 reuses $f0 and stores later (14 words).
- * In interpRot's frac == 0 path the Original has a plain beqz where gcc emits beql (1 word). */
+/* Parked: 1 diff. The dead c.lt.s on t2 comes from setFrame's identical arms.
+ * frac is forced back to memory after setFrame stores it, and
+ * interpRot pins data to $s1 and type to $s0.
+ * Remaining: in interpRot's frac == 0 path the Original has a plain beqz where
+ * gcc 2.96 emits beql with the same delay-slot srl. */
 #ifdef NONMATCHING
 static void func_00035C78(char *out, Track *trk, int id, int n, float t, float t2)
 {
