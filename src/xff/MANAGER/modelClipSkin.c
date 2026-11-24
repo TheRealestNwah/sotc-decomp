@@ -1,6 +1,5 @@
-/* Parked: 5 diffs (was 10), same size (252 words). Remaining: the prologue tests vis->unk8 with bnel in $v0,
- * where the Original loads it into $a0 and uses beqz with a "daddu $a1, $a0" delay slot, then reads unk30
- * through $a1. Permuter (-j2, 30 min) found nothing better on the 10-diff version. */
+/* Parked: 2 diffs (was 5), same size (252 words). Remaining: the copy of vis->unk8 in the beqz delay
+ * slot goes to $v0 instead of $a1, so the later info->unk30 read uses $a0 rather than $a1. */
 #ifdef NONMATCHING
 typedef int u_long128 __attribute__((mode(TI)));
 
@@ -102,15 +101,15 @@ float modelClipSkin(ClipObj *obj, char *arg1) {
 
     cam = iosgluGetCameraContext();
     vis = obj->unk0->unk20;
-    scale = 1.2f;
-    if (vis->unk8 != 0) {
-        scale = vis->unk8->unk34;
-    }
-    /* Copies vis->unk8 into its own register like the Original's delay-slot daddu. */
+    /* Keeps the loaded pointer live past the test, so info is a separate copy. */
     {
         SkinInfo *ii = vis->unk8;
-        __asm__ __volatile__("" : "+r"(ii));
         info = ii;
+        scale = 1.2f;
+        if (ii != 0) {
+            scale = ii->unk34;
+        }
+        __asm__ __volatile__("" : : "r"(ii));
     }
     if (!((int)((vis->u18.l << 8) >> 32) & 1)) {
         if (D_001360C4 != 0 && 0.0f < (f = info->unk30) && dist(arg1 + 0x30, &cam->unk140) < f) {
