@@ -1,7 +1,7 @@
 /* Kicks the sound, LWS animation, shock or particle that a kick definition targets, if its condition (underwater check) passes. */
 #ifdef NONMATCHING
-/* Parked: 21 diffs, same size (282 words). Remaining: the condition flag lands in a1 instead of v1 (bne instead of bnel at 0xFC),
-   the charrootdyn_checkUnderWater argument setup order, and the 0/1 conversion of its result (sltu + 64-bit zero-extend instead of bnez/li 1/li 0). */
+/* Parked: 14 diffs, same size (282 words). Remaining: the condition flag lands in v0 instead of v1, and the 0/1 conversion
+   of the charrootdyn_checkUnderWater result (sltu + 64-bit zero-extend instead of bnez/li 1/li 0). */
 typedef struct {
     float x, y, z, w;
 } __attribute__((aligned(16))) Vec;
@@ -67,10 +67,11 @@ int func_000ECCF8(KickDef *def)
         cond = resolve(&def->cond);
         ok = 1;
         if (cond != 0) {
-            if ((int *)cond != GPConditionCheckType_UNDERWATER) {
-                ok = 0;
-            } else if (underWater(geo)) {
-                ok = 1;
+            if ((int *)cond == GPConditionCheckType_UNDERWATER) {
+                if (underWater(geo))
+                    ok = 1;
+                else
+                    ok = 0;
             } else {
                 ok = 0;
             }
