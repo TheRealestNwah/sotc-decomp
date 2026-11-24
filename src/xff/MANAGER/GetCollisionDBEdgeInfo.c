@@ -1,5 +1,4 @@
-/* Parked: ~18 diffs, same size. Copies the three edge records (object, packed reference, edge index, edge value) of the collision shape a packed reference points at: masked 15-bit values from a packed shape, or the edge words of a full shape or plane. Precomputing the masks before the second GetLayoutClass call, storing object/key/index in that order and reading the packed edge through a union (so the load is not hoisted above the int stores) brought it from 68 to 18. Remaining diffs are register allocation only: a0/a1 swapped for the cls184/db pointers in the head and the group/offset operands in the packed and full-shape address math. */
-#ifdef NONMATCHING
+/* Copies the three edge records (object, packed reference, edge index, edge value) of the collision shape a packed reference points at: masked 15-bit values from a packed shape, or the edge words of a full shape or plane. */
 typedef struct Edge {
     int obj;
     unsigned int key;
@@ -42,7 +41,7 @@ void GetCollisionDBEdgeInfo(Edge *out, Edge *in)
 {
     unsigned int k;
     unsigned char b = ((unsigned char *)in)[7];
-    Cls *c = GetLayoutClass(in->obj)->cls184;
+    register Cls *c __asm__("$5") = GetLayoutClass(in->obj)->cls184;
     Group *g = &c->db->groups[b & 0x7F];
 
     if (g->has14 != 0) {
@@ -55,7 +54,7 @@ void GetCollisionDBEdgeInfo(Edge *out, Edge *in)
         lo = k & 0xFFFFFF;
         hi = (k >> 24) & 0x7F;
         d = GetLayoutClass(in->obj)->cls184->db;
-        p = (PackedEdge *)(d->groups[hi].tbl14 + lo * 0x14 + 8);
+        { Group *gr = d->groups; gr += hi; p = (PackedEdge *)(gr->tbl14 + lo * 0x14 + 8); }
         o = out;
         for (i = 0; i < 3; i++) {
             o->obj = in->obj;
@@ -77,7 +76,7 @@ void GetCollisionDBEdgeInfo(Edge *out, Edge *in)
         int i;
 
         if ((int)in->key < 0)
-            p = (int *)(d->groups[s0].tbl14 + s1 * 0x34 + 0xC);
+            { Group *gr = d->groups; gr += s0; p = (int *)(gr->tbl14 + s1 * 0x34 + 0xC); }
         else
             p = (int *)(d->base18 + (d->groups[s0].tbl54[s1] << 6) + 0x18);
         o = out;
@@ -91,6 +90,3 @@ void GetCollisionDBEdgeInfo(Edge *out, Edge *in)
         }
     }
 }
-#else
-extern void GetCollisionDBEdgeInfo(void *, void *);
-#endif
