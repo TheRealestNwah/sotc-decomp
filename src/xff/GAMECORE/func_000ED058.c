@@ -25,10 +25,8 @@ extern void set_param_double_spring_interp_common(char *, float, float, float, f
 extern void reset_double_spring_interp_cntrl3D(char *, s128 *);
 extern void doit_double_spring_interp_cntrl3D(char *, s128 *, int, int, float);
 
-/* Parked: 1 word differs (the Original compares the first on == 1 against
-   the $a3 it loaded for the doit call; gcc uses $v1). The state store goes through a union so gcc may
-   not move it past the 128-bit copy (strict aliasing), as in the Original. */
-#ifdef NONMATCHING
+/* The state store goes through a union so gcc can't move it past the 128-bit copy
+   (strict aliasing), as in the Original. */
 typedef union {
     int i;
     s128 q;
@@ -48,7 +46,10 @@ static void func_000ED110(SpringPos *w, float *prm, int on, s128 *pos)
     set_param_double_spring_interp_common(w->spring, prm[0], prm[2], prm[1], -1.0f);
     one = 1;
     if (w->state == 0) {
-        if (on == 1) {
+        /* The Original compares against the $a3 it loaded for the doit call. */
+        register int k asm("$7") = 1;
+
+        if (on == k) {
             ((IntOrQuad *)&w->state)->i = on;
             w->pos = *pos;
             reset_double_spring_interp_cntrl3D(w->spring, pos);
@@ -59,4 +60,3 @@ static void func_000ED110(SpringPos *w, float *prm, int on, s128 *pos)
         doit_double_spring_interp_cntrl3D(w->spring, &w->pos, 0, 1, D_0017B720);
     }
 }
-#endif
