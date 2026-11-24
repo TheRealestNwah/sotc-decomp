@@ -89,13 +89,10 @@ static inline void evalKey(unsigned char *a, int type, void *data, int n, float 
     }
 }
 
-/* Parked: 4 diffs (was 10; built on func_00035A20's inlines).
- * Remaining: argument setup order before the first jal. The Original emits
- * lw a1,0(s3); daddu a0,s6; lw a3,0x30(sp); addiu s2,s6,0x10, gcc 2.96 puts
- * each daddu/addiu before its load. The empty asm on `o` keeps out+0x10 out of
- * the first call's delay slot.
- * The dead `(float)n < t2` test reproduces the Original's unused c.lt.s. */
-#ifdef NONMATCHING
+/* The empty asm reading frac from memory keeps the Original's store before the
+ * first call's argument setup. The empty asm on `o` keeps out+0x10 out of the
+ * first call's delay slot. The dead `(float)n < t2` test reproduces the
+ * Original's unused c.lt.s. */
 static void func_00034B30(Out *out, Track *trk, int n, float t, float t2)
 {
     int i0;
@@ -106,6 +103,7 @@ static void func_00034B30(Out *out, Track *trk, int n, float t, float t2)
     setFrame(&i0, &i1, &frac, t, n, t2);
     if ((float)n < t2)
         m = 1;
+    __asm__ ("" : : "m"(frac));
     func_00033868(out, (trk->types >> 12) & 0xF, trk->data0, i0, i1, frac);
     {
         char *o = (char *)out + 0x10;
@@ -130,4 +128,3 @@ static void func_00034B30(Out *out, Track *trk, int n, float t, float t2)
     }
     out->mode = m;
 }
-#endif
