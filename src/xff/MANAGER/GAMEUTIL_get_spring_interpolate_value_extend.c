@@ -1,10 +1,9 @@
-#ifdef NONMATCHING
-/* Parked: 8 diffs, same size.
- * Remaining: the tail call to GAMEUTIL_get_increase_value sets $a0 (flag) before
- * $f12/$f13, where the Original sets them first and $a0 last, next to the $s0 restore. */
+/* GAMEUTIL_get_increase_value is declared (float, float, int) here: with the
+ * flag argument last, gcc sets $a0 after $f12/$f13 in the tail call, like the
+ * Original. */
 extern int GAMEUTIL_is_nearly_equal_zero(float, float);
 extern float GAMEUTIL_get_difference_value(int, float, float);
-extern float GAMEUTIL_get_increase_value(int, float, float);
+extern float GAMEUTIL_get_increase_value(float, float, int);
 
 static inline float spring_step(float e, float k, float dt)
 {
@@ -62,6 +61,5 @@ float GAMEUTIL_get_spring_interpolate_value_extend(int flag, float k, float max_
     if (!GAMEUTIL_is_nearly_equal_zero(e, eps)) {
         res += spring_step(e, k, dt);
     }
-    return GAMEUTIL_get_increase_value(flag, cur, limit_speed(res, max_speed, dt));
+    return GAMEUTIL_get_increase_value(cur, limit_speed(res, max_speed, dt), flag);
 }
-#endif
