@@ -1,8 +1,3 @@
-/* Parked: 2 diffs, same size. Sets up the slow-leg control work (attain range, motion
- * property analysis, layout and collision probes). Remaining: the w->0x1C load before the
- * third analyzeMotionProperty call lands in v0 instead of v1. */
-#ifdef NONMATCHING
-
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef int u128 __attribute__((mode(TI)));
 typedef struct {
@@ -173,7 +168,12 @@ static void func_0010DF90(char *w)
     *(float *)(w + 0x150) = 0.0f;
     analyzeMotionProperty(*(int *)(w + 8), *(int *)m, w + 0x140, w + 0x144, 0, *(float *)(w + 0xB0), *(float *)(m + 0xC));
     analyzeMotionPropertyFromKey2(w, *(int *)(ScriptCtrlDef_SCRStop + 4), w + 0x14C, w + 0x150, 0);
-    analyzeMotionProperty(*(int *)(w + 8), **(int **)(w + 0x1C), 0, 0, w + 0x148, 1.0f, 0.0f);
+    {
+        /* The Original loads w->0x1C into $v1 here. */
+        register int *q __asm__("$3") = *(int **)(w + 0x1C);
+
+        analyzeMotionProperty(*(int *)(w + 8), *q, 0, 0, w + 0x148, 1.0f, 0.0f);
+    }
     if (*(int *)(own + 0x30) == 0) {
         *(float *)(w + 0x1C8) = *(float *)(own + 0x44);
         *(float *)(w + 0x1CC) = *(float *)(own + 0x48);
@@ -205,5 +205,3 @@ static void func_0010DF90(char *w)
         *(int *)(w + 0x1E0) = 0;
     }
 }
-
-#endif
