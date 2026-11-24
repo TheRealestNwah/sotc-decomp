@@ -1,8 +1,9 @@
 /* Creates the layout object, light or wind/part/cam animation for each sub-object of an LWS orient object and links it to the group. */
 #ifdef NONMATCHING
-/* Parked: 12 diffs, same size (281 words). Remaining: the param.one/link/two stores (0x98-0xA0) are ordered
-   link, two, one, the loop-head loads and argument moves for GetObjectAnimationFloatFrame (0x114-0x138) use a0/v1
-   instead of a1/a0 and are scheduled differently, and the f13 move before func_0007F5A0 is placed after t1. */
+/* Parked: 10 diffs, same size (281 words). func_0007F5A0 takes its floats after the fourth argument, which
+   places the f13 move before t1 as in the Original. Remaining: the param.one/link/two stores (0x98-0xA0) are
+   ordered link, two, one, and the loop-head loads and argument moves for GetObjectAnimationFloatFrame
+   (0x114-0x138) use a0/v1 instead of a1/a0 and are scheduled differently. */
 typedef struct { float x, y, z, w; } __attribute__((aligned(16))) Vec;
 typedef int u_long128 __attribute__((mode(TI)));
 
@@ -45,7 +46,7 @@ extern void updateLayoutGeo(char *, void *, int, void *, float);
 extern int StartAnimationSubObjInfinitePart(int, int, int, void *, int, int, void *, int);
 extern int AddGaLightMan(int *, void *, int);
 extern void ForceGameLightFlagEnvelope(int);
-extern void func_0007F5A0(int, void *, void *, int, SubDef *, SubWork *, int, int, float, float);
+extern void func_0007F5A0(int, void *, void *, int, float, float, SubDef *, SubWork *, int, int);
 extern int isysAddGroupWithLinkParam(int, int, int, int);
 extern void GetTRS_Onake_From_ObjectAnimation(void *, Vec *, Vec *, Vec *, Vec *);
 
@@ -194,8 +195,8 @@ void func_00080860(void *obj, int *def, char *cls, void *tail, char *info, int *
             }
             }
             if (w->layout != 0) {
-                func_0007F5A0(w->layout, obj, anim, 0, sd, w, resolve((unsigned int *)(base + 0xC8)),
-                              *(int *)(cls + 0x11FC), 1.0f, 1.0f);
+                func_0007F5A0(w->layout, obj, anim, 0, 1.0f, 1.0f, sd, w, resolve((unsigned int *)(base + 0xC8)),
+                              *(int *)(cls + 0x11FC));
                 isysAddGroupWithLinkParam(w->layout, dp[73], 0, 0);
                 GetTRS_Onake_From_ObjectAnimation(anim, &w->s, &w->t, &w->r, &w->q);
             }
