@@ -94,6 +94,7 @@ __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
 
 inline static void lerp4(void *out, void *a, void *b, float t)
 {
+  register void *o __asm__("$6") = out;
 __asm__ __volatile__("mfc1 $8, %3\n"
                          "qmtc2.ni $8, vf7\n"
                          "lqc2 vf5, 0x0(%1)\n"
@@ -102,7 +103,7 @@ __asm__ __volatile__("mfc1 $8, %3\n"
                          "vmulax.xyzw ACC, vf5, vf7x\n"
                          "vmaddw.xyzw vf9, vf6, vf8w\n"
                          "sqc2 vf9, 0x0(%0)\n"
-                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+                         : : "r"(o), "r"(a), "r"(b), "f"(t) : "$8", "memory");
 }
 
 inline static void normalize4(void *v)
@@ -132,7 +133,7 @@ inline static void getGlobalRest(Vec4 *out, IkTarget *ik, int obj, int idx)
   }
 }
 
-#ifdef NONMATCHING /* 8 diffs: a2/a3/v1 allocation around the cc+0x328 rest-pose pointer and idx<<4; permuter stuck at 60 */
+#ifdef NONMATCHING /* 4 diffs: addu operand order for the cur/src pointers and v0/v1 for the lq temp; permuter stuck at 30 */
 void nico_IK_setTargetQFromSkeletonRestWithLimit(IkTarget *ik, void *base, int open, float rate)
 {
   Vec4 q;
