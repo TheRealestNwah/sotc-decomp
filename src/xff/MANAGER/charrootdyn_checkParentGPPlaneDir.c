@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 22 diffs. Everything up to the matrix block matches; original uses a1=q/a2=&from there and keeps a 1-word nop before the return-0 block (2 words longer). */
+/* Parked: 15 diffs, same size. q and &from are pinned to a1/a2 for the matrix block as in the Original. Remaining: the 0x134 load is scheduled after the v stores, and the final add/ClipCollisionFinder setup reuses a2 for &from instead of rematerialising sp+0x10 into a1 (plus the unreachable nop before the return-0 block). */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -52,6 +52,9 @@ int charrootdyn_checkParentGPPlaneDir(int arg, char *obj, float y)
                          : : "r"(dir.f), "r"(scale) : "memory");
     v.q = ZeroPoint.q;
     v.f[1] = y;
+    {
+    register float *fp_ __asm__("$6") = from.f;
+    register Vec4 *qp_ __asm__("$5") = *(Vec4 **)(obj + 0x13C);
     __asm__ __volatile__("lqc2 vf8, 0x0(%2)\n"
                          "lqc2 vf18, 0x0(%3)\n"
                          "vmove.w vf18, vf0\n"
@@ -84,8 +87,9 @@ int charrootdyn_checkParentGPPlaneDir(int arg, char *obj, float y)
                          "vmaddaz.xyzw ACC, vf16, vf8z\n"
                          "vmaddw.xyzw vf10, vf18, vf8w\n"
                          "sqc2 vf10, 0x0(%0)\n"
-                         : : "r"(from.f), "r"(*(Vec4 **)(obj + 0x13C)), "r"(v.f),
+                         : : "r"(fp_), "r"(qp_), "r"(v.f),
                              "r"(*(Vec4 **)(obj + 0x134)) : "memory");
+    }
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
                          "vadd.xyz vf5, vf5, vf6\n"
