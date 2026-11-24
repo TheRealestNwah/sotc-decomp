@@ -28,8 +28,6 @@ void seLoadBDFile(void *sheet, int unused, int dest)
     func_000DCEF0(adrs, resourceData((unsigned int *)(adrs + 0x18)), dest, sheet, 0, 0);
 }
 
-#ifdef NONMATCHING
-/* Parked attempt: 2 differing words. */
 typedef struct Partition Partition;
 typedef struct { void *owner; int definition; } SoundEntry;
 extern Partition rootPtn;
@@ -41,9 +39,6 @@ extern int B_001502D0;
 extern int B_001502D4;
 extern void *B_001502D8;
 extern void *B_001502DC;
-extern unsigned char RO_0011B310[];
-extern unsigned char RO_0011B348[];
-extern unsigned char RO_0011B380[];
 extern int func_000DD6C0(void);
 extern int D_000DD730(void);
 extern void iosJumpRecoverPoint(const void *, ...);
@@ -67,7 +62,7 @@ static inline int allocSpu(SoundDefinition *bd, int *slot, void *hd)
         if (e->definition == (int)bd)
             goto found;
     }
-    iosJumpRecoverPoint(RO_0011B310, bd);
+    iosJumpRecoverPoint("chkAllocSpuAdrs: layout info\244\254\270\253\311\325\244\253\244\352\244\336\244\273\244\363\244\307\244\267\244\277 %p\n", bd);
 found:
     if (e->owner != 0)
         return 1;
@@ -91,7 +86,7 @@ static void *func_000DCEF0(char *hd, SoundDefinition *bd, int size, void *flag, 
     int addr;
 
     if (snd == 0)
-        iosJumpRecoverPoint(RO_0011B348);
+        iosJumpRecoverPoint("_seLoadBDFile: hd file\244\254\300\350\244\313\275\351\264\374\262\275\244\265\244\354\244\306\244\244\244\336\244\273\244\363\n");
     if (flag != 0) {
         B_001502D8 = flag;
     } else {
@@ -112,8 +107,19 @@ static void *func_000DCEF0(char *hd, SoundDefinition *bd, int size, void *flag, 
         *(int *)(snd + 0x14) = size;
         B_001502DC = iosMallocAlign(&rootPtn, 0x10000, 0x40);
         if (B_001502DC == 0)
-            iosJumpRecoverPoint(RO_0011B380);
-        sndBDOpen(snd, flag != 0 ? (void *)func_000DD6C0 : (void *)D_000DD730, B_001502DC, 0x10000, t1);
+            iosJumpRecoverPoint("_seLoadBDFile: ee\244\313\305\276\301\367\316\316\260\350\244\254\263\316\312\335\244\307\244\255\244\336\244\273\244\363\244\307\244\267\244\277.\n");
+        {
+            /* The Original forms &B_001502DC, then sets $a0, loads $a2 and sets $t0 in that order. */
+            void *fn = flag != 0 ? (void *)func_000DD6C0 : (void *)D_000DD730;
+            register char *s __asm__("$4") = snd;
+            register void *bb __asm__("$6");
+            register int tt __asm__("$8");
+            __asm__ __volatile__("" : "+r"(s) : "r"(&B_001502DC));
+            bb = B_001502DC;
+            __asm__ __volatile__("" : "+r"(bb));
+            tt = t1;
+            sndBDOpen(s, fn, bb, 0x10000, tt);
+        }
         iosFree(B_001502DC);
         return snd;
     } else {
@@ -124,4 +130,3 @@ static void *func_000DCEF0(char *hd, SoundDefinition *bd, int size, void *flag, 
         return 0;
     }
 }
-#endif
