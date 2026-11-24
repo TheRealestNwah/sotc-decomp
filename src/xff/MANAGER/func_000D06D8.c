@@ -1,7 +1,8 @@
-/* Parked: 9 diffs, same size (423 words).
- * Remaining: prologue scheduling. The Original stores w and w->scroll into
- * the context (sw a1/a2) before the ld of the flags at 0x1B8; here the ld
- * is hoisted above both stores.
+/* Parked: 7 diffs, same size (423 words) (was 9). An empty asm that reads
+ * the two context stores and list and rewrites the flags keeps the ld at
+ * 0x1B8 after them, as in the Original.
+ * Remaining: prologue scheduling. The Original stores w (sw a1) before the
+ * callee saves and loads list (lw s0) before storing w->scroll (sw a2).
  */
 #ifdef NONMATCHING
 typedef struct { int rows; int cur; int top; } Scroll;
@@ -58,6 +59,7 @@ static void func_000D06D8(int unused, Win *w)
     c.winv = (int)w;
     c.scv = (int)((Win *)c.winv)->scroll;
     list = ((Win *)c.winv)->list;
+    __asm__("" : "+m"(w->flagsu.l) : "m"(c.winu), "m"(c.scu), "r"(list));
     list->f24 = (int)(((Win *)c.winv)->flagsu.l >> 2) & 1;
     if (!((int)(((Win *)c.winv)->flagsu.l >> 2) & 1))
         return;
