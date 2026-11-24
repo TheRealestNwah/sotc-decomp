@@ -1,8 +1,9 @@
-/* Parked: 7 diffs, same size (423 words) (was 9). An empty asm that reads
+/* Parked: 4 diffs, same size (423 words) (was 7). An empty asm that reads
  * the two context stores and list and rewrites the flags keeps the ld at
- * 0x1B8 after them, as in the Original.
+ * 0x1B8 after them, as in the Original; wrapping the setup statements in
+ * do { } while (0) (found by the permuter) fixes the list load order.
  * Remaining: prologue scheduling. The Original stores w (sw a1) before the
- * callee saves and loads list (lw s0) before storing w->scroll (sw a2).
+ * callee saves.
  */
 #ifdef NONMATCHING
 typedef struct { int rows; int cur; int top; } Scroll;
@@ -56,11 +57,13 @@ static void func_000D06D8(int unused, Win *w)
     List *list;
     int wheel;
 
-    c.winv = (int)w;
-    c.scv = (int)((Win *)c.winv)->scroll;
-    list = ((Win *)c.winv)->list;
-    __asm__("" : "+m"(w->flagsu.l) : "m"(c.winu), "m"(c.scu), "r"(list));
-    list->f24 = (int)(((Win *)c.winv)->flagsu.l >> 2) & 1;
+    do {
+        c.winv = (int)w;
+        c.scv = (int)((Win *)c.winv)->scroll;
+        list = ((Win *)c.winv)->list;
+        __asm__("" : "+m"(w->flagsu.l) : "m"(c.winu), "m"(c.scu), "r"(list));
+        list->f24 = (int)(((Win *)c.winv)->flagsu.l >> 2) & 1;
+    } while (0);
     if (!((int)(((Win *)c.winv)->flagsu.l >> 2) & 1))
         return;
     if ((int)(((Win *)c.winv)->flagsu.l >> 9) & 1) {
