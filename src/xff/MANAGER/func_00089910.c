@@ -111,11 +111,12 @@ static inline void localDirX(void *out, void *quaternion)
         : : "r"(out), "r"(quaternion) : "memory");
 }
 
-/* Parked: 5 diffs, same size. An empty asm ties &tq and IdentityQuaternion to
- * registers, and the rotation pointer is read before
+/* Parked: 3 diffs, same size. Empty asms order the call setup: XUnitVector
+ * and 0x4000 first, then IdentityQuaternion (tied to n so it isn't loaded
+ * earlier), then &tq. The rotation pointer is read before
  * SetQuaternionByAxisRotateVWithNoRegularize so it lives in s1, as the Original does.
- * Remaining: the Original sets a1 = 0x4000 early and loads IdentityQuaternion
- * (lui/addiu) just before the jal; ours loads it first. */
+ * Remaining: the Original's lui of IdentityQuaternion comes after the
+ * geo store's sq; ours is hoisted above addiu a2 / a1 = 0x4000. */
 #ifdef NONMATCHING
 static int func_00089910(int e0, int e1, int chr, int layout, int e2, int flag, void *coll, Vec4 *quat, void *gp, float r)
 {
@@ -140,11 +141,16 @@ static int func_00089910(int e0, int e1, int chr, int layout, int e2, int flag, 
             if (ClipCollisionVariableXZSurface(geo, coll, gp, surf)) {
                 (*(Vec4 **)(lc + 0x134))->q = geo[4].q;
                 {
-                    float *iq = IdentityQuaternion;
+                    float *iq;
                     Vec4 *t = &tq;
+                    void *xa = XUnitVector;
+                    int n = 0x4000;
+                    __asm__ ("" : "+r"(xa), "+r"(n));
+                    iq = IdentityQuaternion;
+                    __asm__ ("" : "+r"(iq) : "r"(n));
                     __asm__ ("" : "+r"(t) : "r"(iq));
                     rot = *(Vec4 **)(lc + 0x13C);
-                    SetQuaternionByAxisRotateVWithNoRegularize(t, 0x4000, XUnitVector);
+                    SetQuaternionByAxisRotateVWithNoRegularize(t, n, xa);
                     quatMul(rot, iq, &tq);
                 }
                 hit = 1;
