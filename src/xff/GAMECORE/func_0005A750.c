@@ -1,5 +1,7 @@
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef unsigned int u_long128 __attribute__((mode(TI)));
+/* Stores through this union may alias other types, keeping the Original store order. */
+typedef union { float f; int i; u_long128 q; } FU;
 typedef struct ScriptCtrlDef {
     int pad0;
     int status;
@@ -159,9 +161,7 @@ static inline void matApply(float *out_, float *m_, float *v_)
                          : : "r"(v), "r"(m), "r"(out) : "memory");
 }
 
-#ifdef NONMATCHING
-/* Parked: 6 words differ (L.v copy/zero store order, matrix address not rematerialized for matInverse, outDist store vs stack-arg load order) */
-int func_0005A750(int obj, char *geom, u_long128 *pos, int useGeom, int flag, float *p60, char *ctrl, unsigned int *scr,
+static int func_0005A750(int obj, char *geom, u_long128 *pos, int useGeom, int flag, float *p60, char *ctrl, unsigned int *scr,
                   float thr, float *outDist, float *outAng)
 {
     char *ai = GetSCRCharaAIWorkPtr(obj);
@@ -171,9 +171,8 @@ int func_0005A750(int obj, char *geom, u_long128 *pos, int useGeom, int flag, fl
         Vec4 p, v, m[4];
     } L;
     float *plane;
-    float dist, ang, t, r, z;
-    int st, nv;
-    char *c;
+    float dist, ang, r;
+    int st;
 
     if (flag != 0) {
         *(u_long128 *)L.p = *pos;
@@ -188,17 +187,17 @@ int func_0005A750(int obj, char *geom, u_long128 *pos, int useGeom, int flag, fl
         return 0;
     dist = vdist(*(float **)(lc + 0x134), L.p);
     *(u_long128 *)L.v = *(u_long128 *)plane;
-    L.v[1] = 0;
+    ((FU *)&L.v[1])->f = 0;
     vecNormalize(L.v, L.v);
     quatPosToMatrix(L.m[0], (float *)(cc + 0x470));
     {
         register float *z __asm__("$2") = L.m[3];
-        __asm__ __volatile__("sqc2 vf0, 0x0(%0)" : : "r"(z) : "memory");
+        __asm__ __volatile__("sqc2 vf0, 0x0(%0)" : : "r"(z));
     }
     matInverse(L.m[0], L.m[0]);
     matApply(L.v, L.m[0], L.v);
     ang = iosGetATan2fExact(L.v[0], L.v[2]);
-    *outDist = dist;
+    ((FU *)outDist)->f = dist;
     *outAng = ang;
     if (!(dist < thr))
         goto ret0;
@@ -227,15 +226,15 @@ int func_0005A750(int obj, char *geom, u_long128 *pos, int useGeom, int flag, fl
                 *(int *)(ai + 0x41E4) = 2;
             }
         }
-    done:
         p60[2] = 0;
     } else {
-        z = 0;
-        nv = 2;
-        if (z < r)
-            nv = 1;
-        *(float *)(ai + 0x41E8) = z;
-        *(int *)(ai + 0x41E4) = nv;
+        if (0 < r) {
+            *(float *)(ai + 0x41E8) = 0;
+            *(int *)(ai + 0x41E4) = 1;
+        } else {
+            *(float *)(ai + 0x41E8) = 0;
+            *(int *)(ai + 0x41E4) = 2;
+        }
     }
     if (*(int *)(ai + 0x41E4) == 1) {
         *(unsigned long *)(ctrl + 0x1C0) |= 1L << ScriptCtrlDef_SCRStopR->status;
@@ -248,4 +247,3 @@ int func_0005A750(int obj, char *geom, u_long128 *pos, int useGeom, int flag, fl
 ret0:
     return 0;
 }
-#endif
