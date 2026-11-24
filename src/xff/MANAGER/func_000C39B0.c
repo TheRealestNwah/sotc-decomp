@@ -1,4 +1,4 @@
-/* Parked: 7 diffs. Builds a particle display list: for each live particle with a projected position writes a vertex record, then builds the matrix, brightness-clamped env and vertex packets and returns the list. Remaining: p/q = dl/dl+0x20 setup order at 0xD4, mul.s/mfc1 order at 0x134 and the second branch UV stack slot (0x60 vs 0x80). */
+/* Parked: 2 diffs. Builds a particle display list: for each live particle with a projected position writes a vertex record, then builds the matrix, brightness-clamped env and vertex packets and returns the list. An empty asm on p keeps p = dl before q = dl + 0x20, and the second branch declares a pad UV before uv/t so t lands at 0x60. Remaining (2 diffs): at 0x134 the mfc1 of t is scheduled into the second mul.s latency slot; the Original keeps both mul.s back to back. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } QVec;
@@ -128,8 +128,9 @@ static void func_000C39B0(char *e, char *a1, char *a2)
             n = 0;
             env = (Env){ c, 1.0f - c, 0.0f, *(float *)(a2 + 0xB4) };
             if (*(unsigned *)(e + 0x124) != 0) {
-                q = dl + 0x20;
                 p = dl;
+                __asm__("" : "+r"(p));
+                q = dl + 0x20;
                 do {
                     if (*(float *)(src + 0x40) != 0.0f) {
                         if (calcPos(q, src)) {
@@ -197,8 +198,9 @@ static void func_000C39B0(char *e, char *a1, char *a2)
                 transMicroCode(7);
                 ptclmanBegin();
                 {
-                    UV t;
+                    UV pad;
                     UV uv;
+                    UV t;
                     float u = *(float *)(a2 + 0x58);
                     float v = *(float *)(a2 + 0x5C);
                     uv = (UV){ u, v, 0, 0 };
