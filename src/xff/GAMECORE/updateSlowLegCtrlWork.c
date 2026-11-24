@@ -1,5 +1,4 @@
-/* Parked: 9 diffs, same size. Per-frame update of the slow-leg move controller: builds a base-move work block on the stack, turns the character quaternion into a matrix and its inverse, steers by direct input, then either keeps the passage target, clears it (no target), or checks whether the layout target is reached; when not reached it re-checks from the work position with the layout block temporarily swapped, picks the motion with func_0010E5A8 and applies scale. Remaining: the quaternion pointer and matrix output take v0/v1 swapped. The x1C4 store goes through a union with long so it aliases the layout block's ld/sd copy and stays before the restore. */
-#ifdef NONMATCHING
+/* Per-frame update of the slow-leg move controller: builds a base-move work block on the stack, turns the character quaternion into a matrix and its inverse, steers by direct input, then either keeps the passage target, clears it (no target), or checks whether the layout target is reached; when not reached it re-checks from the work position with the layout block temporarily swapped, picks the motion with func_0010E5A8 and applies scale. The matrix pointer is pinned to v1 so the quaternion pointer takes v0 like the Original. The x1C4 store goes through a union with long so it aliases the layout block's ld/sd copy and stays before the restore. */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -153,7 +152,7 @@ void updateSlowLegCtrlWork(void *th, Ctrl *ctrl, Lay *lay, int arg3)
     p->x1D8 = arg3;
     p->owner = ctrl;
     {
-        float *m = w.mat[0];
+        register float *m __asm__("$3") = w.mat[0];
         quatToMatrix(m, (float *)(w.chr + 0x470));
         m += 12;
         unitRow(m);
@@ -213,4 +212,3 @@ void updateSlowLegCtrlWork(void *th, Ctrl *ctrl, Lay *lay, int arg3)
     }
     func_0010F338(p);
 }
-#endif
