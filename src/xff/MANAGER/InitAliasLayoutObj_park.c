@@ -1,7 +1,7 @@
-/* Parked: 5 diffs, same size.
- * Remaining: the ZeroPoint/def[10] sq is not scheduled into the
- * func_00074A78 jal delay slot; beqz instead of beql on the final
- * dst+0x144 check. */
+/* Parked: 1 diff (was 5), same size.
+ * Remaining: beqz instead of beql on the final dst+0x144 check (the Original
+ * annuls the "return 1" copy in the delay slot). Selecting the source pointer
+ * before the 16-byte copy lets the sq go into the func_00074A78 jal slot. */
 #ifdef NONMATCHING
 
 extern char *GetScriptLayoutClass(void *);
@@ -73,7 +73,11 @@ int InitAliasLayoutObj(unsigned char *obj, int *def, unsigned char *parent)
   *((int *) (dst + 0x160)) = *((int *) (src + 0x160));
   *((int *) (dst + 0x16C)) = *((int *) (src + 0x16C));
   *((int *) (dst + 0x170)) = *((int *) (src + 0x170));
-  *((s128 *) dst) = (def[10]) ? (*((s128 *) def[10])) : (ZeroPoint);
+  {
+    s128 *p = (s128 *) def[10];
+    if (!p) p = &ZeroPoint;
+    *((s128 *) dst) = *p;
+  }
   func_00074A78(obj, def, 0);
   CreateClothChildLayoutObj(obj, def[3], 0);
   if ((*((int *) (layoutClass(obj) + 0x144))) != 0)
