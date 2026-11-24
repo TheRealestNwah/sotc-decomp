@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* 10 diffs, same length (125 words); several of the 10 are only relocation addends. Sibling of nico_execPlayerFringe (same getClothDynamics call shape, but with a per-index cloth parameter block built on the stack: index 0 -> {-0.03, -0.05, -0.08, -0.1, shorts -1, 0, -0x1000}, index 1 -> {0, -0.05, 0.14, 0.12, shorts 1, -0x800, 0xC00}). GetCharacterClass takes lay[0x194], not obj. The float constants are pinned to the Original's registers ahead of the loop, which gives both their hoist order (-0.08, -0.1, -0.03, -0.05) and the first block's store order. Remaining: the Original hoists the integer constants as -0x800, 0xC00, 1 (ours: 1, -0x800, 0xC00, so the registers rotate), and the second block stores f0 before s10. Pinning the integers or setting them in locals before the loop also hoists -1 / -0x1000 (44 to 76 diffs); a switch changes the branch layout. */
+/* 9 diffs, same length (125 words); several of the 9 are only relocation addends. Sibling of nico_execPlayerFringe (same getClothDynamics call shape, but with a per-index cloth parameter block built on the stack: index 0 -> {-0.03, -0.05, -0.08, -0.1, shorts -1, 0, -0x1000}, index 1 -> {0, -0.05, 0.14, 0.12, shorts 1, -0x800, 0xC00}). GetCharacterClass takes lay[0x194], not obj. The float constants are pinned to the Original's registers ahead of the loop, which gives both their hoist order (-0.08, -0.1, -0.03, -0.05) and the first block's store order. Remaining: the Original hoists the integer constants as -0x800, 0xC00, 1 (ours: 1, 0xC00, -0x800; storing s14 before s12 keeps 0xC00 in $s7 like the Original), and the second block stores f0 before s10. Pinning the integers or setting them in locals before the loop also hoists -1 / -0x1000 (44 to 76 diffs); a switch changes the branch layout. A permuter run (2 workers, 25 min) only improved by storing 0 instead of i into s10. */
 typedef struct {
     float f0;
     float f4;
@@ -56,8 +56,8 @@ void nico_execPlayerMantle(void *obj, int arg, float x, float y)
                 b.f8 = b8;
                 b.fC = bC;
                 b.s10 = i;
-                b.s12 = -0x800;
                 b.s14 = 0xC00;
+                b.s12 = -0x800;
                 getClothDynamics(p, lay, x, y, arg, func_0007EF98, &b);
             }
             i++;
