@@ -1,9 +1,10 @@
-/* Parked: 6 diffs (func_000DB558 4, func_000DB6C0 2).
- * Remaining: func_000DB558 holds coef in v0 instead of t0 for the lerp's
- * qmtc2, and sets up check_and_get_normalize_vector's a1/a2 in the other
- * order; func_000DB6C0 loads the pos copy into v0 instead of v1. The
- * union entry stops float stores from passing the copies, and the memory
- * barrier keeps the pos load after the p0 store like the Original. */
+/* Parked: 2 diffs (func_000DB558 2, func_000DB6C0 0).
+ * Remaining: func_000DB558 sets up check_and_get_normalize_vector's a1/a2
+ * in the other order (the Original fills the jal delay slot with a1 = 0).
+ * The $8 mfc1 into vecLerpI and the $3 pos copy fix the coef and pos
+ * registers. The union entry stops float stores from passing the copies,
+ * and the memory barrier keeps the pos load after the p0 store like the
+ * Original. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef float Vec[4] __attribute__((aligned(16)));
@@ -81,6 +82,25 @@ static inline void vecLerp(float *out, float *a, float *b, float t)
                          : : "r"(out), "r"(a), "r"(b), "r"(t) : "memory");
 }
 
+static inline void vecLerpI(float *out, float *a, float *b, int t)
+{
+    __asm__ __volatile__("qmtc2.ni %3, vf7
+"
+                         "lqc2 vf5, 0x0(%1)
+"
+                         "lqc2 vf6, 0x0(%2)
+"
+                         "vsubx.w vf8, vf0, vf7x
+"
+                         "vmulax.xyz ACC, vf5, vf7x
+"
+                         "vmaddw.xyz vf5, vf6, vf8w
+"
+                         "sqc2 vf5, 0x0(%0)
+"
+                         : : "r"(out), "r"(a), "r"(b), "r"(t) : "memory");
+}
+
 static int func_000DB558(float *yaw, float *pitch, LostTarget *t, char *cam)
 {
     Vec pos;
@@ -101,7 +121,7 @@ static int func_000DB558(float *yaw, float *pitch, LostTarget *t, char *cam)
         look = cam + 0x70;
         GAMEUTIL_get_cross_position_coefficient_t_by_dist_factor(&coef, &dist, look, target, *(float *)(c60 + 0x38), pos);
         do {
-            vecLerp(mid, pos, target, coef);
+            { register int c8 __asm__("$8"); float *mp = mid; __asm__("mfc1 %0, %1" : "=r"(c8) : "f"(coef)); vecLerpI(mp, pos, target, c8); }
             vecSub(v, look, mid);
         } while (0);
         if (GAMEUTIL_check_and_get_normalize_vector(v, (void *)0, v) == 1) {
@@ -155,7 +175,7 @@ static void func_000DB6C0(VisibleAngleManager *m, char *cam, void *c)
         e->s.d = 0;
         e->s.p0 = *(Q *)target;
         __asm__ __volatile__("" ::: "memory");
-        e->s.p1 = *(Q *)pos;
+        { register s128 x __asm__("$3") = *(s128 *)pos; e->s.p1.q = x; }
     }
     m->count++;
 }
