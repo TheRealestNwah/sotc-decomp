@@ -1,11 +1,3 @@
-/*
- * Parked: 3 diffs, same size (268 words).
- * Remaining: type-3 GetMotionNodeQuaternionPosToolCoord argument setup order
- * (the Original puts addiu a0,sp,0x60 in the bnez delay slot and before
- * daddu a3,s2; ours does a3 first). Branch 2 uses quatMatrix2, which pins
- * the source pointer to $v0 so it is set before the destination copy.
- */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { float f[4]; s128 q; } Vec4;
 extern char *GetLayoutClass(void *);
@@ -196,7 +188,7 @@ int updateDamageGeo(void *a0, void *obj, int node, char *geo, int power, int typ
                     mtx = *(Vec4 **)(l + 0x15C) + node * 4;
                 } else {
                     mtx = m;
-                    GetMotionNodeQuaternionPosToolCoord(&b, &a, obj, node, 1);
+                    { register Vec4 *bp __asm__("$4") = &b; __asm__("" : "=r"(bp) : "0"(bp)); GetMotionNodeQuaternionPosToolCoord(bp, &a, obj, node, 1); }
                     __asm__ __volatile__("" : : "r"(mtx));
                     quatMatrix(mtx, &b, &a);
                 }
@@ -247,6 +239,3 @@ int updateDamageGeo(void *a0, void *obj, int node, char *geo, int power, int typ
     }
     return ret;
 }
-#else
-extern int updateDamageGeo();
-#endif
