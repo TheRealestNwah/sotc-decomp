@@ -1,5 +1,4 @@
-/* Parked: 7 diffs, same length. Builds the rotation turning the direction at 0xC0 toward the target at 0xE0 (seen from 0xB0), writes the scaled, rotated half-arc point to out and the unit target direction to dir. Remaining: the Original loads 32768.0f and the axis argument before the first mul.s of the angle and pi after it; gcc does the mul first. Opaque constants and a separate angle local did not move it. The empty asm on half stops gcc keeping 0.5f in $f20 across the acos call. */
-#ifdef NONMATCHING
+/* Builds the rotation turning the direction at 0xC0 toward the target at 0xE0 (seen from 0xB0), writes the scaled, rotated half-arc point to out and the unit target direction to dir. The empty asm on half and acs stops gcc keeping 0.5f in $f20 across the acos call; computing the scaled angle before it gives the Original's constant-load order. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -176,9 +175,11 @@ static void func_000456D8(char *o, Vec4 *out0, Vec4 *dir)
     }
     acs = iosGetACosfExact(dot);
     half = 0.5f;
-    __asm__("" : "+f"(half));
-    __asm__("" : "+f"(acs));
-    SetQuaternionByAxisRotateVWithNoRegularize(&q, (int)(acs * half * 32768.0f / 3.14159251f), ax);
+    {
+        float ang = acs * half * 32768.0f;
+        __asm__("" : "+f"(half), "+f"(acs));
+        SetQuaternionByAxisRotateVWithNoRegularize(&q, (int)(ang / 3.14159251f), ax);
+    }
     quatRotB(out, &q, fwd);
     {
         float h = len * 0.5f;
@@ -196,4 +197,3 @@ static void func_000456D8(char *o, Vec4 *out0, Vec4 *dir)
                          : : "r"(out), "r"(pos) : "memory");
     dir->q = d.q;
 }
-#endif
