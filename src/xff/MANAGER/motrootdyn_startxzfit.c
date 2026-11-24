@@ -1,4 +1,4 @@
-/* Parked: 10 diffs. Remaining: $s5/$s6 hold m and cls+0xE20 swapped, and the t0/mov.s argument order of the getCompleteFittingPlaneFromStabGPWithSlopeLimit call. */
+/* Parked: 2 diffs. Empty asms that read m at the end and p after ParentLayoutObj keep m in $s6 and cls+0xE20 in $s5 as in the Original. Remaining: the t0/mov.s argument order of the getCompleteFittingPlaneFromStabGPWithSlopeLimit call. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } __attribute__((aligned(8))) F4;
@@ -220,11 +220,13 @@ void motrootdyn_startxzfit(void *m, char *cls)
         { float y = o->y; if (!(y > 0.1f)) y = 0.1f; o->y = y; }
         }
         ParentLayoutObj(m, p);
+        __asm__("" : : "r"(p));
     } else {
         charrootdyn_getRegularColFinderPosition(cls + 0x4C0, cls, q, *(void **)(cls + 0x134));
         charrootdyn_getCollisionDB(db, (char *)*(int *)(cls + 0xE38) + *(short *)(cls + 0x370) * 4, m, cls + 0x4C0, cls + 0x4D0, *h, *(float *)(cls + 0xE34));
         func_0006D2D0(m, cls);
     }
     startxzfit_common(cls, &u);
+    __asm__("" : : "r"(m));
 }
 #endif
