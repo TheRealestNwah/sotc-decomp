@@ -1,5 +1,8 @@
-/* Parked: 2 diffs (was 7), same size (100 words). Calling GetGeometryPointerSurfacePlane before the barrier (a permuter hint) fixed the s1/s2 swap. The YQ-from-Y-dir tail is the inlined body of charrootdyn_getCompleteFittingYQFromYDir; a clobber-free asm after GetGeometryPointerPosition makes gcc recompute sp+0x10 for getAverageNormal like the Original. Pinning q to $a2 behind an empty asm fixed the a2 setup. Remaining: the Original sets a0 (sp) after mov.s $f12, gcc before it. */
-#ifdef NONMATCHING
+/* Matched. Calling GetGeometryPointerSurfacePlane before the barrier (a permuter hint) fixes the s1/s2
+ * choice. The YQ-from-Y-dir tail is the inlined body of charrootdyn_getCompleteFittingYQFromYDir; a
+ * clobber-free asm after GetGeometryPointerPosition makes gcc recompute sp+0x10 for getAverageNormal
+ * like the Original. The q ($a2), lim0 ($f12) and dir ($a0) arguments are pinned and set up behind
+ * separate empty asms, in the Original's order. */
 extern void GetDifferencialQuaternionWithNoRegularize(float *, float *, float *, float *);
 
 static inline void quatAxisY(float *out, float *q)
@@ -106,11 +109,15 @@ int charrootdyn_getCompleteFittingYQFromStabGPWithSlopeLimit(float *out, void *g
     __asm__ __volatile__("" : : );
     {
         register float *qq __asm__("$6") = q;
-        register void *dd __asm__("$4") = L.dir;
+        register float ff __asm__("$f12");
+        register void *dd __asm__("$4");
         __asm__ __volatile__("" : "+r"(qq));
-        r = getAverageNormal(dd, lim0, L.n[0], qq, L.pos, lim0, lim1, p2, p4, plane);
+        ff = lim0;
+        __asm__ __volatile__("" : "+f"(ff));
+        dd = L.dir;
+        __asm__ __volatile__("" : "+r"(dd));
+        r = getAverageNormal(dd, ff, L.n[0], qq, L.pos, ff, lim1, p2, p4, plane);
     }
     yqFromYDir(out, L.dir, q);
     return r;
 }
-#endif
