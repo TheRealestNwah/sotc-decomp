@@ -1,5 +1,9 @@
 #ifdef NONMATCHING
-/* 14 diffs: /7 division register choice (a0 vs v1) and final r[15] load order */
+/* Parked: 9 diffs, same size. Pinning c and the low nibble to $a0 gives the
+ * Original's registers around the /7 division. Remaining: the unsigned
+ * float conversion of t & 0xF shifts in place (bltzl, srl $a0) where the
+ * Original shifts into $v1 (bltz), and the last statement loads r[15]
+ * before info.w and info.adv instead of after the subtraction's operands. */
 typedef unsigned long u64 __attribute__((mode(DI)));
 extern int D_001359F4;
 extern int getDispBufferAddressTBP(void);
@@ -16,7 +20,7 @@ static int func_00014F18(PKT **pkt, float *r, unsigned int (*fn)(int), int arg, 
     int ixy[4];
     unsigned int t;
     int tbp;
-    int c;
+    register int c asm("$4");
     int hi;
     float u0, v0, u1, v1;
     FontInfo *fi = &info;
@@ -35,7 +39,10 @@ static int func_00014F18(PKT **pkt, float *r, unsigned int (*fn)(int), int arg, 
     c = t >> 8;
     hi = c / 7;
     tbp += (c % 7) << 10;
-    u0 = (float)(t & 0xF) * 0.0625f + 0.003f;
+    {
+        register unsigned int lo asm("$4") = t & 0xF;
+        u0 = (float)lo * 0.0625f + 0.003f;
+    }
     v0 = (float)((t & 0xFF) >> 4) * 0.0625f + 0.003f;
     v1 = v0 + (float)fi->h.i * 0.00390625f - 0.003f;
     u1 = u0 + (float)fi->w.i * 2.0f * 0.00390625f - 0.003f;
