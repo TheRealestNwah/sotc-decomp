@@ -1,4 +1,4 @@
-/* Parked: 14 diffs, same size. Boss damage application: scales the incoming hit (hit+0x1C) by func_0003D488's result, caps damage for types 1/2/4 so hp stays above the threshold ratio, resets attack power for types 0/5, adds the pending-hit sum, then signals DEAD_BOSS when hp <= 0. Remaining: the original loads hit+0x1C and the func_0003D488 out value before the 1.0f constant (ratio and tmp swap f3/f4), and stores a3[1]/a3[0] before loading h+0x48. */
+/* Parked: 10 diffs, same size. Boss damage application: scales the incoming hit (hit+0x1C) by func_0003D488's result, caps damage for types 1/2/4 so hp stays above the threshold ratio, resets attack power for types 0/5, adds the pending-hit sum, then signals DEAD_BOSS when hp <= 0. Computing dmg before lim takes it from 14 to 10. Remaining: ratio and tmp swap f3/f4 (reordering ratio, declaration order and a struct for h made no difference), and the original stores a3[1]/a3[0] before loading h+0x48 (union stores change the length). */
 extern int playerEnableDeath;
 extern int ScrIntrDef_DEAD_BOSS;
 extern char *GetDamageClass(void *);
@@ -28,8 +28,8 @@ float func_0003D650(void *obj, char *h, char *hit, float *a3)
         r = func_0003D488(obj, hit, type, &tmp);
         f4 = tmp;
         ratio = hp / max;
-        lim = *(float *)(hit + 0x1C) * (1.0f - f4);
         dmg = *(float *)(hit + 0x1C) * r;
+        lim = *(float *)(hit + 0x1C) * (1.0f - f4);
         if (lim < diff) {
             if ((*(long *)(hit + 0x28) & 0xC0000000000000L) != 0 || 0.4f < ratio) {
                 float t = diff - lim;
