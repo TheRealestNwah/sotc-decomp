@@ -1,5 +1,3 @@
-/* Parked: 3 diffs, same length. Remaining: the Original sets the loop counter (li $s1, 2) after the func_0002D260 and B_00188730 address registers; gcc emits it between them. A count-up loop (reversed by gcc) gets closer than a count-down one (4). Reading D_0017A874 before the area index, a separate `sl` pointer, and computing key from id again (permuter) are each needed. */
-#ifdef NONMATCHING
 typedef struct {
     int pad0[2];
     unsigned int slot[37];
@@ -53,12 +51,11 @@ static void func_00027968(int id)
     int key = ((id >> 5) & 0x3FF) << 5;
     int i;
 
-    for (i = 0; i < 3; i++, h++) {
-        int n = stageIndex((StageData *)dldResolve(h));
+    for (i = 0; i < 3; i++) {
+        int n = stageIndex((StageData *)dldResolve(&h[i]));
         if (n >= 0) {
             area = 0; z = area; gv = (void **)((g = gcGlobalVar) + 0x308);
             isysAddGroupWithLinkParam(createScriptObj(func_0002D260, (n << 15) | key, *gv, 0x1000, z, 1, z, z), B_00188730, 0, z);
         }
     }
 }
-#endif
