@@ -41,6 +41,7 @@ static inline void setFrame(int *i0, int *i1, float *frac, float t, int n, float
             f = t - (float)*i0;
         }
         *frac = f;
+        __asm__ __volatile__("" ::: "memory");
     }
 }
 
@@ -57,8 +58,10 @@ static inline void lerp3(void *out, void *a, void *b, float t)
                          : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
 }
 
-static inline void interpRot(void *out, int type, void **data, int i0, int i1, float frac)
+static inline void interpRot(void *out, int type_, void **data_, int i0, int i1, float frac)
 {
+    register void **data __asm__("$17") = data_;
+    register int type __asm__("$16") = type_;
     s128 v[2];
 
     if (frac == 0.0f) {
@@ -110,11 +113,10 @@ static inline void evalKey(unsigned char *a, int type, void *data, int n, float 
     }
 }
 
-/* Parked: 25 diffs (built on func_00035C78's and func_00034B30's inlines).
- * Remaining: n and out get swapped callee-saved registers ($s5/$s6, 10 words);
- * the Original stores frac before setting up the first call and reloads $f12,
- * but gcc 2.96 keeps it in $f0 and stores it later (14 words); interpRot's first
- * null test becomes a beql instead of beqz (1 word). */
+/* Parked: 1 diff (built on func_00035C78's and func_00034B30's inlines).
+ * frac is forced back to memory after setFrame stores it, interpRot pins
+ * data/type to $s1/$s0, and n is copied into $s5 after setFrame.
+ * Remaining: interpRot's first null test becomes a beql instead of beqz. */
 #ifdef NONMATCHING
 static void func_00034E18(char *out, Track *trk, int n, float t, float t2)
 {
@@ -123,9 +125,12 @@ static void func_00034E18(char *out, Track *trk, int n, float t, float t2)
     float frac;
 
     setFrame(&i0, &i1, &frac, t, n, t2);
-    func_00033868(out, (trk->types >> 12) & 0xF, trk->data0, i0, i1, frac);
-    interpRot(out + 0x10, (trk->types >> 8) & 0xF, &trk->data1, i0, i1, frac);
-    interpScale(out + 0x20, (trk->types >> 4) & 0xF, trk->data2, i0, i1, frac);
-    evalKey((unsigned char *)out + 0x30, trk->types & 0xF, (char *)trk + 0x10, n, t, t2);
+    {
+        register int nn __asm__("$21") = n;
+        func_00033868(out, (trk->types >> 12) & 0xF, trk->data0, i0, i1, frac);
+        interpRot(out + 0x10, (trk->types >> 8) & 0xF, &trk->data1, i0, i1, frac);
+        interpScale(out + 0x20, (trk->types >> 4) & 0xF, trk->data2, i0, i1, frac);
+        evalKey((unsigned char *)out + 0x30, trk->types & 0xF, (char *)trk + 0x10, nn, t, t2);
+    }
 }
 #endif
