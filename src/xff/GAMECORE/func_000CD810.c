@@ -1,6 +1,6 @@
-/* Parked: 16 diffs, same size. Remaining: glBlendFunc loads a1=6 before a0=5;
+/* Parked: 13 diffs, same size. Remaining: glBlendFunc loads a1=6 before a0=5;
  * second block schedules the RO_00180BC0 copy load after lw a3 and swaps the
- * sd 0x18/0x30 order; tail reaches gcGlobalVar through a1/v1 instead of v1/v0. */
+ * sd 0x18/0x30 order. */
 
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
@@ -22,7 +22,7 @@ extern const char RO_00180BB0[];
 extern const V4 RO_00180BC0;
 extern int texSearchMopByName(const char *);
 extern void iosDlPushLayer(int);
-extern void iosDlPopLayer(void);
+extern long iosDlPopLayer(void);
 extern void texTransRequest(int, int, int);
 extern void gsRegBegin(void);
 extern void gsReg(int, int);
