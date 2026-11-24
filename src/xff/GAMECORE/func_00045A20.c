@@ -1,4 +1,4 @@
-/* Parked attempt, 2 diffs, same size. Builds a camera frame from the direction to the target, finds where the circle of radius r around the start is tangent to the target, and fills the A3/B3/C3 acceleration work area at w. Remaining: the Original computes w+0x20 into $s1 before w+0x50 into $s0 ahead of the AI_GetAccel calls; ours swaps them. The int offset n (found by the permuter) gets the argument setup order right. */
+/* Parked attempt, 1 diff, same size. Builds a camera frame from the direction to the target, finds where the circle of radius r around the start is tangent to the target, and fills the A3/B3/C3 acceleration work area at w. The two addresses are pinned to $s1/$s0 with an empty asm between them so w+0x20 is computed first, as in the Original. Remaining: the A3 call's last argument (w+n, kept for the argument order) is recomputed with addiu instead of reusing $s1. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -221,10 +221,16 @@ float func_00045A20(char *o, char *w, Vec4 *tgt, float r, float spd)
     F(w, 0xA4) = gcGlobalVar.dt * F(o, 0x350);
     if (t < gcGlobalVar.dt * F(o, 0x350))
         F(w, 0xA0) = gcGlobalVar.dt * F(o, 0x350);
+    {
+    register char *p20 __asm__("$17") = w + 0x20;
+    register char *p50 __asm__("$16");
+    __asm__ __volatile__("" : : "r"(p20));
+    p50 = w + 0x50;
     n = 0x20;
-    AI_GetAccelC3XYZ(w + 0x20, w + 0x30, w + 0x40, w + 0x50, w + 0x60, w + 0x70, F(w, 0xA0));
-    AI_GetAccelA3XYZ(w, w + 0x30, w + 0x50, w + 0x60, w + 0x70, w + n, F(w, 0xA0));
-    AI_GetAccelB3XYZ(w + 0x10, w + 0x30, w + 0x40, w + 0x50, w + 0x60, w + 0x20, F(w, 0xA0));
+    AI_GetAccelC3XYZ(p20, w + 0x30, w + 0x40, p50, w + 0x60, w + 0x70, F(w, 0xA0));
+    AI_GetAccelA3XYZ(w, w + 0x30, p50, w + 0x60, w + 0x70, w + n, F(w, 0xA0));
+    AI_GetAccelB3XYZ(w + 0x10, w + 0x30, w + 0x40, p50, w + 0x60, p20, F(w, 0xA0));
+    }
     return F(w, 0xA0);
 }
 #endif
