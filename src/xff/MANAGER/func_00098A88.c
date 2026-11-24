@@ -1,13 +1,10 @@
 /*
- * Parked: 2 diffs. Global, called from InitSpriteObj (creates one sprite
- * per definition and applies its position, UVs, colour, scale, rotation
- * and blend mode).
- * Remaining: the list->sprites load and the i*4 shift swap registers
- * (Original: v1 = list->sprites, v0 = i << 2). The empty asm statements
- * force the Original's order of the slot address, the `move a0, s1` and
- * the two stores before the 0xC float load.
+ * Static, called from InitSpriteObj: creates one sprite per definition and
+ * applies its position, UVs, colour, scale, rotation and blend mode. The
+ * empty asm statements force the Original's order of the slot address, the
+ * `move a0, s1` and the two stores before the 0xC float load; the pinned
+ * base and offset give its registers for the slot address.
  */
-#ifdef NONMATCHING
 extern int sheetFsLanguageCode;
 extern int DldSysUndefSymbol;
 extern void *spriteCreateObject(void *, int);
@@ -47,7 +44,7 @@ static inline int *dldResolve(unsigned int *h)
     return (t != 0 && t != (int *)DldSysUndefSymbol) ? (int *)t[4] : 0;
 }
 
-void func_00098A88(void *heap, int unused, SpriteList *list, SpriteDef *d)
+static void func_00098A88(void *heap, int unused, SpriteList *list, SpriteDef *d)
 {
     int i;
     for (i = 0; i < list->count; i++) {
@@ -60,7 +57,9 @@ void func_00098A88(void *heap, int unused, SpriteList *list, SpriteDef *d)
             list->max = d->layer + 1;
         sp = spriteCreateObject(heap, tex);
         {
-            void **slot = &list->sprites[i];
+            register void **b __asm__("$3") = list->sprites;
+            register int o __asm__("$2") = i << 2;
+            void **slot = (void **)(o + (int)b);
             __asm__ __volatile__("" : : "r"(slot));
             {
                 register void *a __asm__("$4") = sp;
@@ -90,4 +89,3 @@ void func_00098A88(void *heap, int unused, SpriteList *list, SpriteDef *d)
         d++;
     }
 }
-#endif
