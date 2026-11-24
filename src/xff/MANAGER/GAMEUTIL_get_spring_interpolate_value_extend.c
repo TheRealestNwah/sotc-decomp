@@ -1,20 +1,10 @@
 #ifdef NONMATCHING
-/* 15 diffs: the dead-zone zero is built in f12 (f1 in value_extend) instead of f0,
- * so the prologue/dead-zone registers and their scheduling differ. */
+/* Parked: 8 diffs, same size.
+ * Remaining: the tail call to GAMEUTIL_get_increase_value sets $a0 (flag) before
+ * $f12/$f13, where the Original sets them first and $a0 last, next to the $s0 restore. */
 extern int GAMEUTIL_is_nearly_equal_zero(float, float);
 extern float GAMEUTIL_get_difference_value(int, float, float);
 extern float GAMEUTIL_get_increase_value(int, float, float);
-
-static inline float dead_zone(float x, float min, float max)
-{
-    if (max < x) {
-        return x - max;
-    }
-    if (x < min) {
-        return x - min;
-    }
-    return 0.0f;
-}
 
 static inline float spring_step(float e, float k, float dt)
 {
@@ -53,13 +43,21 @@ static inline float limit_speed(float v, float max, float dt)
     return v;
 }
 
-/* 97 diffs: the zero dead-zone width is rematerialized instead of kept in f21 across the call, same as GAMEUTIL_get_spring_interpolate_offset */
 float GAMEUTIL_get_spring_interpolate_value_extend(int flag, float k, float max_speed, float cur, float target, float eps, float dt)
 {
     float d = GAMEUTIL_get_difference_value(flag, cur, target);
-    float w = 0.0f;
+    register float w __asm__("$f1") = 0.0f;
+    float x = w - d;
     register float res __asm__("$f21") = w;
-    float e = dead_zone(w - d, -w, w);
+    float e;
+    w = -w;
+    if (res < x) {
+        e = x - res;
+    } else if (x < w) {
+        e = x - w;
+    } else {
+        e = res;
+    }
 
     if (!GAMEUTIL_is_nearly_equal_zero(e, eps)) {
         res += spring_step(e, k, dt);
