@@ -1,5 +1,9 @@
-/* Parked at 9 diffs: the Original loads anim->frame before anim->motion and swaps v0/v1 for motion and its flags. */
-#ifdef NONMATCHING
+/* The float store goes through a union so it may alias motion->flags, which keeps
+   the flags load after it like the Original. */
+typedef union {
+    float f;
+    unsigned int u;
+} FloatBits;
 typedef struct {
     char pad0[0x18];
     unsigned int flags;
@@ -68,7 +72,7 @@ static void func_00051CA0(void *actor, float t)
             AdditionMotion *motion;
             void *res;
             float frames;
-            anim->prev = anim->frame;
+            ((FloatBits *)&anim->prev)->f = anim->frame;
             motion = anim->motion;
             res = motion->res;
             frames = motion->frames;
@@ -88,4 +92,3 @@ static void func_00051CA0(void *actor, float t)
         }
     }
 }
-#endif
