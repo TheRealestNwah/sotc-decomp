@@ -1,4 +1,7 @@
-/* Parked: 25 diffs, same size. Remaining: callee-saved rotation of col/riding/blocked (fp/s7/s6), f0/f1 swaps in the reset 1.0f store and the normalize-check compare, late mtc1 after the vdist cfc2, v1/a0 swap in the last vdot operands. */
+/* Parked: 14 diffs, same size. Remaining: f0/f1 swaps in the reset 1.0f
+ * store and the vdot <= 0.0f compare, the mtc1 of vdist's result issuing
+ * before (rather than after) the 0.39999998f constant, and a v1/a0 swap in
+ * the last vdot operands. riding/blocked are pinned to s7/s6. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -107,9 +110,9 @@ void CAM_doit_post_update_new_camera_data_target_offset(char *ctl, char *cam, in
     char *sub;
     int one;
     int r;
-    int riding;
+    register int riding __asm__("$23");
     int obj;
-    int blocked;
+    register int blocked __asm__("$22");
     float ratio;
     int miss;
     int st;
