@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 9 diffs (char copy of pass found by permuter): scheduling of the group-pointer movn and the s0/s1/s4 setup before the inner loop. Permuter (5 workers, 25 min): best was a volatile char temp for pass != 0, still not a match. */
+#ifdef NONMATCHING /* Parked: 8 diffs (load the group with the call's result first, then an empty volatile asm before last = 0). Remaining: the two group-address lui/addiu pairs use a0/v0 in the opposite order, and gcc schedules a1 = 0 before the movn and swaps the s0/s1 setup after the call. Tried: inverted ternary, an if-assigned temp, +r on node. */
 typedef struct FogColMan {
     char pad0[0x90];
     int flags;
@@ -39,10 +39,10 @@ unsigned char *AddCollMan(void *a, void *b, void *c)
         if (found) {
             continue;
         }
-        pc = pass;
+        node = isysGroupForFirst(pass != 0 ? B_00148AD8 : B_00148ADC, 0);
+        __asm__ volatile("");
         last = 0;
-        for (node = isysGroupForFirst(pc != 0 ? B_00148AD8 : B_00148ADC, 0); node != 0;
-             node = isysGroupForNext(node, 0)) {
+        for (; node != 0; node = isysGroupForNext(node, 0)) {
             last = *node;
             w = GetObjWork(last, 0x18);
             if (w == 0) {
