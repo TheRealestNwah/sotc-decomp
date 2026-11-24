@@ -6,7 +6,7 @@ extern float iosGetACosfExact(float);
 extern void RotQuaternionXExact(float *, float *, float);
 extern void GetDifferencialQuaternionWithNoRegularize(float *, float *, void *, void *);
 
-static inline void quatRotateVector(Vec4 *out0, float *quat0, Vec4 *vec0)
+static inline int quatRotateVector(Vec4 *out0, float *quat0, Vec4 *vec0)
 {
     register Vec4 *vec __asm__("$4") = vec0;
     register Vec4 *out __asm__("$2") = out0;
@@ -82,7 +82,7 @@ static inline void quatMul(void *dst, void *a, void *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-#ifdef NONMATCHING /* 11 diffs: reading ld through a pointer (from the permuter) fixes the product registers; left: v0/v1 numbering of the (idx<<N)+base address temps, the 0.0f/$f21 init order and one lui scheduled early */
+#ifdef NONMATCHING /* 5 diffs: quatRotateVector returning int (value unused) and the register pins on the two (idx<<N)+base temps come from the permuter; left: addu operand order at the two pinned address temps and v0/v1 numbering of the quatMul address */
 float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip)
 {
     Vec4 d __attribute__((aligned(16)));
@@ -99,7 +99,9 @@ float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip
     register float sd __asm__("$f20");
     register float ang1 __asm__("$f21");
     register float ang2 __asm__("$f25");
-    char *pos = (*(int *)(o + 0x14) << 6) + *(char **)(o + 8) + 0x30;
+    register char *pos __asm__("$3");
+
+    { int ix = *(int *)(o + 0x14); register char *bs __asm__("$2") = *(char **)(o + 8); pos = (ix << 6) + bs; pos += 0x30; }
 
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
@@ -139,11 +141,15 @@ float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip
                          "vmulq.xyz vf5, vf5, Q\n"
                          "sqc2 vf5, 0x0(%1)\n"
                          : : "r"(&d), "r"(&n) : "memory");
+    {
+    register int ix2 __asm__("$2") = *(int *)(o + 0x14);
+    register char *ap __asm__("$2") = (ix2 << 4) + *(char **)(o + 0xC);
     __asm__ __volatile__("lqc2 vf11, 0x0(%1)\n"
                          "vsubw.x vf5, vf0, vf0w\n"
                          "vmulx.xyz vf11, vf11, vf5x\n"
                          "sqc2 vf11, 0x0(%0)\n"
-                         : : "r"(&c), "r"((*(int *)(o + 0x14) << 4) + *(char **)(o + 0xC)) : "memory");
+                         : : "r"(&c), "r"(ap) : "memory");
+    }
     quatRotateVector(&r, (float *)&c, &n);
     GetDifferencialQuaternionWithNoRegularize(q, (float *)&r, ZUnitVectorInv, o + 0x20);
     quatMul((*(int *)(o + 0x14) << 4) + *(char **)(o + 4), (*(int *)(o + 0x14) << 4) + *(char **)(o + 4), q);
