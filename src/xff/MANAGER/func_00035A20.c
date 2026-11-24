@@ -40,7 +40,7 @@ static inline void setFrame(int *i0, int *i1, float *frac, float t, int n, float
         } else {
             f = t - (float)*i0;
         }
-        *frac = f;
+        ((union { float f; unsigned int u; } *)frac)->f = f;
     }
 }
 
@@ -78,17 +78,15 @@ static inline void evalKey(unsigned char *a, int type, void **data, int n, float
         func_000333C8(a, type, data, (float)(n - 1), end);
         func_000333C8(b, type, data, t, 0.0f);
         x = b[0];
-        a[1] = b[1] | a[1];
+        a[1] = a[1] | b[1];
         a[0] |= x;
         a[2] |= b[0];
     }
 }
 
-/* Parked at 11 diffs (built on func_00035C78's inlines).
- * frac's store and reload: the Original stores it before setting up the position call
- * and reloads $f12 from the stack, but gcc 2.96 reuses $f0 and stores later (9 words).
- * In evalKey the Original loads a[1] into $v0 and b[1] into $a0; ours swaps them (2 words). */
-#ifdef NONMATCHING
+/* The empty asm reading frac from memory keeps the Original's store before
+ * the call setup and its reload into $f12; setFrame stores frac through a
+ * union so the store may alias the track loads. */
 static void func_00035A20(char *out, unsigned int *trk, int n, float t, float t2)
 {
     int i0;
@@ -96,8 +94,8 @@ static void func_00035A20(char *out, unsigned int *trk, int n, float t, float t2
     float frac;
 
     setFrame(&i0, &i1, &frac, t, n, t2);
+    __asm__ ("" : : "m"(frac));
     func_00033868(out, (trk[0] >> 16) & 0xFF, (void *)trk[1], i0, i1, frac);
     interpRot(out + 0x10, (trk[0] >> 8) & 0xFF, (void **)&trk[2], i0, i1, frac);
     evalKey(out + 0x20, trk[0] & 0xFF, (void **)&trk[3], n, t, t2);
 }
-#endif
