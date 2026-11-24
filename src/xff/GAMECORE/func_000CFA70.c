@@ -1,5 +1,6 @@
-/* Parked: 3 diffs, same size. Remaining: the init block schedules
- * sw button10 (0x10) after sw state (0x0) instead of before sw button (0x1C). */
+/* Parked: 2 diffs, same size. Remaining: the init block stores button
+ * (0x1C) before button10 (0x10); the Original stores 0x10 first. Writing
+ * state, button, button10 in that order is the closest of the six orders. */
 typedef struct {
     int state;
     int pad4;
@@ -78,9 +79,9 @@ void func_000CFA70(int *menu)
     }
     w.f18 = 2.25f;
     w.f14 = 1.0f;
-    w.button10 = 1;
-    w.button = 3;
     w.state = 1;
+    w.button = 3;
+    w.button10 = 1;
     w.pad4 = 0;
     w.done = 0;
     w.sel = 0;
