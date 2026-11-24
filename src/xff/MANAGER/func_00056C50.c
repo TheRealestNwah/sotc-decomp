@@ -1,9 +1,8 @@
 /*
- * Parked: 21 diffs. Static, called from GetMainAnimation (same Original
+ * Parked: 12 diffs. Static, called from GetMainAnimation (same Original
  * source file, declared static in GetMainAnimation.c).
- * Remaining: the mode-1 pair copy loop addresses c+4/c+8 and src+4/src+8
- * with 0xC40 folded into the index, where the Original uses the full
- * c+0xC44/0xC48 bases; and the 0x724 load is scheduled after the 0x43C store.
+ * Remaining: the 0x724 load is scheduled after the 0x43C store and the
+ * copy loop's base registers (t0/t1) and its addu operand order differ.
  */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
@@ -18,15 +17,6 @@ extern void ResetAnimeFrameTableInfo(void *, void *, void *);
 #define I(p, o) (*(int *)((char *)(p) + (o)))
 #define U8(p, o) (*(unsigned char *)((char *)(p) + (o)))
 #define S8(p, o) (*(signed char *)((char *)(p) + (o)))
-
-typedef struct {
-    int a;
-    int b;
-} Pair;
-typedef struct {
-    char pad[0xC44];
-    Pair p[1];
-} CC;
 
 static inline char *resolveHandle(unsigned int *h)
 {
@@ -57,10 +47,14 @@ static int func_00056C50(int id, float dt)
         F(c, 0x744) = F(src, 0x744);
         F(c, 0x740) = F(src, 0x740);
         U8(c, 0xC40) = U8(src, 0xC40);
-        for (i = 0; i < 1; i++) {
-            ((CC *)c)->p[i].a = ((CC *)src)->p[i].a;
-            ((CC *)c)->p[i].b = ((CC *)src)->p[i].b;
-            __asm__("" : "+r"(i));
+        {
+            int *da = (int *)(c + 0xC44), *db = (int *)(c + 0xC48);
+            int *sa = (int *)(src + 0xC44), *sb = (int *)(src + 0xC48);
+            for (i = 0; i < 1; i++) {
+                da[i * 2] = sa[i * 2];
+                db[i * 2] = sb[i * 2];
+                __asm__("" : "+r"(i));
+            }
         }
         break;
     }
