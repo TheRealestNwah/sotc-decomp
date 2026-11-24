@@ -1,6 +1,6 @@
 #ifdef NONMATCHING
 /* Sets the current vertex's color: lit through the two VU0 matrices when lighting is fully enabled, flat otherwise. */
-/* 17 diffs. Remaining: the Original precomputes the five pointers in a3 (vtx), t2 (m1), a0 (m0), t1 (color), t0 (normal), all before the sd; it keeps 255.0f in f1/a3; and the flat branch reloads color with lq 0x90($a2) where ours reuses the local. An inline-helper variant scored 23. Not yet permuted. */
+/* Parked: 13 diffs. Remaining: the Original keeps vtx in a3 and m1 in t2 (ours t2 and a3), so 255.0f goes through f1/a3 instead of f0/v1, and the flat branch adds g + n*64 with the operands the other way round. Declaring the five pointers inside the lit branch (color, normal, m0, m1, vtx) gets the flat branch its own lq 0x90($a2) and the Original pointer order. Not yet permuted. */
 typedef int u128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -58,14 +58,14 @@ extern GlState D_00130480;
 static void func_000120C8(int lit)
 {
     GlState *g = &D_00130480;
-    float *normal = g->h.normal;
-    u128 *color = &g->h.color;
-    float *m0 = g->h.mat0[0];
-    float *m1 = g->h.mat1[0];
-    u128 *vtx = g->v.v[0];
 
     g->b.f3 = lit;
     if ((g->w.all & 0xB) == 0xB) {
+        u128 *color = &g->h.color;
+        float *normal = g->h.normal;
+        float *m0 = g->h.mat0[0];
+        float *m1 = g->h.mat1[0];
+        u128 *vtx = g->v.v[0];
         u128 *dst = &vtx[g->n.n * 4];
 
         __asm__ __volatile__("lqc2 vf24, 0x0(%0)\n"
