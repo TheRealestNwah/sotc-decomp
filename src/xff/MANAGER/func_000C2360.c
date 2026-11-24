@@ -1,6 +1,4 @@
 /* Finds a particle's collision hit by its configured mode and returns the hit position and plane. */
-#ifdef NONMATCHING
-/* Parked attempt: 18 differing words, all one $s4/$s5 swap (original: pl in $s4, hit in $s5). Declaration-order variants did not change it. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; int i[4]; } Vec4;
 
@@ -41,11 +39,10 @@ static int func_000C2360(Vec4 *pos, Vec4 *plane, char *obj, void *from, void *to
         float r = *(float *)(cfg + 0x124);
         if (*(int *)(obj + 0x188) == 1) {
             Vec4 cross;
-            char *pl = obj + 0xB0;
-            if (GetCrossPositionPlaneLine(&cross, pl, from, to) == 1 &&
+            if (GetCrossPositionPlaneLine(&cross, obj + 0xB0, from, to) == 1 &&
                 (r <= 0.0f || distSq(&cross, obj + 0xA0) <= r * r)) {
                 pos->q = cross.q;
-                plane->q = *(s128 *)pl;
+                plane->q = *(s128 *)(obj + 0xB0);
                 plane->f[3] = 0.0f;
                 if (*(void **)(obj + 0x18C)) {
                     func_000C2520(pos, plane, *(void **)(obj + 0x18C));
@@ -64,4 +61,3 @@ static int func_000C2360(Vec4 *pos, Vec4 *plane, char *obj, void *from, void *to
     }
     return hit;
 }
-#endif
