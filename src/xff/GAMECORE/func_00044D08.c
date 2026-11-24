@@ -1,15 +1,11 @@
 /*
- * Parked attempt, 12 diffs, same size.
- *
  * Two place() calls (normalize, pick X/Y unit axis by F(o,0xC0), differential
  * quaternion, qmul, conjugate, rotate offset, add base) plus a final distance.
- * Remaining diffs are register choices only: the axis lq/sq temp is v0 where
- * the Original uses v1, and the rotate output / vadd re-load pointers swap
- * a0/v1/v0. Getting this close needed a rotate asm without a "memory" clobber
- * (so gcc recomputes sp+N) and an empty volatile asm after the axis copy (to
- * keep the sq out of the jal delay slot). The permuter found nothing better.
+ * The rotate asm has no "memory" clobber so gcc recomputes sp+N, and the empty
+ * volatile asm after the axis copy keeps the sq out of the jal delay slot.
+ * Register-pinned temps give the Original's v1/v0 choices for the axis copy,
+ * the rotate output and the vadd re-load pointer.
  */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union {
     s128 q;
@@ -21,8 +17,9 @@ extern void GetDifferencialQuaternionWithNoRegularize(void *, void *, void *, vo
 
 #define F(p, o) (*(float *)((char *)(p) + (o)))
 
-static inline void rotate(void *v, void *in, void *q)
+static inline void rotate(void *v0_, void *in, void *q)
 {
+    register void *v __asm__("$3") = v0_;
     __asm__ __volatile__("lqc2 vf8, 0x0(%1)\n"
                          "vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%2)\n"
@@ -114,8 +111,9 @@ static inline void qconj(void *out, void *q)
                          : : "r"(out), "r"(q) : "memory");
 }
 
-static inline void vadd3(void *out, void *a, void *b)
+static inline void vadd3(void *out, void *a, void *b0)
 {
+    register void *b __asm__("$2") = b0;
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)
 "
                          "lqc2 vf6, 0x0(%2)
@@ -166,7 +164,7 @@ static inline void place(char *o, char *dir, char *base, char *out, char *offs)
         ap = &XUnitVector;
     else
         ap = &YUnitVector;
-    axis.q = ap->q; __asm__ __volatile__("");
+    { register s128 t __asm__("$3") = ap->q; axis.q = t; } __asm__ __volatile__("");
     GetDifferencialQuaternionWithNoRegularize(&q, &n, o + 0xC0, &axis);
     qmul(&q, &q, o + 0xA0);
     qconj(&qi, &q);
@@ -181,4 +179,3 @@ static void func_00044D08(char *o, char *w)
     place(o, w + 0x90, w + 0x90, w + 0x230, w + 0x140);
     F(w, 0x244) = vdist(w + 0x220, w + 0x210);
 }
-#endif
