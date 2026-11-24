@@ -1,5 +1,4 @@
-/* Parked: 15 diffs. Slides a two-point segment (pos, pos2) along delta: a clip query finds the first hit, the delta is projected onto the hit plane, then a 4D slide query (with or without the filter callback) resolves the final position, which is pushed back out of the plane when behind it. Copies the hit layout/normal, clamps the two class limits and takes the slide's boss DB info if none was set. The float arguments are declared first in the SlideCollisionFinder4D prototypes only to get the Original argument setup order and register allocation. Remaining: the 64-byte boss DB info copy, which the Original schedules as alternating ld/sd pairs through v0/v1 and gcc here loads into eight registers before storing. */
-#ifdef NONMATCHING
+/* Slides a two-point segment (pos, pos2) along delta: a clip query finds the first hit, the delta is projected onto the hit plane, then a 4D slide query (with or without the filter callback) resolves the final position, which is pushed back out of the plane when behind it. Copies the hit layout/normal, clamps the two class limits and takes the slide's boss DB info if none was set. The float arguments are declared first in the SlideCollisionFinder4D prototypes only to get the Original argument setup order and register allocation. The 64-byte boss DB info copy is written as doubleword moves through two temporaries, with empty asm barriers so gcc keeps the Original's alternating v0/v1 ld/sd pairs. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -152,7 +151,24 @@ int charrootdyn_slidecollisionCB(SlideOut *out, Vec4 *pos, Vec4 *pos2, Vec4 *del
             out->normal.q = hit.normal.q;
             out->hi = out->hi < res.hi ? res.hi : out->hi;
             if (sub->flag == 0 && res.sub.flag != 0)
-                *sub = res.sub;
+                {
+                    long long *d = (long long *)sub;
+                    long long *s = (long long *)&res.sub;
+                    long long x, y;
+                    x = s[1]; y = s[0]; d[1] = x; d[0] = y;
+                    __asm__ __volatile__("" ::: "memory");
+                    x = s[2]; d[2] = x;
+                    __asm__ __volatile__("" ::: "memory");
+                    y = s[3]; d[3] = y;
+                    __asm__ __volatile__("" ::: "memory");
+                    x = s[4]; d[4] = x;
+                    __asm__ __volatile__("" ::: "memory");
+                    y = s[5]; d[5] = y;
+                    __asm__ __volatile__("" ::: "memory");
+                    x = s[6]; d[6] = x;
+                    __asm__ __volatile__("" ::: "memory");
+                    y = s[7]; d[7] = y;
+                }
             return r;
         }
     }
@@ -160,4 +176,3 @@ int charrootdyn_slidecollisionCB(SlideOut *out, Vec4 *pos, Vec4 *pos2, Vec4 *del
     out->a.q = end[0].q;
     return 0;
 }
-#endif
