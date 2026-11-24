@@ -1,5 +1,3 @@
-/* Parked: 2 diffs, same size (338 words). Remaining: the three GetMotionNS_RootInfo argument moves are scheduled a0,a1,a2 instead of the Original's a2,a1,a0 (0x180/0x188). */
-#ifdef NONMATCHING
 typedef unsigned int qword __attribute__((mode(TI)));
 
 typedef union {
@@ -175,7 +173,12 @@ static void func_0007E9B8(Quat *pos, Quat *rotOut, Quat *rots, FrameInfo *fi, An
         {
             Quat nxt[n];
 
-            GetMotionNS_RootInfo(&rpos, &rrot, res, idx, fi->f8, fi->fC, t);
+            /* res pinned to $a2 so its move is scheduled first, like the Original. */
+            {
+                register AnimRes *r_ __asm__("$6") = res;
+
+                GetMotionNS_RootInfo(&rpos, &rrot, r_, idx, fi->f8, fi->fC, t);
+            }
             getMotionFloatFrame(nxt, res, n, fi->f8);
             resourceRot(nxt, &rpos, &rrot, obj->rot, 0);
             vsub4(&diff, &rpos, &base);
@@ -234,10 +237,3 @@ static void func_0007E9B8(Quat *pos, Quat *rotOut, Quat *rots, FrameInfo *fi, An
         }
     }
 }
-#else
-typedef unsigned int qword __attribute__((mode(TI)));
-typedef union { float v[4]; qword q; } Quat;
-typedef struct FrameInfo FrameInfo;
-typedef struct AnimObj AnimObj;
-static void func_0007E9B8(Quat *pos, Quat *rotOut, Quat *rots, FrameInfo *fi, AnimObj *obj, AnimObj *sub, Quat *trans, Quat *root, Quat *out, int n, int idx, float t, float rs, float bt);
-#endif
