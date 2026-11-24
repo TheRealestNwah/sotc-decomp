@@ -15,12 +15,14 @@ static inline float distSq(char *a, char *b)
     return d;
 }
 
-#ifdef NONMATCHING /* 17 diffs: layout matches; near3 operand pointers are allocated a1/a0/v1 in the original and v1/a1/a0 here, and the original re-reads c+0x40/c+0x4F0 by offset where ours reuses the near3 address registers */
+#ifdef NONMATCHING /* 5 diffs: in case 3 the original keeps the constant 1 in v0 and the copy in v1, storing 0x26C and 0x270 before the sq in the branch delay slot; ours swaps the registers and schedules sw 0x26C into the delay slot */
 static inline int near3(char *c)
 {
     float r = *(float *)(*(char **)(c + 0x20) + 0x2C);
 
-    return distSq(c + 0x40, c + 0x4F0) <= r * r;
+    if (distSq(c + 0x40, c + 0x4F0) <= r * r)
+        return 1;
+    return 0;
 }
 
 static void func_0009DA40(char *c, char *out0)
