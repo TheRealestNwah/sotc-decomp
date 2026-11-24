@@ -1,8 +1,9 @@
 /* Parked draft: flushes the finder set, then collects collision finders for every group member a
    caller-supplied filter accepts (stopping when the set is full); when the set has a limit, deletes
-   the finders a script character class added beyond it. 11 diffs, same size: the Original preloads
-   `user` into the filter test's delay slot and uses v1 for the p.limit reloads. A 30-minute
-   permuter run found nothing better. */
+   the finders a script character class added beyond it. Parked: 7 diffs, same size. Remaining: in
+   the first loop the Original fills the filter == 0 branch's delay slot with the `user` load from
+   the call path (gcc sets ok = 1 there), and the second loop uses v1 for the `user` and p.limit
+   reloads. Tried: continue/goto/nested-if forms of the filter test, int-typed filter, ok = filter. */
 #ifdef NONMATCHING
 
 typedef struct {
@@ -52,8 +53,13 @@ void GetCollisionDBCallBack(FinderSet *set, int group, int a2, int a3, float f12
             member = *it;
             if (set->count >= set->capacity)
                 break;
-            if (filter == 0 || filter(member, user) != 0)
+            {
+            int ok = 1;
+            if (filter != 0)
+                ok = filter(member, user);
+            if (ok != 0)
                 func_0009B6C8(set, member, f12, p.f, p.a2, p.a3, tmp, p.t1, p.t2, p.t3, user);
+            }
         }
         if (member != 0)
             isysGroupForExit(member, 0);
