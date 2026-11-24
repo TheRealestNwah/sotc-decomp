@@ -6,10 +6,11 @@ extern Pair RO_00181790;
 extern char *GetCharacterClass(int);
 extern void nico_calcTailGenealogicalNodeNext(void *);
 
-/* Parked: 15 diffs (same size, 81 words). Remaining: scheduling of the
- * D_0017B8C4 load against the RO_00181790 address and pair copy (the
- * Original loads D first and forms the RO address late), and the e + 0x280
- * pointer computed after the pair stores instead of before. */
+/* Parked: 10 diffs (same size, 81 words). An empty asm on e and copying
+ * the pair high word first take it from 15. Remaining: the Original forms
+ * the RO_00181790 address (lui $a0) before the D_0017B8C4 one (lui $a1) and
+ * loads D after ik; ours swaps those registers and loads D first, and the
+ * same a0/a1 swap shows at the final &D_0017B8C4 / &L.v pair. */
 #ifdef NONMATCHING
 static inline void mkmat(float *mm, char *q, char *t)
 {
@@ -56,7 +57,9 @@ void nico_calcTailGenealogicalNodeTail(int *obj)
     float *m = L.mat[0];
 
     e = (char *)((D_0017B8C4 << 4) + (int)ik);
-    L.v = RO_00181790;
+    __asm__("" : "+r"(e));
+    L.v.y = RO_00181790.y;
+    L.v.x = RO_00181790.x;
     mkmat(m, e, e + 0x280);
     pd = &D_0017B8C4;
     __asm__ __volatile__("lqc2 vf8, 0x0(%2)\n"
