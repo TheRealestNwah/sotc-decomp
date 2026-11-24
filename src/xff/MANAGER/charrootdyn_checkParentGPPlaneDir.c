@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 15 diffs, same size. q and &from are pinned to a1/a2 for the matrix block as in the Original. Remaining: the 0x134 load is scheduled after the v stores, and the final add/ClipCollisionFinder setup reuses a2 for &from instead of rematerialising sp+0x10 into a1 (plus the unreachable nop before the return-0 block). */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -88,17 +86,18 @@ int charrootdyn_checkParentGPPlaneDir(int arg, char *obj, float y)
                          "vmaddw.xyzw vf10, vf18, vf8w\n"
                          "sqc2 vf10, 0x0(%0)\n"
                          : : "r"(fp_), "r"(qp_), "r"(v.f),
-                             "r"(*(Vec4 **)(obj + 0x134)) : "memory");
+                             "r"(*(Vec4 **)(obj + 0x134)));
     }
+    {
+    register float *tp_ __asm__("$6") = to.f;
+    register float *fq_ __asm__("$5") = from.f;
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
                          "vadd.xyz vf5, vf5, vf6\n"
                          "sqc2 vf5, 0x0(%0)\n"
-                         : : "r"(to.f), "r"(from.f), "r"(dir.f) : "memory");
-    return ClipCollisionFinder(arg, &from, &to, obj + 0xE20);
+                         : : "r"(tp_), "r"(fq_), "r"(dir.f) : "memory");
+    return ClipCollisionFinder(arg, (Vec4 *)fq_, (Vec4 *)tp_, obj + 0xE20);
+    }
     }
     return 0;
 }
-#else
-extern int charrootdyn_checkParentGPPlaneDir(int, char *, float);
-#endif
