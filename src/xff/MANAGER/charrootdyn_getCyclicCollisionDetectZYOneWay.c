@@ -1,7 +1,7 @@
 /* Steps a point around a half circle of radius r in the YZ plane and runs the
  * collision finder on each segment; returns 1 on the first hit. */
-/* Parked: 20 diffs.
- * Remaining: n lands in s5 instead of s4 (swapped with &cur/&w's s-registers),
+/* Parked: 15 diffs. n is pinned to s4 as in the Original.
+ * Remaining: &cur and &w swap s5/s6, (float)n and 1.0f swap f1/f2,
  * and gcc hoists the callback address (lui) above the argument moves instead of
  * materialising it in $t0 right before the call. The constants are laundered
  * so cse2 doesn't share the outer pi/32768 with the loop.
@@ -72,8 +72,9 @@ static inline void makePoint0(Vec4 *out, float r, float a, float one)
     out->f[3] = one;
 }
 
-int charrootdyn_getCyclicCollisionDetectZYOneWay(void *ctx, Vec4 *pos, Vec4 *quat, int n, void *db, float r)
+int charrootdyn_getCyclicCollisionDetectZYOneWay(void *ctx, Vec4 *pos, Vec4 *quat, int n_, void *db, float r)
 {
+    register int n __asm__("$20") = n_;
     Vec4 prev;
     Vec4 v;
     Vec4 cur;
