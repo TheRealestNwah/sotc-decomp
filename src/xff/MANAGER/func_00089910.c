@@ -111,10 +111,11 @@ static inline void localDirX(void *out, void *quaternion)
         : : "r"(out), "r"(quaternion) : "memory");
 }
 
-/* Parked: 9 diffs, same size. An empty asm ties &tq and IdentityQuaternion to
- * registers before SetQuaternionByAxisRotateVWithNoRegularize, as the Original does.
- * Remaining: the Original loads IdentityQuaternion (lui/addiu) just before the
- * jal and keeps the rotation pointer in s1. */
+/* Parked: 5 diffs, same size. An empty asm ties &tq and IdentityQuaternion to
+ * registers, and the rotation pointer is read before
+ * SetQuaternionByAxisRotateVWithNoRegularize so it lives in s1, as the Original does.
+ * Remaining: the Original sets a1 = 0x4000 early and loads IdentityQuaternion
+ * (lui/addiu) just before the jal; ours loads it first. */
 #ifdef NONMATCHING
 static int func_00089910(int e0, int e1, int chr, int layout, int e2, int flag, void *coll, Vec4 *quat, void *gp, float r)
 {
@@ -142,8 +143,8 @@ static int func_00089910(int e0, int e1, int chr, int layout, int e2, int flag, 
                     float *iq = IdentityQuaternion;
                     Vec4 *t = &tq;
                     __asm__ ("" : "+r"(t) : "r"(iq));
-                    SetQuaternionByAxisRotateVWithNoRegularize(t, 0x4000, XUnitVector);
                     rot = *(Vec4 **)(lc + 0x13C);
+                    SetQuaternionByAxisRotateVWithNoRegularize(t, 0x4000, XUnitVector);
                     quatMul(rot, iq, &tq);
                 }
                 hit = 1;
