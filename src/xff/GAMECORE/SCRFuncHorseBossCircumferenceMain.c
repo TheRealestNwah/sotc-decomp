@@ -1,12 +1,6 @@
-/*
- * Parked: 5 diffs, same size (215 words).
- * Remaining: the setAttainmentPosAndDirPosAndLock jal delay slot gets the
- * out[1] store instead of the w->0x407C->0x134 load (the original loads
- * 0x407C after the store). Alias, type and temp variants stayed at 5.
- */
-#ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
 
+typedef union { float f; int i; void *p; } FU;
 extern char gcGlobalVar[];
 extern void *SCRGetFirstObj(void *);
 extern char *getSCRDataCtrlWork(void *);
@@ -151,7 +145,8 @@ void SCRFuncHorseBossCircumferenceMain(void *obj, float r, float lo, float hi, f
         L.v[2] = (lo + hi) * 0.5f;
     }
     matApply(L.out, L.m[0], L.v);
-    L.out[1] += yofs;
+    /* The union store may alias the 0x407C load, keeping it after the store. */
+    ((FU *)&L.out[1])->f += yofs;
     setAttainmentPosAndDirPosAndLock(w, L.out, *(void **)(*(char **)(w + 0x407C) + 0x134));
     if (GetDebugDispType() == 6) {
         half = (hi - lo) * 0.5f;
@@ -168,4 +163,3 @@ void SCRFuncHorseBossCircumferenceMain(void *obj, float r, float lo, float hi, f
         DebugDispBox(L.m[0], 4);
     }
 }
-#endif
