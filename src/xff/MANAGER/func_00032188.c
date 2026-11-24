@@ -3,11 +3,10 @@
  * then returns the key or a hemisphere-corrected lerp of the two nearest
  * keys).
  *
- * Parked: 8 diffs (ee-gcc 2.96 -O2 -G0).
- * Remaining: the else path of the wrap computes n - 1 into $v1 instead of
- * $v0 (3 words), and the two getKey version tests use bnel with the zero
- * result in the delay slot where the original uses bnez and shares an
- * earlier return-zero (5 words, including the shifted beql targets).
+ * Parked: 5 diffs (was 8; ee-gcc 2.96 -O2 -G0).
+ * Remaining: the two getKey version tests use bnel with the zero result in
+ * the delay slot where the original uses bnez and shares an earlier
+ * return-zero (5 words, including the shifted beql targets).
  */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
@@ -93,7 +92,7 @@ static int func_00032188(Vec4 *out, Track *t, float frame)
         frame = frame - (float)(int)frame;
     } else {
         int m = n - 1;
-        frame = frame - (float)((int)(frame / (float)m) * m);
+        frame = frame - (float)(m * (int)(frame / (float)m));
     }
     if (frame == 0.0f && 0.0f < orig)
         frame = (float)(t->count - 1);
