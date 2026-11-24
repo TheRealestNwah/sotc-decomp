@@ -1,6 +1,3 @@
-/* Parked attempt: 8 words differ from the Original. */
-#ifdef NONMATCHING
-/* 8 diffs: f0/f1 numbering in the second loop's colour copy (sp+0x10..0x1C). */
 typedef struct {
     float x, y, z, w;
 } V4 __attribute__((aligned(8)));
@@ -130,10 +127,11 @@ void updateEyeWork(void *obj)
             i = 0;
             while (dldBase(&l->tex) != 0) {
                 clut = *(int *)(dldBase(&l->tex) + 0xC);
-                tmp.x = l->x;
-                tmp.y = l->y;
-                tmp.z = l->z;
-                tmp.w = l->w;
+                { register float f0 __asm__("$f0"); register float f1 __asm__("$f1");
+                f0 = l->x; tmp.x = f0;
+                f1 = l->y; tmp.y = f1;
+                f0 = l->z; tmp.z = f0;
+                f1 = l->w; tmp.w = f1; }
                 col.v = tmp;
                 if (l->time > e->timer) {
                     vecSub(&tmp, &col.v, &e->col[i]);
@@ -152,4 +150,3 @@ void updateEyeWork(void *obj)
         e->timer += gcGlobalVar.dt;
     }
 }
-#endif
