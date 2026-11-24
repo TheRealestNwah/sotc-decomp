@@ -1,6 +1,6 @@
-/* Parked: 10 diffs, same size (252 words). Remaining: the prologue tests vis->unk8 with bnel and keeps one copy in $a0,
- * where the Original uses beqz with a "daddu $a1, $a0" delay slot and reads unk30 through $a1 (and the
- * dist operands then swap $v1/$a0). Permuter (-j2, 30 min) found nothing better. */
+/* Parked: 5 diffs (was 10), same size (252 words). Remaining: the prologue tests vis->unk8 with bnel in $v0,
+ * where the Original loads it into $a0 and uses beqz with a "daddu $a1, $a0" delay slot, then reads unk30
+ * through $a1. Permuter (-j2, 30 min) found nothing better on the 10-diff version. */
 #ifdef NONMATCHING
 typedef int u_long128 __attribute__((mode(TI)));
 
@@ -106,7 +106,12 @@ float modelClipSkin(ClipObj *obj, char *arg1) {
     if (vis->unk8 != 0) {
         scale = vis->unk8->unk34;
     }
-    info = vis->unk8;
+    /* Copies vis->unk8 into its own register like the Original's delay-slot daddu. */
+    {
+        SkinInfo *ii = vis->unk8;
+        __asm__ __volatile__("" : "+r"(ii));
+        info = ii;
+    }
     if (!((int)((vis->u18.l << 8) >> 32) & 1)) {
         if (D_001360C4 != 0 && 0.0f < (f = info->unk30) && dist(arg1 + 0x30, &cam->unk140) < f) {
             return -2.0f;
