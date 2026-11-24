@@ -1,5 +1,4 @@
-/* Parked attempt, 4 diffs, same size. Builds the look direction for the subjective camera by mode. Remaining: case 5 swaps f0/f1 for the 0xE0/0xE4 loads. */
-#ifdef NONMATCHING
+/* Builds the look direction for the subjective camera by mode. */
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } __attribute__((aligned(8))) V;
 
@@ -61,9 +60,13 @@ static void func_000EA508(float *dir, float *pos, char *mode, char *cam)
         if (GAMEUTIL_check_and_get_normalize_vector(dir, 0, dir) == 1)
             ok = 1;
     } else if (t == 5) {
-        tmp.x = *(float *)(mode + 0xE0);
-        tmp.y = *(float *)(mode + 0xE4);
-        tmp.z = *(float *)(mode + 0xE8);
+        {
+            /* The Original loads 0xE0 into $f1 and 0xE4 into $f0. */
+            register float a __asm__("$f1") = *(float *)(mode + 0xE0);
+            tmp.x = a;
+            tmp.y = *(float *)(mode + 0xE4);
+            tmp.z = *(float *)(mode + 0xE8);
+        }
         tmp.w = 1.0f;
         buf = tmp;
         GAMEUTIL_convert_from_lw_to_game_coord(bp = &buf);
@@ -76,4 +79,3 @@ static void func_000EA508(float *dir, float *pos, char *mode, char *cam)
     if (ok == 0)
         *(s128 *)dir = *(s128 *)(cam + 0xF20);
 }
-#endif
