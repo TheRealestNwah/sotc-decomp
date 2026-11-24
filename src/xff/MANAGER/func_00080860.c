@@ -1,8 +1,8 @@
 /* Creates the layout object, light or wind/part/cam animation for each sub-object of an LWS orient object and links it to the group. */
 #ifdef NONMATCHING
-/* Parked: 17 diffs, same size (281 words). Remaining: the first 128-bit copy loads the destination pointer before the source,
-   the second copy keeps the destination pointer instead of reloading cls+0x11F8, the loop entry test is slt/beqz on i
-   instead of blez on n, and the loop-head argument loads (0x114-0x138) and the f13 move before func_0007F5A0 are scheduled differently. */
+/* Parked: 12 diffs, same size (281 words). Remaining: the param.one/link/two stores (0x98-0xA0) are ordered
+   link, two, one, the loop-head loads and argument moves for GetObjectAnimationFloatFrame (0x114-0x138) use a0/v1
+   instead of a1/a0 and are scheduled differently, and the f13 move before func_0007F5A0 is placed after t1. */
 typedef struct { float x, y, z, w; } __attribute__((aligned(16))) Vec;
 typedef int u_long128 __attribute__((mode(TI)));
 
@@ -49,9 +49,6 @@ extern void func_0007F5A0(int, void *, void *, int, SubDef *, SubWork *, int, in
 extern int isysAddGroupWithLinkParam(int, int, int, int);
 extern void GetTRS_Onake_From_ObjectAnimation(void *, Vec *, Vec *, Vec *, Vec *);
 
-#define CP1(d, s) do { u_long128 t_; __asm__ volatile("lq %0, %2\n\tsq %0, %1" : "=&r"(t_), "=m"(d) : "m"(s)); } while (0)
-#define CP(d, s) do { u_long128 t_; __asm__ volatile("lq %0, %1" : "=r"(t_) : "m"(s)); __asm__ volatile("sq %1, %0" : "=m"(d) : "r"(t_)); } while (0)
-
 static inline int resolve(unsigned int *h)
 {
     unsigned int v = *h;
@@ -72,9 +69,11 @@ void func_00080860(void *obj, int *def, char *cls, void *tail, char *info, int *
     SubDef *sd;
     SubWork *w;
     int i = 0;
+    register int *dp __asm__("$23");
 
     SetGeometryPointerNodePosState(geo, obj, 0, &IdentityQuaternion, &ZeroPoint);
-    base = def[31];
+    dp = def;
+    base = dp[31];
     res = getAnimObjResource(base + 0x50);
     lc = GetLayoutClass((int)obj);
     param.one = 1;
@@ -92,101 +91,114 @@ void func_00080860(void *obj, int *def, char *cls, void *tail, char *info, int *
     param.pad28[1] = 0;
     param.pad28[2] = 0;
     param.pad38 = 0;
-    CP1(**(u_long128 **)(cls + 0x11F8), **(u_long128 **)(lc + 0x134));
-    CP(*(u_long128 *)(*(char **)(cls + 0x11F8) + 0x20), *(u_long128 *)(cc + 0x470));
+    {
+        register u_long128 *src __asm__("$3") = *(u_long128 **)(lc + 0x134);
+        register u_long128 *dst __asm__("$4") = *(u_long128 **)(cls + 0x11F8);
+        register u_long128 t __asm__("$2");
+
+        __asm__ volatile("lq %0, 0(%1)\n\tsq %0, 0(%2)" : "=&r"(t) : "r"(src), "r"(dst));
+    }
+    {
+        u_long128 t;
+
+        __asm__ volatile("lq %0, %1" : "=r"(t) : "m"(*(u_long128 *)(cc + 0x470)) : "memory");
+        __asm__ volatile("sq %1, %0" : "=m"(*(u_long128 *)(*(char **)(cls + 0x11F8) + 0x20)) : "r"(t));
+    }
     sd = *(SubDef **)(info + 0x54);
     w = *(SubWork **)(cls + 0x1200);
-    for (; i < n; i++, w++, sd++) {
-        int *ent;
+    if (n > 0) {
+        for (; i < n; i++, w++, sd++) {
+            int *ent;
 
-        w->sub = 0;
-        ent = (int *)(*(char **)(res + 0x10) + i * 12);
-        GetObjectAnimationFloatFrame(anim, getAnimObjResource(def[31] + 0x50), i, 0.0f, 0.0f);
-        switch (sd->type = *ent) {
-        case 1:
-        case 5:
-            if (sd->param != 0) {
-                w->layout = initLayoutObj("lwsori_subobj", rootPtn, sd->param, &param);
-                updateLayoutGeo(GetLayoutClass(w->layout), obj, 0, anim, 0.0f);
-            }
-            break;
-        case 38:
-            w->layout = initLayoutObj("lwsori_subobj_sprit", rootPtn, 0, &param);
-            break;
-        case 3:
-            if (sd->param != 0) {
-                w->layout = initLayoutObj("lwsori_subobj_damage", rootPtn, 0, &param);
-            }
-            break;
-        case 13:
-            if (sd->param != 0) {
-                w->layout = initLayoutObj("lwsori_subobj_dam_box", rootPtn, 0, &param);
-            }
-            break;
-        case 10:
-            if (sd->param != 0) {
-                w->layout = initLayoutObj("lwsori_subobj_dam_cylinder", rootPtn, 0, &param);
-            }
-            break;
-        case 9:
-            if (sd->param != 0) {
-                w->layout = initLayoutObj("lwsori_subobj_lws_trigger", rootPtn, 0, &param);
-                *(u_long128 *)(GetLayoutClass(w->layout) + 0x90) = *(u_long128 *)(lc + 0x90);
-            }
-            break;
-        case 6:
-            if (sd->param != 0) {
-                w->layout = initLayoutObj("lwsori_subobj_light", rootPtn, 0, &param);
-            }
-            break;
-        case 11:
-            if (sd->param != 0) {
-                w->layout = initLayoutObj("lwsori_subobj_effect", rootPtn, 0, &param);
-            }
-            break;
-        case 12:
-            if (sd->param != 0) {
-                w->layout = initLayoutObj("lwsori_subobj_se", rootPtn, 0, &param);
-            }
-            break;
-        case 2:
-        case 4:
-        case 7:
-        case 39:
-        case 40:
-        case 41:
-        case 42:
-        case 45:
-        case 47:
-        case 48:
-            if (sd->param != 0) {
-                int l = initLayoutObj("lwsori_subobj_wind/part/cam", rootPtn, 0, &param);
-
-                w->layout = l;
-                if (sd->flag != 0) {
-                    w->sub = StartAnimationSubObjInfinitePart(0, l, 0, obj, 0, sd->type, anim, sd->param);
+            w->sub = 0;
+            ent = (int *)(*(char **)(res + 0x10) + i * 12);
+            GetObjectAnimationFloatFrame(anim, getAnimObjResource(dp[31] + 0x50), i, 0.0f, 0.0f);
+            switch (sd->type = *ent) {
+            case 1:
+            case 5:
+                if (sd->param != 0) {
+                    w->layout = initLayoutObj("lwsori_subobj", rootPtn, sd->param, &param);
+                    updateLayoutGeo(GetLayoutClass(w->layout), obj, 0, anim, 0.0f);
                 }
-            }
-            break;
-        case 27:
-        case 28:
-        case 33:
-        case 34:
-        case 35: {
-            int m = AddGaLightMan(ent, anim, sd->param);
+                break;
+            case 38:
+                w->layout = initLayoutObj("lwsori_subobj_sprit", rootPtn, 0, &param);
+                break;
+            case 3:
+                if (sd->param != 0) {
+                    w->layout = initLayoutObj("lwsori_subobj_damage", rootPtn, 0, &param);
+                }
+                break;
+            case 13:
+                if (sd->param != 0) {
+                    w->layout = initLayoutObj("lwsori_subobj_dam_box", rootPtn, 0, &param);
+                }
+                break;
+            case 10:
+                if (sd->param != 0) {
+                    w->layout = initLayoutObj("lwsori_subobj_dam_cylinder", rootPtn, 0, &param);
+                }
+                break;
+            case 9:
+                if (sd->param != 0) {
+                    w->layout = initLayoutObj("lwsori_subobj_lws_trigger", rootPtn, 0, &param);
+                    *(u_long128 *)(GetLayoutClass(w->layout) + 0x90) = *(u_long128 *)(lc + 0x90);
+                }
+                break;
+            case 6:
+                if (sd->param != 0) {
+                    w->layout = initLayoutObj("lwsori_subobj_light", rootPtn, 0, &param);
+                }
+                break;
+            case 11:
+                if (sd->param != 0) {
+                    w->layout = initLayoutObj("lwsori_subobj_effect", rootPtn, 0, &param);
+                }
+                break;
+            case 12:
+                if (sd->param != 0) {
+                    w->layout = initLayoutObj("lwsori_subobj_se", rootPtn, 0, &param);
+                }
+                break;
+            case 2:
+            case 4:
+            case 7:
+            case 39:
+            case 40:
+            case 41:
+            case 42:
+            case 45:
+            case 47:
+            case 48:
+                if (sd->param != 0) {
+                    int l = initLayoutObj("lwsori_subobj_wind/part/cam", rootPtn, 0, &param);
 
-            w->sub = m;
-            if (*(int *)(lc + 0x124) != 0 && m != 0) {
-                ForceGameLightFlagEnvelope(m);
+                    w->layout = l;
+                    if (sd->flag != 0) {
+                        w->sub = StartAnimationSubObjInfinitePart(0, l, 0, obj, 0, sd->type, anim, sd->param);
+                    }
+                }
+                break;
+            case 27:
+            case 28:
+            case 33:
+            case 34:
+            case 35: {
+                int m = AddGaLightMan(ent, anim, sd->param);
+
+                w->sub = m;
+                if (*(int *)(lc + 0x124) != 0 && m != 0) {
+                    ForceGameLightFlagEnvelope(m);
+                }
+                break;
             }
-            break;
-        }
-        }
-        if (w->layout != 0) {
-            func_0007F5A0(w->layout, obj, anim, 0, sd, w, resolve((unsigned int *)(base + 0xC8)),
-                          *(int *)(cls + 0x11FC), 1.0f, 1.0f);
-            isysAddGroupWithLinkParam(w->layout, def[73], 0, 0);
-            GetTRS_Onake_From_ObjectAnimation(anim, &w->s, &w->t, &w->r, &w->q);
+            }
+            if (w->layout != 0) {
+                func_0007F5A0(w->layout, obj, anim, 0, sd, w, resolve((unsigned int *)(base + 0xC8)),
+                              *(int *)(cls + 0x11FC), 1.0f, 1.0f);
+                isysAddGroupWithLinkParam(w->layout, dp[73], 0, 0);
+                GetTRS_Onake_From_ObjectAnimation(anim, &w->s, &w->t, &w->r, &w->q);
+            }
         }
     }
 }
