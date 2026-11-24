@@ -1,5 +1,3 @@
-#ifdef NONMATCHING
-/* Parked: 12 diffs, same size. Remaining: in each of the three cases the key build loads 0x80000000 into $a0 and ORs into $v1 (the Original uses $v1 for the constant and reuses $v0 for the result). */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef struct { int a; int b; } Key;
@@ -94,7 +92,8 @@ static int func_000AF400(Hit *hit, Vec4 *p0, Vec4 *p1, Tree *tree, int leafNo, C
                 continue;
             if (c->filter && !c->filter(&bnd, c->mtx2, c->arg))
                 continue;
-            t0.a = c->id; t0.b = *ip | 0x80000000; key = t0;
+            /* Constant pinned to $v1 and result to $v0, like the Original. */
+            t0.a = c->id; { register unsigned int k_ asm("$3") = 0x80000000; register unsigned int r_ asm("$2") = *ip; r_ |= k_; t0.b = r_; } key = t0;
             if (c->filter2 && !c->filter2(&key, c->arg))
                 continue;
             if (ClipCollisionDB(hit, &q0, &q1, &key)) {
@@ -124,7 +123,7 @@ static int func_000AF400(Hit *hit, Vec4 *p0, Vec4 *p1, Tree *tree, int leafNo, C
                 continue;
             if (c->filter && !c->filter(&bnd, c->mtx2, c->arg))
                 continue;
-            t1.a = c->id; t1.b = *ip | 0x80000000; key = t1;
+            t1.a = c->id; { register unsigned int k_ asm("$3") = 0x80000000; register unsigned int r_ asm("$2") = *ip; r_ |= k_; t1.b = r_; } key = t1;
             if (c->filter2 && !c->filter2(&key, c->arg))
                 continue;
             if (ClipCollisionDB(hit, &q0, &q1, &key) || ClipCollisionDB(hit, &q1, &q0, &key)) {
@@ -154,7 +153,7 @@ static int func_000AF400(Hit *hit, Vec4 *p0, Vec4 *p1, Tree *tree, int leafNo, C
                 continue;
             if (c->filter && !c->filter(&bnd, c->mtx2, c->arg))
                 continue;
-            t2.a = c->id; t2.b = *ip | 0x80000000; key = t2;
+            t2.a = c->id; { register unsigned int k_ asm("$3") = 0x80000000; register unsigned int r_ asm("$2") = *ip; r_ |= k_; t2.b = r_; } key = t2;
             if (c->filter2 && !c->filter2(&key, c->arg))
                 continue;
             if (ClipCollisionDB(hit, &q1, &q0, &key)) {
@@ -168,6 +167,3 @@ static int func_000AF400(Hit *hit, Vec4 *p0, Vec4 *p1, Tree *tree, int leafNo, C
     }
     return found;
 }
-#else
-static int func_000AF400();
-#endif
