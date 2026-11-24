@@ -1,10 +1,6 @@
-/* Parked attempt: 4 words differ from the Original.
-   Finds, among the control points of the ten camera-offset control tables in B_0019FCF8, the
+/* Finds, among the control points of the ten camera-offset control tables in B_0019FCF8, the
    one nearest to pos (VU0 squared distance); when mode == 1, points essentially coincident with
    ref get a 64-unit bias. Writes the winner to out and returns whether any was found. */
-#ifdef NONMATCHING
-/* 4 diffs: before the GAMEUTIL_is_diff_nearly_equal_zero3D call the Original sets $a0 (&cand)
-   before loading 0.001f into $f12; ours loads $f12 first. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -54,6 +50,8 @@ int get_nearest_camera_vs_ofst_cntrl_position(Vec4 *out, Vec4 *pos, int mode, Ve
 
                 *(V4f *)&cand = (V4f){ p[0], p[1], p[2], 1.0f };
                 d = distSq(pos, &cand);
+                /* Keeps the &cand argument ahead of the 0.001f load. */
+                __asm__("");
                 if (mode == 1) {
                     if (GAMEUTIL_is_diff_nearly_equal_zero3D(&cand, &r, 0.001f) == mode) {
                         d -= 64.0f;
@@ -71,4 +69,3 @@ int get_nearest_camera_vs_ofst_cntrl_position(Vec4 *out, Vec4 *pos, int mode, Ve
     }
     return found;
 }
-#endif
