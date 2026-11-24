@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 3 diffs (was 9): layout pinned to $3, priority to $4, and the layout+0x134 load done in place by an asm lw on a $3-pinned copy. Left: the order of the a0 (pos) / a1 / a2 argument moves before is_clear_camera_region_condition. Earlier 9 diffs (register allocation: original keeps the layout pointer in v1 and the priority in a0; ours swaps them, and the qmfc2 result goes to a0 instead of v0). */
+/* Parked: 2 diffs (was 3): layout pinned to $3, priority to $4, the layout+0x134 load done in place by an asm lw on a $3-pinned copy, and the call arguments pinned to $a0, $a2, $a1 in that order. Remaining: the Original sets a0 (pos) before a1/a2 ahead of is_clear_camera_region_condition; ours sets a2 first. Chained empty-asm dependencies and other pin orders stayed at 2 or worse. */
 typedef int s128 __attribute__((mode(TI)));
 extern char *GetLayoutClass(int);
 extern int is_clear_camera_region_condition(float *pos, void *region, void *arg, void *camera,
@@ -58,7 +58,10 @@ void *get_apply_camera_region(int layoutId, int type, unsigned long key, void *a
                 dist = 0.0f;
         }
         if (bestPriority < priority || dist < bestDist) {
-            if (is_clear_camera_region_condition(pos, region, arg, camera, boss) == 1) {
+            register float *pp __asm__("$4") = pos;
+            register void *aa __asm__("$6") = arg;
+            register char *rr __asm__("$5") = region;
+            if (is_clear_camera_region_condition(pp, rr, aa, camera, boss) == 1) {
                 bestPriority = *(int *)(entry + 0x10);
                 best = region;
                 bestDist = dist;
