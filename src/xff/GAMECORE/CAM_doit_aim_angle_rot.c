@@ -1,7 +1,9 @@
-/* Parked: 20 diffs, same size. Remaining: float parameter registers
- * (Original keeps width in $f20, velA in $f21, velB in $f22; this has
- * width and velB swapped), mul operand order for r * velB, and argument
- * scheduling around CAM_is_inside_of_region_aim_angle_rot and func_000E16F0. */
+/* Parked: 10 diffs, same size. Remaining: argument scheduling (mov.s
+ * $f12/$f14 from $f23 issues before the daddu a2/a0 copies of w at the
+ * region-check and func_000E16F0 calls), the yaw branch keeping the
+ * scaled step in $f21 rather than $f0, and the pitch branch's
+ * temporaries ($f25/$f21 in the Original, $f22/$f21 here). The hp
+ * pointer to half is a permuter find that fixes the half/0.5f registers. */
 
 #ifdef NONMATCHING
 
@@ -31,6 +33,10 @@ typedef struct {
 float CAM_doit_aim_angle_rot(AimRot *w, int mode, float cur, float center, float a2, float width,
                              float velA, float velB, float range, float expo, float dt)
 {
+    float *hp;
+    register float W __asm__("$f20") = width;
+    register float VB __asm__("$f22") = velB;
+    register float VA __asm__("$f21") = velA;
     float rs, re;
     float out;
     float r, vA, vB, target, vel, lo, hi, half, d;
@@ -43,35 +49,36 @@ float CAM_doit_aim_angle_rot(AimRot *w, int mode, float cur, float center, float
         w->busy = 0;
         GAMEUTIL_reset_interp_ratio_cntrl(w->ratio);
     }
-    func_000E1658(w, cur, center, a2, width);
+    func_000E1658(w, cur, center, a2, W);
     if (w->active == 0) {
         w->done = 1;
     } else {
         w->done = 0;
-        ret = CAM_is_inside_of_region_aim_angle_rot(&rs, &re, w, cur, center, width);
+        hp = &half;
+        ret = CAM_is_inside_of_region_aim_angle_rot(&rs, &re, w, cur, center, W);
         if (ret == 1) {
             w->done = ret;
             w->active = 0;
         } else {
             r = GAMEUTIL_get_interp_ratio_interp_ratio_cntrl(w->ratio);
-            velB = r * velB;
-            velA = r * velA;
+            VA = r * VA;
+            VB = r * VB;
             target = func_000E16F0(w, rs, re, cur);
             if (w->pitch == 0) {
                 half = range * 0.5f * 0.017453292519943295f;
-                lo = velB * 0.017453292519943295f;
-                hi = velA * 0.017453292519943295f;
+                lo = VB * 0.017453292519943295f;
+                hi = VA * 0.017453292519943295f;
                 d = GAMEUTIL_get_difference_yaw_and_yaw(cur, target);
                 hi = hi - lo;
                 vel = lo + hi * powf(func_000E15F8(d, half), expo);
             } else {
                 float t;
                 half = range * 0.5f * 0.017453292519943295f;
-                hi = velA * 0.017453292519943295f;
+                hi = VA * 0.017453292519943295f;
                 d = GAMEUTIL_get_difference_pitch_and_pitch(cur, target);
-                lo = velB * 0.017453292519943295f;
+                lo = VB * 0.017453292519943295f;
                 t = 1.0f;
-                if (!(half <= d))
+                if (!(*hp <= d))
                     t = d / half;
                 vel = lo + (hi - lo) * powf(t, expo);
             }
