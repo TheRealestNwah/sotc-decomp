@@ -51,10 +51,11 @@ static inline void vecAdd(void *out, void *a, void *b)
 }
 
 #ifdef NONMATCHING
-/* Parked: 4 words differ. The RO copy follows the ctrl call behind a barrier,
+/* Parked: 2 words differ. The RO copy follows the ctrl call behind a barrier,
    and the v60.y store goes through a union (strict aliasing moved it past the
-   lq). Left: gcc hoists the loop-invariant gcGlobalVar lui (s7) after the
-   stack pointer setups instead of between pv60 and pn80. */
+   lq). Left: gcc places the hoisted gcGlobalVar lui (s7) after the stack
+   pointer setups instead of between pv60 and pn80; setting pb40 before pn80
+   and po70 fixes the order of the other three. */
 void SCRFuncKameSetTemporaryTarget(void *obj, float a, float b)
 {
     struct { char buf[0x50]; Vec4 p50; Vec4 v60; Vec4 o70; Vec4 n80; } L;
@@ -82,9 +83,9 @@ void SCRFuncKameSetTemporaryTarget(void *obj, float a, float b)
     one = 1.0f;
     pp50 = &L.p50;
     pv60 = &L.v60;
+    pb40 = L.buf + 0x40;
     pn80 = &L.n80;
     po70 = &L.o70;
-    pb40 = L.buf + 0x40;
 loop:
     if (ClipCollisionDirect(L.buf, pp50, pv60, gcGlobalVar + 0x238) != 0) {
         *(volatile s128 *)&L.n80 = *GetGeometryPointerSurfacePlane(L.buf);
