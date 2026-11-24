@@ -111,9 +111,10 @@ static inline void localDirX(void *out, void *quaternion)
         : : "r"(out), "r"(quaternion) : "memory");
 }
 
-/* Parked attempt: 12 diffs. The Original holds IdentityQuaternion in s0 and the
- * rotation pointer in s1 across SetQuaternionByAxisRotateVWithNoRegularize and
- * recomputes &tq afterwards; gcc keeps &tq in s1 instead. */
+/* Parked: 9 diffs, same size. An empty asm ties &tq and IdentityQuaternion to
+ * registers before SetQuaternionByAxisRotateVWithNoRegularize, as the Original does.
+ * Remaining: the Original loads IdentityQuaternion (lui/addiu) just before the
+ * jal and keeps the rotation pointer in s1. */
 #ifdef NONMATCHING
 static int func_00089910(int e0, int e1, int chr, int layout, int e2, int flag, void *coll, Vec4 *quat, void *gp, float r)
 {
@@ -137,9 +138,14 @@ static int func_00089910(int e0, int e1, int chr, int layout, int e2, int flag, 
             surf = *(char **)(cc + 0xE38) + *(short *)(cc + 0x372) * 4;
             if (ClipCollisionVariableXZSurface(geo, coll, gp, surf)) {
                 (*(Vec4 **)(lc + 0x134))->q = geo[4].q;
-                rot = *(Vec4 **)(lc + 0x13C);
-                SetQuaternionByAxisRotateVWithNoRegularize(&tq, 0x4000, XUnitVector);
-                quatMul(rot, IdentityQuaternion, &tq);
+                {
+                    float *iq = IdentityQuaternion;
+                    Vec4 *t = &tq;
+                    __asm__ ("" : "+r"(t) : "r"(iq));
+                    SetQuaternionByAxisRotateVWithNoRegularize(t, 0x4000, XUnitVector);
+                    rot = *(Vec4 **)(lc + 0x13C);
+                    quatMul(rot, iq, &tq);
+                }
                 hit = 1;
             } else if (flag == 0) {
                 if (ClipCollisionDirectCallBack(geo, coll, gp, surf, 0, 0, 0, func_00091500, 0)) {
