@@ -1,18 +1,6 @@
-#ifdef NONMATCHING
-/* 15 diffs: the dead-zone zero is built in f12 (f1 in value_extend) instead of f0,
- * so the prologue/dead-zone registers and their scheduling differ. */
+/* The dead-zone zero is pinned to $f0 and negated in place (-w), with the
+ * dead zone written out, so its registers and scheduling match. */
 extern int GAMEUTIL_is_nearly_equal_zero(float, float);
-
-static inline float dead_zone(float x, float min, float max)
-{
-    if (max < x) {
-        return x - max;
-    }
-    if (x < min) {
-        return x - min;
-    }
-    return 0.0f;
-}
 
 static inline float spring_step(float e, float k, float dt)
 {
@@ -53,13 +41,15 @@ static inline float limit_speed(float v, float max, float dt)
 
 float GAMEUTIL_get_spring_interpolate_offset(float k, float max_speed, float cur, float target, float eps, float dt)
 {
-    float w = 0.0f;
+    register float w __asm__("$f0") = 0.0f;
     register float res __asm__("$f21") = w;
-    float e = dead_zone(cur - target, -w, res);
+    float x = cur - target;
+    float e;
+    w = -w;
+    if (res < x) e = x - res; else if (x < w) e = x - w; else e = res;
 
     if (!GAMEUTIL_is_nearly_equal_zero(e, eps)) {
         res += spring_step(e, k, dt);
     }
     return limit_speed(res, max_speed, dt);
 }
-#endif
