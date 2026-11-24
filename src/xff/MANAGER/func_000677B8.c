@@ -1,5 +1,3 @@
-/* Parked: 16 diffs. Sets the layout root quaternion from the collision edge at o+0xC0 via an inlined copy of the charrootdyn_edgepointstab logic: the DLD flag word at o+0x1C0+0xC selects useEdge, exchange and the func_00067068 mode bits; without flags it falls back to func_00067068 with mode 1. Remaining: the bits held in s6/s7 are swapped (exchange spill and q pointer), and the float argument moves before both func_00067068 calls sit later than in the Original. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
 extern float YUnitVector[];
@@ -8,7 +6,7 @@ extern s128 *GetCollisionDBPlane(void *);
 extern void GetCollisionEdgePointerVertexPoint(int *, void *);
 extern void GetQuaternionByAxisDirZY(float *, float *, float *);
 extern void SetQuaternionByAxisRotateVWithNoRegularize(float *, short, float *);
-extern void func_00067068(float *, s128 *, void *, void *, char *, int, int, int, float, float, float);
+extern void func_00067068(float *, s128 *, void *, void *, char *, float, float, float, int, int, int);
 extern void SetLayoutClassRootQuaternion(char *, float *);
 
 typedef struct {
@@ -49,8 +47,8 @@ static inline void quatMul(float *d, float *a, float *b)
                          : : "r"(a), "r"(b), "r"(d) : "memory");
 }
 
-static inline int edgepointstab(float *q, s128 *plane, void *a2, void *a3, char *obj, int t1, int t2,
-                                int useEdge, int exchange, int t3, float f0, float f1, float f2)
+static inline int edgepointstab(float *q, s128 *plane, void *a2, void *a3, char *obj, float f0, float f1, float f2, int t1, int t2,
+                                int useEdge, int exchange, int t3)
 {
     float cross[4] __attribute__((aligned(16)));
     float dir[4] __attribute__((aligned(16)));
@@ -63,11 +61,11 @@ static inline int edgepointstab(float *q, s128 *plane, void *a2, void *a3, char 
         *plane = *GetCollisionDBPlane(edge);
     if (useEdge != 0) {
         GetCollisionEdgePointerVertexPoint(pts, edge);
-        __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
-                             "lqc2 vf6, 0x0(%1)\n"
+        __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                             "lqc2 vf6, 0x0(%2)\n"
                              "vsub.xyz vf5, vf5, vf6\n"
-                             "sqc2 vf5, 0x0(%2)\n"
-                             : : "r"(pts[1]), "r"(pts[0]), "r"(dir) : "memory");
+                             "sqc2 vf5, 0x0(%0)\n"
+                             : : "r"(dir), "r"(pts[1]), "r"(pts[0]) : "memory");
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "lqc2 vf6, 0x0(%1)\n"
                              "vopmula.xyz ACC, vf5, vf6\n"
@@ -89,7 +87,7 @@ static inline int edgepointstab(float *q, s128 *plane, void *a2, void *a3, char 
                              : : "r"(cross), "r"(cross) : "memory");
         GetQuaternionByAxisDirZY(q, cross, YUnitVector);
     } else {
-        func_00067068(q, plane, a2, a3, obj, t1, t2, t3, f0, f1, f2);
+        func_00067068(q, plane, a2, a3, obj, f0, f1, f2, t1, t2, t3);
     }
     if (exchange != 0) {
         SetQuaternionByAxisRotateVWithNoRegularize(cross, -0x8000, YUnitVector);
@@ -98,7 +96,7 @@ static inline int edgepointstab(float *q, s128 *plane, void *a2, void *a3, char 
     return 1;
 }
 
-int func_000677B8(char *o, s128 *plane)
+static int func_000677B8(char *o, s128 *plane)
 {
     float q[4] __attribute__((aligned(16)));
     char work[0xA0] __attribute__((aligned(16)));
@@ -111,10 +109,9 @@ int func_000677B8(char *o, s128 *plane)
     s = *(float *)(*(char **)(o + 0x1140) + 0xC4);
     if (flags != 0) {
         unsigned int v = *flags;
-        ok = edgepointstab(q, plane, work, aux, o, (v >> 1) & 1, v & 1, (v >> 2) & 1, (v >> 3) & 1, (v >> 4) & 1, s,
-                           s, -s);
+        ok = edgepointstab(q, plane, work, aux, o, s, s, -s, (v >> 1) & 1, v & 1, (v >> 2) & 1, (v >> 3) & 1, (v >> 4) & 1);
     } else {
-        ok = edgepointstab(q, plane, work, aux, o, 1, 0, 0, 0, 0, s, s, -s);
+        ok = edgepointstab(q, plane, work, aux, o, s, s, -s, 1, 0, 0, 0, 0);
     }
     if (ok != 0) {
         SetLayoutClassRootQuaternion(o, q);
@@ -122,4 +119,3 @@ int func_000677B8(char *o, s128 *plane)
     }
     return 0;
 }
-#endif
