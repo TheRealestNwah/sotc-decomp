@@ -1,5 +1,4 @@
-/* Parked: 2 diffs, same size (150 words incl. the split tail func_00052A00). Path-follow step: scales o+0x140 by o+0x10C and gcGlobalVar.f190 into the move vector, accumulates it into a+0x50 and a+0x20, stores the speed (VU0 length via .word 0x4BA703BD) at a+0xC, clamps the distance to a+0x40 to o+0xF0, then (when the owner has a steering table) steers a+0x18/a+0x1C by AI_GetSideSignalFromDirLev and calls iosGetSinCosf. The mfc1 of each scale factor and the mtc1 of each VU0 length sit inside their asm blocks, which fixes the scheduling around them. Remaining: the lui temp for &gcGlobalVar (the Original uses v0, the C v1); the owner pointer and the first scale source are pinned to v0/v1 with local register variables. */
-#ifdef NONMATCHING
+/* Matched (150 words incl. the split tail func_00052A00). Path-follow step: scales o+0x140 by o+0x10C and gcGlobalVar.f190 into the move vector, accumulates it into a+0x50 and a+0x20, stores the speed (VU0 length via .word 0x4BA703BD) at a+0xC, clamps the distance to a+0x40 to o+0xF0, then (when the owner has a steering table) steers a+0x18/a+0x1C by AI_GetSideSignalFromDirLev and calls iosGetSinCosf. The mfc1 of each scale factor and the mtc1 of each VU0 length sit inside their asm blocks, which fixes the scheduling around them. The owner pointer and the first scale source are pinned to v0/v1 with local register variables, and an empty asm clobbering $3 before the gcGlobalVar scale moves the lui temp for &gcGlobalVar to v0 like the Original. */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef union {
@@ -119,6 +118,7 @@ static void func_00052790(char *a)
         lim = *(float *)(o + 0xF0);
         SCALE(src, &L.v, *(float *)(o + 0x10C));
     }
+    __asm__ __volatile__("" ::: "$3");
     SCALE(&L.v, &L.t0, gcGlobalVar.f190);
     ADD3(a + 0x50, &L.t0, a + 0x50);
     SCALE(a + 0x50, &L.t1, gcGlobalVar.f190);
@@ -170,4 +170,3 @@ static void func_00052790(char *a)
         iosGetSinCosf(a + 0x30, f12);
     }
 }
-#endif
