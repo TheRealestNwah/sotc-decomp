@@ -133,7 +133,7 @@ inline static void getGlobalRest(Vec4 *out, IkTarget *ik, int obj, int idx)
   }
 }
 
-#ifdef NONMATCHING /* 4 diffs: addu operand order for the cur/src pointers and v0/v1 for the lq temp; permuter stuck at 30 */
+#ifdef NONMATCHING /* 2 diffs: the tgt copy's lq temp lands in v0 instead of v1; permuter stuck at 10 */
 void nico_IK_setTargetQFromSkeletonRestWithLimit(IkTarget *ik, void *base, int open, float rate)
 {
   Vec4 q;
@@ -165,8 +165,8 @@ void nico_IK_setTargetQFromSkeletonRestWithLimit(IkTarget *ik, void *base, int o
     *w -= rate * 0.5f;
     *w = ((*w) >= 0.0f) ? (*w) : (0.0f);
   }
-  cur = &ik->q[ik->idx];
-  src = (*((Vec4 **) (cc + 0x328))) + idx;
+  cur = (Vec4 *)((ik->idx << 4) + (int)ik->q);
+  src = (Vec4 *)((idx << 4) + *(int *)(cc + 0x328));
   t = *w;
   tgt.q = cur->q;
   d.f = dot4(src, &tgt);
