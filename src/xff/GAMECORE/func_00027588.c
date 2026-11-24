@@ -41,8 +41,6 @@ none:
 }
 
 /* Starts func_0002D090 for each of the three stage data references of part id in the current stage slot. */
-#ifdef NONMATCHING
-/* Parked at 3 diffs: the Original sets the loop counter (daddu $s1, $zero, $zero) after the lui of the callback and B_00188730; ours sets it first. The two empty asms on n keep loop.c from hoisting the 0x3FFFF mask out of the loop. */
 static void func_00027588(int id)
 {
     int s = D_0017A874;
@@ -53,8 +51,8 @@ static void func_00027588(int id)
     char *g; void **gv; int z;
     int i;
 
-    for (i = 0; i < 1; i++, h++) {
-        int n = stageIndex((StageData *)dldResolve(h));
+    for (i = 0; i < 1; i++) {
+        int n = stageIndex((StageData *)dldResolve(&h[i]));
         __asm__("" : "+r"(n));
         __asm__("" : "+r"(n));
         if (n >= 0) {
@@ -63,4 +61,3 @@ static void func_00027588(int id)
         }
     }
 }
-#endif
