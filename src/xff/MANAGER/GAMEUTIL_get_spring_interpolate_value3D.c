@@ -1,20 +1,9 @@
-#ifdef NONMATCHING
-/* 11 diffs: the dead-zone zero is built in f12 (f1 in value_extend) instead of f0,
- * so the prologue/dead-zone registers and their scheduling differ. */
+/* The dead-zone zero is pinned to $f0 and negated in place, and vlen3 moves
+ * the square root into an FPR inside its asm, as in
+ * GAMEUTIL_get_spring_interpolate_offset3D. */
 extern int GAMEUTIL_is_nearly_equal_zero(float, float);
 extern float GAMEUTIL_get_difference_value(int, float, float);
 extern float GAMEUTIL_get_increase_value(int, float, float);
-
-static inline float dead_zone(float x, float min, float max)
-{
-    if (max < x) {
-        return x - max;
-    }
-    if (x < min) {
-        return x - min;
-    }
-    return 0.0f;
-}
 
 static inline float spring_step(float e, float k, float dt)
 {
@@ -84,9 +73,11 @@ static inline float vlen3(float *v)
                          "vmaddz.w vf7, vf0, vf7z\n"
                          "vsqrt Q, vf7w\n"
                          "vwaitq\n"
-                         "cfc2.ni %0, $vi22
+                         "cfc2.ni $2, $vi22
 "
-                         : "=r"(d) : "r"(v));
+                         "mtc1 $2, %0
+"
+                         : "=f"(d) : "r"(v) : "$2");
     return d;
 }
 
@@ -110,9 +101,12 @@ void GAMEUTIL_get_spring_interpolate_value3D(float *out, float *cur, float *targ
     vsub3(diff, target, cur);
     len = vlen3(diff);
     if (!GAMEUTIL_is_nearly_equal_zero(len, eps)) {
-        float w = 0.0f;
+        register float w __asm__("$f0") = 0.0f;
+        float x = w - len;
         register float res __asm__("$f21") = w;
-        float e = dead_zone(w - len, -w, w);
+        float e;
+        w = -w;
+        if (res < x) e = x - res; else if (x < w) e = x - w; else e = res;
 
         if (!GAMEUTIL_is_nearly_equal_zero(e, eps)) {
             res += spring_step(e, k, dt);
@@ -125,4 +119,3 @@ void GAMEUTIL_get_spring_interpolate_value3D(float *out, float *cur, float *targ
     }
     vadd3(out, cur, vel);
 }
-#endif
