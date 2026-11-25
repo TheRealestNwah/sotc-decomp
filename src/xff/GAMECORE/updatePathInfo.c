@@ -11,7 +11,7 @@ typedef struct {
     int v[9];
 } PathPoint;
 
-/* Parked: 6 diffs. Reading `it` through its address (from the permuter) makes the inner loop match; left: the s2/s3 order of the off/i zeroing and one lw 0x3C scheduled two slots late. */
+/* Parked: 2 diffs. Reading `it` through its address (from the permuter) makes the inner loop match; zeroing i before off and reading cnt back from the stored point fix the s2 zeroing and the 0x3C load. Left: the Original hoists the gcGlobalVar lui (s4) before the off zeroing (s3). */
 #ifdef NONMATCHING
 void updatePathInfo(void)
 {
@@ -33,8 +33,8 @@ void updatePathInfo(void)
     } else {
         *(int *)(w + 0x566C) = 0;
     }
-    off = 0;
     i = 0;
+    off = 0;
     do {
         e = off + B_001A57E8;
         *(int *)(e + 0x90) = 0;
@@ -49,8 +49,8 @@ void updatePathInfo(void)
                 obj = *it;
                 pt = (PathPoint *)(e + *(int *)(e + 0x90) * 0x24);
                 pt->v[0] = *(int *)(obj + 0x38);
-                cnt = *(int **)(obj + 0x3C);
-                pt->v[1] = (int)cnt;
+                pt->v[1] = *(int *)(obj + 0x3C);
+                cnt = (int *)pt->v[1];
                 pt->v[2] = *(int *)(obj + 0x40);
                 pt->v[3] = *(int *)(obj + 0x44);
                 pt->v[4] = *(int *)(obj + 0x48);
