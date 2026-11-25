@@ -1,10 +1,3 @@
-/*
- * Parked attempt: 1 differing word (206 words, same size as the Original).
- * The stereo branch computes left = v * (1.0f - pan) with v in $f2 instead
- * of $f1 (mul.s $f1, $f2, $f0 vs the Original's mul.s $f1, $f1, $f0).
- * Variants tried: separate l/r copies, compound assignment, inline casts.
- */
-#ifdef NONMATCHING
 struct AdpcmChannel {
     int active;
     char pad04[0x34];
@@ -96,6 +89,8 @@ static void func_000DBC88(void)
             l = v;
             r = v;
             if (0.0f < pan) {
+                /* Keeps v in $f1 so left scales it rather than its copy in r. */
+                __asm__("" : "+f"(v));
                 l = v * (1.0f - pan);
             }
             if (pan < 0.0f) {
@@ -121,4 +116,3 @@ static void func_000DBC88(void)
     }
     SignalSema(B_0014F8B8);
 }
-#endif
