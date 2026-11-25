@@ -1,4 +1,4 @@
-/* Parked: 23 diffs, same size. Builds a quaternion/translation matrix from the character class, then for each of n 0x20-byte hang segments transforms both endpoints, casts a collision ray (SCRGetCollisionCallBack with func_00091AB8) and either sets the segment's script-control status (dld-linked def) or records edge/hand grip geometry from func_00090408. Remaining: the Original fills v[1], copies it to v[0] before loading the second endpoint, then fills v[2]; this hoists all six item loads ahead of the stores. */
+/* Parked: 16 diffs, same size. Builds a quaternion/translation matrix from the character class, then for each of n 0x20-byte hang segments transforms both endpoints, casts a collision ray (SCRGetCollisionCallBack with func_00091AB8) and either sets the segment's script-control status (dld-linked def) or records edge/hand grip geometry from func_00090408. An empty asm after v[0] = v[1] keeps the second endpoint's loads after the first copy, as in the Original. Remaining: the first endpoint loads x into f2 (ours f0), and the Original issues only the first ld of the copy before the second endpoint's loads, storing both halves after v[2] is filled. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -99,6 +99,7 @@ static int func_000910B0(void *edge, void *hand, void *obj, char *item, int n)
         v[1].f[2] = ((float *)item)[2];
         v[1].f[3] = 1.0f;
         v[0] = v[1];
+        __asm__ __volatile__("");
         v[2].f[0] = ((float *)item)[3];
         v[2].f[1] = ((float *)item)[4];
         v[2].f[2] = ((float *)item)[5];
