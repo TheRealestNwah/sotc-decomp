@@ -175,7 +175,7 @@ string gives one, otherwise after its first and last functions.
 - `Sg2ModSetParam` 2632
 - `T_00023200` 3024
 
-## MANAGER (439)
+## MANAGER (437)
 
 79 Source groups to go, 511 fully matched.
 
@@ -214,6 +214,10 @@ string gives one, otherwise after its first and last functions.
 ### reflectionBegin: 1 of 1 unmatched
 
 - `reflectionBegin` 4352
+
+### waterRefractionBegin .. refractionEnd: 1 of 4 unmatched
+
+- `waterRefractionBegin` 1188
 
 ### shadowReset: 1 of 1 unmatched
 
@@ -317,11 +321,6 @@ string gives one, otherwise after its first and last functions.
 
 - `func_00014CD0` 528 *parked*
 - `func_00014F18` 960 *parked*
-
-### waterRefractionBegin .. refractionEnd: 2 of 4 unmatched
-
-- `waterRefractionBegin` 1188
-- `func_00021320` 1908
 
 ### texSetModelName .. vramAllocByTBPSize: 2 of 13 unmatched
 
@@ -590,6 +589,21 @@ string gives one, otherwise after its first and last functions.
 - `func_000D93F0` 3564
 - `func_000D5F00` 5304
 
+### UpdateLayoutClassSimpleGeometry .. GetAmbientBrightnessOfLayoutObject: 12 of 83 unmatched
+
+- `func_00074270` 296 *parked*
+- `func_000748C0` 384 *parked*
+- `UpdateLayoutClassParentSimpleGeometry` 412 *parked*
+- `UnparentLayoutObj` 524 *parked*
+- `func_000746A0` 540 *parked*
+- `CalcLightLayoutObj` 624 *parked*
+- `func_000743D0` 664 *parked*
+- `InitAliasLayoutObj` 732 *parked*
+- `func_00079788` 816 *parked*
+- `func_000755D0` 656
+- `func_00078C28` 2520
+- `func_00074A78` 2848
+
 ### usbdevInit .. createStringInputDialog: 12 of 37 unmatched
 
 - `createSheetMenu` 316 *parked*
@@ -604,22 +618,6 @@ string gives one, otherwise after its first and last functions.
 - `createNumDialog` 924
 - `createMenu` 1356
 - `func_000D2368` 1404
-
-### UpdateLayoutClassSimpleGeometry .. GetAmbientBrightnessOfLayoutObject: 13 of 83 unmatched
-
-- `func_00074270` 296 *parked*
-- `func_000748C0` 384 *parked*
-- `UpdateLayoutClassParentSimpleGeometry` 412 *parked*
-- `UnparentLayoutObj` 524 *parked*
-- `func_000746A0` 540 *parked*
-- `CalcLightLayoutObj` 624 *parked*
-- `func_000743D0` 664 *parked*
-- `InitAliasLayoutObj` 732 *parked*
-- `func_00079788` 816 *parked*
-- `func_000755D0` 656
-- `UpdateLayoutClassSimpleGeometry` 1428
-- `func_00078C28` 2520
-- `func_00074A78` 2848
 
 ### DeleteSortList .. ExecScriptSpriteObj: 14 of 94 unmatched
 
@@ -665,10 +663,10 @@ string gives one, otherwise after its first and last functions.
 - `func_000C0178` 464 *parked*
 - `func_000BF318` 472 *parked*
 - `func_000BFF48` 504 *parked*
+- `func_000C3438` 576 *parked*
 - `doit_particle_manager` 612 *parked*
 - `func_000C2968` 624 *parked*
 - `func_000C39B0` 1504 *parked*
-- `func_000C3438` 576
 - `disp_particle_emitter` 620
 - `func_000BEC80` 728
 - `func_000C2F88` 1144
@@ -688,12 +686,12 @@ string gives one, otherwise after its first and last functions.
 - `func_00018778` 564 *parked*
 - `func_00019B78` 616 *parked*
 - `modelClipSkin` 1008 *parked*
+- `lineObjectDispImmediate` 1380 *parked*
 - `func_00019900` 632
 - `modelInitDispModelClass` 984
 - `func_000194B8` 1092
 - `func_00019040` 1140
 - `func_00018BC0` 1148
-- `lineObjectDispImmediate` 1380
 - `func_0001DA30` 1800
 - `modelDisp` 3692
 
@@ -854,9 +852,9 @@ string gives one, otherwise after its first and last functions.
 - `func_000A2B30` 3832
 - `func_000A1580` 5496
 
-## GAMECORE (374)
+## GAMECORE (370)
 
-85 Source groups to go, 688 fully matched.
+84 Source groups to go, 689 fully matched.
 
 ### initgcmain: 1 of 2 unmatched
 
@@ -961,10 +959,6 @@ string gives one, otherwise after its first and last functions.
 ### updateInterestWork: 1 of 1 unmatched
 
 - `updateInterestWork` 1208
-
-### updatePerceptionWork .. equipmentInvisibilityCloak: 1 of 9 unmatched
-
-- `perceptionExec` 1236 *parked*
 
 ### nico_aimIK: 1 of 1 unmatched
 
@@ -1194,6 +1188,15 @@ string gives one, otherwise after its first and last functions.
 - `nico_horseBodyExpression` 1624
 - `func_00058000` 8176
 
+### updateSmallManager .. nico_SmallNamazuStart: 6 of 49 unmatched
+
+- `func_000B53E0` 300 *parked*
+- `nico_SmallNamazuStart` 984 *parked*
+- `func_000B9548` 536
+- `func_000B8850` 624
+- `func_000B8AF8` 1680
+- `func_000B5548` 5336
+
 ### calcAttainPosForAttainRange .. moveCtrlWallJudgeFunc: 6 of 28 unmatched
 
 - `_initBaseMoveTmpWork` 296 *parked*
@@ -1213,20 +1216,8 @@ string gives one, otherwise after its first and last functions.
 - `_SCRGetCollisionTwoBoneRay` 996 *parked*
 - `_setRootXYZHPB` 880
 
-### updateSmallManager .. nico_SmallNamazuStart: 8 of 49 unmatched
+### createBirdCtrlWork .. setHoverAttackBirdCtrlWork: 7 of 24 unmatched
 
-- `func_000B53E0` 300 *parked*
-- `nico_SmallNamazuStart` 984 *parked*
-- `func_000BA980` 2976 *parked*
-- `func_000B9548` 536
-- `func_000B8850` 624
-- `func_000B76A8` 1064
-- `func_000B8AF8` 1680
-- `func_000B5548` 5336
-
-### createBirdCtrlWork .. setHoverAttackBirdCtrlWork: 8 of 24 unmatched
-
-- `func_000FFB80` 656 *parked*
 - `getCalcAttackPassagePoint2` 1080
 - `func_00100198` 1088
 - `func_00103030` 1772
@@ -1275,9 +1266,9 @@ string gives one, otherwise after its first and last functions.
 
 - `func_000BCA80` 424 *parked*
 - `func_000BF880` 552 *parked*
+- `func_000BFAE0` 608 *parked*
 - `func_000BD7A0` 672 *parked*
 - `func_000BD348` 1056 *parked*
-- `func_000BFAE0` 608
 - `func_000BE108` 1040
 - `func_000BE550` 1440
 - `func_000BCCF0` 1568
@@ -1361,10 +1352,10 @@ string gives one, otherwise after its first and last functions.
 - `func_00026E38` 512 *parked*
 - `func_00027070` 512 *parked*
 - `GetStageContext` 544 *parked*
+- `initlayout` 988 *parked*
 - `func_00026238` 1180 *parked*
 - `func_0002B838` 584
 - `func_0002ABB0` 704
-- `initlayout` 988
 - `func_0002AEA8` 1032
 - `func_000283D8` 10144
 
