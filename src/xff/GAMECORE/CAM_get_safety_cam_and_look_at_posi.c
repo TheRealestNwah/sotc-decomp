@@ -1,4 +1,7 @@
-/* Parked: 10 diffs, same size. Remaining: the cand[] base address is shared between the loop pointer and the final cand[best] copy (Original reloads sp+0x10 and uses lq 0x50(base)), which also reorders the loop-pointer setup and turns bgez into bgezl. */
+/* Parked: 4 diffs, same size. The Original addresses cand[best] as lq 0x50(&L + best*16) with &L (sp+0x10) in a register,
+ * so cand sits 0x50 past L in one frame block; an empty asm barrier keeps &L in a register here (the cand
+ * offset depends on that frame layout). Hoisting &M.d / &M.ofs into pointers ahead of the loop (a permuter find)
+ * gives the Original's loop-pointer setup order. Remaining: $a0/$v1 swapped in the final cand[best] copy. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float v[3]; } F3;
@@ -55,6 +58,8 @@ void CAM_get_safety_cam_and_look_at_posi(void *out, s128 *cam, s128 *look, s128 
         float p0;
         int miss;
         s128 *c;
+        s128 *dp;
+        s128 *op;
 
         best = -1;
         __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -81,20 +86,22 @@ void CAM_get_safety_cam_and_look_at_posi(void *out, s128 *cam, s128 *look, s128 
         }
         neg = -len;
         GAMEUTIL_get_yaw_pitch_by_direction(&y0, &p0, &M.dir);
+        dp = &M.d;
+        op = &M.ofs;
         c = cand;
         for (i = 0; i < 3; i++, c++) {
             float y = GAMEUTIL_increase_yaw(0, y0, yaw[i]);
-            GAMEUTIL_get_direction_by_yaw_pitch(&M.d, y, GAMEUTIL_increase_pitch(0, 0, p0, pitch[i], 1.48352981f, -1.48352981f));
+            GAMEUTIL_get_direction_by_yaw_pitch(dp, y, GAMEUTIL_increase_pitch(0, 0, p0, pitch[i], 1.48352981f, -1.48352981f));
             __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                                  "qmtc2.ni %1, vf6\n"
                                  "vmulx.xyz vf5, vf5, vf6x\n"
                                  "sqc2 vf5, 0x0(%2)\n"
-                                 : : "r"(&M.d), "r"(neg), "r"(&M.ofs) : "memory");
+                                 : : "r"(dp), "r"(neg), "r"(op) : "memory");
             __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                                  "lqc2 vf6, 0x0(%1)\n"
                                  "vadd.xyz vf5, vf5, vf6\n"
                                  "sqc2 vf5, 0x0(%2)\n"
-                                 : : "r"(cam), "r"(&M.ofs), "r"(c) : "memory");
+                                 : : "r"(cam), "r"(op), "r"(c) : "memory");
             miss = checkHit(M.dyn, &L.tgt, c, col, sub);
             if (miss == 1) {
                 best = i;
@@ -120,7 +127,7 @@ void CAM_get_safety_cam_and_look_at_posi(void *out, s128 *cam, s128 *look, s128 
                 if (dist[best] < dist[i])
                     best = i;
         }
-        L.pos = cand[best];
+        { char *lp = (char *)&L; __asm__("" : "+r"(lp)); L.pos = ((s128 *)(lp + 0x50))[best]; }
     } else {
         L.pos = *look;
     }
