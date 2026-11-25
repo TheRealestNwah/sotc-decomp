@@ -1,4 +1,4 @@
-/* Parked: 22 diffs, same size. Resets the player's grip/hang/slip script-control statuses, re-sets the hand-slip flags on an EDGEXZ root, then sums func_00090560 over the four attribute slots at B_0018B748 (after func_000910B0 when the animation has a resolved hang table), sets the grip statuses from the result, runs the fall-down hang search (func_000906D8 / func_00090F28) in the falling control modes, and relinks the layout's geometry pointer. Remaining: in the second loop the Original keeps the running result in v0 where this keeps it in a3, and the ControlMode compares swap v0/v1. */
+/* Parked: 10 diffs, same size. Resets the player's grip/hang/slip script-control statuses, re-sets the hand-slip flags on an EDGEXZ root, then sums func_00090560 over the four attribute slots at B_0018B748 (after func_000910B0 when the animation has a resolved hang table), sets the grip statuses from the result, runs the fall-down hang search (func_000906D8 / func_00090F28) in the falling control modes, and relinks the layout's geometry pointer. The second loop's running result is pinned to v0, as in the Original. Remaining: v0/v1 swap on the B_0018B748 address and the ControlMode compare, and the second loop's setup order (the Original computes work + 0x70 before zeroing v0). */
 #ifdef NONMATCHING
 typedef struct { char pad[0x18]; } AttrSt;
 typedef struct { int pad0; int id; } ScriptCtrlDef;
@@ -106,13 +106,15 @@ void player_updateAttrStatusAndFindHangPosWithFallDown(void *obj, char *work, in
         }
     }
     if (!done) {
-        int r2 = 0;
+        register int r2 asm("$2") = 0;
         AttrSt *q = B_0018B748;
         int k;
         k = 4;
         do {
-            r2 = func_00090560(q++, work + 0x70, work + 0xB0, r2, obj);
-        } while (--k);
+            r2 = func_00090560(q, work + 0x70, work + 0xB0, r2, obj);
+            q++;
+            k--;
+        } while (k);
         *(int *)(work + 0x60) = r2;
     }
     if (*(int *)(work + 0x60) & 1)
