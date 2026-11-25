@@ -81,36 +81,23 @@ static inline void applyMatrix(void *dst, void *m, void *v)
 
 static inline void normalize(void *v)
 {
-    __asm__ __volatile__("lqc2 vf14, 0x0(%0)
-"
-                         "vmul.xyzw vf15, vf14, vf14
-"
-                         "vaddy.x vf15, vf15, vf15y
-"
-                         "vaddz.x vf15, vf15, vf15z
-"
-                         "vaddw.x vf15, vf15, vf15w
-"
-                         "vrsqrt Q, vf0w, vf15x
-"
-                         "vwaitq
-"
-                         "vmulq.xyzw vf15, vf14, Q
-"
-                         "sqc2 vf15, 0x0(%0)
-"
+    __asm__ __volatile__("lqc2 vf14, 0x0(%0)\n"
+                         "vmul.xyzw vf15, vf14, vf14\n"
+                         "vaddy.x vf15, vf15, vf15y\n"
+                         "vaddz.x vf15, vf15, vf15z\n"
+                         "vaddw.x vf15, vf15, vf15w\n"
+                         "vrsqrt Q, vf0w, vf15x\n"
+                         "vwaitq\n"
+                         "vmulq.xyzw vf15, vf14, Q\n"
+                         "sqc2 vf15, 0x0(%0)\n"
                          : : "r"(v) : "memory");
 }
 static inline void scaleMul(void *dst, void *a, void *b)
 {
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)
-"
-                         "lqc2 vf6, 0x0(%2)
-"
-                         "vmul.xyz vf5, vf5, vf6
-"
-                         "sqc2 vf5, 0x0(%0)
-"
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vmul.xyz vf5, vf5, vf6\n"
+                         "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
