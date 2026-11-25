@@ -52,3 +52,20 @@ Letter *create_letter(void **out_data, void **out_data2, int type, int a3, int a
     }
     return 0;
 }
+
+void init_letter(void *arg0, int *arg1, int *arg2)
+{
+    *arg1 = 0;
+    *arg2 = 0;
+    (*(int *)((char *)(arg0) + 0x20)) = 1;
+}
+
+int is_hope_letter_type(void *arg0, int arg1)
+{
+    return (*(int *)((char *)(arg0) + 0xC)) == arg1;
+}
+
+int get_letter_contents_data(void *arg0)
+{
+    return (*(int *)((char *)(arg0) + 0x1C));
+}

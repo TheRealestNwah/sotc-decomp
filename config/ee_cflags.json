@@ -215,7 +215,7 @@
   "src/xff/KERNEL/Sg2ModGetParam.c": [
     "--asm-fill-delay-slots"
   ],
-  "src/xff/KERNEL/create_letter.c": [
+  "src/xff/KERNEL/letter.c": [
     "-fno-strict-aliasing"
   ],
   "src/xff/KERNEL/iosintr.c": [
