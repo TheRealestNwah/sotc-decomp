@@ -1,4 +1,4 @@
-/* Parked: 25 diffs, same size (161 words incl. the split tail func_00047C40 tail call). Path-follow state update: when A0 < A4 re-derives the heading (normalised via VU0 unless AI_CheckNormZero fails, then ZUnitVector), randomises it by f21, scales by -f20 and by the speed ratio (o+0x354 / o+0x350) with qmtc2 multiplies, refreshes A0/A4 from gcGlobalVar.f190 * o+0x350, calls the three AI_GetAccel*3XYZ helpers, then position/velocity. Float-to-int bits go through `mfc1` asm outputs (memory round trips cost 67 diffs). Remaining: mfc1 vs sub.s order, the Original evaluates call arguments t1 first, and hi/lo placement of the gcGlobalVar load. */
+/* Parked: 18 diffs, same size (161 words incl. the split tail func_00047C40 tail call). Path-follow state update: when A0 < A4 re-derives the heading (normalised via VU0 unless AI_CheckNormZero fails, then ZUnitVector), randomises it by f21, scales by -f20 and by the speed ratio (o+0x354 / o+0x350) with qmtc2 multiplies, refreshes A0/A4 from gcGlobalVar.f190 * o+0x350, calls the three AI_GetAccel*3XYZ helpers, then position/velocity. Float-to-int bits go through `mfc1` asm outputs (memory round trips cost 67 diffs). Setting s5 after the second accel call fixes most argument-move order. Remaining: mfc1 vs sub.s order, some call argument moves, and hi/lo placement of the gcGlobalVar load. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -104,8 +104,8 @@ void func_000479F0(char *o, char *p, float f21, float f22, float f20)
         s0 = p + 0x60;
         s1 = p + 0x40;
         AI_GetAccelC3XYZ(s6, s3, s1, s4, s0, s7, *(float *)(p + 0xA0));
-        s5 = p + 0x10;
         AI_GetAccelA3XYZ(p, s3, s4, s0, s7, s6, *(float *)(p + 0xA0));
+        s5 = p + 0x10;
         AI_GetAccelB3XYZ(s5, s3, s1, s4, s0, s6, *(float *)(p + 0xA0));
     } else {
         s3 = p + 0x30;
