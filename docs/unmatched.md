@@ -843,7 +843,7 @@ string gives one, otherwise after its first and last functions.
 - `func_000A2B30` 3832
 - `func_000A1580` 5496
 
-## GAMECORE (360)
+## GAMECORE (358)
 
 84 Source groups to go, 689 fully matched.
 
@@ -999,6 +999,11 @@ string gives one, otherwise after its first and last functions.
 - `func_0002E220` 696 *parked*
 - `func_0002F770` 1696 *parked*
 
+### dynamicstest .. demo_end: 2 of 45 unmatched
+
+- `func_0004D8B0` 812
+- `func_0004C940` 1008
+
 ### nico_kirinBossStart .. SCRFuncKirinSlopeFallRockLWSLoad: 2 of 7 unmatched
 
 - `SCRFuncKirinCaveFallRockLWSLoad` 1680
@@ -1084,13 +1089,6 @@ string gives one, otherwise after its first and last functions.
 - `nico_leoBodyExpression` 572 *parked*
 - `SCRConditionSendDamageToCollisionObject3` 1224
 - `SCRConditionSendDamageToCollisionObject2` 2072
-
-### dynamicstest .. demo_end: 4 of 45 unmatched
-
-- `func_0004D8B0` 812
-- `func_0004C940` 1008
-- `func_0004C4D8` 1072
-- `func_0004D440` 1080
 
 ### SCRHorseUnLoad .. nico_initHorseBriddle: 4 of 25 unmatched
 
