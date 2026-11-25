@@ -1,4 +1,4 @@
-/* Parked: 19 diffs, same size (213 words incl. the split tail func_0006F540). Sight-on camera yaw update: takes the actor's local Z direction (yaw/pitch at sp+0x20/0x24), aims from the target layout position (+0x29C height offset, VU0 vsub.xyz into +0x1F0) to get yaw/pitch at +0x200/+0x204, adds func_0006F578's offset into +0x208 and clamps it against +0x2C4..+0x2CC when +0x2BC or +0x2C0 is set. Mode 1 resets the two spring interpolators (+0x22C, +0x250); otherwise they are driven by gcGlobalVar.dt with the dead zone +0x2B0/+0x2B4, then +0x280 is clamped when +0x2B8 is set. Remaining: scheduling only (the yaw/pitch zero stores and the I(4) load, the memset/GetLayoutClass delay slots, f1 vs f0 for +0x208 and the spring argument setup order). */
+/* Parked: 6 diffs, same size (213 words incl. the split tail func_0006F540). Sight-on camera yaw update: takes the actor's local Z direction (yaw/pitch at sp+0x20/0x24), aims from the target layout position (+0x29C height offset, VU0 vsub.xyz into +0x1F0) to get yaw/pitch at +0x200/+0x204, adds func_0006F578's offset into +0x208 and clamps it against +0x2C4..+0x2CC when +0x2BC or +0x2C0 is set. Mode 1 resets the two spring interpolators (+0x22C, +0x250); otherwise they are driven by gcGlobalVar.dt with the dead zone +0x2B0/+0x2B4, then +0x280 is clamped when +0x2B8 is set. Remaining: the yaw/pitch zero stores around the I(4) load (pitch first, yaw in the delay slot in the Original) and f1 vs f0 for the +0x208 load in the dead-zone-free path. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union {
@@ -44,8 +44,8 @@ static void func_0006F230(char *o_, float a, float b, int mode)
     yaw = 0.0f;
     GAMEUTIL_get_local_directionZ(&dir, o4); }
     GAMEUTIL_get_yaw_pitch_by_direction(&yaw, &pitch, &dir);
-    memset(&v, 0, 0x10);
     y = yaw;
+    memset(&v, 0, 0x10);
     dir.q = **(s128 **)(GetLayoutClass(I(4)) + 0x134);
     dir.v.y += F(0x29C);
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -80,7 +80,10 @@ static void func_0006F230(char *o_, float a, float b, int mode)
                 in = 0;
         } else if (F(0x2B4) < d)
             in = 0;
-        doit_double_spring_interp_cntrl(o_ + 0x22C, in == 1 ? F(0x248) : d, gcGlobalVar.dt, 0);
+        {
+            float x = in == 1 ? F(0x248) : d;
+            doit_double_spring_interp_cntrl(o_ + 0x22C, x, gcGlobalVar.dt, 0);
+        }
         if (in == 1)
             v.v.x = GAMEUTIL_increase_yaw(0, F(0x208), -F(0x248));
         else
