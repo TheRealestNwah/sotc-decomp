@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* found/aux s2-s3 register swap */
+#ifdef NONMATCHING /* Parked: 6 diffs (found/aux s2-s3 swap; the Original passes &auxiliary to func_000AE618 as a fresh sp+0x20, not the hoisted aux register). */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef struct { int f0; int id; } FinderEntry;
@@ -33,9 +33,9 @@ int NippingCheckCollisionFindetWithKeep4D(float *start, Vec4 *finish, int *finde
         CollisionPoint point;
         FinderEntry *entry = (FinderEntry *)finder[3];
         int found = 0;
-        Vec4 *aux = &auxiliary;
         end.q = finish->q;
         while (--count != -1) {
+            Vec4 *aux = &auxiliary;
             if (entry->f0 != 0 && func_000AE618(&point, &auxiliary, start, &end, entry, keep)) {
                 if (found != 0 && dot3(aux, &normal) < 0.0f)
                     return 1;
@@ -49,4 +49,5 @@ int NippingCheckCollisionFindetWithKeep4D(float *start, Vec4 *finish, int *finde
     }
     return 0;
 }
+
 #endif
