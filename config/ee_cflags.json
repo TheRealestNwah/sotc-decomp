@@ -297,7 +297,7 @@
   "src/xff/KERNEL/func_00023DD0.c": [
     "--asm-fill-delay-slots"
   ],
-  "src/xff/KERNEL/iosCreateThread.c": [
+  "src/xff/KERNEL/iosthread.c": [
     "-fno-strict-aliasing"
   ],
   "src/xff/KERNEL/isysLaunchModule.c": [
