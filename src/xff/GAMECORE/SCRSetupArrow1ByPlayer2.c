@@ -1,7 +1,9 @@
-/* Parked: 21 diffs, same size. Matches except instruction scheduling.
-   Remaining: lq/sq of dir hoisted around the first lui/lw, the LayoutInit
-   zero stores ordered differently, and two lw/lqc2 pairs at the end swap
-   order (lw 0x13C register v0 vs v1). Permuter (30 min) found nothing. */
+/* Parked: 4 diffs, same size. Matches except instruction scheduling of
+   the dir lw 0x13C before quatToDir, which the Original loads after the
+   f44 store and the mov.s of rg (the &v addiu goes first there). The pool
+   pointer goes through an empty asm so the pos copy is stored before the
+   free-list load, and an empty asm before the first switch keeps the f48
+   load ahead of the case constant. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } Vec __attribute__((aligned(16)));
@@ -166,6 +168,7 @@ void SCRSetupArrow1ByPlayer2(int unused, int type, Vec *dir, Vec *pos)
     Vec v;
     Vec gp[4];
     ArrowNode *n;
+    ArrowPool *pool;
     char *lc;
     void *q;
     int def;
@@ -176,14 +179,15 @@ void SCRSetupArrow1ByPlayer2(int unused, int type, Vec *dir, Vec *pos)
 
     *(s128 *)&d = *(s128 *)dir;
     GetQuaternionByAxisDirZY(&rot, &d, &YUnitVector);
+    pool = &B_001889A0;
     *(s128 *)&p = *(s128 *)pos;
-    n = arrowAlloc(&B_001889A0);
+    __asm__ __volatile__("" : : "r"(pool));
+    n = arrowAlloc(pool);
     if (n == 0) {
         func_000317C8(B_001889A0.used.head);
         n = arrowAlloc(&B_001889A0);
     }
     li.pos = &p;
-    li.a5C = 1;
     li.a30 = 0;
     li.rot = &rot;
     li.a3C = 0;
@@ -192,6 +196,7 @@ void SCRSetupArrow1ByPlayer2(int unused, int type, Vec *dir, Vec *pos)
     li.a44 = 0;
     li.a48 = 0;
     li.a4C = 1;
+    li.a5C = 1;
     li.a54 = 0;
     li.a58 = 0;
     li.a60 = 0;
@@ -248,6 +253,7 @@ void SCRSetupArrow1ByPlayer2(int unused, int type, Vec *dir, Vec *pos)
     n->f44 = sp;
     rg = sp;
     quatToDir(&v, *(Vec **)(lc + 0x13C));
+    __asm__ __volatile__("");
     switch (n->f48) {
     case 4:
     case 6:
