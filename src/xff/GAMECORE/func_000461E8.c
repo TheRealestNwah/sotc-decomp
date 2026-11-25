@@ -1,8 +1,11 @@
-/* func_000461E8: Parked attempt, 13 diffs, same size.
- * The Original loads o->0x358 into $f20 before the first GetLayoutClass call
- * and computes o+0xD0 before the 0xA0 store; ours schedules both later.
- * AI_GetAccelC3XYZ's 6th argument ($t1) is set first in the Original.
- * new_var (from the permuter) breaks the w+0x40 CSE so $s2/$s3 match.
+/* func_000461E8: Parked attempt, 9 diffs, same size.
+ * The Original loads o->0x358 into $f20 before the first GetLayoutClass call;
+ * ours schedules it into the call's delay slot.
+ * AI_GetAccelC3XYZ's 6th argument ($t1) is set first in the Original, and the
+ * B3 call reuses $s2 for w+0x40 where ours recomputes it.
+ * new_var (from the permuter) breaks the w+0x40 CSE so $s2/$s3 match;
+ * new_var2 and the do/while (0) block (also from the permuter) fix the
+ * o+0xD0 and 0xA0 store order and the B3 call's $t1.
  * The (Vec4 *)->q store lets it alias the float loads that follow.
  */
 #ifdef NONMATCHING
@@ -121,6 +124,7 @@ static void func_000461E8(char *o, char *w)
 {
     Vec4 dir;
     int new_var;
+    int new_var2;
     Vec4 t;
     Vec4 a;
     Vec4 b;
@@ -150,24 +154,27 @@ static void func_000461E8(char *o, char *w)
     lo = 150.0f;
     pd = (s128 *)(o + 0xD0);
     F(w, 0xA0) = d / sp;
-    new_var = 0x40;
-    a.q = **(s128 **)(GetLayoutClass(*(int *)(o + 8)) + 0x134);
-    b.q = *pd;
-    b.f[1] = 0.0f;
-    a.f[1] = 0.0f;
-    d = vdist(&a, &b);
-    if (d <= lo)
-        f = 1.0f;
-    else if (d >= 200.0f)
-        f = a.f[1];
-    else
-        f = 1.0f - (d - lo) / 50.0f;
-    F(w, 0xA0) *= f;
-    F(w, 0xA4) = gcGlobalVar.dt * F(o, 0x350);
-    if (F(w, 0xA0) < gcGlobalVar.dt * F(o, 0x350))
-        F(w, 0xA0) = gcGlobalVar.dt * F(o, 0x350);
-    AI_GetAccelC3XYZ(w + 0x20, w + 0x30, w + new_var, w + 0x50, w + 0x60, w + 0x70, F(w, 0xA0));
-    AI_GetAccelA3XYZ(w, w + 0x30, w + 0x50, w + 0x60, w + 0x70, w + 0x20, F(w, 0xA0));
-    AI_GetAccelB3XYZ(w + 0x10, w + 0x30, w + 0x40, w + 0x50, w + 0x60, w + 0x20, F(w, 0xA0));
+    do {
+        new_var = 0x40;
+        a.q = **(s128 **)(GetLayoutClass(*(int *)(o + 8)) + 0x134);
+        b.q = *pd;
+        b.f[1] = 0.0f;
+        a.f[1] = 0.0f;
+        d = vdist(&a, &b);
+        if (d <= lo)
+            f = 1.0f;
+        else if (d >= 200.0f)
+            f = a.f[1];
+        else
+            f = 1.0f - (d - lo) / 50.0f;
+        F(w, 0xA0) *= f;
+        F(w, 0xA4) = gcGlobalVar.dt * F(o, 0x350);
+        if (F(w, 0xA0) < gcGlobalVar.dt * F(o, 0x350))
+            F(w, 0xA0) = gcGlobalVar.dt * F(o, 0x350);
+        AI_GetAccelC3XYZ(w + 0x20, w + 0x30, w + new_var, w + 0x50, w + 0x60, w + 0x70, F(w, 0xA0));
+        new_var2 = 0x20;
+        AI_GetAccelA3XYZ(w, w + 0x30, w + 0x50, w + 0x60, w + 0x70, w + 0x20, F(w, 0xA0));
+        AI_GetAccelB3XYZ(w + 0x10, w + 0x30, w + 0x40, w + 0x50, w + 0x60, w + new_var2, F(w, 0xA0));
+    } while (0);
 }
 #endif
