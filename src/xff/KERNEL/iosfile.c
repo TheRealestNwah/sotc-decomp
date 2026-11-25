@@ -13,13 +13,12 @@ typedef struct {
 extern FileEnt B_000543A8[8];
 extern int LoaderSysFOpen(char *, int, int);
 extern int LoaderSysFClose(int);
-extern int LoaderSysFRead(int, void *, int);
+extern int LoaderSysFRead();
 extern int LoaderSysGetstat(char *, LoaderStat *);
 
 static inline FileEnt *file_find(int fd)
 {
     int i;
-    FileEnt *p;
     for (i = 0; i < 8; i++) {
         if (B_000543A8[i].fd == fd)
             goto found;
@@ -69,7 +68,18 @@ found:
     B_000543A8[i].fd = -1;
 }
 
-extern int iosLoaderGetFileSizeName(char *);
+int iosLoaderGetFileSizeName(char *name)
+{
+    int fd;
+    int size;
+
+    fd = file_open(name);
+    if (fd < 0)
+        return -1;
+    size = file_size(fd);
+    file_close(fd);
+    return size;
+}
 
 int iosFileRead(char *name, void *buf, int max)
 {
@@ -86,6 +96,44 @@ int iosFileRead(char *name, void *buf, int max)
         LoaderSysFRead(fd, buf, max);
     file_close(fd);
     return size;
+}
+
+int iosLoaderFOpen(char *name, int flags, int mode)
+{
+    LoaderStat st;
+    FileEnt *e;
+    int fd;
+
+    fd = LoaderSysFOpen(name, flags, mode);
+    if (fd < 0)
+        return fd;
+    e = file_find(-1);
+    e->fd = fd;
+    LoaderSysGetstat(name, &st);
+    e->size = st.size;
+    return fd;
+}
+
+int iosLoaderFClose(int fd)
+{
+    int result = LoaderSysFClose(fd);
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (B_000543A8[i].fd == fd)
+            goto found;
+    }
+    __asm__ volatile("break 0");
+    goto end;
+found:
+    B_000543A8[i].fd = -1;
+end:
+    return result;
+}
+
+int iosLoaderFRead(int a, int b, int c, int d)
+{
+    return LoaderSysFRead(a, b, c, d);
 }
 
 int iosLoaderGetFileSize(int fd)
