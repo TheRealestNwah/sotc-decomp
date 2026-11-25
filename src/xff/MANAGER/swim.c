@@ -1,5 +1,3 @@
-/* Parked: 1 diff. Swimming root dynamics: moves the character by its rotated velocity plus wind, applies buoyancy against the water surface (damping vertical speed near the surface), slides along collision, restores position and updates landing, chain and velocity state. Storing the velocity inside rotatePointR, after its operand registers are set, gives the Original order; pinning finder to $s4 keeps quat in $s5. Remaining: the velocity sq is based on the rotate operand $v0 (0x0($v0)) instead of 0x6F0($s2), since CSE reuses the equal address. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -141,7 +139,8 @@ void swim(int id, s128 *last, s128 *vel, int vcol, float unused, float dt, float
     StabilizeToYRotQuaternion(*(void **)(cls + 0x13C));
     still = 0;
     q = quat;
-    { register s128 t asm("v1") = *vel; rotatePointR(&L.mv, cls + 0x6F0, q, *(s128 *)(cls + 0x6F0) = t); }
+    { register s128 t asm("v1") = *vel; /* The laundered operand keeps the velocity store based on cls, not on $v0. */
+    rotatePointR(&L.mv, ({ char *pp = cls + 0x6F0; __asm__("" : "+r"(pp)); pp; }), q, *(s128 *)(cls + 0x6F0) = t); }
     scaleXYZW(&L.mv, dt);
     addXYZ(pos, pos, &L.mv);
     if (wind != 0)
@@ -190,4 +189,3 @@ void swim(int id, s128 *last, s128 *vel, int vcol, float unused, float dt, float
     if (vcol != 0)
         GetCharaVCollisionStatus(cls);
 }
-#endif
