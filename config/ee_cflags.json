@@ -197,19 +197,7 @@
   "src/xff/KERNEL/Sg2SlotSetLfoVolSpeed.c": [
     "--asm-fill-delay-slots"
   ],
-  "src/xff/KERNEL/gsRegBegin.c": [
-    "-fno-strict-aliasing"
-  ],
-  "src/xff/KERNEL/gsRegEnd.c": [
-    "-fno-strict-aliasing"
-  ],
-  "src/xff/KERNEL/gsRegEndWithPtr.c": [
-    "-fno-strict-aliasing"
-  ],
-  "src/xff/KERNEL/gsReglistEnd.c": [
-    "-fno-strict-aliasing"
-  ],
-  "src/xff/KERNEL/gsReglistBegin.c": [
+  "src/xff/KERNEL/gspacket.c": [
     "-fno-strict-aliasing"
   ],
   "src/xff/KERNEL/Sg2ModGetParam.c": [
