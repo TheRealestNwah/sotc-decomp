@@ -1,6 +1,7 @@
-/* Parked: 13 diffs, same size. Remaining: lst (w+0x2038) and the loop-hoisted
- * constant 1 swap s4/s5 in the retry loop, the execPointListSort delay slot,
- * and the 0x418 store / sq 0x10 order in the prologue. */
+/* Parked: 11 diffs, same size. Remaining: lst (w+0x2038) and the loop-hoisted
+ * constant 1 swap s4/s5 in the retry loop (pinning either one perturbs other
+ * blocks), and the 0x418 store / sq 0x10 order in the prologue. Setting
+ * tries before the execPointListSort call fixes that call's delay slot. */
 
 #ifdef NONMATCHING
 
@@ -164,8 +165,8 @@ void updateUserPathWork(int owner, char *w)
         char *lst = w + 0x2038;
         int tries;
         char *cp;
-        execPointListSort(w, lst, tgt);
         tries = 0;
+        execPointListSort(w, lst, tgt);
         for (;;) {
             if (getNearPoint(w, 0, &pa, &pb, lst, tgt, W(int, 0x39C) == 0, 1)) {
                 if (pa == W(int, 0x80) && pb == W(int, 0x84)) {
