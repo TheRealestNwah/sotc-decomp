@@ -1,9 +1,11 @@
-/* Parked: 10 diffs, same size. Remaining: argument scheduling (mov.s
+/* Parked: 8 diffs, same size. Remaining: argument scheduling (mov.s
  * $f12/$f14 from $f23 issues before the daddu a2/a0 copies of w at the
- * region-check and func_000E16F0 calls), the yaw branch keeping the
- * scaled step in $f21 rather than $f0, and the pitch branch's
- * temporaries ($f25/$f21 in the Original, $f22/$f21 here). The hp
- * pointer to half is a permuter find that fixes the half/0.5f registers. */
+ * region-check and func_000E16F0 calls) and the pitch branch's
+ * temporaries ($f25/$f21 in the Original, $f22/$f21 here; reordering the
+ * statements or using separate locals doesn't change them). Folding the
+ * yaw branch's scaled step back into hi keeps it in $f21 like the Original.
+ * The hp pointer to half is a permuter find that fixes the half/0.5f
+ * registers. A 9-minute permuter run from here found nothing better. */
 
 #ifdef NONMATCHING
 
@@ -70,7 +72,8 @@ float CAM_doit_aim_angle_rot(AimRot *w, int mode, float cur, float center, float
                 hi = VA * 0.017453292519943295f;
                 d = GAMEUTIL_get_difference_yaw_and_yaw(cur, target);
                 hi = hi - lo;
-                vel = lo + hi * powf(func_000E15F8(d, half), expo);
+                hi = hi * powf(func_000E15F8(d, half), expo);
+                vel = lo + hi;
             } else {
                 float t;
                 half = range * 0.5f * 0.017453292519943295f;
