@@ -1,5 +1,4 @@
-/* Parked at 6 diffs: the Original uses non-likely bne (li v0 in the delay slot) where a call result is stored into 0x16C (4 sites) and orders the case-2 AI_UpdateVelocity argument setup (a0 before the 0x5C load). Case 7 uses if/else for the bc1fl choice and a memory barrier after the 0x170 store to keep the 2.0f load after it. */
-#ifdef NONMATCHING
+/* Matched (744 words). An empty asm clobbering $2 before each call whose result is stored into 0x16C makes v0 dead on that path, so the compare branch fills its delay slot with a plain bne like the Original. In case 2, two empty asm barriers keep the 0.0f argument from being CSEd with the other cases and order the argument setup (0x64 load, 0.0f, a0, then the 0x5C load in the call's delay slot). Case 7 uses if/else for the bc1fl choice and a memory barrier after the 0x170 store to keep the 2.0f load after it. */
 typedef struct { int pad0; int status; } ScriptCtrlDef;
 extern ScriptCtrlDef *ScriptCtrlDef_SCRStop;
 extern ScriptCtrlDef *ScriptCtrlDef_SCRGoF;
@@ -118,11 +117,11 @@ static void func_000BA980(char *w)
         func_000B9B00(w);
         s = I(0x164);
         if (s == 2)
-            I(0x16C) = func_000B9C98(w);
+            { __asm__("" ::: "$2"); I(0x16C) = func_000B9C98(w); }
         else if (s == 4)
             I(0x16C) = 0x1A;
         else if (s == 6)
-            I(0x16C) = func_000B9E08(w);
+            { __asm__("" ::: "$2"); I(0x16C) = func_000B9E08(w); }
         else if (s == 7)
             I(0x16C) = 0x1A;
         else if (s == 8)
@@ -136,12 +135,12 @@ static void func_000BA980(char *w)
         break;
     case 2:
         func_000B9798(w);
-        { char *d = P(0x64); float z = 0.0f; __asm__("" : "+f"(z)); AI_UpdateVelocity(w + 0x26C, z, *(float *)(d + 0x5C)); }
+        { char *nv; char *d = P(0x64); float z = 0.0f; __asm__("" : "+f"(z), "+r"(d)); nv = w + 0x26C; __asm__("" : "+r"(nv), "+r"(d)); AI_UpdateVelocity(nv, z, *(float *)(d + 0x5C)); }
         s = I(0x164);
         if (s == 1)
             I(0x16C) = 0x1A;
         else if (s == 6)
-            I(0x16C) = func_000B9E08(w);
+            { __asm__("" ::: "$2"); I(0x16C) = func_000B9E08(w); }
         else if (s == 7)
             I(0x16C) = 0x1A;
         else if (s == 8)
@@ -187,7 +186,7 @@ static void func_000BA980(char *w)
         if (s == 1)
             I(0x16C) = 0x1A;
         else if (s == 6)
-            I(0x16C) = func_000B9E08(w);
+            { __asm__("" ::: "$2"); I(0x16C) = func_000B9E08(w); }
         else if (s == 8)
             I(0x16C) = sideDir(w);
         else if (s == 9)
@@ -276,4 +275,3 @@ static void func_000BA980(char *w)
         break;
     }
 }
-#endif
