@@ -1,4 +1,3 @@
-/* 2 diffs: the Original copies the start vector with lq/sq through $v1 (lq $v1, 0($s4); sq $v1, 0x70($sp)) where ours uses $v0; everything else matches. The permuter found nothing better in ~2700 iterations. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef struct { int f0; int id; } FinderEntry;
@@ -10,7 +9,6 @@ extern int func_000A2B30(void *, void *, void *, void *, void *, float, void *);
 extern int func_000A0DE8(void *, void *, void *, void *, void *, float);
 extern int func_000A1580(void *, void *, void *, void *, void *, float);
 
-#ifdef NONMATCHING
 static inline int clip_finder_entry(void *aux, void *e, void *start, void *pos, void *entry, float slope)
 {
     return func_000A0DE8(aux, e, start, pos, entry, slope);
@@ -79,7 +77,11 @@ int ClipCollisionFinderWithKeep4DSlopeLimit(KeepResult *out, Vec4 *start, Vec4 *
         while (n2 != -1) {
             if (cur2->f0 != 0) {
                 to_local(&pt.position, cur2, start);
-                tmp.q = out->position.q;
+                {
+                    /* The Original copies through $v1. */
+                    register s128 t asm("v1") = out->position.q;
+                    tmp.q = t;
+                }
                 r2 = clip_finder_entry(&aux, &e, &pt.position, &tmp, cur2, f12);
                 ok = 0;
                 if (r2 == 1) {
@@ -103,4 +105,3 @@ int ClipCollisionFinderWithKeep4DSlopeLimit(KeepResult *out, Vec4 *start, Vec4 *
     }
     return ret;
 }
-#endif
