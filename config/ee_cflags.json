@@ -324,5 +324,8 @@
   ],
   "src/xff/MANAGER/func_000C0178.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/func_000D93F0.c": [
+    "-fno-strict-aliasing"
   ]
 }
