@@ -1,4 +1,4 @@
-/* Parked: 23 diffs, same size. Shoulder collision probe: transforms the motion node tool position, B_0018B7B0 and the class origin into object space, casts a cyclic Z/Y one-way collision probe along the class quaternion turned by -0x8000 about Z and -0x2000 about X, and on a hit writes either the hit position or a point rotated by the arcsine of the target direction. Called as T_00092958 from nico_player_colfit_Shoulder.c. Remaining: the Original recomputes the SetQuaternionByAxisRotateVWithNoRegularize argument address after the call (ours CSEs it), and the t2/f12 argument setup order. */
+/* Parked: 22 diffs, same size. Shoulder collision probe: transforms the motion node tool position, B_0018B7B0 and the class origin into object space, casts a cyclic Z/Y one-way collision probe along the class quaternion turned by -0x8000 about Z and -0x2000 about X, and on a hit writes either the hit position or a point rotated by the arcsine of the target direction. Called as T_00092958 from nico_player_colfit_Shoulder.c. Remaining: the Original recomputes the SetQuaternionByAxisRotateVWithNoRegularize argument address after the call (ours CSEs it), and the t2/f12 argument setup order. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -181,6 +181,7 @@ static int func_00092958(s128 *out, int *obj0)
     subXYZ(&vC0, &v30, &v10);
     vC0.x = zero;
     vC0.y = zero;
+    __asm__ __volatile__(""); /* bare asm flushes cse before lengthXYZ */
     len = lengthXYZ(&vC0);
     rq = *(void **)(cc + 0x13C);
     SetQuaternionByAxisRotateVWithNoRegularize(&qE0, -0x8000, ZUnitVector);
