@@ -7,10 +7,10 @@ typedef struct {
     int busy;
 } GcGlobal_func_00095428;
 extern int B_0018B850[4];
-extern void func_00095E70(void);
-extern void func_00096010(void);
-extern void func_00095DB0(void);
-extern void func_00095F50(void);
+static void func_00095E70(void);
+static void func_00096010(void);
+static void func_00095DB0(void);
+static void func_00095F50(void);
 extern void isysLetterObjDiscardLetterAll(void *);
 extern void isysSleepSubThread(void);
 extern void FlushRequestViewIntervalClip(void *);
@@ -47,6 +47,10 @@ extern void *isysGetThisSubThread(void);
 extern float ViewIntervalClip(void *, void *, float);
 extern char *GetLayoutClass(void *);
 extern int StageManagerCheckAreaExist(int);
+extern int ExecObjectAnimation(void *, void *, float, float);
+extern void isysRequestDeleteObj(void *);
+extern void ExecLwsDemoOrientManagerObj(void *, float, float);
+extern void ExecMotionSyncAnimation(void *, void *, float, float);
 extern ScrObj *SCRGetGetGeometryPointerLegalParentObj(char *);
 extern void ExecCharaGeometryPreprocess(void *, float, float, float);
 #define SCR_STACK_ENTER2()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "sw $sp, 0($2)\n"                                                                              "la $3, B_0018B860\n"                                                                          "lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "move $sp, $2\n"                                                                               : : "r"(_scr_in) : "$2", "$5", "memory")
@@ -108,7 +112,7 @@ static inline void setScriptSwitch(unsigned char *obj, int on)
     SetScriptAnimationObjAccessSwitch(obj, on);
 }
 extern void *GetScriptCharacterClass(void *);
-extern void func_00096168();
+static void func_00096168(void);
 extern int D_0017AF54;
 struct OrientationGlobalsView {
  char pad00[0x188];
@@ -116,7 +120,7 @@ struct OrientationGlobalsView {
  char pad18C[0x1E4];
  char context[0];
 };
-extern void func_000960C0();
+static void func_000960C0(void);
 typedef struct { char pad[0x178]; float f178; char pad2[0xC]; float f188; char pad3[0x1E4]; char geo[1]; } G;
 static inline int isLegalParent(char *l)
 {
@@ -178,13 +182,15 @@ extern void initlayout(int a0, void *a1, int a2, int a3, int t0, int t1);
                          :                                                                         \
                          : "r"(*(volatile int *)B_0019B860)                                        \
                          : "$2", "memory")
-extern void func_00096610(void);
+static void func_00096610(void);
 extern void **isysGroupForFirst(void *, int);
 extern void **isysGroupForNext(void **, int);
 extern void isysGroupForExit(void *, int);
 
 static void func_000956B0(void);
 static void func_000965E8(void);
+static void func_00096688(void);
+static void simpleExecCharaGeometry(int a0);
 
 void bootprogressivecheck(int a)
 {
@@ -403,12 +409,125 @@ void __execScrLwsOri(void *actor)
                             (*(struct OrientationGlobalsView *)&gcGlobalVar).context, interval, 1.0f / interval);
 }
 
+typedef struct {
+    char pad0[0x539];
+    char inArea;
+} ScrCharClass_DB0;
+
+typedef struct {
+    char pad0[0x134];
+    int area;
+} ScrLayoutClass_DB0;
+
+#define SCR_STACK_ENTER_00095DB0()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "sw $sp, 0($2)\n"                                                                              "la $3, B_0018B860\n"                                                                          "lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "move $sp, $2\n"                                                                               : : "r"(B_0019B860[0]) : "$2", "$3", "memory")
+#define SCR_STACK_LEAVE_00095DB0()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "lw $sp, 0($2)\n"                                                                              : : "r"(B_0019B860[0]) : "$2", "memory")
+
+static void func_00095DB0(void)
+{
+    void *thread;
+    ScrCharClass_DB0 *cc;
+
+    SCR_STACK_ENTER_00095DB0();
+    thread = isysGetThisSubThread();
+    cc = (ScrCharClass_DB0 *)GetCharacterClass(thread);
+    ExecCharaGeometry(thread, (char *)&gcGlobalVar + 0x370);
+    cc->inArea = StageManagerCheckAreaExist(((ScrLayoutClass_DB0 *)GetLayoutClass(thread))->area);
+    SCR_STACK_LEAVE_00095DB0();
+}
+
+typedef struct {
+    char pad0[0x188];
+    float clipDist;
+    char pad18C[0x370 - 0x18C];
+    char lwsCtx[1];
+} GcGlobal_func_00095E70;
+#define SCR_STACK_ENTER_00095E70()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "sw $sp, 0($2)\n"                                                                              "la $3, B_0018B860\n"                                                                          "lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "move $sp, $2\n"                                                                               : : "r"(B_0019B860[0]) : "$2", "$3", "memory")
+#define SCR_STACK_LEAVE_00095E70()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "lw $sp, 0($2)\n"                                                                              : : "r"(B_0019B860[0]) : "$2", "memory")
+
+static void func_00095E70(void)
+{
+    void *thread;
+    float clip;
+
+    SCR_STACK_ENTER_00095E70();
+    thread = isysGetThisSubThread();
+    clip = ViewIntervalClip(thread, (void *)get_main_cameraman_camera_obj(), (*(GcGlobal_func_00095E70 *)&gcGlobalVar).clipDist);
+    ExecScriptLwsOrientClass(thread, (void *)get_main_cameraman_camera_obj(), (*(GcGlobal_func_00095E70 *)&gcGlobalVar).lwsCtx, clip, 1.0f / clip);
+    SCR_STACK_LEAVE_00095E70();
+}
+
+typedef struct {
+    char pad0[0x190];
+    float animStart;
+    float animEnd;
+} GcGlobal_func_00095F50;
+#define SCR_STACK_ENTER_00095F50()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "sw $sp, 0($2)\n"                                                                              "la $3, B_0018B860\n"                                                                          "lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "move $sp, $2\n"                                                                               : : "r"(B_0019B860[0]) : "$2", "$3", "memory")
+#define SCR_STACK_LEAVE_00095F50()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "lw $sp, 0($2)\n"                                                                              : : "r"(B_0019B860[0]) : "$2", "memory")
+
+static void func_00095F50(void)
+{
+    void *thread;
+    int done;
+
+    SCR_STACK_ENTER_00095F50();
+    thread = isysGetThisSubThread();
+    done = ExecObjectAnimation(thread, (void *)get_main_cameraman_camera_obj(), (*(GcGlobal_func_00095F50 *)&gcGlobalVar).animStart, (*(GcGlobal_func_00095F50 *)&gcGlobalVar).animEnd);
+    B_0018B850[0] = done;
+    if (done != 0)
+        isysRequestDeleteObj(thread);
+    SCR_STACK_LEAVE_00095F50();
+}
+
+typedef struct {
+    char pad0[0x178];
+    float demoStart;
+    char pad17C[0x180 - 0x17C];
+    float demoEnd;
+} GcGlobal_func_00096010;
+#define SCR_STACK_ENTER_00096010()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "sw $sp, 0($2)\n"                                                                              "la $3, B_0018B860\n"                                                                          "lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "move $sp, $2\n"                                                                               : : "r"(B_0019B860[0]) : "$2", "$3", "memory")
+#define SCR_STACK_LEAVE_00096010()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "lw $sp, 0($2)\n"                                                                              : : "r"(B_0019B860[0]) : "$2", "memory")
+
+static void func_00096010(void)
+{
+    SCR_STACK_ENTER_00096010();
+    ExecLwsDemoOrientManagerObj(isysGetThisSubThread(), (*(GcGlobal_func_00096010 *)&gcGlobalVar).demoStart, (*(GcGlobal_func_00096010 *)&gcGlobalVar).demoEnd);
+    SCR_STACK_LEAVE_00096010();
+}
+
 void st_motionsyncanimation(void)
 {
 loop_1:
     func_000960C0();
     ((void (*)())isysSleepSubThread)();
     goto loop_1;
+}
+
+typedef struct {
+    char pad0[0x190];
+    float animStart;
+    float animEnd;
+} GcGlobal_func_000960C0;
+#define SCR_STACK_ENTER_000960C0()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "sw $sp, 0($2)\n"                                                                              "la $3, B_0018B860\n"                                                                          "lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "move $sp, $2\n"                                                                               : : "r"(B_0019B860[0]) : "$2", "$3", "memory")
+#define SCR_STACK_LEAVE_000960C0()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "lw $sp, 0($2)\n"                                                                              : : "r"(B_0019B860[0]) : "$2", "memory")
+
+static void func_000960C0(void)
+{
+    void *thread;
+
+    SCR_STACK_ENTER_000960C0();
+    thread = isysGetThisSubThread();
+    ExecMotionSyncAnimation(thread, (void *)get_main_cameraman_camera_obj(), (*(GcGlobal_func_000960C0 *)&gcGlobalVar).animStart, (*(GcGlobal_func_000960C0 *)&gcGlobalVar).animEnd);
+    SCR_STACK_LEAVE_000960C0();
+}
+
+#define SCR_STACK_ENTER_00096168()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "sw $sp, 0($2)\n"                                                                              "la $3, B_0018B860\n"                                                                          "lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "move $sp, $2\n"                                                                               : : "r"(B_0019B860[0]) : "$2", "$3", "memory")
+#define SCR_STACK_LEAVE_00096168()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "lw $sp, 0($2)\n"                                                                              : : "r"(B_0019B860[0]) : "$2", "memory")
+
+static void func_00096168(void)
+{
+    SCR_STACK_ENTER_00096168();
+    simpleExecCharaGeometry(D_0017AF54);
+    SCR_STACK_LEAVE_00096168();
 }
 
 static void simpleExecCharaGeometry(int a0)
@@ -491,6 +610,19 @@ static void func_000965E8(void)
         func_00096610();
         ((void (*)(void *))func_00095428)(isysGetThisSubThread());
     }
+}
+
+#define SCR_STACK_ENTER_00096610()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "sw $sp, 0($2)\n"                                                                              "la $3, B_0018B860\n"                                                                          "lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "move $sp, $2\n"                                                                               : : "r"(_scr_in) : "$2", "$5", "memory")
+#define SCR_STACK_LEAVE_00096610()                                                                          __asm__ __volatile__("lui $2, %%hi(B_0019B860)\n"                                                                   "nop\n"                                                                                        "addiu $2, $2, %%lo(B_0019B860)\n"                                                             "nop\n"                                                                                        "lw $sp, 0($2)\n"                                                                              : : "r"(*(volatile int *)B_0019B860) : "$2", "memory")
+
+static void func_00096610(void)
+{
+    {
+        register int _scr_in asm("$4") = *(volatile int *)B_0019B860;
+        SCR_STACK_ENTER_00096610();
+    }
+    func_00096688();
+    SCR_STACK_LEAVE_00096610();
 }
 
 static void func_00096688(void)
