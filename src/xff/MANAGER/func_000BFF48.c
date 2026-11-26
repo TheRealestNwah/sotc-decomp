@@ -1,9 +1,9 @@
-/* Parked: 23 diffs. Emitter visibility clip: sphere (shape type 1, clipBySphere) or oriented box
+/* Parked: 22 diffs. Emitter visibility clip: sphere (shape type 1, clipBySphere) or oriented box
    (type 2: quaternion matrix times the camera matrix at 0x5A0, clipByMinMaxCube). The clobber-free
    translation asm stops gcc keeping &m in $s0 across iosgluGetCameraContext, and the register pins
    in quatMatrix give the Original's a0/a1/a2. Remaining: the box corner loads, negations and
    stores are scheduled differently (the Original loads 0x74, 0x4, 0x70 and stores hi.x/hi.y
-   after the first corner copy). */
+   after the first corner copy). Reading the half-extents as x, y, z (0x4, 0x70, 0x74) gives 22 (was 23). */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } __attribute__((aligned(8))) Vec;
@@ -121,9 +121,9 @@ static int func_000BFF48(char *e, int *shape)
             ret = 1;
     } else if (shape[0] == 2) {
         float *s = (float *)shape;
-        float z = s[0x1D];
-        float y = s[0x1C];
         float x = s[1];
+        float y = s[0x1C];
+        float z = s[0x1D];
         box[1].x = -x * 0.5f;
         hi.x = x * 0.5f;
         box[1].y = -y * 0.5f;
