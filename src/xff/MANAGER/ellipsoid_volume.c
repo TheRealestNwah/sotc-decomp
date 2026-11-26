@@ -1,7 +1,9 @@
-
 typedef struct {
     float x, y, z, w;
 } __attribute__((aligned(8))) Vec4;
+extern void iosInverseMatrix(float *, void *);
+
+float GetRateInOutEllipticalSphereVolumeWithInverseMatrix(float *inv, float *point, float *inner, float *radius);
 
 static inline void applyMatrix(float *out, float *m, float *v)
 {
@@ -51,6 +53,15 @@ static inline float sqrtF(float x)
     float r;
     __asm__ __volatile__("sqrt.s %0, %1" : "=f"(r) : "f"(x));
     return r;
+}
+
+float GetRateInOutEllipticalSphereVolume(void *matrix, void *point, void *inner_radius,
+                                        void *outer_radius)
+{
+    float inverse[16] __attribute__((aligned(16)));
+    iosInverseMatrix(inverse, matrix);
+    return GetRateInOutEllipticalSphereVolumeWithInverseMatrix(inverse, point, inner_radius,
+                                                              outer_radius);
 }
 
 float GetRateInOutEllipticalSphereVolumeWithInverseMatrix(float *inv, float *point, float *inner, float *radius)
