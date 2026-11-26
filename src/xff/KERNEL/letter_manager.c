@@ -1,14 +1,20 @@
-extern void *B_000C2750;
-extern void open_letter_post(void *);
-extern void *get_next_letter_in_post(void *);
+extern int B_000C2750;
+extern void *g_pLetterMem;
+extern unsigned char rootPtn[];
+extern int create_letter_post();
+extern void init_letter_type_store();
+extern void decrement_letter_refcount(int *);
+extern void push_back_letter_in_post(int, int);
+extern void open_letter_post(int);
+extern void *get_next_letter_in_post(int);
 extern int get_reference_letter_type(void *);
 extern int get_letter_receiver_obj_group(void *);
 extern unsigned char *isysGetLetterObj(unsigned char *);
 extern void **isysGroupForFirst(void *, int);
 extern void **isysGroupForNext(void **, int);
 extern void isysGroupForExit(void *, int);
-extern void discard_all_letter_in_post(void *);
-extern void close_letter_post(char *);
+extern void discard_all_letter_in_post(int);
+extern void close_letter_post(int);
 extern int func_0001BE30(unsigned char *, void *, int *);
 
 void doit_letter_manager(void)
@@ -52,4 +58,18 @@ void doit_letter_manager(void)
     }
     discard_all_letter_in_post(B_000C2750);
     close_letter_post(B_000C2750);
+}
+
+void init_letter_manager(void)
+{
+    init_letter_type_store();
+    g_pLetterMem = rootPtn;
+    B_000C2750 = create_letter_post();
+}
+
+void send_letter(int *arg0)
+{
+    push_back_letter_in_post(B_000C2750, *arg0);
+    decrement_letter_refcount(arg0);
+    *arg0 = 0;
 }
