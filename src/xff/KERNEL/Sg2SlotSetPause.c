@@ -1,5 +1,4 @@
-typedef struct { unsigned int flags; char pad[0xDC]; } Sg2Slot;
-extern Sg2Slot B_000DE370[];
+#include "kernel/sg2slot.h"
 
 void Sg2SlotSetPause(int i, int on)
 {

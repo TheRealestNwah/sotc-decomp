@@ -1,10 +1,4 @@
-typedef struct {
-    int flags;
-    int alloc;
-    char pad8[0xD8];
-} Sg2Slot;
-
-extern Sg2Slot B_000DE370[];
+#include "kernel/sg2slot.h"
 
 void Sg2SlotTbl(int n, char *buf)
 {

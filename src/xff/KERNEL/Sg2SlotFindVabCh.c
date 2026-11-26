@@ -1,5 +1,4 @@
-typedef struct { int flags; int a, b, cls, vab, ch; char pad[0xC8]; } Sg2Slot;
-extern Sg2Slot B_000DE370[];
+#include "kernel/sg2slot.h"
 
 int Sg2SlotFindVabCh(int *out, int vab, int ch)
 {
