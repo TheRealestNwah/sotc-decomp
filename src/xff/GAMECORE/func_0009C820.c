@@ -1,7 +1,5 @@
-/* Parked: 19 diffs, same size. Remaining: case 2 register assignment
-   (YUnitVector/t2/b2/inv in s1/s0/s2 vs the Original's s0/s2/s1). The
+/* t2 is pinned to $s2 so case 2 gets the Original register assignment. The
    0x1F0 offset through new_var2 (from the permuter) fixes the copy's load base. */
-#ifdef NONMATCHING
 
 typedef int s128 __attribute__((mode(TI)));
 typedef union 
@@ -84,7 +82,7 @@ vmulx.xyz vf11, vf11, vf5x
 sqc2 vf11, 0x0(%0)" : : "r"(out), "r"(q) : "memory");
 }
 
-void func_0009C820(char *o)
+static void func_0009C820(char *o)
 {
   unsigned long new_var2;
   Vec4 q;
@@ -126,7 +124,7 @@ void func_0009C820(char *o)
 
     case 2:
     {
-      Vec4 *t2;
+      register Vec4 *t2 asm("$18");
       char *b2;
       char *l2;
       Vec4 *i2;
@@ -169,4 +167,3 @@ void func_0009C820(char *o)
   }
 
 }
-#endif
