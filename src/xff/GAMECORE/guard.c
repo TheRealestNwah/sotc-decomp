@@ -1,3 +1,6 @@
+/* Shaman's guards: the guard A, B and D scripts, which follow the shaman,
+ * face Dormin while he casts, and fire the guard B bowgun. */
+
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef unsigned int u_long128 __attribute__((mode(TI)));
 
@@ -105,6 +108,7 @@ static inline void matApply(float *out, float *m, float *v)
                          : : "r"(v), "r"(m), "r"(out) : "memory");
 }
 
+extern char rootPtn[];
 extern char *GameObject_SHAMAN_P;
 extern char *GameObject_DORMIN_P;
 extern int MotionKind_SHAMAN_WALK;
@@ -115,20 +119,63 @@ extern int MotionKind_SHAMAN_SPELL_END;
 extern char *ScriptCtrlDef_SCRGoR;
 extern char *ScriptCtrlDef_SCRGoL;
 extern char *ScriptCtrlDef_SCRAccel;
+extern int ScriptCtrlDef_SCRGuardADamageFront;
+extern int ScriptCtrlDef_SCRGuardADamageBack;
+extern int ScriptCtrlDef_SCRGuardAssume;
+extern int ScriptCtrlDef_SCRGuardBDamageFront;
+extern int ScriptCtrlDef_SCRGuardBDamageBack;
+extern int ScriptCtrlDef_SCRGuardDDamageFront;
+extern int ScriptCtrlDef_SCRGuardDDamageBack;
 extern char gcGlobalVar[];
-extern char *GetLayoutClass(int);
-extern char *GetCharacterClass(int);
-extern int *GetAnimationClass(int);
+
+extern void *isysGetThisSubThread(void);
+extern void isysJumpSubThread(void (*)(void), void *);
+extern int iosCreatePartition(void *, int);
+extern char *GetLayoutClass(void *);
+extern char *GetCharacterClass(void *);
+extern int *GetAnimationClass(void *);
+extern char *GetScriptClass(void *);
+extern char *GetScriptCharacterClass(void *);
+extern char *GetSCRCharaAIWorkPtr(void *);
+extern char *_SCRMallocAlign(int, int, int);
+extern void *memset(void *, int, unsigned int);
+extern void CharaCtrlResetCtrlStatus(void *);
+extern void CharaCtrlResetAllScriptCtrlStatus(void *);
+extern void CharaCtrlSetScriptCtrlStatus(void *, int);
+extern void createUserPathWork(void *, void *, int, float, float);
+extern void updateUserPathWork(void *, void *);
+extern void deleteUserPathWork(char *);
+extern void setAttainRangeData(void *, void *, float, float, float, float);
+extern void setCreateTempAttain(void *, int);
 extern void setAttainModePathWork(void *, int);
-extern void setDashHumanCtrlWork(void *, int);
-extern void iosRotMatrixY(float *, float);
+extern void setFollowModePathWork(void *, int);
+extern void setUserPathMode(void *, int);
 extern void setAttainmentPos(void *, float *);
 extern int getWayFinish(void *);
-extern float iosGetATan2fExact(float, float);
-extern void CharaCtrlSetScriptCtrlStatus(int, int);
-extern float calcProgRotRatio(float, float, float, float, float);
-extern void SCRCharaTurnDirectInput(int, float);
+extern void createHumanCtrlWork(void *, char *, unsigned int *, void *);
+extern void updateHumanCtrlWork(void *, void *, void *);
+extern void setDashHumanCtrlWork(void *, int);
 extern void _setExecBaseMoveWork(void *, int);
+extern void setExecGazeIKWork(void *, int);
+extern void setGoingAngleGazeIKWork(void *, float);
+extern void updateGazeIKWork(void *, void *);
+extern void SetScriptObjDeleteCallBackFunc(void *, void (*)(void), void *);
+extern void iosRotMatrixY(float *, float);
+extern float iosGetATan2fExact(float, float);
+extern float calcProgRotRatio(float, float, float, float, float);
+extern void SCRCharaTurnDirectInput(void *, float);
+extern void guardDamageMain(void *obj, int front, int back);
+extern void scrRunM(int);
+extern void RequestCharacterMotionShiftFunc(void *character, void (*func)(void *character));
+
+static void func_000562C8(char *w);
+static void T_000563E8(void *obj);
+static void func_00056408(char *ai);
+static void func_00056550(void *obj);
+/* In func_00056740.c and T_00056860.c: func_00056740 calls guardMainCommon
+ * by name, which a merged file can't reproduce. */
+extern void func_00056740(void);
+extern void T_00056860(void *character);
 
 static inline float distXZ(float *a, float *b)
 {
@@ -173,11 +220,11 @@ static inline void vecScale(float *dst, float *src, float s)
                          : : "r"(dst), "r"(src), "r"(s) : "memory");
 }
 
-void guardMainCommon(int obj, int *flag, void *path, void *hc, char *ctrl, float yaw, float scale)
+void guardMainCommon(void *obj, int *flag, void *path, void *hc, char *ctrl, float yaw, float scale)
 {
-    int sh = *(int *)(GameObject_SHAMAN_P + 8);
+    void *sh = *(void **)(GameObject_SHAMAN_P + 8);
     char *ls = GetLayoutClass(sh);
-    char *ld = GetLayoutClass(*(int *)(GameObject_DORMIN_P + 8));
+    char *ld = GetLayoutClass(*(void **)(GameObject_DORMIN_P + 8));
     char *lo = GetLayoutClass(obj);
     VecQ d;
     Vec4 rm[4];
@@ -313,4 +360,144 @@ void guardMainCommon(int obj, int *flag, void *path, void *hc, char *ctrl, float
         _setExecBaseMoveWork(hc, 1);
         *flag = 0;
     }
+}
+
+void nico_guardAStart(void)
+{
+    void *th = isysGetThisSubThread();
+    int part = iosCreatePartition(rootPtn, 0x3CE3);
+    char *c;
+    char *w;
+    char *pw;
+    char *hc;
+    float v[4];
+
+    *(int *)(GetScriptCharacterClass(th) + 0x11FC) = part;
+    CharaCtrlResetCtrlStatus(th);
+    CharaCtrlResetAllScriptCtrlStatus(th);
+    c = GetScriptCharacterClass(th);
+    w = _SCRMallocAlign(part, 0x3CB0, 0x10);
+    *(char **)(c + 0x1200) = w;
+    hc = w + 0x3C70;
+    pw = w + 0x10;
+    CharaCtrlResetCtrlStatus(th);
+    createUserPathWork(th, pw, 0, 5.0f, 10.0f);
+    memset(v, 0, 0x10);
+    v[3] = 1.0f;
+    setAttainRangeData(pw, v, 0.0f, 0.5f, 3.1415926f, 10.0f);
+    setCreateTempAttain(pw, 0);
+    createHumanCtrlWork(th, hc, *(unsigned int **)(GetScriptClass(th) + 0x44), pw);
+    setAttainModePathWork(pw, 0);
+    setFollowModePathWork(pw, 1);
+    _setExecBaseMoveWork(hc, 1);
+    setUserPathMode(pw, 0);
+    setExecGazeIKWork(GetCharacterClass(th), 1);
+    setGoingAngleGazeIKWork(GetCharacterClass(th), 80.0f);
+    SetScriptObjDeleteCallBackFunc(th, (void (*)(void))T_000563E8, 0);
+    isysJumpSubThread((void (*)(void))func_000562C8, w);
+}
+
+static void func_000562C8(char *w)
+{
+    void *th = isysGetThisSubThread();
+    char *hc = w + 0x3C70;
+    char *pw = w + 0x10;
+    int state = 0;
+
+    while (1) {
+        void *t = isysGetThisSubThread();
+        void *obj = *(void **)(GameObject_DORMIN_P + 8);
+        CharaCtrlResetAllScriptCtrlStatus(t);
+        updateUserPathWork(t, w + 0x10);
+        updateHumanCtrlWork(t, hc, w + 0x10);
+        updateGazeIKWork(GetCharacterClass(t), *(void **)(GetLayoutClass(obj) + 0x134));
+        guardDamageMain(th, ScriptCtrlDef_SCRGuardADamageFront, ScriptCtrlDef_SCRGuardADamageBack);
+        if (*(int *)(GameObject_SHAMAN_P + 8) != 0 && *(int *)(GameObject_DORMIN_P + 8) != 0)
+            guardMainCommon(th, &state, pw, hc, (char *)ScriptCtrlDef_SCRGuardAssume, 0.0f, 1.5f);
+        isysGetThisSubThread();
+        scrRunM(1);
+    }
+}
+
+static void T_000563E8(void *obj)
+{
+    deleteUserPathWork(GetSCRCharaAIWorkPtr(obj) + 0x10);
+}
+
+static void func_00056408(char *ai)
+{
+    float range[4];
+    void *thread;
+    char *human = ai + 0x3C70;
+    char *path = ai + 0x10;
+
+    thread = isysGetThisSubThread();
+
+    createUserPathWork(thread, path, 0, 5.0f, 10.0f);
+    memset(range, 0, sizeof(range));
+    range[3] = 1.0f;
+    setAttainRangeData(path, range, 0.0f, 1.0f, 3.1415926f, 10.0f);
+    setCreateTempAttain(path, 0);
+    createHumanCtrlWork(thread, human, *(unsigned int **)(GetScriptClass(thread) + 0x44), path);
+    setAttainModePathWork(path, 0);
+    setFollowModePathWork(path, 1);
+    _setExecBaseMoveWork(human, 1);
+    setUserPathMode(path, 0);
+    setExecGazeIKWork(GetCharacterClass(thread), 1);
+    setGoingAngleGazeIKWork(GetCharacterClass(thread), 80.0f);
+    SetScriptObjDeleteCallBackFunc(thread, (void (*)(void))func_00056550, 0);
+}
+
+static void func_00056550(void *obj)
+{
+    deleteUserPathWork(GetSCRCharaAIWorkPtr(obj) + 0x10);
+}
+
+void nico_guardBStart(void)
+{
+    void *th = isysGetThisSubThread();
+    int part = iosCreatePartition(rootPtn, 0x3CF3);
+    char *c;
+    char *w;
+
+    *(int *)(GetScriptCharacterClass(th) + 0x11FC) = part;
+    CharaCtrlResetCtrlStatus(th);
+    CharaCtrlResetAllScriptCtrlStatus(th);
+    c = GetScriptCharacterClass(th);
+    w = _SCRMallocAlign(part, 0x3CC0, 0x10);
+    *(char **)(c + 0x1200) = w;
+    CharaCtrlResetCtrlStatus(th);
+    func_00056408(w);
+    *(float *)(w + 0x3CB0) = 1.0471975803375244f;
+    *(int *)(w + 0x3CB4) = ScriptCtrlDef_SCRGuardBDamageFront;
+    *(int *)(w + 0x3CB8) = ScriptCtrlDef_SCRGuardBDamageBack;
+    scrRunM(1);
+    isysJumpSubThread(func_00056740, w);
+}
+
+void nico_guardDStart(void)
+{
+    void *th = isysGetThisSubThread();
+    int part = iosCreatePartition(rootPtn, 0x3CF3);
+    char *c;
+    char *w;
+
+    *(int *)(GetScriptCharacterClass(th) + 0x11FC) = part;
+    CharaCtrlResetCtrlStatus(th);
+    CharaCtrlResetAllScriptCtrlStatus(th);
+    c = GetScriptCharacterClass(th);
+    w = _SCRMallocAlign(part, 0x3CC0, 0x10);
+    *(char **)(c + 0x1200) = w;
+    CharaCtrlResetCtrlStatus(th);
+    func_00056408(w);
+    *(float *)(w + 0x3CB0) = -1.0471975803375244f;
+    *(int *)(w + 0x3CB4) = ScriptCtrlDef_SCRGuardDDamageFront;
+    *(int *)(w + 0x3CB8) = ScriptCtrlDef_SCRGuardDDamageBack;
+    scrRunM(1);
+    isysJumpSubThread(func_00056740, w);
+}
+
+void SCRGuardArrowShoot(void *character)
+{
+    RequestCharacterMotionShiftFunc(character, T_00056860);
 }
