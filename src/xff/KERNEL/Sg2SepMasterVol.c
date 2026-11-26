@@ -1,5 +1,4 @@
-typedef struct { int status, previous, unk8, vab, mod; char pad14[60]; } Sep;
-extern Sep B_000DD700[];
+#include "kernel/sg2sep.h"
 extern int vab_check_alive(int);
 extern int vab_set_semastervol(int, int);
 extern int Sg2ModSetParam(int, int, int, int);

@@ -1,5 +1,4 @@
-typedef struct { int status, previous, unk8, vab, mod; char pad14[60]; } Sep;
-extern Sep B_000DD700[];
+#include "kernel/sg2sep.h"
 extern unsigned char B_000DE220[];
 extern int B_000DE320;
 
