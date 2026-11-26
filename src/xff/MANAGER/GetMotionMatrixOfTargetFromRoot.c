@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* parked draft: 18 diffs, register allocation only (VU0 helpers as in GetMotionMatrixOfChildsFromTarget.c) */
+#ifdef NONMATCHING /* parked draft: 12 diffs (VU0 helpers as in GetMotionMatrixOfChildsFromTarget.c). Pinning scale to $s1 and idx to $s2 gives the Original's saved-register order (&q in $s0); left: the idx & 0x10000 test lands in $v1 and the final qout[idx] address reuses $s2 */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -175,19 +175,21 @@ void GetMotionMatrixOfTargetFromRoot(Mtx *mtx, Vec *qout, Motion *mot, Vec *rot,
     MotNode *node;
     Vec *g;
     int c;
+    register int ix __asm__("$18") = idx;
+    register Vec *sc __asm__("$17") = scale;
 
-    if (idx > 0 && (idx & 0x10000)) {
+    if (ix > 0 && (ix & 0x10000)) {
         return;
     }
     unitQuat(&v);
     unitQuat(&q);
     iosUnitMatrix(&acc);
     nodes = mot->nodes;
-    c = idx;
+    c = ix;
     while (c != -1) {
         Vec *r = &rot[c];
         node = &nodes[c];
-        quatPosScaleMatrix(&m, r, &node->pos, scale);
+        quatPosScaleMatrix(&m, r, &node->pos, sc);
         mtxMul(&acc, &m, &acc);
         quatMul(&q, r, &q);
         c = node->parent;
@@ -196,7 +198,7 @@ void GetMotionMatrixOfTargetFromRoot(Mtx *mtx, Vec *qout, Motion *mot, Vec *rot,
     *(s128 *)g = *(s128 *)root;
     mtxMul(&acc, (Mtx *)(g - 3), &acc);
     quatNormalize(&q);
-    iosCopyMatrix(&mtx[idx], &acc);
-    *(s128 *)&qout[idx] = *(s128 *)&q;
+    iosCopyMatrix(&mtx[ix], &acc);
+    *(s128 *)&qout[ix] = *(s128 *)&q;
 }
 #endif
