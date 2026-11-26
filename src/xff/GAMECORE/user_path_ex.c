@@ -1,6 +1,6 @@
+#include "common.h"
+
 typedef float Vec4[4] __attribute__((aligned(16)));
-typedef unsigned int u_long128 __attribute__((mode(TI)));
-typedef int s128 __attribute__((mode(TI)));
 
 typedef union {
     u_long128 q;
