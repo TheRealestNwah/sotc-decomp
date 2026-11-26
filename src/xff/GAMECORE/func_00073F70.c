@@ -47,7 +47,6 @@ typedef struct {
 
 #define LAYER(m, s) SpriteMenuGetLayerNoByHash(m, MakeStrHashValue(s))
 
-#ifdef NONMATCHING /* 10 diffs: the 15-second close loads gcGlobalVar.f before the work[4] store and swaps the 3.0f/1.0f registers */
 /* Option menu update: dims unselected values on the top page, moves the screen offset on the position page (clamped
    to +-10) and closes the progressive-scan test after 15 seconds. */
 static void func_00073F70(void *menu, MenuInfo *info, int *work)
@@ -100,7 +99,8 @@ static void func_00073F70(void *menu, MenuInfo *info, int *work)
             controllerAlertDisable(0);
             SpriteMenuSetDispFlag(menu, LAYER(menu, RO_0017E130), 0);
             SpriteMenuSetLayer(menu, LAYER(menu, RO_0017E098));
-            work[4] &= -5;
+            /* The union access keeps the gcGlobalVar.f load below this store, like the Original. */
+            ((union { int i; float f; } *)&work[4])->i &= -5;
             *(float *)&work[5] = gcGlobalVar.f - 3.0f + 1.0f;
             if (*getProgressiveMode() != 0) {
                 *getProgressiveMode() = 0;
@@ -111,4 +111,3 @@ static void func_00073F70(void *menu, MenuInfo *info, int *work)
         }
     }
 }
-#endif
