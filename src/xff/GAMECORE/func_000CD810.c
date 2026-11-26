@@ -1,8 +1,3 @@
-/* Parked: 13 diffs, same size. Remaining: glBlendFunc loads a1=6 before a0=5;
- * second block schedules the RO_00180BC0 copy load after lw a3 and swaps the
- * sd 0x18/0x30 order. */
-
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { short x, y, z; unsigned short flags; } Rec;
 typedef struct { int head; int next; } Ring;
@@ -62,7 +57,7 @@ static inline unsigned short brk(Rec *r)
     return r->flags & 1;
 }
 
-void func_000CD810(Menu *menu, int flag, float r, float g, float b, float a)
+static void func_000CD810(Menu *menu, int flag, float r, float g, float b, float a)
 {
     float col[4];
     V4 iv;
@@ -97,7 +92,7 @@ void func_000CD810(Menu *menu, int flag, float r, float g, float b, float a)
     col[2] = b;
     col[3] = a;
     n = 0;
-    glBlendFunc(5, 6);
+    { register int bb asm("$5") = 6; register int aa asm("$4") = 5; glBlendFunc(aa, bb); }
     pz = 0.0f;
     glColor4fv(col);
     if (D_0017B37C == 0) {
@@ -161,7 +156,7 @@ void func_000CD810(Menu *menu, int flag, float r, float g, float b, float a)
         fv.w[1] = B_0019CF50[i].y;
         fv.w[2] = B_0019CF50[i].z;
         iv = fv;
-        c2 = RO_00180BC0;
+        { const V4 *rp = &RO_00180BC0; c2 = *rp; }
         itof(&fv, &iv);
         x2 = menu->scale * (fv.f[0] * menu->sx * 0.1f);
         y2 = menu->scale * (fv.f[2] * menu->sy * 0.1f + fv.f[1] * -0.067f);
@@ -173,4 +168,3 @@ void func_000CD810(Menu *menu, int flag, float r, float g, float b, float a)
     iosDlPopLayer();
     texAnimationOne(tex, menu->anim, gcGlobalVar.f170);
 }
-#endif
