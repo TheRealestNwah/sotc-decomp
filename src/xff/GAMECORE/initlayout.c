@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 9 diffs: float register allocation in the grid-position block */
+#ifdef NONMATCHING /* 2 diffs: the two independent mul.s (nx*0.5, w*0.5) in the v[0] block are scheduled the other way round. L->d pinned to $f0 fixes the v[2] block. Tried: operand order, temporaries, $f2/$f3/$f5 pins and asm passthroughs on nx*0.5, w and w*0.5. */
 extern int DldSysUndefSymbol;
 extern char _GameObject[];
 typedef int Q __attribute__((mode(TI)));
@@ -52,7 +52,10 @@ void initlayout(int a0, int *h, int idx, int unused, int arg4, int flag)
 
         v[0] = -(((idx % L->nx) - L->nx * 0.5f) * L->w + L->w * 0.5f);
         v[1] = 0;
-        v[2] = ((idx / L->nx) - (float)L->nz * 0.5f) * L->d + L->d * 0.5f;
+        {
+        register float dd __asm__("$f0") = L->d;
+        v[2] = ((idx / L->nx) - (float)L->nz * 0.5f) * dd + dd * 0.5f;
+        }
         v[3] = 1.0f;
     } else {
         *(Q *)v = ZeroPoint;
