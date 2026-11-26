@@ -1,4 +1,6 @@
 /* The union store keeps the dt load after the prevTarget store (strict aliasing would hoist it); the pins give the Original's registers. */
+#include "common.h"
+#include "gamecore/cameraman.h"
 typedef struct { char pad[0x170]; float dt; }
 GcGlobal;
 extern GcGlobal gcGlobalVar;
@@ -6,16 +8,6 @@ extern int DebugFindPlayer(int);
 extern int GAMEUTIL_get_first_obj(int);
 extern void SetSeamlessStageControlObject(int);
 extern void update_camera_obj(int);
-typedef struct {
-    int camObj;
-    int mode;
-    int owner;
-    char pad0C[0xC];
-    int prevTarget;
-    int target;
-    char pad20[0x37C0 - 0x20];
-    float timer;
-} Cameraman;
 typedef union { int i; float f; } IF;
 extern char RO_001810A8[];
 extern char RO_001810C8[];
@@ -43,7 +35,6 @@ extern void iosFree(void *);
 extern void **isysGroupForFirst(void *, int);
 extern void **isysGroupForNext(void **, int);
 extern void isysGroupForExit(void *, int);
-typedef int s128 __attribute__((mode(TI)));
 extern void doit_game_camera(void *, void *, float);
 
 static int func_000E32B0(char *p);
