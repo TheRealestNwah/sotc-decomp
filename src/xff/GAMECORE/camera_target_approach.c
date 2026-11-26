@@ -1,11 +1,7 @@
+#include "gamecore/camera_target_approach.h"
+
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
-typedef struct {
-    char pad0[0x10];
-    char filter[0x30];
-    float yaw;
-    char aim[1];
-} ApproachWork;
 extern int is_approach_rise_ok_camera_place_status(void *);
 extern int is_reset_or_lws_movie_or_cutout_game_camera(void *);
 extern int CAM_is_visible_now_target_visibility(void *);
