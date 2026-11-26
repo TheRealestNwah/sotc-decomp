@@ -1,46 +1,4 @@
-typedef struct AdpcmScriptWork {
-    unsigned char unknown00[0x40];
-    int field40;
-    unsigned int flags;
-} AdpcmScriptWork;
-typedef struct AdpcmHandle { int handle; } AdpcmHandle;
-typedef union AdpcmSlot AdpcmSlot;
-union AdpcmSlot {
-    struct {
-        int state;
-        unsigned char unknown04[0x14];
-        AdpcmHandle *adpcm;
-        AdpcmScriptWork *script;
-        unsigned char unknown20[0x10];
-        void (*callback)(AdpcmSlot *);
-    } fields;
-};
-typedef struct AdpcmOrientEntry {
-    unsigned char unknown00[0x40];
-    AdpcmSlot *slot;
-    unsigned char unknown44[0xC];
-} AdpcmOrientEntry;
-typedef struct AdpcmOrient {
-    unsigned char unknown00[0xC];
-    int count;
-    AdpcmOrientEntry *entries;
-} AdpcmOrient;
-
-typedef struct BgmRequest {
-    int handle;
-    int attr;
-    int state;
-    float volume;
-    float volL;
-    float volR;
-    float fade;
-    int closeHandle;
-    int *done;
-    unsigned int flags;
-    int arg28;
-    int arg2C;
-    int arg30;
-} BgmRequest;
+#include "gamecore/bgm.h"
 
 extern BgmRequest B_001888E8[3];
 extern char gcGlobalVar[];
