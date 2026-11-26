@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 7 diffs */
+#ifdef NONMATCHING /* 2 diffs */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef union {
