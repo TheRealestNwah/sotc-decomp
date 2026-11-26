@@ -1,38 +1,4 @@
-typedef struct {
-    int flag;
-    int id;
-    float toPlayer;
-    float toBoss;
-} Accessory;
-
-typedef struct {
-    int a;
-    int b;
-    int flag;
-    int adrs;
-    unsigned int disp : 1;
-    unsigned int cls : 1;
-} Gobj;
-
-typedef struct {
-    int core;
-    int flag;
-    int stage;
-    unsigned int obj;
-    int set;
-} HorseType;
-
-typedef struct {
-    signed char a;
-    signed char place;
-    char pad[0x42];
-} SavePoint;
-
-typedef struct {
-    char pad[0xC];
-    int n;
-    SavePoint *list;
-} SavePointList;
+#include "gamecore/gstat.h"
 
 extern int __gameMode;
 extern int gstatTimeAttackMode;
@@ -102,9 +68,6 @@ extern void bossStatInit(void);
 extern void backStageInit(void);
 extern void time_attack_init_gstat_adrs(void);
 
-void gStatUnloadHorseChara(void);
-void gStatRestartHorseChara(void);
-void gStatLoadPlayerAccessories(void);
 
 void gameModeInit(void)
 {
