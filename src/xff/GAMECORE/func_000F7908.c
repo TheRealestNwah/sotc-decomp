@@ -1,11 +1,9 @@
-/* Parked: 2 diffs, same size. Remaining: the way[0] x10 store is scheduled
- * before the pos store (the Original stores pos first).
- *
- * Called once a user path is down to its last way: when the straight segment
+/* Called once a user path is down to its last way: when the straight segment
  * to it is blocked (ClipEdgeLinkDBFinder), and the wall faces against the move
- * or the two side probes straddle it, moves the way to 0.1 short of the hit. */
+ * or the two side probes straddle it, moves the way to 0.1 short of the hit.
+ * The way[0] stores are written x10 and x18 before pos, which is how the
+ * Original schedules them. */
 
-#ifdef NONMATCHING
 
 typedef unsigned int u128 __attribute__((mode(TI)));
 typedef union { u128 q; float f[4]; int i[4]; } V;
@@ -288,9 +286,9 @@ static void func_000F7908(PathCtrl *g, int obj)
         ((U *)&w->area)->s = area;
         ((U *)&w->idx)->i = idx;
         ((U *)&w->link)->s = -1;
-        ((U *)&w->pos)->q = r.q;
-        ((U *)&w->x18)->s = 0;
         ((U *)&w->x10)->i = 0;
+        ((U *)&w->x18)->s = 0;
+        ((U *)&w->pos)->q = r.q;
         g->n = 1;
         g->x60 = r.q;
         ((U *)&g->x70)->q = r.q;
@@ -305,5 +303,3 @@ static void func_000F7908(PathCtrl *g, int obj)
         }
     }
 }
-
-#endif
