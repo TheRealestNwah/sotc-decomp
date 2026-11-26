@@ -1,6 +1,6 @@
 /* initScriptLwsorientObj: the file name avoids colliding with InitScriptLwsOrientObj.c on case-insensitive file systems. */
 #ifdef NONMATCHING
-/* 8 diffs (518 words, same size). Builds a 0x158-byte creation record from the Lws orient element (dld of src+4), the info block and the arguments, copies it to the outgoing by-value slot at sp+0 (arg declared before c) and calls CreateScriptLwsOri(heap, 0, rec). Stores go through an int/float union so loads from the element are not hoisted past them, as in the Original. Remaining: storing t0 (field 0x140) before t2 (field 0x134) is what gives the Original's s3 = t0, s4 = t2, but then the 0x134 store is scheduled after 0x29C instead of between 0x290 and 0x298 (6 diffs), and the field 0xE0 float copy uses $f1 instead of $f0 (2 diffs). */
+/* 5 diffs (518 words, same size). Builds a 0x158-byte creation record from the Lws orient element (dld of src+4), the info block and the arguments, copies it to the outgoing by-value slot at sp+0 (arg declared before c) and calls CreateScriptLwsOri(heap, 0, rec). Stores go through an int/float union so loads from the element are not hoisted past them, as in the Original. Pinning t2 to $20 gives the Original's s3 = t0, s4 = t2 with the fields stored in order, and an $f0 pin fixes the field 0xE0 float copy. Remaining: the 0x134 store (s4) is scheduled before the 0x118/0x11C/0x128/0x130 stores instead of after 0x130 (5 diffs); every order of the 0x130-0x140 stores stays at 5 or more. */
 extern int DldSysUndefSymbol;
 extern char *D_00136C10;
 
@@ -28,6 +28,7 @@ typedef union { int i; float f; } U;
 
 void *initScriptLwsorientObj(int a0, void *heap, char *src, int *info, int t0, int t1, int t2, int t3, int t4)
 {
+    register int rt2 __asm__("$20") = t2;
     Def arg;
     Def c;
     char *e;
@@ -104,7 +105,10 @@ void *initScriptLwsorientObj(int a0, void *heap, char *src, int *info, int t0, i
     CW(0xD4) = W(0x40);
     CW(0xD8) = (int)(e + 0xD0);
     CF(0xDC) = FL(0xC0);
-    CF(0xE0) = FL(0xCC);
+    {
+        register float z __asm__("$f0") = FL(0xCC);
+        CF(0xE0) = z;
+    }
     CW(0xE4) = (int)(e + 0x104);
     CW(0xE8) = W(0x58);
     CW(0xEC) = info[0xC];
@@ -125,10 +129,10 @@ void *initScriptLwsorientObj(int a0, void *heap, char *src, int *info, int t0, i
     CW(0x128) = 0;
     CF(0x12C) = *(float *)(src + 0xC) * 0.5f;
     CW(0x130) = 0;
+    CW(0x134) = rt2;
     CW(0x138) = 0;
     CW(0x13C) = W(0x100);
     CW(0x140) = t0;
-    CW(0x134) = t2;
     CW(0x144) = t3;
     CW(0x148) = t4;
     CW(0x14C) = 0;
