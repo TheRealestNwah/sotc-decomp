@@ -123,13 +123,14 @@ def only_target(source: str, name: str) -> str:
     return NONMATCHING_RE.sub(choose, source)
 
 
-def compiled_size(source: Path, name: str) -> int | None:
-    """Size of `name` as the C file compiles now."""
+def compiled_size(source: Path, name: str, flags: list[str] | None = None) -> int | None:
+    """Size of `name` as the C file compiles now. `flags` are extra tools/ee_cc.py
+    arguments, so the size comes from the same compile the permuter will run."""
     from elftools.elf.elffile import ELFFile
 
     obj = source.with_suffix(".o")
-    subprocess.run([sys.executable, str(ROOT / "tools/ee_cc.py"), str(source), str(obj)],
-                   check=True)  # fmt: skip
+    subprocess.run([sys.executable, str(ROOT / "tools/ee_cc.py"), str(source), str(obj),
+                    *(flags or [])], check=True)  # fmt: skip
     with obj.open("rb") as f:
         elf = ELFFile(io.BytesIO(f.read()))
     symbols = elf.get_section_by_name(".symtab").iter_symbols()
@@ -160,6 +161,10 @@ def setup(c_file: Path, name: str, module: str, out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     base = out / "base.c"
     base.write_text(only_target(c_file.read_text(encoding="utf-8"), name), encoding="utf-8")
+    # Per-file flags from config/ee_cflags.json follow the copy into the permuter,
+    # both for the target's size and for compile.sh (--asm-fill-delay-slots changes
+    # the compiled size).
+    extra = [f"--flag={flag}" for flag in ee_cc.source_cflags(c_file, ROOT)[2:]]
     if module == "LOADER":
         flags = " --loader"
         words, relocs = loader_function(
@@ -169,10 +174,9 @@ def setup(c_file: Path, name: str, module: str, out: Path) -> None:
         )
     else:
         flags = ""
-        words, relocs = original_function(module, name, compiled_size(base, name))
-    # Per-file flags from config/ee_cflags.json follow the copy into the permuter.
-    for extra in ee_cc.source_cflags(c_file, ROOT)[2:]:
-        flags += f" --flag={extra}"
+        words, relocs = original_function(module, name, compiled_size(base, name, extra))
+    for flag in extra:
+        flags += f" {flag}"
     asm = out / "target.s"
     asm.write_text(target_asm(name, words, relocs), encoding="utf-8")
     subprocess.run(

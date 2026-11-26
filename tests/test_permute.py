@@ -271,3 +271,45 @@ def test_permuter_hot_path_does_not_import_elftools(module):
     importing them must stay cheap: elftools alone costs seconds on a cold disk."""
     code = f"import sys, {module}; sys.exit('elftools' in sys.modules)"
     assert subprocess.run([sys.executable, "-c", code], cwd=ROOT, check=False).returncode == 0
+
+
+class _StopSetup(Exception):
+    pass
+
+
+def test_setup_sizes_the_target_with_per_file_flags(monkeypatch, tmp_path):
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config/ee_cflags.json").write_text(
+        '{"src/xff/KERNEL/snd.c": ["--asm-fill-delay-slots"]}', encoding="utf-8"
+    )
+    c_file = tmp_path / "src/xff/KERNEL/snd.c"
+    c_file.parent.mkdir(parents=True)
+    c_file.write_text(SOURCE, encoding="utf-8")
+    sizes = []
+    monkeypatch.setattr(permute, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        permute, "compiled_size", lambda base, name, flags=None: sizes.append(flags) or 8
+    )
+
+    def stop(module, name, size):
+        assert size == 8
+        raise _StopSetup
+
+    monkeypatch.setattr(permute, "original_function", stop)
+    with pytest.raises(_StopSetup):
+        permute.setup(c_file, "f", "KERNEL", tmp_path / "out")
+    assert sizes == [["--flag=--asm-fill-delay-slots"]]
+
+
+def test_compiled_size_passes_flags_to_ee_cc(monkeypatch, tmp_path):
+    calls = []
+
+    def run(args, check):
+        calls.append(args)
+        raise _StopSetup
+
+    monkeypatch.setattr(permute.subprocess, "run", run)
+    with pytest.raises(_StopSetup):
+        permute.compiled_size(tmp_path / "base.c", "f", ["--flag=--asm-fill-delay-slots"])
+    assert calls[0][-1] == "--flag=--asm-fill-delay-slots"
+    assert calls[0][-2] == str(tmp_path / "base.o")
