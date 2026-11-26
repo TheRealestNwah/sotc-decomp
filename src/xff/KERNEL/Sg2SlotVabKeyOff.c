@@ -1,15 +1,5 @@
-typedef struct {
-    int flags;
-    char pad4[0xC - 4];
-    int mod;
-    int vab;
-    int ch;
-    char pad18[0x24 - 0x18];
-    int note;
-    char pad28[0xE0 - 0x28];
-} Slot;
+#include "kernel/sg2slot.h"
 
-extern Slot B_000DE370[48];
 extern int B_000DE338[2];
 extern int DIntr(void);
 extern int EIntr(void);
