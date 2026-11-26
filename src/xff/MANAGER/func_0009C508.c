@@ -1,5 +1,5 @@
-/* Parked at 22 diffs: x0 and pb.v.y swap $f4/$f5 in the loop, and the inlined water-surface
-   check keeps ok in $v0 with a bnel/beql shape where the Original uses $a2, beqz and beq.
+/* Parked at 12 diffs: x0 and pb.v.y swap $f4/$f5 in the loop, and the inlined water-surface
+   check compares table[id] with a bnel shape where the Original uses beq (ok pinned to $a2).
    bary must be an 8-byte aligned struct, otherwise gcc pads it to 16 bytes and the frame grows. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
@@ -141,7 +141,7 @@ static inline void lerp(float *dst, float *a, float *b, float r)
 /* Finds the water surface triangle the segment a..b crosses and stores the crossing point in *out. */
 static inline int hitwater(char *res, Vec4 *pend, Vec4 *p, void *obj, WaterJudge *judge, WaterTri *tri)
 {
-    int ok;
+    register int ok asm("$6");
     pend->q = p->q;
     pend->v.y += -1000.0f;
     if (ClipCollisionDirectCallBackOneObj(res, p, pend, obj, 0, 0, func_000AE020, 0)) {
@@ -189,7 +189,8 @@ static int func_0009C508(Vec4 *out, Vec4 *a, Vec4 *b, void *obj)
         if (pb.v.y < y && y < pa.v.y) {
             int ok;
             lerp(&p.v.x, &pb.v.x, &pa.v.x, (y - pa.v.y) / (pb.v.y - pa.v.y));
-            pt->v.x = p.v.x - x0;
+            y = p.v.x - x0;
+            pt->v.x = y;
             pt->v.z = p.v.z - z0;
             stpos(&bary.s, &bary.t, &e1->v.x, &e2->v.x, &pt->v.x);
             if (bary.s < -0.00002f || bary.t < -0.00002f || bary.s + bary.t - 1.0f > 0.00002f)
