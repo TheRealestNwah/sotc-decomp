@@ -1,4 +1,4 @@
-/* Parked attempt, 25 diffs, same size (281 words incl. the split tail func_00046F10). Path-follow init (sibling of func_00046F48 / func_00047278): rotates RO_0017D1A0 (-0.02, 0.1, 0, 0) and ZUnitVectorInv by the layout's quaternion, adds the offset to the layout position, forces the direction's y to 1.0 and normalises it, scales w+0x90 and the direction into w+0x30 / w+0x40, gets the travel time from AI_GetTimeFromAccelC3 (projected speeds along the normalised chord), clamps it to 2pi / o+0x358 and dt * o+0x350, and calls AI_GetAccelC/A/B3XYZ. The inline getTime helper reproduces the early arg-register copies; rotate without the memory clobber rematerialises &off. Remaining: the Original copies RO_0017D1A0 into the frame (ld 8 before ld 0, sp+0x20 computed first) before loading lc+0x134, passes &off to vadd3 in a0, copies pos to w+0x60 from sp rather than through s1, and orders the ZeroVector store / 2*o+0x358 and the first AI call's t1 differently around the argument copies. */
+/* Parked attempt, 24 diffs, same size (281 words incl. the split tail func_00046F10). Path-follow init (sibling of func_00046F48 / func_00047278): rotates RO_0017D1A0 (-0.02, 0.1, 0, 0) and ZUnitVectorInv by the layout's quaternion, adds the offset to the layout position, forces the direction's y to 1.0 and normalises it, scales w+0x90 and the direction into w+0x30 / w+0x40, gets the travel time from AI_GetTimeFromAccelC3 (projected speeds along the normalised chord), clamps it to 2pi / o+0x358 and dt * o+0x350, and calls AI_GetAccelC/A/B3XYZ. The inline getTime helper reproduces the early arg-register copies; rotate without the memory clobber rematerialises &off; a bare asm barrier before the lc+0x134 load puts the RO_0017D1A0 frame copy (ld 8 before ld 0) first. Remaining: the Original computes sp+0x20 before that copy, passes &off to vadd3 in a0, copies pos to w+0x60 from sp rather than through s1, and orders the ZeroVector store / 2*o+0x358 and the first AI call's t1 differently around the argument copies. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union {
@@ -212,6 +212,7 @@ static void func_00046AD0(char *o, char *w)
     char *w40;
     float lim;
 
+    __asm__ __volatile__("");
     pp->q = **(s128 **)(lc + 0x134);
     rotate_nm(&off, *(void **)(lc + 0x13C));
     vadd3(pp, pp, &off);
