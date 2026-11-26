@@ -204,8 +204,10 @@ def generate(cross: str, sources: list[Path], modules: list[str] | None = None) 
         "  description = REBUILD $out",
         "",
         "rule eecc",
-        "  command = $python tools/ee_cc.py $in $out",
+        "  command = $python tools/ee_cc.py $in $out --depfile $out.d",
         "  description = EECC $in",
+        "  depfile = $out.d",
+        "  deps = gcc",
         "",
         "rule splice",
         "  command = $python tools/xff_splice.py $module"

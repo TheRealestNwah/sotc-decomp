@@ -183,3 +183,15 @@ def test_splice_depends_on_the_original_and_every_module_it_imports(tmp_path, mo
     for path in ("iso/TEST.XFF", "tools/xff_splice.py", "tools/functions.py",
                  "tools/xff_split.py", "tools/xff2.py"):  # fmt: skip
         assert path in implicit
+
+
+def test_c_objects_track_header_dependencies(tmp_path, monkeypatch):
+    source_dir = tmp_path / "src/xff/TEST"
+    source_dir.mkdir(parents=True)
+    (source_dir / "f.c").touch()
+    monkeypatch.setattr(configure, "ROOT", tmp_path)
+    ninja = generate("test-", [], ["TEST"])
+    rule = ninja.split("rule eecc\n", 1)[1].split("\n\n", 1)[0]
+    assert "--depfile $out.d" in rule
+    assert "depfile = $out.d" in rule
+    assert "deps = gcc" in rule

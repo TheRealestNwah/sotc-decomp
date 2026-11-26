@@ -23,11 +23,14 @@ from tools.ee_asm import FILL_DELAY_SLOTS, split_asm_options  # noqa: E402
 from tools.try_compilers import (  # noqa: E402
     DEFAULT_COMPILERS,
     I386_LIBS,
+    STAGE_INCLUDE,
     assemble,
     compile_c,
     diagnostic_message,
     find_cc1,
     find_package_as,
+    include_dir_for,
+    included_headers,
     wsl_path,
 )
 
@@ -60,7 +63,7 @@ def small_data_limit(flags: list[str]) -> int:
     return limits[-1] if limits else 0
 
 
-LINUX_PIPELINE = r"""
+LINUX_PIPELINE_TEMPLATE = r"""
 set -e
 cc1=$1
 assembler=$2
@@ -79,6 +82,7 @@ ld="$(dirname "$libs")/ld-linux.so.2"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 cp "$source" "$work/in.c"
+@STAGE_INCLUDE@
 "$ld" --library-path "$libs" "$cc1" -quiet "$@" "$work/in.c" -o "$work/out.s"
 if [ ! -s "$work/out.s" ]; then
     echo "error: compiler produced no assembly" >&2
@@ -88,6 +92,8 @@ python3 "$preprocess" "$work/out.s" --gp "$gp" $asm_options
 "$ld" --library-path "$libs" "$assembler" -EL -G "$gp" -o "$work/out.o" "$work/out.s"
 cp "$work/out.o" "$output"
 """
+# $inc (the include directory, or empty) comes in through the environment.
+LINUX_PIPELINE = LINUX_PIPELINE_TEMPLATE.replace("@STAGE_INCLUDE@", STAGE_INCLUDE)
 
 
 def compile_and_assemble(
@@ -104,9 +110,11 @@ def compile_and_assemble(
             return compile_c(compiler_dir, source, flags, asm) or assemble(
                 asm, output, package_as, small_data_limit(flags), fill_delay_slots=fill_delay_slots
             )
+    include = include_dir_for(source)
     result = subprocess.run(
         [
-            "wsl", "-e", "bash", "-c", LINUX_PIPELINE, "ee-cc",
+            "wsl", "-e", *(["env", f"inc={wsl_path(include)}"] if include else []),
+            "bash", "-c", LINUX_PIPELINE, "ee-cc",
             wsl_path(cc1), wsl_path(package_as), wsl_path(source), wsl_path(output),
             wsl_path(ROOT / "tools/ee_asm.py"), I386_LIBS,
             FILL_DELAY_SLOTS if fill_delay_slots else "", str(small_data_limit(flags)),
@@ -118,6 +126,22 @@ def compile_and_assemble(
         output.unlink(missing_ok=True)
         return diagnostic_message(result)
     return None
+
+
+def depfile_text(source: Path, output: Path, root: Path | None = None) -> str:
+    """A Makefile-style depfile for ninja (`deps = gcc`): the object depends on
+    its source and every header from include/ it pulls in."""
+    root = (root or ROOT).resolve()
+
+    def name(path: Path) -> str:
+        try:
+            text = path.resolve().relative_to(root).as_posix()
+        except ValueError:
+            text = path.resolve().as_posix()
+        return text.replace(" ", "\\ ")
+
+    headers = included_headers(source, root / "include")
+    return f"{name(output)}: " + " ".join(name(p) for p in [source, *headers]) + "\n"
 
 
 def build(
@@ -151,11 +175,19 @@ def main(argv: list[str] | None = None) -> int:
         help="an extra compiler flag (repeatable, e.g. --flag=-fno-strict-aliasing), "
         "for a copy outside src/ that config/ee_cflags.json can't name",
     )
+    parser.add_argument(
+        "--depfile",
+        type=Path,
+        help="also write a depfile listing the headers from include/ the source uses",
+    )
     args = parser.parse_args(argv)
     flags = LOADER_CFLAGS.copy() if args.loader else None
     if args.flag:
         flags = (flags or CFLAGS.copy()) + args.flag
     error = build(args.source, args.output, args.compilers / COMPILER, flags)
+    if args.depfile:
+        args.depfile.parent.mkdir(parents=True, exist_ok=True)
+        args.depfile.write_text(depfile_text(args.source, args.output), encoding="utf-8")
     if error:
         print(f"{args.source}: {error}", file=sys.stderr)
         return 1
