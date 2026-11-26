@@ -1,4 +1,4 @@
-/* Parked: 22 diffs. Motion-shift step for one entry of the character class motion table: resolves the info relocatable ref to the current motion resource, decides from info->xC whether the shift fires, then either leaves the old motion (callbacks, two CallMotShiftCallBackElemLeaveFunc calls, ReleaseCharacterClassAddMotSyncAnim, func_00051A60) or restarts it (func_00051958), runs info->fn and sets the blend frames. One pointer `p` walks the two leave callbacks at mot+0xA8 and is then reused for class+0x2C8, which puts that in $s0 like the Original (25 before). Remaining: prologue argument spills and register choice for the ref decode and the tab[i].xC limit. The `long` return type came from a 25-minute permuter run (27 diffs with `int`); the Original most likely returns int. */
+/* Parked: 8 diffs. Motion-shift step for one entry of the character class motion table: resolves the info relocatable ref to the current motion resource, decides from info->xC whether the shift fires, then either leaves the old motion (callbacks, two CallMotShiftCallBackElemLeaveFunc calls, ReleaseCharacterClassAddMotSyncAnim, func_00051A60) or restarts it (func_00051958), runs info->fn and sets the blend frames. One pointer `p` walks the two leave callbacks at mot+0xA8 and is then reused for class+0x2C8, which puts that in $s0 like the Original. The empty asm after the prologue loads schedules the vidx/vcls spills like the Original, and a block-local float for the blend frames gives the Original's float registers (22 before). Remaining: tab, ref and the i*0x80 offset take $t1/$a2/$t0 where the Original uses $t0/$a3/$a2. The `long` return type came from a permuter run (16 diffs with `int` here); the Original most likely returns int. */
 #ifdef NONMATCHING
 typedef struct {
     char pad0[4];
@@ -61,6 +61,7 @@ long func_00053058(int obj, int idx, MotInfo *info_, int res, float f)
     vcls = cls;
     rp = &info->ref;
     i = vidx;
+    __asm__ volatile("");
     tab = *(MotEntry **)(cls + 0x30C);
     ref = *rp;
     off = ref & 0x3FFFF;
@@ -111,9 +112,11 @@ long func_00053058(int obj, int idx, MotInfo *info_, int res, float f)
             fr = cur != 0 ? cur + 0x50 : 0;
             if (fr != 0)
                 GetMotionResourceOriginalFrames(fr);
-            lim = info->x10 * ent->x2C;
-            ent->x54 = 0.0f;
-            ent->x50 = lim;
+            {
+                float t = info->x10 * ent->x2C;
+                ent->x54 = 0.0f;
+                ent->x50 = t;
+            }
         }
     }
     return ret;
