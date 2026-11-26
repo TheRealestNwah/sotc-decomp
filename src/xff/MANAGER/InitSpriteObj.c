@@ -51,8 +51,6 @@ typedef struct {
     int unk34;
 } SpriteDef;
 
-#ifdef NONMATCHING
-/* 44 diffs: original keeps every field copy in source order, as if built without strict aliasing (23 diffs with -fno-strict-aliasing) */
 int InitSpriteObj(SpriteObjHeader *obj, SpriteDef *def)
 {
     void *heap = obj->heap;
@@ -65,20 +63,19 @@ int InitSpriteObj(SpriteObjHeader *obj, SpriteDef *def)
 
     s->func = (int)func_00099118;
     s->buf = (int)iosMallocAlign(heap, def->count * 4, 0x10);
-    s->used = 0;
     s->count = def->count;
+    s->used = 0;
     arg = 0;
-    module = 0;
     s->unkC = def->unkC;
-    s->color = 0xFFFFFF;
     s->unk10 = def->unk10;
+    s->color = 0xFFFFFF;
     s->unk14 = 0;
     s->unk18 = 0;
     s->unk20 = def->unk14;
     s->unk24 = def->unk18;
     s->unk2C = def->unk20;
-    s->unk34 = 0;
     s->unk30 = def->unk24;
+    s->unk34 = 0;
     f = def->unk28;
     s->unk3C = f;
     f += def->unk2C;
@@ -86,16 +83,14 @@ int InitSpriteObj(SpriteObjHeader *obj, SpriteDef *def)
     f += def->unk30;
     s->unk44 = f;
     s->unk28 = def->unk1C;
-    s->unk4C = 1;
     s->unk48 = def->unk34;
+    s->unk4C = 1;
     s->unk50 = 0;
     ref = def->ref;
     offset = *ref & 0x3FFFF;
-    if (offset)
-        module = *(char **)((char *)ref - offset);
+    module = offset ? *(char **)((char *)ref - offset) : 0;
     if (module && module != DldSysUndefSymbol)
         arg = *(int *)(module + 0x10);
     func_00098A88(heap, obj, s, arg);
     return 1;
 }
-#endif
