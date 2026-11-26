@@ -1,8 +1,6 @@
-/* Parked: 14 diffs, same size. Remaining: f0/f1 swaps in the reset 1.0f
- * store and the vdot <= 0.0f compare, the mtc1 of vdist's result issuing
- * before (rather than after) the 0.39999998f constant, and a v1/a0 swap in
- * the last vdot operands. riding/blocked are pinned to s7/s6. */
-#ifdef NONMATCHING
+/* riding/blocked are pinned to s7/s6. vdist and vdotf move their result to an FPR
+ * inside the asm (like other matched VU0 helpers), vdotf into $f0; vdot pins its
+ * operands to a0/v1; the reset 1.0f store goes through $f1. */
 typedef int s128 __attribute__((mode(TI)));
 
 extern s128 ZeroPoint;
@@ -40,8 +38,10 @@ static inline void vadd(void *out, void *a, void *b)
                          : : "r"(out), "r"(a), "r"(b) : "memory");
 }
 
-static inline float vdot(void *a, void *b)
+static inline float vdot(void *a0, void *b0)
 {
+    register void *a asm("$4") = a0;
+    register void *b asm("$3") = b0;
     register float r asm("$2");
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
@@ -55,20 +55,48 @@ static inline float vdot(void *a, void *b)
     return r;
 }
 
-static inline float vdist(void *a, void *b)
+static inline float vdotf(void *a, void *b)
 {
-    register float r asm("$2");
+    register float r asm("$f0");
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
-                         "vsub.xyzw vf7, vf5, vf6\n"
-                         "vmul.xyz vf7, vf7, vf7\n"
-                         "vmulax.w ACC, vf0, vf7x\n"
-                         "vmadday.w ACC, vf0, vf7y\n"
-                         "vmaddz.w vf7, vf0, vf7z\n"
-                         ".word 0x4BA703BD\n"
-                         "vwaitq\n"
-                         "cfc2.ni %0, $vi22\n"
-                         : "=r"(r) : "r"(a), "r"(b) : "memory");
+                         "vaddw.x vf7, vf0, vf0w\n"
+                         "vmul.xyz vf6, vf5, vf6\n"
+                         "vaddax.x ACC, vf0, vf6x\n"
+                         "vmadday.x ACC, vf7, vf6y\n"
+                         "vmaddz.x vf6, vf7, vf6z\n"
+                         "qmfc2.ni $2, vf6\n"
+                         "mtc1 $2, %0\n"
+                         : "=f"(r) : "r"(a), "r"(b) : "$2", "memory");
+    return r;
+}
+
+static inline float vdist(void *a, void *b)
+{
+    float r;
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)
+"
+                         "lqc2 vf6, 0x0(%2)
+"
+                         "vsub.xyzw vf7, vf5, vf6
+"
+                         "vmul.xyz vf7, vf7, vf7
+"
+                         "vmulax.w ACC, vf0, vf7x
+"
+                         "vmadday.w ACC, vf0, vf7y
+"
+                         "vmaddz.w vf7, vf0, vf7z
+"
+                         ".word 0x4BA703BD
+"
+                         "vwaitq
+"
+                         "cfc2.ni $2, $vi22
+"
+                         "mtc1 $2, %0
+"
+                         : "=f"(r) : "r"(a), "r"(b) : "$2", "memory");
     return r;
 }
 
@@ -97,7 +125,7 @@ static inline int checkHit(void *dyn, char *hit, void *from, void *to, void *col
 static inline void resetit(char *ctl)
 {
         reset_double_spring_interp_cntrl(ctl + 0x160, 1.0f);
-        *(float *)(ctl + 0x180) = 1.0f;
+        { register float o asm("$f1") = 1.0f; *(float *)(ctl + 0x180) = o; }
         GAMEUTIL_reset_status_manager(ctl + 0x184, 0);
         *(s128 *)(ctl + 0x1A0) = ZeroPoint;
         *(s128 *)(ctl + 0x1B0) = ZUnitVector;
@@ -143,7 +171,7 @@ void CAM_doit_post_update_new_camera_data_target_offset(char *ctl, char *cam, in
     if (!checkHit(L.dyn, L.hit, src, &L.from, col, 1, riding)) {
         L.from = L.dyn[0];
         vsub(&L.dir, &L.to, &L.from);
-        if (GAMEUTIL_check_and_get_normalize_vector(&L.dir, &L.len, &L.dir) != 1 || vdot(&L.dyn[1], &L.dir) <= 0.0f) {
+        if (GAMEUTIL_check_and_get_normalize_vector(&L.dir, &L.len, &L.dir) != 1 || vdotf(&L.dyn[1], &L.dir) <= 0.0f) {
             ratio = 0.0f;
             blocked = 1;
         }
@@ -186,4 +214,3 @@ done:
     GAMEUTIL_doit_status_manager(sm, st, force, f);
     doit_double_spring_interp_cntrl(ctl + 0x160, 0, *(float *)(ctl + 0x180), f);
 }
-#endif
