@@ -1,8 +1,3 @@
-/* sound3DCalc: parked at 19 diffs. All remaining diffs are float register
- * allocation: the Original keeps p->inner in $f5, c (outer^2) in $f4 and the
- * zero constant in $f0; gcc 2.96 puts c in $f0, tied to the p->outer load.
- * A permuter run found nothing plausible. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -58,8 +53,9 @@ void sound3DCalc(Sound3D *s, Vec4 *pos, Vec4 *cam, void *mtx)
                          "vmul.xyz vf7, vf7, vf7\n"
                          "vaddy.x vf7, vf7, vf7y\n"
                          "vaddz.x vf7, vf7, vf7z\n"
-                         "qmfc2 %0, vf7\n"
-                         : "=r"(dist2) : "r"(&d));
+                         "qmfc2 $2, vf7\n"
+                         "mtc1 $2, %0\n"
+                         : "=f"(dist2) : "r"(&d) : "$2");
     iosInverseMatrix(mtx, mtx);
     iosApplyRotMatrix(&dir, mtx, &d);
     iosGetStabXZVector(&dir, &dir);
@@ -71,12 +67,12 @@ void sound3DCalc(Sound3D *s, Vec4 *pos, Vec4 *cam, void *mtx)
         vol = 1.0f;
     } else if (dist2 < b || c == 0.0f) {
         vol = 1.0f / (dist2 / b + 1.0f);
+    } else if (!(dist2 < c)) {
+        vol = 0.0f;
     } else {
         vol = 0.0f;
-        if (dist2 < c) {
-            if (!(c <= b))
-                vol = 1.0f / ((dist2 - b) / (c - b) + 1.0f) - 0.5f;
-        }
+        if (!(c <= b))
+            vol = 1.0f / ((dist2 - b) / (c = c - b) + 1.0f) - 0.5f;
     }
     if (p->inner < 0.0f)
         vol = 1.0f - vol;
@@ -84,4 +80,3 @@ void sound3DCalc(Sound3D *s, Vec4 *pos, Vec4 *cam, void *mtx)
     sndSepSetVol(s, vol);
     sndSepSetPan(s, pan);
 }
-#endif
