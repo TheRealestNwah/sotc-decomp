@@ -1,4 +1,4 @@
-/* Parked: 14 diffs, same size (424 words). BGM slot state machine: steps the 3 entries of B_001887D0 through standby (1-2), delayed start with bgmPlay/bgmChangeVol plus onPlay script and caption (3), per-tick volume control from distance and conditions with end-mode checks (4), bgmStop (5) and slot release (6). Remaining: register choice only. The caption handle address lives in a1 in the Original (v1 here), and the %hi of D_0017A968 in firstObj uses a0 in the Original (a1 here). */
+/* Parked: 13 diffs, same size (424 words). BGM slot state machine: steps the 3 entries of B_001887D0 through standby (1-2), delayed start with bgmPlay/bgmChangeVol plus onPlay script and caption (3), per-tick volume control from distance and conditions with end-mode checks (4), bgmStop (5) and slot release (6). Pinning the case 4 firstObj() result to a0 fixes the condition register. Remaining: register choice only. The caption handle address lives in a1 in the Original (v1 here), and the %hi of D_0017A968 in firstObj uses a0 in the Original (a1 here). */
 #ifdef NONMATCHING
 typedef struct Entry {
     unsigned int bgm;
@@ -178,7 +178,7 @@ static void func_0002F770(void)
                 float m;
                 int j;
                 if (v->kind == 0) {
-                    if (firstObj() != 0) {
+                    register void *o4 asm("$4") = firstObj(); if (o4 != 0) {
                         t = *(float *)(getSCRDataCtrlWork() + 0x4080);
                         e = (Entry *)p->owner;
                     } else {
