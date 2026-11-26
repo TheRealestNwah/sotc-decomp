@@ -1,5 +1,6 @@
-/* NONMATCHING: 4 diffs. The no-parent branch loads chr->pos into $v1 before
- * reloading chr->dyn; the Original reloads chr->dyn first and uses $v0. */
+/* NONMATCHING: 2 diffs. In the no-parent branch, pinning the first chr->pos copy
+ * to $v0 gives the Original's registers; what remains is the second copy, where
+ * the Original reloads chr->dyn before chr->pos and ours loads chr->pos first. */
 #ifdef NONMATCHING
 typedef unsigned int s128 __attribute__((mode(TI)));
 typedef union {
@@ -219,7 +220,10 @@ void func_000586C0(Chr *chr, float dt, float invdt)
         __asm__ __volatile__("" : : : "memory");
         chr->dyn->parented = chr->parent;
     } else {
-        dyn->vel.q = chr->pos.q;
+        {
+            register s128 q __asm__("$2") = chr->pos.q;
+            dyn->vel.q = q;
+        }
         chr->dyn->prevVel.q = chr->pos.q;
         chr->dyn->parented = chr->parent;
         chr->dyn->dirVel.q = ZeroVector;
