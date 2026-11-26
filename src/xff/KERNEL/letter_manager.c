@@ -15,7 +15,19 @@ extern void **isysGroupForNext(void **, int);
 extern void isysGroupForExit(void *, int);
 extern void discard_all_letter_in_post(int);
 extern void close_letter_post(int);
-extern int func_0001BE30(unsigned char *, void *, int *);
+extern void *get_letter_receiver_data(void *);
+
+typedef struct {
+    char pad0[0xC];
+    int (*filter)(void *, void *);
+} Receiver;
+
+typedef struct {
+    char pad0[0x1C];
+    int post;
+} Postman;
+
+static int func_0001BE30(unsigned char *, void *, int *);
 
 void doit_letter_manager(void)
 {
@@ -72,4 +84,18 @@ void send_letter(int *arg0)
     push_back_letter_in_post(B_000C2750, *arg0);
     decrement_letter_refcount(arg0);
     *arg0 = 0;
+}
+
+/* Delivers a letter to one receiver, unless its filter refuses it. */
+static int func_0001BE30(unsigned char *obj, void *letter, int *type)
+{
+    Postman *p = (Postman *)obj;
+    Receiver *r = (Receiver *)type;
+
+    if (r->filter) {
+        if (r->filter(p, get_letter_receiver_data(letter)) != 1)
+            return 0;
+    }
+    push_back_letter_in_post(p->post, (int)letter);
+    return 1;
 }
