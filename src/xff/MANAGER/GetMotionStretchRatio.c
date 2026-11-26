@@ -1,4 +1,4 @@
-/* Parked: 20 diffs. The Original keeps the stretch word and its >>20 apart in the unsigned-to-float conversion (srl 1 on the shifted value) and reloads the animation pointer after the recover check without a branch-likely. */
+/* Parked: 17 diffs. An empty volatile asm before the animation reload keeps the reload out of a branch-likely delay slot, as in the Original. Left: the reload sits at the join instead of on the recover-call path (which leaves the bnez delay slot empty), and the Original keeps the stretch word and its >>20 apart in the unsigned-to-float conversion (srl 1 on the shifted value, ours srl 21 on the word). */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern int _AnimObjDef;
@@ -42,6 +42,7 @@ static inline char *animationData(AnimationDefinition *definition)
 {
     if (definition->animation == 0)
         iosJumpRecoverPoint(RO_0013E670, definition->name);
+    __asm__ volatile("");
     return definition->animation;
 }
 
