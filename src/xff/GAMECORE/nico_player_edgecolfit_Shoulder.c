@@ -1,4 +1,4 @@
-/* Parked: 25 diffs, same size (includes the split tail func_00092920). Shoulder edge fit: while the geometry pointer is an edge (type 4) and the root dynamics allow it, offsets the pointer position along the class quaternion axes and tries charrootdyn_detectCharClimbableWall; on a hit it clamps the hit parameter to [0, 1], otherwise it clips the edge parameter against the planes through both edge vertices, intersects the edge with the target plane and the class plane, and pushes the result off any collision found by ClipCollisionFinderCallBack. The object-space offset of B_0018B7C0 (x and w zeroed) is added and func_00091CE0 stores B_0018B800, setting B_0018B804. Remaining: the Original allocates fp = obj, s6 = &res, s7 = &B_0018B7B0 (ours s7/fp/s6), sets t1 last in the detect call, reloads the clamped w through a1 instead of forwarding f20, and stores the zeroed x/w through f0. */
+/* Parked: 3 diffs, same size (includes the split tail func_00092920). Shoulder edge fit: while the geometry pointer is an edge (type 4) and the root dynamics allow it, offsets the pointer position along the class quaternion axes and tries charrootdyn_detectCharClimbableWall; on a hit it clamps the hit parameter to [0, 1], otherwise it clips the edge parameter against the planes through both edge vertices, intersects the edge with the target plane and the class plane, and pushes the result off any collision found by ClipCollisionFinderCallBack. The object-space offset of B_0018B7C0 (x and w zeroed) is added and func_00091CE0 stores B_0018B800, setting B_0018B804. Remaining: t1 (cc + 0xE20) is set before the f14/f15 moves in the detect call; the Original puts it in the jal delay slot. The hit clamp passes p through an opaque asm so w is reloaded through a1, and the zeroed x/w go through one float local, stored w first. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } Vec4 __attribute__((aligned(16)));
@@ -225,8 +225,8 @@ void nico_player_edgecolfit_Shoulder(int *obj)
                     p = &res.pos;
                     if (!(zero <= p->w))
                         p->w = zero;
-                    if (!(p->w <= 1.0f))
-                        p->w = 1.0f;
+                    __asm__ __volatile__("" : "+r"(p));
+                    { float w = p->w; __asm__ __volatile__(""); if (!(w <= 1.0f)) p->w = 1.0f; }
                     GetGeometryPointerPosition(&pos, p);
                 } else {
                     GetCollisionEdgePointerVertexPoint(&ev, gp);
@@ -273,9 +273,7 @@ void nico_player_edgecolfit_Shoulder(int *obj)
                     }
                 }
                 matVec(&res.v, (char *)obj + 0x70, B_0018B7C0);
-                p = &res.v;
-                p->x = 0.0f;
-                p->w = 0.0f;
+                { float z = 0.0f; res.v.w = z; res.v.x = z; }
                 matVec(&res.v, (char *)obj + 0x30, &res.v);
                 add(&pos, &pos, &res.v);
                 B_0018B800 = func_00091CE0(obj, &pos, B_0018B7B0, B_0018B7F0, B_0018B7E0, 0);
