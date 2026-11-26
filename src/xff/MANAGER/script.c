@@ -40,7 +40,7 @@ typedef struct ScriptParam {
 } ScriptParam;
 
 extern int execScriptGroup[];
-extern void D_00087920(void);
+static void T_00087920(void *o);
 
 extern void *GetScriptLayoutClass(void *);
 extern void *GetScriptCharacterClass(void *);
@@ -176,7 +176,7 @@ int *createScriptObj(int script, int param, void *parent, int thread, int workSi
 
     obj = _isysCreateObj(parent, 6, 0x90, workSize + isysGetSubThreadWorkSize(thread) + 0x33,
                          func_000878B0, 4);
-    isysSetObjImmediateDeleteFunc(obj, D_00087920);
+    isysSetObjImmediateDeleteFunc(obj, T_00087920);
     isysInitISYSLetterObj(obj);
     memset(&info, 0, sizeof(info));
     info.func = script;
@@ -287,4 +287,33 @@ static void func_000878B0(char *o)
         isysDeleteSubThread(o);
     }
     isysFlushISYSLetterObj(o);
+}
+
+typedef void (*Hook)(void *, void *);
+
+static void T_00087920(void *o)
+{
+    char *s = GetScriptClass(o);
+    char *grp;
+    void **g;
+    void *last;
+
+    if (*(Hook *)(s + 0x54) != 0) {
+        (*(Hook *)(s + 0x54))(o, *(void **)(s + 0x58));
+    }
+    if (*(Hook *)(s + 0x5C) != 0) {
+        (*(Hook *)(s + 0x5C))(o, *(void **)(s + 0x60));
+    }
+    grp = s + 0x30;
+    last = 0;
+    g = isysGroupForFirst(grp, 0);
+    while (g != 0) {
+        last = *g;
+        isysRequestDeleteObj(last);
+        g = isysGroupForNext(g, 0);
+    }
+    if (last != 0) {
+        isysGroupForExit(last, 0);
+    }
+    isysDeleteGroupAllObj(grp);
 }
