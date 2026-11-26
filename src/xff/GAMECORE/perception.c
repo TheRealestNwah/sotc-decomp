@@ -1,35 +1,6 @@
-typedef int s128 __attribute__((mode(TI)));
-typedef union {
-    s128 q;
-    float f[4];
-} Vec4;
-typedef union {
-    struct { int a, b, c, d; } i;
-    float f[4];
-} PercRes;
-typedef struct {
-    char pad0[0x18];
-    float lost;
-    float h;
-    float v;
-    float bow;
-} PercParam;
-typedef struct {
-    Vec4 pos;
-    Vec4 last;
-    float hTime;
-    float vTime;
-    float lostTime;
-    int lost;
-    PercRes res;
-    PercParam *param;
-    int unk44;
-    void *target;
-    char *targetLay;
-    float distXZ;
-    float dist;
-    float bowTime;
-} PercWork;
+#include "common.h"
+#include "gamecore/perception.h"
+
 extern struct { char pad[0x190]; float dt; } gcGlobalVar;
 extern char *getSCRDataCtrlWork(void *);
 extern char *GetLayoutClass(void *);
@@ -71,11 +42,10 @@ static inline float distXYZ(void *a, void *b)
 #define DT (gcGlobalVar.dt)
 /* PercRes and the target layout's position pointer share unions with floats so
  * their loads stay after the preceding float stores, as in the Original. */
-union PU { Vec4 *p; float f; };
+union PU { PercVec4 *p; float f; };
 /* prm is pinned to s4 and the first quatPosToMatrix call goes through a copy
  * that pins its quat/pos pointers to v1/a1, as in the Original. */
 typedef float Vec4_perceptionExec[4] __attribute__((aligned(16)));
-typedef unsigned int u_long128 __attribute__((mode(TI)));
 typedef union {
     u_long128 q;
     Vec4_perceptionExec f;
@@ -258,25 +228,9 @@ union PerceptionVector {
     int words[4];
     void *pointers[4];
 };
-typedef struct {
-    char pad[0x134];
-    /* The char member lets the stores below alias the pointer, so it is
-       reloaded for the second copy, as in the original. */
-    union {
-        u_long128 *pos;
-        char alias;
-    } pos;
-} PerceptionObj;
-typedef struct {
-    u_long128 last[2];
-    char pad[0x2C];
-    PerceptionObj *obj;
-} PerceptionWork;
 extern int _omakeSelectFlagChk(int);
 extern unsigned long *GetCollisionDBAttributeAdr(void *surface);
 
-int perceptionExec(void *obj, char *w, int *res, float *target);
-int equipmentInvisibilityCloak(int a, int b, int c, int d);
 static int func_00122CB8(void *surface);
 
 void updatePerceptionWork(void *obj)
@@ -422,8 +376,8 @@ void setPerceptionParam(void *arg0, int arg1)
 
 int perceptionExec2(void *obj, char *w, void *target)
 {
-    Vec4 pos;
-    Vec4 quat;
+    PercVec4 pos;
+    PercVec4 quat;
     char *ch = GetCharacterClass(obj);
     char *lc = GetLayoutClass(obj);
     char *bone;
