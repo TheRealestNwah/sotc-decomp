@@ -13,7 +13,6 @@ extern int *GetNextSortObj(void *, int *);
 extern char *GetLayoutClass(int);
 extern char *GetGeoDispClass(int);
 extern void iosCopyMatrix(void *, void *);
-#ifdef NONMATCHING
 typedef struct { float x, y, z, w; } __attribute__((aligned(16))) V4;
 typedef union { char *p; float f; int i; u64 d; s128 q; } UP;
 #define PTR(a) (((UP *)(a))->p)
@@ -54,8 +53,9 @@ static inline float innerProduct(void *a, void *b)
         "vaddax.x ACC, vf0, vf6x\n"
         "vmadday.x ACC, vf7, vf6y\n"
         "vmaddz.x vf6, vf7, vf6z\n"
-        "qmfc2.ni %0, vf6\n"
-        : "=r"(dot) : "r"(a), "r"(b));
+        "qmfc2.ni $2, vf6\n"
+        "mtc1 $2, %0\n"
+        : "=f"(dot) : "r"(a), "r"(b) : "$2");
     return dot;
 }
 
@@ -149,9 +149,6 @@ static void func_00079788(int obj, char *unused)
 }
 #undef DD
 #undef CC
-#else
-extern void func_00079788(int, char *);
-#endif
 
 typedef void (*DispFn)(int);
 
