@@ -1,4 +1,4 @@
-/* ~19 diffs, same length. Fetches the collision GP db entry, and when the collision resource version is >= 5 with a camera attribute table (res+0x44) decodes the camera-attribute short index of the hit shape (packed node/shape reference, either from the node shape array at node+0x34 or via the plane index table at res+0x54) and writes (index << 15) plus 1.0f as the share record, returning 1; otherwise falls back to the generic attribute word masked with 0x1F8000. A long return type and the if/else index assignment brought it from 58 to 19. Remaining diffs: the original keeps r and the index in v0 and returns through a beql on out==0, shifts the index with a 32-bit sll (ours dsll; an int shift jumped to 90), and swaps a0/a1 in the packed-shape path and the fallback tail. */
+/* NONMATCHING: 5 diffs, same length. Fetches the collision GP db entry, and when the collision resource version is >= 5 with a camera attribute table (res+0x44) decodes the camera-attribute short index of the hit shape (packed node/shape reference, either from the node shape array at node+0x34 or via the plane index table at res+0x54) and writes (index << 15) plus 1.0f as the share record, returning 1; otherwise falls back to the generic attribute word masked with 0x1F8000. The camera path is an int-returning inline (getCameraAttribute) whose result goes into a long r, which gives the Original's 32-bit sll, the shared v0 result and the beql on out == 0; a node pointer local fixes the packed-shape registers. Remaining: the fallback tail computes index * 16 and the mask constant in v0/a0 instead of a0/a1. */
 typedef struct { char pad0[0x30]; int attribute; } FullCollisionShape;
 typedef struct { unsigned short attribute; char pad2[0x12]; } PackedCollisionShape;
 typedef struct { char pad0[0x3C]; int attribute; } CollisionPlane;
@@ -43,34 +43,41 @@ typedef struct { void *object; unsigned int packed; } GP;
 extern GP *GetGeometryPointerCollisionDB(char *);
 
 #ifdef NONMATCHING
-long GetCollisionCameraAttributeShareArray(long *out, char *gp)
+static inline int getCameraAttribute(long *out, GP *db)
 {
-    GP *db = GetGeometryPointerCollisionDB(gp);
     CollisionResource *res = GetLayoutClass(db->object)->collision->resource;
-    int r;
     int index;
 
-    r = -1;
     if (*(int *)res >= 5 && *(int *)((char *)res + 0x44) != 0) {
-        if (db->object != 0) {
-            CollisionResource *rr;
-            int nodeIndex = (db->packed >> 24) & 0x7F;
-            int shapeIndex = db->packed & 0xFFFFFF;
+    if (db->object != 0) {
+        CollisionResource *rr;
+        int nodeIndex = (db->packed >> 24) & 0x7F;
+        int shapeIndex = db->packed & 0xFFFFFF;
 
-            rr = GetLayoutClass(db->object)->collision->resource;
-            if ((int)db->packed < 0)
-                index = ((unsigned short *)*(char **)((char *)&rr->nodes[nodeIndex] + 0x34))[shapeIndex];
-            else
-                index = ((unsigned short *)*(char **)((char *)rr + 0x54))[rr->nodes[nodeIndex].planeIndices[shapeIndex]];
-        } else {
-            index = -1;
+        rr = GetLayoutClass(db->object)->collision->resource;
+        if ((int)db->packed < 0)
+        {
+            CollisionNode *node = &rr->nodes[nodeIndex];
+            index = ((unsigned short *)*(char **)((char *)node + 0x34))[shapeIndex];
         }
-        if (out != 0) {
-            *out = (long)index << 15;
-            ((float *)out)[2] = 1.0f;
-        }
-        r = 1;
+        else
+            index = ((unsigned short *)*(char **)((char *)rr + 0x54))[rr->nodes[nodeIndex].planeIndices[shapeIndex]];
+    } else {
+        index = -1;
     }
+    if (out != 0) {
+        *out = index << 15;
+        ((float *)out)[2] = 1.0f;
+    }
+    return 1;
+    }
+    return -1;
+}
+
+long GetCollisionCameraAttributeShareArray(long *out, char *gp)
+{
+    long r = getCameraAttribute(out, GetGeometryPointerCollisionDB(gp));
+
     if (r < 0) {
         GP *d2 = GetGeometryPointerCollisionDB(gp);
         long v;
