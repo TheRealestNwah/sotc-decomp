@@ -1,13 +1,9 @@
-/* Parked attempt: 5 differing words, same size (129 words), with -fno-strict-aliasing.
- * Remaining diffs are the operand setup order before the lerp asm (lui/addiu of
- * All1Vector and obj+0x70 vs the lwc1 of prm+0x68 and its mfc1 register). */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef union { float f[4]; s128 q; } Col;
 extern Vec4 All1Vector;
 
-void func_000C0178(char *obj, char *prm, char *a2, Vec4 *v, float *m0)
+static void func_000C0178(char *obj, char *prm, char *a2, Vec4 *v, float *m0)
 {
     register float *m __asm__("$12") = m0;
     Col c;
@@ -72,14 +68,15 @@ void func_000C0178(char *obj, char *prm, char *a2, Vec4 *v, float *m0)
                 *p = 1.0f;
             }
         }
-        __asm__ __volatile__("qmtc2.ni %0, vf7\n"
-                             "lqc2 vf5, 0x0(%1)\n"
+        __asm__ __volatile__("mfc1 $8, %2\n"
+                             "qmtc2.ni $8, vf7\n"
+                             "lqc2 vf5, 0x0(%0)\n"
                              "lqc2 vf6, 0x0(%3)\n"
                              "vsubx.w vf8, vf0, vf7x\n"
                              "vmulax.xyz ACC, vf5, vf7x\n"
                              "vmaddw.xyz vf5, vf6, vf8w\n"
-                             "sqc2 vf5, 0x0(%2)\n"
-                             : : "r"(*(float *)(prm + 0x68)), "r"(c.f), "r"(obj + 0x70), "r"(&All1Vector) : "memory");
+                             "sqc2 vf5, 0x0(%1)\n"
+                             : : "r"(c.f), "r"(obj + 0x70), "f"(*(float *)(prm + 0x68)), "r"(&All1Vector) : "$8", "memory");
     }
     *(s128 *)(obj + 0x80) = v[3].q;
     if (*(int *)(prm + 0xB0) == 1 || *(int *)(a2 + 0x164) == 2) {
@@ -105,6 +102,3 @@ void func_000C0178(char *obj, char *prm, char *a2, Vec4 *v, float *m0)
     }
     *(int *)(obj + 0x110) = 1;
 }
-#else
-extern void func_000C0178(char *obj, char *prm, char *a2, void *v, float *m0);
-#endif
