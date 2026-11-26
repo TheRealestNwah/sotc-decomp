@@ -1,3 +1,6 @@
+/* Sg2 SMF player, part one: the slot release-level dump and opening a
+ * Standard MIDI File (format 0) for playback on a free player slot. */
+
 typedef struct {
     int on;
     int a;
@@ -30,14 +33,67 @@ typedef struct {
 
 extern Smfp B_000E0DC0[];
 extern int B_000E11C4;
+extern int Sg2RemoteGetSlotReleaseLv(int);
+extern int sprintf(char *, const char *, ...);
+extern char *strcpy(char *, const char *);
+extern char *strcat(char *, const char *);
 extern double dpmul(double, double);
 extern unsigned int Sg2CtrlGetTickMode(void);
 extern int DIntr(void);
 extern void EIntr(void);
 extern int vab_check_alive(int);
-extern int func_0002B830(Smfp *);
-extern int func_0002B8F0(Smfp *);
 extern int Sg2ModOpenBgm(int, int);
+
+int Sg2SmfpOpenSelCore(int vab, unsigned char *data, int arg);
+
+/* Writes the release level of all 48 slots to output, 12 per line. */
+void Sg2SlotEnvTbl(char *output)
+{
+    char text[16];
+    int slot;
+    strcpy(output, "");
+    for (slot = 0; slot < 48; slot++) {
+        sprintf(text, "%04x ", Sg2RemoteGetSlotReleaseLv(slot));
+        if ((slot + 1) % 12 == 0)
+            strcat(text, "\n");
+        strcat(output, text);
+    }
+}
+
+/* Reads the MThd header chunk: only format 0 with one track is accepted. */
+static int func_0002B830(Smfp *s)
+{
+    unsigned char *p = s->p60;
+    int len = (p[4] << 24) | (p[5] << 16) | (p[6] << 8) | p[7];
+    int format = (p[8] << 8) | p[9];
+    int tracks = (p[10] << 8) | p[11];
+    int division = (p[12] << 8) | p[13];
+
+    if (len != 6) {
+        return -1;
+    }
+    if (format != 0) {
+        return -1;
+    }
+    if (tracks != 1) {
+        return -1;
+    }
+    s->d38 = division;
+    s->p60 = p + 14;
+    return 0;
+}
+
+/* Skips the MTrk chunk header. */
+static int func_0002B8F0(Smfp *s)
+{
+    s->p60 += 8;
+    return 0;
+}
+
+int Sg2SmfpOpen(int vab, unsigned char *data, int arg)
+{
+    return Sg2SmfpOpenSelCore(vab, data, 2);
+}
 
 int Sg2SmfpOpenSelCore(int vab, unsigned char *data, int arg)
 {
