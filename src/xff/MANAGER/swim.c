@@ -1,5 +1,4 @@
 typedef int s128 __attribute__((mode(TI)));
-
 typedef struct {
     s128 q0;
     s128 q10;
@@ -10,7 +9,6 @@ typedef struct {
     int x80;
     int pad84[3];
 } SlideResult;
-
 extern s128 ZeroPoint;
 extern s128 ZeroVector;
 extern char *GetCharacterClass(int);
@@ -28,7 +26,12 @@ extern void charrootdyn_setHColFindStatus(char *, void *, float);
 extern void charrootdyn_getChainStatus(int);
 extern void charrootdyn_getvelocity(void *, void *, void *, float);
 extern void GetCharaVCollisionStatus(char *);
-extern int func_0006BE30();
+#define rotatePointR(o, p, q, S) do { register void *_o asm("a0") = (o); register void *_p asm("v0") = (p); S; __asm__ __volatile__("lqc2 vf08, 0x0(%1)\n" "vaddw.xyz vf12, vf00, vf00w\n" "lqc2 vf11, 0x0(%2)\n" "vmr32.w vf14, vf00\n" "vmr32.w vf15, vf00\n" "vmr32.w vf16, vf00\n" "vopmula.xyz ACC, vf11, vf12\n" "vmadd.xyz vf11, vf00, vf00\n" "vmadd.xyz vf10, vf11, vf12\n" "vmul.xyz vf13, vf11, vf10\n" "vopmula.xyz ACC, vf11, vf10\n" "vmaddw.xyz vf15, vf10, vf11w\n" "vmsubw.xyz vf16, vf10, vf11w\n" "vopmula.xyz ACC, vf13, vf12\n" "vmadd.xyz vf17, vf13, vf12\n" "vopmula.xyz ACC, vf15, vf12\n" "vmadd.xyz vf15, vf00, vf00\n" "vsub.xyz vf14, vf12, vf17\n" "vmove.yz vf17, vf14\n" "vmove.y vf14, vf16\n" "vmove.y vf16, vf15\n" "vmove.y vf15, vf17\n" "vmove.z vf14, vf15\n" "vmove.z vf15, vf16\n" "vmove.z vf16, vf17\n" "vmulax.xyzw ACC, vf14, vf08x\n" "vmadday.xyzw ACC, vf15, vf08y\n" "vmaddaz.xyzw ACC, vf16, vf08z\n" "vmaddw.xyzw vf10, vf00, vf08w\n" "sqc2 vf10, 0x0(%0)\n" : : "r"(_o), "r"(_p), "r"(q)); } while (0)
+#define NEARZERO(x) ((x) < 0.0f ? -0.01f < (x) : (x) < 0.01f)
+extern void ForceUnparentLayoutObj(void *);
+extern long *GetCollisionDBAttributeAdr(void *);
+
+static int func_0006BE30(void *collision);
 
 static inline void rotatePoint(void *out, void *point, void *quaternion)
 {
@@ -65,8 +68,6 @@ static inline void rotatePoint(void *out, void *point, void *quaternion)
                          : : "r"(out), "r"(point), "r"(quaternion));
 }
 
-#define rotatePointR(o, p, q, S) do { register void *_o asm("a0") = (o); register void *_p asm("v0") = (p); S; __asm__ __volatile__("lqc2 vf08, 0x0(%1)\n" "vaddw.xyz vf12, vf00, vf00w\n" "lqc2 vf11, 0x0(%2)\n" "vmr32.w vf14, vf00\n" "vmr32.w vf15, vf00\n" "vmr32.w vf16, vf00\n" "vopmula.xyz ACC, vf11, vf12\n" "vmadd.xyz vf11, vf00, vf00\n" "vmadd.xyz vf10, vf11, vf12\n" "vmul.xyz vf13, vf11, vf10\n" "vopmula.xyz ACC, vf11, vf10\n" "vmaddw.xyz vf15, vf10, vf11w\n" "vmsubw.xyz vf16, vf10, vf11w\n" "vopmula.xyz ACC, vf13, vf12\n" "vmadd.xyz vf17, vf13, vf12\n" "vopmula.xyz ACC, vf15, vf12\n" "vmadd.xyz vf15, vf00, vf00\n" "vsub.xyz vf14, vf12, vf17\n" "vmove.yz vf17, vf14\n" "vmove.y vf14, vf16\n" "vmove.y vf16, vf15\n" "vmove.y vf15, vf17\n" "vmove.z vf14, vf15\n" "vmove.z vf15, vf16\n" "vmove.z vf16, vf17\n" "vmulax.xyzw ACC, vf14, vf08x\n" "vmadday.xyzw ACC, vf15, vf08y\n" "vmaddaz.xyzw ACC, vf16, vf08z\n" "vmaddw.xyzw vf10, vf00, vf08w\n" "sqc2 vf10, 0x0(%0)\n" : : "r"(_o), "r"(_p), "r"(q)); } while (0)
-
 static inline void addXYZ(void *out, void *a, void *b)
 {
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -93,8 +94,6 @@ static inline void scaleXYZW(void *v, float s)
                          "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(v), "r"(s) : "memory");
 }
-
-#define NEARZERO(x) ((x) < 0.0f ? -0.01f < (x) : (x) < 0.01f)
 
 void swim(int id, s128 *last, s128 *vel, int vcol, float unused, float dt, float vt, int wind)
 {
@@ -188,4 +187,20 @@ void swim(int id, s128 *last, s128 *vel, int vcol, float unused, float dt, float
     charrootdyn_getvelocity(cls + 0x30, pos, prev, vt);
     if (vcol != 0)
         GetCharaVCollisionStatus(cls);
+}
+
+void motrootdyn_startswim(void *actor, char *m)
+{
+    ForceUnparentLayoutObj(actor);
+    *(float *)(m + 0xB30) = *(float *)(m + 0x34) * 0.5f;
+}
+
+static int func_0006BE30(void *collision)
+{
+    long attr = *GetCollisionDBAttributeAdr(collision);
+
+    if ((attr & 0x7C00) == 0x3C00) {
+        return 0;
+    }
+    return (attr & 0x7C000000) != 0x14000000;
 }
