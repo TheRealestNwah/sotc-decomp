@@ -1,4 +1,4 @@
-/* Parked: 17 diffs. The Original keeps point in $s4, e2 in $s5, the vertex
+/* Parked: 15 diffs. Passing &e1 straight into getST (as in GetSTPositionOfCollisionDB) fixes the vertex array and e1 registers. The Original keeps point in $s4, e2 in $s5 (still swapped here), the vertex
  * array in $s6 and e1 in $s7 (gcc 2.96 rotates them), loads the -2e-5
  * constant before storing s and t, and loads the matrix row index before
  * the matrix base. getSTDB is an inlined copy of GetSTPositionOfCollisionDB
@@ -195,7 +195,7 @@ static inline int getSTDB(float *s, float *t, EdgeRef *edge, Vec4 *point)
                          "sqc2 vf7, 0x0(%2)
 "
                          : : "r"(point), "r"(v[0]), "r"(&d) : "memory");
-    getST(s, t, pe1, pe2, &d);
+    getST(s, t, &e1, pe2, &d);
     if (*s < -0.00002f)
         return 0;
     if (*t < -0.00002f)
