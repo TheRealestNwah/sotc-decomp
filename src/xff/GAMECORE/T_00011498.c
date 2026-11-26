@@ -1,12 +1,12 @@
-/* Parked: 13 diffs, 268 words (same length). Caption job script (started by func_000118C8):
+/* Parked: 6 diffs, 268 words (same length). Caption job script (started by func_000118C8):
  * copies its 0x34-byte job, then while captions are enabled (D_00179FE8) fades alpha out when
  * *hidden is set, otherwise runs the fade-in / hold / fade-out / done states on its clock
  * and draws the caption strip (texture tex, row style, height pos) as a GS sprite on its layer.
- * Remaining: the r = v copy stores its low half first (the Original stores 0x48 before 0x40),
- * the second gsReg(3) loads r.h before r.y, and the second gsReg(4) y offset adds 0x8000 in
- * 64-bit (daddu with a fresh ori) where the Original adds it in SImode through the
- * assembler's macro (ori at / addu). Writing that add in SImode makes gcc keep 0x8000 in a
- * saved register across the loop (263 diffs). */
+ * The second gsReg(4) 0x8000 add is SImode and must not be CSEd with the first one, so gcc
+ * folds it into an `la` (ori at / addu); the first gsReg(4) takes its 0x8000 through a
+ * laundered k. Remaining: the r = v copy stores its low half first (the Original stores
+ * 0x48 before 0x40), and the first gsReg(4) schedules addiu a0,4 after the subus. A 30-min
+ * permuter run found nothing better. */
 #ifdef NONMATCHING
 typedef struct { int tex; int *hidden; int state; int style; int pos; int layer; float len; float fadeIn; float fadeOut; float alpha; float time; int unk2C; int *count; } CaptionJob;
 typedef union { struct { int x, y, w, h; }; float f[4]; } __attribute__((aligned(8))) Rect;
@@ -84,9 +84,9 @@ static void T_00011498(CaptionJob *arg)
             gsReg(0, 0x156);
             gsReg(1, (long)v.x | ((long)v.y << 8) | ((long)v.w << 16) | ((long)v.h << 24) | ((long)0x3F800000 << 32));
             gsReg(3, (r.x + 8) | ((long)(r.y + 8) << 16));
-            gsReg(4, (0x8000 - ((w >> 1) << 4)) | ((long)((((h >> 1) - j->pos - 0x40) << 4) + 0x8000) << 16) | z);
+            { int p = j->pos; int k = 0x8000; __asm__("" : "+r"(k)); gsReg(4, (k - ((w >> 1) << 4)) | ((long)((((h >> 1) - p - 0x40) << 4) + k) << 16) | z); }
             gsReg(3, (r.x + r.w + 8) | ((long)(r.y + r.h + 8) << 16));
-            gsReg(4, (0xA000 - ((w >> 1) << 4)) | ((long)(((h >> 1) - j->pos) << 4) + 0x8000 << 16) | z);
+            gsReg(4, (0xA000 - ((w >> 1) << 4)) | ((long)((((h >> 1) - j->pos) << 4) + 0x8000) << 16) | z);
             gsReg(0x47, 0x50000);
             gsRegEnd();
             iosDlPopLayer();
