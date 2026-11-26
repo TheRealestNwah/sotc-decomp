@@ -1,4 +1,4 @@
-/* Parked: 23 diffs, same size (209 words) (193 before; flag -fno-strict-aliasing). Fixes: a real float `y` (zero, copied from x) for the `+ 0.0f` y offset (original keeps it in f23), alpha as the last call argument in a conditional (`cond ? alpha * 0.6f : alpha`), `fdy` converted before the layout loads, 0.6f, and the missing-glyph branch as `if (i > 0) x += w; else x += w * 0.5f`. Register roles (text s7, glyphs s6, buf fp) now come out naturally. Remaining: the string address setup order before the first iosSPrintf, and flags/alpha scheduling around spriteDrawSprite. */
+/* Parked: 11 diffs, same size (209 words) (23 before; flag -fno-strict-aliasing). spriteDrawSprite takes its six floats before the two ints (pri, then the text's 0x70 field), like func_00095218 and func_00099118. Earlier fixes: a real float `y` (zero, copied from x) for the `+ 0.0f` y offset (original keeps it in f23), alpha as the last float argument in a conditional (`cond ? alpha * 0.6f : alpha`), `fdy` converted before the layout loads, 0.6f, and the missing-glyph branch as `if (i > 0) x += w; else x += w * 0.5f`. Remaining: the string address setup order before the first iosSPrintf, and load scheduling around the two spriteSetPosition/spriteDrawSprite calls. */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern char RO_00140670[];
@@ -12,7 +12,7 @@ extern char *strcat(char *, const char *);
 extern void spriteSetPosition(int *, float, float);
 extern void spriteSetScale(int *, float, float);
 extern void spriteSetTextureCoordinateUV(int *, float, float, float, float);
-extern void spriteDrawSprite(int *, int, int, int, float, float, float, float, float, float);
+extern void spriteDrawSprite(int *, int, float, float, float, float, float, float, int, int);
 
 typedef struct {
     char c[11];
@@ -70,11 +70,12 @@ void func_00095458(int *spr, char *layout, char *text, int width, float alpha)
                     int dy = getDrawScreenHeight() >= 0x1C0 ? 0 : *(int *)(*(char **)layout + 8);
                     float fdy = (float)dy;
                     unsigned int flags = *(unsigned int *)(layout + 8);
-                    spriteDrawSprite(spr, *(int *)(layout + 0x24), (flags >> 14) & 0xF, *(int *)(text + 0x70),
+                    spriteDrawSprite(spr, *(int *)(layout + 0x24),
                                      *(float *)(layout + 0x1C), *(float *)(layout + 0x20) + fdy,
                                      *(float *)(layout + 0x28), *(float *)(layout + 0x2C),
                                      *(float *)(layout + 0x30),
-                                     (!((flags >> 20) & 1) && (*(unsigned int *)(layout + 0x38) & 0x1FF)) ? alpha * 0.6f : alpha);
+                                     (!((flags >> 20) & 1) && (*(unsigned int *)(layout + 0x38) & 0x1FF)) ? alpha * 0.6f : alpha,
+                                     (flags >> 14) & 0xF, *(int *)(text + 0x70));
                 }
                 f = *(float *)(g + 0x34);
                 f *= 0.5f;
