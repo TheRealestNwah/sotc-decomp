@@ -7,10 +7,10 @@ extern void get_snipe_position_nico_sight_on(void *, int);
 extern void get_radiate_direction_nico_sight_on(void *, int);
 extern int get_predict_hit_position_nico_sight_on(void *, int);
 
-/* Parked: 20 diffs, 149 words vs 152. Remaining: only the final return. The Original
- * branches on (c - len < -rad) with bc1t to a shared `return 0` block and reaches
- * `return 1` through b + nop; gcc inverts it to bc1f and falls through. The early
- * exits, p50 (sp + 0x50, never assigned before) and v40 in $s1 match. */
+/* Parked: 1 diff, same size (152 words). Remaining: the final c - len < -rad test is
+ * bc1t in the Original but bc1tl in C. Both fill the delay slot with the shared
+ * `return 0` block's daddu, but gcc's reorg annuls it. The tail shapes tried (a result
+ * variable, `>=`, early `return 0`, scoped -rad, else blocks) leave it or regress. */
 #ifdef NONMATCHING
 int AI_CheckSightOn(int obj, float rad)
 {
@@ -123,8 +123,7 @@ int AI_CheckSightOn(int obj, float rad)
                          : "=f"(dot2) : "r"(dir), "r"(sp + 0x30) : "$2");
     if (!(0.0f < dot2))
         goto zero;
-    if (get_predict_hit_position_nico_sight_on(v40, sight) == 0)
-        return 1;
+    if (get_predict_hit_position_nico_sight_on(v40, sight) != 0) {
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
                          "vsub.xyzw vf7, vf5, vf6\n"
@@ -137,8 +136,9 @@ int AI_CheckSightOn(int obj, float rad)
                          "cfc2.ni $2, $vi22\n"
                          "mtc1 $2, %0\n"
                          : "=f"(c) : "r"(v40), "r"(sp) : "$2");
-    if (c - len < -rad)
-        goto zero;
+        if (c - len < -rad)
+            goto zero;
+    }
     return 1;
 zero:
     return 0;
