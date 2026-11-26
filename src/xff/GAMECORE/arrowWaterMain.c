@@ -85,7 +85,7 @@ static inline void setUnit(void *p)
 " : : "r"(p) : "memory");
 }
 
-/* 13 diffs. Places a new ripple: unit vectors at +0x50/+0x60, flags reset, offset (layout 0x70/0x74 of the owner's +0x114 data) rotated by the layout quaternion and added to its position, facing from ZUnitVector, angle via iosGetATan2fExact, then func_00052558. Remaining diffs: the Original schedules the Ofs zero stores and the second quaternion load differently. */
+/* 10 diffs. Places a new ripple: unit vectors at +0x50/+0x60, flags reset, offset (layout 0x70/0x74 of the owner's +0x114 data) rotated by the layout quaternion and added to its position, facing from ZUnitVector, angle via iosGetATan2fExact, then func_00052558. Loading the layout quaternion pointer through q before the first quatRotateVector gets the right temps there. Remaining diffs: the Original schedules the Ofs zero stores (t.y/t.w) after the lwc1/ld copy and uses a1 for the copy temp, and computes dir and ZUnitVector before the second quaternion load and sq. */
 #ifdef NONMATCHING
 static void func_00054388(char *p, int i)
 {
@@ -113,7 +113,7 @@ static void func_00054388(char *p, int i)
     t.z = *(float *)(((PU *)(w + 0x114))->c + 0x74);
     t.w = 0;
     ofs = t;
-    quatRotateVector((float *)&ofs, (float *)*(int *)(lay + 0x13C), (float *)&ofs);
+    q = (char *)*(int *)(lay + 0x13C); quatRotateVector((float *)&ofs, (float *)q, (float *)&ofs);
     addXYZ((float *)(p + 0x40), *(float **)(lay + 0x134), (float *)&ofs);
     *(s128 *)(p + 0x20) = *(s128 *)(p + 0x40);
     quatRotateVector(dir, (float *)*(int *)(lay + 0x13C), ZUnitVector);
