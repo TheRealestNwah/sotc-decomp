@@ -1,11 +1,8 @@
 /*
- * charrootdyn_parentpointxzfitstab: Parked attempt, 20 differing words of 347.
+ * charrootdyn_parentpointxzfitstab: Parked attempt, 5 differing words of 347.
  * Remaining differences:
  * - Both slope-limit fitting calls: the Original sets $f13 (mov.s from $f12)
- *   before $a3; this C sets it last.
- * - charrootdyn_getGPRelativePositionWithQ call: the Original sets $a0 before $a3.
- * - The Original keeps &mat in $a0 through the matrix/inverse blocks; this C
- *   uses $a3 (0x3C4-0x520).
+ *   before $a3 ($a3 fills the delay slot); this C sets $f13 last.
  */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
@@ -189,7 +186,9 @@ static void charrootdyn_parentpointxzfitstab(char *cls, char *node, Vec4 *keep)
     Vec4 off;
     Vec4 mat[4];
     Vec4 rel;
+    Vec4 *bq2;
     Vec4 inv[4];
+    Vec4 *dst;
     unsigned int *attr;
     char *gp;
     Vec4 *bq;
@@ -262,7 +261,8 @@ static void charrootdyn_parentpointxzfitstab(char *cls, char *node, Vec4 *keep)
         matApply((Vec4 *)(cls + 0xB30), inv, *(Vec4 **)(cls + 0x134));
         DivQuaternion(bq, &q, &gq);
     } else {
-        matApply(*(Vec4 **)(cls + 0x134), mat, (Vec4 *)(cls + 0xB30));
+        dst = *(Vec4 **)(cls + 0x134);
+        matApply(dst, mat, (Vec4 *)(cls + 0xB30));
     }
 }
 
