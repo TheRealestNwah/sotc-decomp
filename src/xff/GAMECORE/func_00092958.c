@@ -1,4 +1,4 @@
-/* Parked: 22 diffs, same size. Shoulder collision probe: transforms the motion node tool position, B_0018B7B0 and the class origin into object space, casts a cyclic Z/Y one-way collision probe along the class quaternion turned by -0x8000 about Z and -0x2000 about X, and on a hit writes either the hit position or a point rotated by the arcsine of the target direction. Called as T_00092958 from nico_player_colfit_Shoulder.c. Remaining: the Original recomputes the SetQuaternionByAxisRotateVWithNoRegularize argument address after the call (ours CSEs it), and the t2/f12 argument setup order. */
+/* Parked: 15 diffs, same size. The first two SetQuaternionByAxisRotateVWithNoRegularize addresses pass through an opaque asm so gcc recomputes them after the call like the Original. Shoulder collision probe: transforms the motion node tool position, B_0018B7B0 and the class origin into object space, casts a cyclic Z/Y one-way collision probe along the class quaternion turned by -0x8000 about Z and -0x2000 about X, and on a hit writes either the hit position or a point rotated by the arcsine of the target direction. Called as T_00092958 from nico_player_colfit_Shoulder.c. Remaining: the s0 = &qD0 setup sits after the first call (before it in the Original), the t2/f12 argument setup order, and the q130 call still CSEs its address and swaps the q120/q130 registers. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -184,9 +184,9 @@ static int func_00092958(s128 *out, int *obj0)
     __asm__ __volatile__(""); /* bare asm flushes cse before lengthXYZ */
     len = lengthXYZ(&vC0);
     rq = *(void **)(cc + 0x13C);
-    SetQuaternionByAxisRotateVWithNoRegularize(&qE0, -0x8000, ZUnitVector);
+    { void *pa = &qE0; __asm__("" : "+r"(pa)); SetQuaternionByAxisRotateVWithNoRegularize(pa, -0x8000, ZUnitVector); }
     quatMul(&qD0, rq, &qE0);
-    SetQuaternionByAxisRotateVWithNoRegularize(&qF0, -0x2000, XUnitVector);
+    { void *pb = &qF0; __asm__ __volatile__("" : "+r"(pb)); SetQuaternionByAxisRotateVWithNoRegularize(pb, -0x2000, XUnitVector); }
     quatMul(&qD0, &qD0, &qF0);
     if (charrootdyn_getCyclicCollisionDetectZYOneWayCB(&res, &v60, &qD0, 4, 1, cc + 0xE20, character_ikcolattrfilter, 0, len) ) {
     matVec(&qE0, m, &res.pos);
