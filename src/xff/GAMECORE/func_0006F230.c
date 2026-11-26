@@ -1,4 +1,4 @@
-/* Parked: 6 diffs, same size (213 words incl. the split tail func_0006F540). Sight-on camera yaw update: takes the actor's local Z direction (yaw/pitch at sp+0x20/0x24), aims from the target layout position (+0x29C height offset, VU0 vsub.xyz into +0x1F0) to get yaw/pitch at +0x200/+0x204, adds func_0006F578's offset into +0x208 and clamps it against +0x2C4..+0x2CC when +0x2BC or +0x2C0 is set. Mode 1 resets the two spring interpolators (+0x22C, +0x250); otherwise they are driven by gcGlobalVar.dt with the dead zone +0x2B0/+0x2B4, then +0x280 is clamped when +0x2B8 is set. Remaining: the yaw/pitch zero stores around the I(4) load (pitch first, yaw in the delay slot in the Original) and f1 vs f0 for the +0x208 load in the dead-zone-free path. */
+/* Parked: 4 diffs, same size (213 words incl. the split tail func_0006F540). Sight-on camera yaw update: takes the actor's local Z direction (yaw/pitch at sp+0x20/0x24), aims from the target layout position (+0x29C height offset, VU0 vsub.xyz into +0x1F0) to get yaw/pitch at +0x200/+0x204, adds func_0006F578's offset into +0x208 and clamps it against +0x2C4..+0x2CC when +0x2BC or +0x2C0 is set. Mode 1 resets the two spring interpolators (+0x22C, +0x250); otherwise they are driven by gcGlobalVar.dt with the dead zone +0x2B0/+0x2B4, then +0x280 is clamped when +0x2B8 is set. Remaining: the yaw/pitch zero stores around the I(4) load (Original: lw first, then the 0x24 store and the a1 move, with the 0x20 store in the jal delay slot; ours fills the slot with the a1 move). Declaration order, store order, comma expressions, barriers and a $f0 pin don't move it. The $f1 pin on the +0x208 load in the dead-zone-free path is needed. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union {
@@ -70,7 +70,7 @@ static void func_0006F230(char *o_, float a, float b, int mode)
     v.v.y = F(0x204);
     if (F(0x2B0) == 0.0f && F(0x2B4) == 0.0f) {
         doit_double_spring_interp_cntrl(o_ + 0x22C, 0.0f, gcGlobalVar.dt, 0);
-        v.v.x = F(0x208);
+        { register float t asm("$f1") = F(0x208); v.v.x = t; }
         doit_double_spring_interp_cntrl3D(o_ + 0x250, &v, 0, gcGlobalVar.dt);
     } else {
         in = 1;
