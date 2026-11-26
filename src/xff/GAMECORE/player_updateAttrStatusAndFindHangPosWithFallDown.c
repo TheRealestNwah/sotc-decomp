@@ -1,5 +1,4 @@
-/* Parked: 10 diffs, same size. Resets the player's grip/hang/slip script-control statuses, re-sets the hand-slip flags on an EDGEXZ root, then sums func_00090560 over the four attribute slots at B_0018B748 (after func_000910B0 when the animation has a resolved hang table), sets the grip statuses from the result, runs the fall-down hang search (func_000906D8 / func_00090F28) in the falling control modes, and relinks the layout's geometry pointer. The second loop's running result is pinned to v0, as in the Original. Remaining: v0/v1 swap on the B_0018B748 address and the ControlMode compare, and the second loop's setup order (the Original computes work + 0x70 before zeroing v0). */
-#ifdef NONMATCHING
+/* Resets the player's grip/hang/slip script-control statuses, re-sets the hand-slip flags on an EDGEXZ root, then sums func_00090560 over the four attribute slots at B_0018B748 (after func_000910B0 when the animation has a resolved hang table), sets the grip statuses from the result, runs the fall-down hang search (func_000906D8 / func_00090F28) in the falling control modes, and relinks the layout's geometry pointer. The second loop's running result is pinned to v0 and its work + 0x70 / work + 0xB0 arguments are hoisted into locals, which gives the Original's setup order; reading ControlMode_PLAYER_FALL before the character's mode gives its v0/v1 choice. */
 typedef struct { char pad[0x18]; } AttrSt;
 typedef struct { int pad0; int id; } ScriptCtrlDef;
 extern AttrSt B_0018B748[];
@@ -106,12 +105,14 @@ void player_updateAttrStatusAndFindHangPosWithFallDown(void *obj, char *work, in
         }
     }
     if (!done) {
+        char *p70 = work + 0x70;
         register int r2 asm("$2") = 0;
         AttrSt *q = B_0018B748;
+        char *pB0 = work + 0xB0;
         int k;
         k = 4;
         do {
-            r2 = func_00090560(q, work + 0x70, work + 0xB0, r2, obj);
+            r2 = func_00090560(q, p70, pB0, r2, obj);
             q++;
             k--;
         } while (k);
@@ -122,12 +123,14 @@ void player_updateAttrStatusAndFindHangPosWithFallDown(void *obj, char *work, in
     if (*(int *)(work + 0x60) & 2)
         CharaCtrlSetScriptCtrlStatus(obj, ScriptCtrlDef_SCRPlayerHandGripSub->id);
     if (*(int *)(work + 0x60) == 0 && noFall == 0) {
+        int fall;
         int mode;
         int hit;
         char *c2 = GetCharacterClass(obj);
+        fall = ControlMode_PLAYER_FALL;
         mode = *(int *)(c2 + 0x750);
         hit = 0;
-        if (mode == ControlMode_PLAYER_FALL || mode == ControlMode_PLAYER_JUMP || mode == ControlMode_PLAYER_RUN_FALL
+        if (mode == fall || mode == ControlMode_PLAYER_JUMP || mode == ControlMode_PLAYER_RUN_FALL
             || mode == ControlMode_PLAYER_TUMBLE_FALL || mode == ControlMode_PLAYER_HANG_AFTER_FALL)
             hit = func_000906D8(a, b, obj, c2, work);
         if (hit)
@@ -145,4 +148,3 @@ void player_updateAttrStatusAndFindHangPosWithFallDown(void *obj, char *work, in
         AddTwoWayLinkNext(GetLayoutClass(GetGeometryPointerObject(geo)) + 0x118, work + 0x50);
     }
 }
-#endif
