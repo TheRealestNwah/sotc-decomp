@@ -1,5 +1,7 @@
 #ifdef NONMATCHING
-/* Parked: 22 words differ (success path is not a sibling call; loop-invariant lui placement) */
+/* Parked: 4 diffs. The goto loop with the success path returning through the sibling call gives the
+   Original layout and tail call. Remaining: the loop entry test is bgezl (ld $s0 in the delay slot)
+   where the Original has bgez with the hoisted rootPtn lui in the slot, then a nop before the body. */
 extern char *GetScriptLayoutClass(void *);
 extern void *dynamic_cast_to_camera_obj(void *);
 extern char *get_camera_obj_layout_class(void *);
@@ -35,7 +37,8 @@ static void func_000748C0(unsigned char *o)
     int w;
 
     l = layoutClass(o);
-    while (*(int *)(l + 0x174) < 0) {
+    if (*(int *)(l + 0x174) < 0) {
+    loop:
         w = InitCollisionWork(rootPtn, *(int *)(*(int *)(l + 0x184) + 0x20), l, 1);
         if (w != 0) {
             l = layoutClass(o);
@@ -46,6 +49,8 @@ static void func_000748C0(unsigned char *o)
             return;
         }
         isysSleepSubThread();
+        if (*(int *)(l + 0x174) < 0)
+            goto loop;
     }
 }
 #endif
