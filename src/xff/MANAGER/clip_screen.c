@@ -1,5 +1,4 @@
 typedef float ClipMatrix[4][4];
-
 typedef struct ClipScreen {
     int width;
     int height;
@@ -16,41 +15,36 @@ typedef struct ClipScreen {
     int scissorH[2];
     ClipMatrix scissorClip[2];
 } ClipScreen;
-
 typedef struct ClipScreenEntry {
     char pad0[0x8];
     unsigned long key;
     int unk10;
     int unk14;
 } ClipScreenEntry;
-
 extern int D_00139F44;
 extern ClipScreenEntry **D_00139F48;
 extern float D_00139F54;
 extern float D_00139F58;
 extern char D_00139F5C[];
-
 extern void *iosMallocAlign(int heap, int size, int align);
 extern void iosFree(void *p);
 extern int getDispScreenWidth(void);
 extern int getDispScreenHeight(void);
 extern int getDrawScreenHeight(void);
-
 extern float iosGetTanf(float x);
 extern void iosUnitMatrix(void *m);
-
-static float func_000E95C8(float angle, int height);
-static void func_000E9640(ClipScreen *p, float dist);
-static void func_000E9730(ClipScreen *p);
-static void func_000E9780(ClipScreen *p, float dist);
-static void func_000E9830(ClipMatrix m, float w, float h, float dist, float near, float far);
-static void func_000E9930(ClipMatrix m, int w, int h);
 
 static ClipScreenEntry *func_000E8FD0(ClipScreenEntry *p);
 void set_screen_size(ClipScreen *p, int width, int height);
 void set_view_angle(ClipScreen *p, float angle);
 void set_scissor_screen_size(ClipScreen *p, int i, int width, int height);
 void update_clip_screen(ClipScreen *p);
+static float func_000E95C8(float angle, int height);
+static void func_000E9640(ClipScreen *p, float dist);
+static void func_000E9730(ClipScreen *p);
+static void func_000E9780(ClipScreen *p, float dist);
+static void func_000E9830(ClipMatrix m, float w, float h, float dist, float near, float far);
+static void func_000E9930(ClipMatrix m, int w, int h);
 
 static ClipScreenEntry *func_000E8F50(int type, unsigned long key)
 {
@@ -190,6 +184,26 @@ float get_z_buf_max_clip_screen(void)
     return 16700000.0f;
 }
 
+void create_original_clip_matrix(float *m, float angle, float width, float near, float far)
+{
+    int w;
+    float d;
+    float sx;
+    float sy;
+
+    w = width * 1000.0f;
+    d = 500.0f / iosGetTanf(angle * 0.5f * 0.017453293f) / D_00139F54;
+    sx = d / ((float)w * 0.5f);
+    sy = d / 500.0f * D_00139F54 / 0.90909f / D_00139F58;
+    iosUnitMatrix(m);
+    m[0] = sx;
+    m[5] = sy;
+    m[10] = (far + near) / (far - near);
+    m[11] = 1.0f;
+    m[14] = far * near * -2.0f / (far - near);
+    m[15] = 0.0f;
+}
+
 void update_clip_screen(ClipScreen *p)
 {
     float dist;
@@ -198,6 +212,22 @@ void update_clip_screen(ClipScreen *p)
     func_000E9640(p, dist);
     func_000E9730(p);
     func_000E9780(p, dist);
+}
+
+void create_directX_projection_matrix(float *m, float fov, float aspect, float zNear, float zFar)
+{
+    float half = fov * 0.5f;
+    float sx = 1.0f / iosGetTanf(half * aspect * 0.0174532925f);
+    float sy = 1.0f / iosGetTanf(half * 0.0174532925f);
+    float q = zFar / (zFar - zNear);
+
+    iosUnitMatrix(m);
+    m[0] = sx;
+    m[5] = sy;
+    m[11] = 1.0f;
+    m[15] = 0.0f;
+    m[10] = q;
+    m[14] = -q * zNear;
 }
 
 void *get_screen_size_scale_screen_matrix(void)
