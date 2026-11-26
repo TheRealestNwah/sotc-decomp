@@ -22,7 +22,7 @@ typedef struct {
 extern void *g_pLetterMem;
 extern LetterType *get_letter_type(int);
 extern void *iosMallocAlign(void *, int, int);
-extern void func_0001BB90(Letter *, int, int, LetterType *);
+static void func_0001BB90(Letter *, int, int, LetterType *);
 
 /* Matches only with -fno-strict-aliasing (config/ee_cflags.json). */
 Letter *create_letter(void **out_data, void **out_data2, int type, int a3, int a4)
@@ -68,4 +68,13 @@ int is_hope_letter_type(void *arg0, int arg1)
 int get_letter_contents_data(void *arg0)
 {
     return (*(int *)((char *)(arg0) + 0x1C));
+}
+
+/* Sets a letter's x14 to b if its type has a non-zero first word, otherwise to a. */
+static void func_0001BB90(Letter *l, int a, int b, LetterType *lt)
+{
+    if (lt->x0 != 0) {
+        a = b;
+    }
+    l->x14 = a;
 }
