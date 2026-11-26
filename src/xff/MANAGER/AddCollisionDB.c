@@ -1,8 +1,9 @@
 /* Parked draft: adds collision finders for every member of a group (stopping when the finder set
    is full), and when the set has a limit deletes the finders a script character class added beyond
-   it. 13 diffs, same size: the p.b and p.f stores are scheduled differently, and v0/v1 are swapped
-   for the p.limit reloads and the func_000AE170 address. The `pa` pointer and the int return on
-   func_000ADFC8 came from the permuter (37 -> 13). */
+   it. 10 diffs, same size: the p.b store lands in the func_000ADFC8 delay slot instead of p.limit,
+   and v0/v1 are swapped for the p.limit reload and the func_000AE170 address. The `pa` pointer and
+   the int return on func_000ADFC8 came from the permuter (37 -> 13); the empty asm on the limit
+   load fixed the p.limit store register (13 -> 10). */
 #ifdef NONMATCHING
 
 typedef struct 
@@ -35,8 +36,13 @@ void AddCollisionDB(FinderSet *set, int group, int user, int a, int b, float f12
     p.a = a;
     p.b = b;
     pa = &p.a;
-    p.limit = set->limit;
-    p.f = 0;
+    {
+        int l = set->limit;
+
+        __asm__("" : "+r"(l));
+        p.f = 0;
+        p.limit = l;
+    }
     func_000ADFC8(tmp, &p, *pa, p.b);
     if (p.limit < 0)
     {
