@@ -1,18 +1,10 @@
-typedef struct {
-    char pad[0xC];
-    int n;
-    unsigned int *tab;
-} MotList;
-typedef struct {
-    int cur;
-    int next;
-    char pad[0x14];
-    float speed;
-} AnimClass;
+#include "gamecore/powerwork.h"
+
 typedef struct {
     char pad[0x180];
     float dt;
 } GcGlobal;
+
 extern GcGlobal gcGlobalVar;
 extern int DldSysUndefSymbol;
 extern float B_00188608;
@@ -72,9 +64,6 @@ extern void setgrip(float);
 extern void startGaugeMaxAddEffect(void);
 extern float D_0017A304;
 
-float getPlayerMaxHp(void);
-void resetAttackPower(void);
-float getAttackPowerRatio(void);
 
 int updatePowerWork(int obj, float heap, float heap2, float jump)
 {
