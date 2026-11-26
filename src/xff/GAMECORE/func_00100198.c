@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 7 diffs: case 3 &a/w+0x170 in a1/a0 instead of a0/a1 */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef union {
@@ -85,7 +84,7 @@ static inline void vscale(void *out, void *a, float s){
 ""vmulx.xyz vf5, vf5, vf6x
 ""sqc2 vf5, 0x0(%0)
 " : : "r"(out), "r"(a), "f"(s) : "$3", "memory");}
-int func_00100198(void *out, char *o)
+static int func_00100198(void *out, char *o)
 {
     Vec dir;
     Vec perp;
@@ -110,14 +109,17 @@ int func_00100198(void *out, char *o)
     NORM(&perp);
     switch (*(int *)(w + 0x154)) {
     case 3:
-        SUB(&a, w + 0x160, *(void **)(*(char **)(o + 0x18) + 0x134));
+        {
+        register Vec *ap __asm__("$4") = &a;
+        SUB(ap, w + 0x160, *(void **)(*(char **)(o + 0x18) + 0x134));
         SUB(&b, w + 0x160, w + 0x170);
         a.y = 0.0f;
         b.y = 0.0f;
-        NORM(&a);
+        NORM(ap);
         NORM(&b);
-        if (dot(&a, &b) < 0.049999998f) {
+        if (dot(ap, &b) < 0.049999998f) {
             func_00100A48(o, &dir, &perp, &np);
+        }
         }
         break;
     case 0:
@@ -156,4 +158,3 @@ int func_00100198(void *out, char *o)
     matVec(out, o + 0x20, w + 0x160);
     return 1;
 }
-#endif
