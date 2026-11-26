@@ -1,9 +1,7 @@
 /* Kite path work: the path points the small animals (kites) fly between,
  * picked at random inside their area, plus the leader/child path checks. */
-
-typedef int s128 __attribute__((mode(TI)));
-typedef unsigned int u_long128 __attribute__((mode(TI)));
-typedef float Vec4[4] __attribute__((aligned(16)));
+#include "common.h"
+#include "gamecore/kite_path.h"
 
 typedef union {
     u_long128 q;
@@ -33,78 +31,6 @@ typedef struct {
     short type;
 } SObjNode;
 
-typedef struct {
-    s128 pos;
-    int a;
-    int b;
-    int c;
-    int pad;
-} KitePathPoint;
-
-typedef struct {
-    KitePathPoint pts[4];
-    s128 pos;
-    float x;
-    float y;
-    int s98;
-    int list[10];
-    int count;
-    void *obj;
-    int padcc;
-} KiteSub;
-
-typedef struct {
-    int a;
-    int b;
-    int pad8[2];
-    KitePathPoint pts[6];
-    s128 pos;
-    float x;
-    float y;
-    int e8;
-    int ec;
-    void *obj;
-    int padf4[11];
-    KiteSub sub;
-    char special[1];
-} KitePathWork;
-
-/* func_000AD410 */
-
-typedef struct {
-    long long a;
-    long long b;
-    int idx;
-    int pad14;
-    long long d;
-} PathPt;
-
-typedef struct {
-    PathPt cur;
-    PathPt next;
-    PathPt saveCur;
-    PathPt saveNext;
-    char pad80[0x18];
-    int flag;
-} PathWork;
-
-typedef struct {
-    int kind;
-    char pad04[0xFC];
-    char area[0x20];
-    PathWork pw;
-    char padBC[0x1F0 - 0x120 - sizeof(PathWork)];
-    char special[1];
-} Kite;
-
-/* KiteSpecial_SetNewPathPoint */
-
-typedef struct {
-    Vec4 center;
-    float radius;
-    float height;
-} KiteArea;
-
 /* Kite_GetPassageWork. The point position is copied through an IntOrQuad
  * union so gcc keeps it ahead of the area store. */
 
@@ -112,27 +38,6 @@ typedef union {
     int i;
     u_long128 q;
 } IntOrQuad;
-
-typedef struct {
-    Vec4 pos;
-    int area;
-    int pt;
-    int idx;
-    int pad;
-} PassPt;
-
-typedef struct {
-    PassPt p[2];
-} PassPair;
-
-typedef struct {
-    int x0;
-    int x4;
-    int x8[2];
-    PassPair cur;
-    PassPair prev;
-    PassPair save;
-} PassWork;
 
 typedef struct {
     int t[45];
@@ -150,7 +55,6 @@ extern char *GetLayoutClass(void *);
 extern void updateUserPathWork(void *, void *);
 extern void *isysGetThisSubThread(void);
 
-void Kite_InitSpecialPathWork(void *layout);
 
 static inline void initPoint(KitePathPoint *p)
 {
