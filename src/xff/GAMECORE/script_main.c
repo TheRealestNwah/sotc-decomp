@@ -1,3 +1,5 @@
+#include "gamecore/script_main.h"
+
 extern int ScriptSpriteMenuObjDef_SPRITE_BOOT_PROGRESSIVE_ALERT;
 extern void _SCRStartSpriteMenuAnim(int, int, int, int, int, int);
 typedef struct {
@@ -24,22 +26,6 @@ typedef struct {
     char pad17C[0x188 - 0x17C];
     float clipDist;
 } GcGlobal;
-typedef struct {
-    char pad0[0x370];
-    short state;
-    char pad372[0x534 - 0x372];
-    signed char active;
-    char pad535[0xD90 - 0x535];
-    unsigned char riding;
-    char padD91[0x1070 - 0xD91];
-    int f1070;
-    char pad1074[0x1170 - 0x1074];
-    int f1170;
-} ScrCharClass;
-typedef struct {
-    char pad0[0x8];
-    unsigned char type;
-} ScrObj;
 extern GcGlobal gcGlobalVar;
 extern int B_0019B860[2];
 extern char B_0018B860[0x10000];
