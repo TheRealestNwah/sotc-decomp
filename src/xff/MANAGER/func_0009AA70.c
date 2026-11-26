@@ -1,8 +1,9 @@
-/* NONMATCHING: 18 diffs. Two incoming stack arguments land in swapped
- * registers ($a1/$v1), and the first left-child test in the kd-tree
- * search is laid out with the recursive call as the fallthrough; the
- * Original falls through to the leaf callback with the index shift
- * after the $a0 move. */
+/* NONMATCHING: 16 diffs. Storing f2C, f28, f24 in that order gives the
+ * Original's registers for the incoming stack arguments ($v1/$a1), but
+ * the f24 store is then scheduled after f2C instead of first. The first
+ * left-child test in the kd-tree search is laid out with the recursive
+ * call as the fallthrough; the Original falls through to the leaf
+ * callback with the index shift after the $a0 move. */
 #ifdef NONMATCHING
 typedef unsigned int s128 __attribute__((mode(TI)));
 typedef union {
@@ -146,9 +147,9 @@ void func_0009AA70(int *p0, int unused, TreeOwner *owner, int f14, int fC, Vec4 
     u.q.rad = rad;
     u.q.pos = pos;
     u.q.f20 = f20;
-    u.q.f24 = f24;
-    u.q.f28 = f28;
     u.q.f2C = f2C;
+    u.q.f28 = f28;
+    u.q.f24 = f24;
     u.q.f30 = f30;
     u.q.f34 = *p0;
     query = up->q;
