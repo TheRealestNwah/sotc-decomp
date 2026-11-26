@@ -276,7 +276,7 @@
   "src/xff/KERNEL/Sg2SmfpSetParam.c": [
     "--asm-fill-delay-slots"
   ],
-  "src/xff/KERNEL/Sg2SmfpTickProc.c": [
+  "src/xff/KERNEL/sg2smfp_tick.c": [
     "--asm-fill-delay-slots"
   ],
   "src/xff/KERNEL/func_00016380.c": [
