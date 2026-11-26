@@ -53,8 +53,6 @@ typedef struct {
     char tail[0x2C];
 } AnimationSample;
 static float func_000E5EA0(void *, const Vector *);
-#ifdef NONMATCHING
-/* 15 diffs: register allocation around the volume-rate calls and stack layout of the lo/hi bounds. */
 typedef struct { float x, y, z; int w; } __attribute__((aligned(8))) V;
 
 extern int is_sub_type_camera_lws_animation(void *);
@@ -73,8 +71,10 @@ static inline V mkV(float x, float y, float z)
     return v;
 }
 
-static inline void quatToMatrix(float *m, float *q, void *pos)
+static inline void quatToMatrix(float *m0, float *q, void *pos)
 {
+    register float *m __asm__("$6") = m0;
+    register void *pp __asm__("$3") = pos;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                          "lqc2 vf11, 0x0(%1)\n"
                          "vmr32.w vf14, vf0\n"
@@ -106,7 +106,7 @@ static inline void quatToMatrix(float *m, float *q, void *pos)
     __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmove.w vf4, vf0\n"
                          "sqc2 vf4, 0x30(%0)\n"
-                         : : "r"(m), "r"(pos) : "memory");
+                         : : "r"(m), "r"(pp) : "memory");
 }
 
 static float func_000E5EA0(void *animation, const Vector *reference)
@@ -154,7 +154,9 @@ static float func_000E5EA0(void *animation, const Vector *reference)
                 GetGeometryPointerQuaternion((float *)&q, (char *)anim + 0x50);
                 quatToMatrix(m, (float *)&q, (char *)anim + 0x90);
                 {
-                register int type __asm__("$4") = *(int *)(s + 0x64);
+                register int type __asm__("$4");
+                __asm__("" ::: "memory");
+                type = *(int *)(s + 0x64);
                 if (type == 2)
                     rate = GetRateInOutEllipticalSphereVolume(m, pos, &lo, &hi);
                 else if (type == 3)
@@ -170,7 +172,6 @@ static float func_000E5EA0(void *animation, const Vector *reference)
     }
     return scale;
 }
-#endif
 extern int GetAnimationClassObjectAnimation(void *, float *, void *, int);
 static inline void scaleXYZ(Vector *out, float scale)
 {
