@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 4 diffs */
+#ifdef NONMATCHING /* 2 diffs */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef union {
@@ -288,6 +288,7 @@ void updateWormCtrlWork(void *th, Ctrl *ctrl, Lay *lay)
     ctrl->x9C = vlen(GetLayoutClass(th) + 0x30);
     _initBaseMoveTmpWork(th, p, ctrl, lay);
     p->owner = ctrl;
+    do {
     {
         register float *m __asm__("$3") = w.mat[0];
         quatToMatrix(m, w.obj->quat);
@@ -305,8 +306,8 @@ void updateWormCtrlWork(void *th, Ctrl *ctrl, Lay *lay)
         func_00113078(ctrl);
     }
     p->x168 = 0;
+    } while (0);
     ctrl->xD4 = 0;
-    __asm__ __volatile__("" ::: "memory");
     if (p->chr->x750 == ctrl->x80 || p->chr->x750 == ctrl->x84) {
         scaleW(&u.a.v, &YUnitVector, 100.0f);
         vadd(&u.a.v, &u.a.v, p->obj->pos);
