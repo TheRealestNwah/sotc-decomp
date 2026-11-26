@@ -66,13 +66,12 @@ typedef struct {
 } ShockPad;
 
 #define PB(x) ((unsigned char *)&(x))
-#ifdef NONMATCHING /* 6 diffs: the 0x40 temp comes from the permuter; left: the two pattern-table pointers (+0x4 and +0x14) get a2/a1 where the Original uses a1/a2 */
 static ShockReq *func_000070F0(ShockPad *pad, int *pattern, ShockPattern p, int arg3, int arg4)
 {
     unsigned char *pat = (unsigned char *)pattern;
     ShockSet *set;
     ShockNode *n;
-    char *a;
+    register char *a asm("$5");
     char *b;
     int v;
     int m;
@@ -91,11 +90,11 @@ static ShockReq *func_000070F0(ShockPad *pad, int *pattern, ShockPattern p, int 
     n->port = PB(p)[0];
     n->arg4 = arg4;
     n->arg3 = arg3;
-    a = pat[0] != 0xFF ? (char *)set->pad4 + ((int *)set->pad4)[pat[0]] : 0;
+    { char *t = pat[0] != 0xFF ? (char *)set->pad4 + ((int *)set->pad4)[pat[0]] : 0; a = t; }
     b = pat[1] != 0xFF ? (char *)set->pad8 + ((int *)set->pad8)[pat[1]] : 0;
     c40 = 0x40;
-    n->b = b;
     n->a = a;
+    n->b = b;
     m = 0xFF;
     n->kind = 0x11;
     n->b3 = c40;
@@ -127,9 +126,6 @@ static ShockReq *func_000070F0(ShockPad *pad, int *pattern, ShockPattern p, int 
     pad->head = n;
     return (ShockReq *)n;
 }
-#else
-extern ShockReq *func_000070F0(void *pad, int *pattern, ShockPattern p, int arg3, int arg4);
-#endif
 
 
 static inline ShockSet *getSet(unsigned int k)
