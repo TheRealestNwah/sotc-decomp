@@ -1,6 +1,6 @@
-/* Parked at 13 diffs: gcc swaps the callee-saved registers of the quaternion
-   pointer and the collision callback ($s2/$s3, 11 words), and the address and
-   data registers of the rotation input copy (2 words). */
+/* Parked at 4 diffs: the rotation input copy swaps its address and data
+   registers ($a0/$v1). Reusing the dead `target` variable for the quaternion
+   pointer keeps it in $s2 like the Original. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -156,6 +156,7 @@ static void func_00069300(void *id, Vec4 *target, void *keep)
         (*(Vec4 **)(cls + 0x134))->q = pt.position.q;
     }
     subXZ(&pt, target, geom);
-    fitInline(id, *(Vec4 **)(cls + 0x13C), &pt, keep);
+    target = *(Vec4 **)(cls + 0x13C);
+    fitInline(id, target, &pt, keep);
 }
 #endif
