@@ -1,5 +1,4 @@
-/* Parked: 9 diffs, same size. Sibling of _sendProgramRotInput: direction from the character's position (cc+0x134 pointer) to the target, normalised with w = 1.0, transformed by the inverse of the character's quaternion matrix (cc+0x470, rows only, identity translation row stored from vf0), atan2(x, z) as the turn angle; when the character's mode (cc+0x750) equals w+0x20 it refreshes the motion ratio at w+0x110 through calcNextMotRatio (only while it still holds the sentinel RO_001814B8, an all-ones word compared as a float), otherwise switches to SCRStop and then SCRStopR / SCRStopL by angle versus the threshold (one shared call) and re-arms w+0x110 with the sentinel. Remaining: the Original rebuilds the matrix address in v0 after the identity-row store instead of copying a0, and sets a0 in each StopR/StopL arm rather than in the shared call's delay slot (the arms now load the script pointer through v0 like the Original). */
-#ifdef NONMATCHING
+/* Sibling of _sendProgramRotInput: direction from the character's position (cc+0x134 pointer) to the target, normalised with w = 1.0, transformed by the inverse of the character's quaternion matrix (cc+0x470, rows only, identity translation row stored from vf0), atan2(x, z) as the turn angle; when the character's mode (cc+0x750) equals w+0x20 it refreshes the motion ratio at w+0x110 through calcNextMotRatio (only while it still holds the sentinel RO_001814B8, an all-ones word compared as a float), otherwise switches to SCRStop and then SCRStopR / SCRStopL by angle versus the threshold (one shared call) and re-arms w+0x110 with the sentinel. w is pinned to $s2 and the shared call's obj to $a0 so each arm sets $a0 like the Original; the identity-row store has no "memory" clobber so the matrix address is rebuilt from $sp after it. */
 typedef float Vec4[4] __attribute__((aligned(16)));
 
 extern int *ScriptCtrlDef_SCRStop;
@@ -110,8 +109,9 @@ static inline void matApply(float *out, float *m, float *v)
                          : : "r"(v), "r"(m), "r"(out) : "memory");
 }
 
-int sendStopKeyFastLegCtrlWork(int obj, char *w, char *target, float thr)
+int sendStopKeyFastLegCtrlWork(int obj, char *w0, char *target, float thr)
 {
+    register char *w asm("$18") = w0;
     Vec4 v;
     Vec4 m[4];
     char *cc;
@@ -135,7 +135,7 @@ int sendStopKeyFastLegCtrlWork(int obj, char *w, char *target, float thr)
     v[3] = 1.0f;
     quatToMatrix3(m[0], (float *)(cc + 0x470));
     { register float *p3 asm("$3") = m[3]; __asm__ __volatile__("sqc2 vf0, 0x0(%0)
-" : : "r"(p3) : "memory"); }
+" : : "r"(p3)); }
     { register float *mm asm("$2") = m[0]; __asm__("" : "+r"(mm)); matInverse(mm, mm); matApply(v, mm, v); }
     ang = iosGetATan2fExact(v[0], v[2]);
     if (*(int *)(cc + 0x750) == *(int *)(w + 0x20)) {
@@ -145,7 +145,7 @@ int sendStopKeyFastLegCtrlWork(int obj, char *w, char *target, float thr)
     }
     CharaCtrlSetScriptCtrlStatus(obj, ScriptCtrlDef_SCRStop[1]);
     {
-        int a;
+        register int a asm("$4");
         register int *s __asm__("$2");
 
         if (thr < ang) {
@@ -162,4 +162,3 @@ int sendStopKeyFastLegCtrlWork(int obj, char *w, char *target, float thr)
     __asm__ __volatile__("");
     return 0;
 }
-#endif
