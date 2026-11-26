@@ -1,4 +1,4 @@
-#ifdef NONMATCHING
+#ifdef NONMATCHING /* 8 words: the two quats + idx*16 store addresses (v0/v1 swapped) and the order of the a1/a3 argument moves at 0x294 */
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef int s128 __attribute__((mode(TI)));
 
@@ -20,7 +20,7 @@ extern void GetMotionMatrixOfTargetFromParent(void *, void *, void *, void *, vo
 extern void GetDifferencialQuaternionWithNoRegularize(float *, float *, float *, float *);
 extern void GetQuaternionByAxisDirZY(float *, float *, float *);
 extern void DivQuaternion(float *, float *, float *);
-extern void GetLimitationQuaternion(float *, float *, float);
+extern short GetLimitationQuaternion(float *, float *, float);
 
 
 static inline void vecNormalize(float *dst, float *src)
