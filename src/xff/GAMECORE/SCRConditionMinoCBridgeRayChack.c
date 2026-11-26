@@ -20,8 +20,6 @@ static inline char *dldResolve(unsigned int *h)
     return (t != 0 && t != DldSysUndefSymbol) ? (char *)t[4] + ((v >> 18) & 0xFFF) * ((int *)t[2])[3] : 0;
 }
 
-/* Parked: 19 words differ (callee-saved assignment: the dir/pos vector pointers land in s1/s2 swapped, and the two long long args in s2/s4 swapped). */
-#ifdef NONMATCHING
 int SCRConditionMinoCBridgeRayChack(void *obj, int u1, int u2, int u3, long long ex0, long long ex1, int u4, int u5, unsigned int *key, float f0, float f1, float f2)
 {
     struct { s128 q; char buf[0x50]; Vec4 p70; Vec4 p80; Vec4 p90; Vec4 pa0; Pair held; } L;
@@ -31,6 +29,7 @@ int SCRConditionMinoCBridgeRayChack(void *obj, int u1, int u2, int u3, long long
     char *r1;
     char *r2;
     char *chr;
+    register long long e0 __asm__("$18") = ex0;
     
     
     
@@ -44,9 +43,14 @@ int SCRConditionMinoCBridgeRayChack(void *obj, int u1, int u2, int u3, long long
         cnt += 2;
     if (cnt == 3)
         return 1;
-    L.held.x = ex0;
+    L.held.x = e0;
     L.held.y = ex1;
+    {
+    void *lp;
+    register float *pa __asm__("$18");
+
     L.q = *(s128 *)(GetCharacterClass(obj) + 0x470);
+    pa = L.pa0;
     __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmul.xyzw vf5, vf4, vf4\n"
                          "vmr32.xyzw vf6, vf4\n"
@@ -61,17 +65,18 @@ int SCRConditionMinoCBridgeRayChack(void *obj, int u1, int u2, int u3, long long
                          "vmulw.xyz vf6, vf6, vf5w\n"
                          "vaddw.y vf6, vf6, vf0w\n"
                          "sqc2 vf6, 0x0(%0)\n"
-                         : : "r"(L.pa0), "r"(&L.q) : "memory");
+                         : : "r"(pa), "r"(&L.q) : "memory");
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "qmtc2.ni %2, vf6\n"
                          "vmulx.xyz vf5, vf5, vf6x\n"
                          "sqc2 vf5, 0x0(%0)\n"
-                         : : "r"(L.p90), "r"(L.pa0), "r"(f1) : "memory");
+                         : : "r"(L.p90), "r"(pa), "r"(f1) : "memory");
+    lp = *(void **)(GetLayoutClass(obj) + 0x134);
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
                          "vadd.xyz vf5, vf5, vf6\n"
                          "sqc2 vf5, 0x0(%0)\n"
-                         : : "r"(L.p70), "r"(*(void **)(GetLayoutClass(obj) + 0x134)), "r"(L.p90) : "memory");
+                         : : "r"(L.p70), "r"(lp), "r"(L.p90) : "memory");
     chr = GetCharacterClass(obj) + 0x470;
     __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                          "vmul.xyzw vf5, vf4, vf4\n"
@@ -88,7 +93,7 @@ int SCRConditionMinoCBridgeRayChack(void *obj, int u1, int u2, int u3, long long
                          "vmulw.xyz vf6, vf6, vf5w\n"
                          "vaddw.z vf6, vf6, vf0w\n"
                          "sqc2 vf6, 0x0(%0)\n"
-                         : : "r"(L.pa0), "r"(chr) : "memory");
+                         : : "r"(pa), "r"(chr) : "memory");
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "qmtc2.ni %2, vf6\n"
                          "vmulx.xyz vf5, vf5, vf6x\n"
@@ -97,19 +102,17 @@ int SCRConditionMinoCBridgeRayChack(void *obj, int u1, int u2, int u3, long long
                          "lqc2 vf6, 0x0(%0)\n"
                          "vsub.xyz vf5, vf5, vf6\n"
                          "sqc2 vf5, 0x0(%3)\n"
-                         : : "r"(L.p90), "r"(L.pa0), "r"(f2), "r"(L.p70) : "memory");
+                         : : "r"(L.p90), "r"(pa), "r"(f2), "r"(L.p70) : "memory");
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "qmtc2.ni %2, vf6\n"
                          "vmulx.xyz vf5, vf5, vf6x\n"
                          "sqc2 vf5, 0x0(%0)\n"
-                         : : "r"(L.p90), "r"(L.pa0), "r"(f0) : "memory");
+                         : : "r"(L.p90), "r"(pa), "r"(f0) : "memory");
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
                          "vadd.xyz vf5, vf5, vf6\n"
                          "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(L.p80), "r"(L.p70), "r"(L.p90) : "memory");
     return ClipCollisionDirectCallBack(L.buf, L.p70, L.p80, gcGlobalVar + 0x238, 0, 0, 0, func_0006BC58, &L.held) == 0;
+    }
 }
-#else
-extern int SCRConditionMinoCBridgeRayChack(void *obj, int u1, int u2, int u3, long long ex0, long long ex1, int u4, int u5, unsigned int *key, float f0, float f1, float f2);
-#endif
