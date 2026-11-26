@@ -1,4 +1,4 @@
-/* func_0006C328 parked: 12 diffs, same size (778 words). Projectile thread for the BUDDHA/TTS/PSD/YAMORI shots: sets up the shot LWS, homes the type-2 shot toward the player, moves it by the frame time, clips against the player and the world, then plays the hit LWS and sends the buddha explode damage. Remaining: in the explode-damage block the Original branches with a plain bnez (lws loaded in its delay slot) where ours uses bnel, and the SendDamageLetter arguments are scheduled differently. T_0006CF58 (the speed setup inside its symbol range) compiles to a match on its own but the splice can only place it together with func_0006C328, so both stay parked. */
+/* func_0006C328 parked: 2 diffs, same size (778 words). Projectile thread for the BUDDHA/TTS/PSD/YAMORI shots: sets up the shot LWS, homes the type-2 shot toward the player, moves it by the frame time, clips against the player and the world, then plays the hit LWS and sends the buddha explode damage. Remaining: in the explode-damage block the Original branches on the collision result with a plain bnez (lws loaded in its delay slot, nop after the next jal) where ours uses bnel, i.e. reorg predicts the branch differently. The 4.3f store goes through an int/float union so gcc keeps the info+8 load after it, as in the Original. T_0006CF58 (the speed setup inside its symbol range) compiles to a match on its own but the splice can only place it together with func_0006C328, so both stay parked. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -355,7 +355,7 @@ void func_0006C328(int *arg0)
                             normalize3(L.vF0, L.vF0);
                             scale4(L.vF0, L.vF0, 0.5f);
                             add4(L.vF0, L.vF0, V(l0, 0x134));
-                            L.vF0[3] = 4.2999997138977051f;
+                            ((union { int i; float f; } *)&L.vF0[3])->f = 4.2999997138977051f;
                             SendDamageLetter(0, *(int *)(info + 8), DamageDef_BUDDHA_EXPLODE_IMPACT, L.vF0);
                         }
                     }
