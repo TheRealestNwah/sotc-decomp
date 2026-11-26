@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 7 diffs */
+#ifdef NONMATCHING /* 4 diffs */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef union {
@@ -114,7 +114,7 @@ extern float CalcDistancePointAndLine(void *, void *, void *);
 extern void CalcFootVec(void *, void *, void *, void *);
 extern void func_00112B08(Tmp *, void *);
 extern void func_00111218(void *, void *, int, Tmp *);
-extern void setLockPassageWork(int, int);
+extern int setLockPassageWork(int, int);
 extern int chkAttainExecLayout(Lay *, s128 *, Obj *, Chr *);
 extern int chkAttainExecColumn(Lay *, s128 *, Obj *, Chr *);
 extern void forceSetWayFinish(Lay *);
@@ -306,6 +306,7 @@ void updateWormCtrlWork(void *th, Ctrl *ctrl, Lay *lay)
     }
     p->x168 = 0;
     ctrl->xD4 = 0;
+    __asm__ __volatile__("" ::: "memory");
     if (p->chr->x750 == ctrl->x80 || p->chr->x750 == ctrl->x84) {
         scaleW(&u.a.v, &YUnitVector, 100.0f);
         vadd(&u.a.v, &u.a.v, p->obj->pos);
