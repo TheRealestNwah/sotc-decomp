@@ -2,13 +2,21 @@ extern unsigned char *CreateSubLinkObjByGeometryPointer(char *, int);
 extern int boot_particle_emitter(int, char *, void *, unsigned char *);
 extern void isysRequestDeleteObj(void *);
 extern void SetSubLinkObjDeleteFuncInfo(unsigned char *, int, void *, int);
-extern void func_000EE510(void *, int *);
-extern void T_000EE558(void *);
-
 typedef struct ParticleKickInfo {
     int emitter;
     int particle;
 } ParticleKickInfo;
+extern char *GetSubLinkClass(unsigned char *object);
+typedef struct {
+    int id;
+    void *emitter;
+} EmitterRef;
+extern void stop_particle_emitter_callback(void *, int);
+extern void end_particle_emitter(void *, int, int);
+extern void stop_particle_emitter_geometry_pointer_reference(void *, int);
+
+static void func_000EE510(void *obj, EmitterRef *r);
+static void T_000EE558(void *obj);
 
 unsigned char *SequenceKickParticle(int particle, char *geometry)
 {
@@ -33,4 +41,21 @@ unsigned char *SequenceKickParticle(int particle, char *geometry)
         }
     }
     return link;
+}
+
+int KickParticleGetResourceId(unsigned char *object)
+{
+    return **(int **)(GetSubLinkClass(object) + 0x10);
+}
+
+static void func_000EE510(void *obj, EmitterRef *r)
+{
+    stop_particle_emitter_callback(r->emitter, r->id);
+    end_particle_emitter(r->emitter, r->id, 1);
+    stop_particle_emitter_geometry_pointer_reference(r->emitter, r->id);
+}
+
+static void T_000EE558(void *obj)
+{
+    isysRequestDeleteObj(obj);
 }
