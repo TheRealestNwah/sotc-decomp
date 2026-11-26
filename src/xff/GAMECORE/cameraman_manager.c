@@ -1,8 +1,5 @@
-typedef struct {
-    int selected;
-    int total;
-    int cameras[5];
-} CameraManager;
+#include "gamecore/cameraman_manager.h"
+
 extern CameraManager B_0019FD20;
 extern char B_0019FD40[];
 extern void *GAMEUTIL_get_player_obj(void);
@@ -20,8 +17,6 @@ struct CameraSelectionView {
 };
 extern void *get_camera_obj(void *);
 
-int get_main_cameraman(void);
-void *get_main_cameraman_camera_obj(void);
 
 void doit_cameraman_manager(float time)
 {
