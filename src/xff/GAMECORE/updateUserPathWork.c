@@ -1,7 +1,8 @@
-/* Parked: 11 diffs, same size. Remaining: lst (w+0x2038) and the loop-hoisted
- * constant 1 swap s4/s5 in the retry loop (pinning either one perturbs other
- * blocks), and the 0x418 store / sq 0x10 order in the prologue. Setting
- * tries before the execPointListSort call fixes that call's delay slot. */
+/* Parked: 2 diffs, same size. Remaining: the prologue stores the sq to 0x10
+ * before the 0x418 store, where the Original stores 0x418 first (no statement
+ * order or store type changes it). Pinning lst (w+0x2038) to s4 and oa/ob to
+ * s3/s2 fixes the retry loop's s4/s5 swap. Setting tries before the
+ * execPointListSort call fixes that call's delay slot. */
 
 #ifdef NONMATCHING
 
@@ -121,8 +122,8 @@ void updateUserPathWork(int owner, char *w)
     }
     execPointListSort(w, w + 0x434, w);
     {
-        int oa = W(int, 0x41C);
-        int ob = W(int, 0x420);
+        register int oa asm("$19") = W(int, 0x41C);
+        register int ob asm("$18") = W(int, 0x420);
         getNearPoint(w, 0, &W(int, 0x41C), &W(int, 0x420), w + 0x434, w, W(int, 0x39C) == 0, 0);
         if (oa != -1 && ob != -1 && W(int, 0x41C) != oa && W(int, 0x420) != ob
             && func_000FA870(w, oa, ob, w, 0, 1, 0, 0)) {
@@ -162,7 +163,7 @@ void updateUserPathWork(int owner, char *w)
     }
     if (W(int, 0x3A0) == 0 && W(int, 0x90) != 0) {
         char *tgt = w + 0x60;
-        char *lst = w + 0x2038;
+        register char *lst asm("$20") = w + 0x2038;
         int tries;
         char *cp;
         tries = 0;
