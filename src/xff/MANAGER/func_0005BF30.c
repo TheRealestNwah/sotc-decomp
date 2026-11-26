@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked attempt: 22 differing words (register allocation). */
+/* Parked attempt: 18 differing words (register allocation). */
 typedef struct { float x, y, z, w; } __attribute__((aligned(16))) Vec4;
 extern void iosSetCurrentMatrix(void *);
 extern void iosApplyCurrentMatrix(void *, void *);
@@ -72,6 +72,8 @@ static int func_0005BF30(char *obj, float *out, int arg, int flags, void *mtx, f
     int i;
     int odd;
     int k;
+    float *pq;
+    float *pr;
     int ang;
     float c;
     const float *cosT;
@@ -92,8 +94,9 @@ static int func_0005BF30(char *obj, float *out, int arg, int flags, void *mtx, f
             sz = -sz;
     }
     cosT = &T_0013EC90[2];
+    i = 0;
     sinT = cosT - 2;
-    for (i = 0; i < 8; i++) {
+    for (; i < 8; i++) {
         int j0 = (i + 6) & 7;
         int j1 = (i + 7) & 7;
         v0.w = 1.0f;
@@ -121,7 +124,9 @@ static int func_0005BF30(char *obj, float *out, int arg, int flags, void *mtx, f
                 if (!(ad.y > ad.z))
                     k = 2;
             }
-            ang = (short)(int)(((float)i + (((float *)(obj + 0x40))[k] - pp0[k]) / pd[k]) * 8192.0f);
+            pq = &pd[k];
+            pr = &pp0[k];
+            ang = (short)(int)(((float)i + (((float *)(obj + 0x40))[k] - *pr) / *pq) * 8192.0f);
             c = -iosGetTableCos(ang);
             n.y = iosGetTableSin(ang) * y;
             n.w = 0;
