@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* parked draft: 16 diffs; the Original allocates vp/point/pe1 to s4/s5/s7 (saved-register rotation) and loads the -2e-5 constant before storing *s and *t */
+#ifdef NONMATCHING /* parked draft: 10 diffs; passing &e1 directly to getST fixes the vp/point/s rotation (s4/s5/s6). Left: pe1 and t swap $s7/$fp, and the Original loads the -2e-5 constant before storing *s and *t */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef struct { char pad0[0x3C]; int attribute; } CollisionPlane;
@@ -107,7 +107,7 @@ int GetSTPositionOfCollisionDB(float *s, float *t, CollisionReference *reference
                          "vsub.xyzw vf7, vf5, vf6\n"
                          "sqc2 vf7, 0x0(%2)\n"
                          : : "r"(point), "r"(v[0]), "r"(&d) : "memory");
-    getST(s, t, pe1, pe2, &d);
+    getST(s, t, &e1, pe2, &d);
     if (*s < -0.00002f)
         return 0;
     if (*t < -0.00002f)
