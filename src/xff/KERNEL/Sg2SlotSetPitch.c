@@ -1,21 +1,4 @@
-typedef struct {
-    int a;
-    int b;
-    int cur;
-    int end;
-} SlotLfo;
-
-typedef struct {
-    int flags;
-    char pad4[0x1C];
-    SlotLfo pitch;
-    int p30;
-    char pad34[0x3C];
-    int directPitch;
-    char pad74[0x6C];
-} Sg2Slot;
-
-extern Sg2Slot B_000DE370[];
+#include "kernel/sg2slot.h"
 
 #ifdef NONMATCHING
 /* Parked: 1 word differs (addu $t6 operands swapped: original adds $v0,$a0, gcc emits $a0,$v0); pinned locals with "+r" barriers fix everything else. A 25-minute permuter run found nothing better. */
@@ -46,7 +29,7 @@ void Sg2SlotSetPitch(int s, int a, int b, int c, int d, int e)
     l2->b = a;
     l4->end = b;
     l6->cur = c;
-    p3->p30 = d;
+    p3->mas.a = d;
     p1->directPitch = e;
     d5 = d5 / div;
     p7->flags |= 0x80;
