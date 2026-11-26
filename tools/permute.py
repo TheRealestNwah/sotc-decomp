@@ -49,6 +49,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.try_compilers import (  # noqa: E402
     DEFAULT_COMPILERS,
     I386_LIBS,
+    STAGE_INCLUDE,
+    include_dir_for,
     wsl_path,
 )
 
@@ -413,12 +415,15 @@ def run(directory: Path, extra: list[str]) -> int:
         script = (
             f"ld=$(dirname {I386_LIBS})/ld-linux.so.2; "
             f'[ -e "$ld" ] || ld={I386_LIBS}/ld-linux.so.2; '
-            'work=$(mktemp -d); cp "$1" "$work/in.c"; '
-            f'"$ld" --library-path {I386_LIBS} "$0" -P -nostdinc -DPERMUTER "$work/in.c"; '
-            'status=$?; rm -rf "$work"; exit $status'
+            'work=$(mktemp -d); cp "$1" "$work/in.c"; cpp0="$0"; shift 1; '
+            + STAGE_INCLUDE
+            + f'"$ld" --library-path {I386_LIBS} "$cpp0" "$@" -P -nostdinc -DPERMUTER '
+            '"$work/in.c"; status=$?; rm -rf "$work"; exit $status'
         )
+        include = include_dir_for(Path(filename))
+        env = ["env", f"inc={wsl_path(include)}"] if include else []
         source = subprocess.check_output(
-            ["wsl", "-e", "bash", "-c", script, wsl_path(cpp0), wsl_path(Path(filename))],
+            ["wsl", "-e", *env, "bash", "-c", script, wsl_path(cpp0), wsl_path(Path(filename))],
             text=True,
             encoding="utf-8",
         )

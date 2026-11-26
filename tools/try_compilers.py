@@ -66,6 +66,42 @@ def wsl_path(path: Path) -> str:
     return f"/mnt/{p[0].lower()}{p[2:]}" if re.match(r"[A-Za-z]:/", p) else p
 
 
+INCLUDE = ROOT / "include"
+INCLUDE_RE = re.compile(r'^[ \t]*#[ \t]*include[ \t]*"([^"]+)"', re.M)
+
+# Shell lines for the WSL pipelines: when $inc names the include directory, copy it
+# next to in.c (old 32-bit programs can't read /mnt, see compile_c) and put -I first.
+STAGE_INCLUDE = (
+    'if [ -n "$inc" ]; then mkdir "$work/include"; cp -r "$inc"/. "$work/include/"; '
+    'set -- "-I$work/include" "$@"; fi; '
+)
+
+
+def included_headers(source: Path, include_dir: Path = INCLUDE) -> list[Path]:
+    """The headers in `include_dir` that `source` includes with `#include "name"`,
+    followed through the headers themselves. Names resolve against `include_dir`
+    only (the -I directory), never against the source's own folder."""
+    found: list[Path] = []
+    todo = [source]
+    while todo:
+        path = todo.pop()
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for name in INCLUDE_RE.findall(text):
+            header = include_dir / name
+            if header.is_file() and header not in found:
+                found.append(header)
+                todo.append(header)
+    return found
+
+
+def include_dir_for(source: Path, include_dir: Path = INCLUDE) -> Path | None:
+    """`include_dir` when `source` includes any header from it, else None, so a
+    file without includes compiles exactly as before."""
+    return include_dir if included_headers(source, include_dir) else None
+
+
 def find_cc1(compiler_dir: Path) -> Path:
     for name in ("cc1", "cc1.exe"):
         found = sorted(compiler_dir.rglob(name))
@@ -92,8 +128,10 @@ def diagnostic_message(result: subprocess.CompletedProcess[str]) -> str:
 def compile_c(compiler_dir: Path, source: Path, flags: list[str], out: Path) -> str | None:
     """Returns an error message, or None on success."""
     cc1 = find_cc1(compiler_dir)
+    include = include_dir_for(source)
     if cc1.suffix == ".exe":
-        cmd = [str(cc1), "-quiet", *flags, str(source), "-o", str(out)]
+        include_flags = [f"-I{include}"] if include else []
+        cmd = [str(cc1), "-quiet", *include_flags, *flags, str(source), "-o", str(out)]
     else:
         # Old 32-bit programs can't stat files on Windows-mounted drives
         # ("Value too large for defined data type"), so work in WSL's /tmp.
@@ -101,12 +139,14 @@ def compile_c(compiler_dir: Path, source: Path, flags: list[str], out: Path) -> 
             f"ld=$(dirname {I386_LIBS})/ld-linux.so.2; "
             f'[ -e "$ld" ] || ld={I386_LIBS}/ld-linux.so.2; '
             'work=$(mktemp -d); cp "$1" "$work/in.c"; cc1="$0"; shift 2; '
-            f'"$ld" --library-path {I386_LIBS} "$cc1" -quiet "$@" '
+            + STAGE_INCLUDE
+            + f'"$ld" --library-path {I386_LIBS} "$cc1" -quiet "$@" '
             '"$work/in.c" -o "$work/out.s"; status=$?; '
             '[ -f "$work/out.s" ] && cp "$work/out.s" "$OUT"; rm -rf "$work"; exit $status'
         )
-        cmd = ["wsl", "-e", "env", f"OUT={wsl_path(out)}", "bash", "-c", script, wsl_path(cc1),
-               wsl_path(source), wsl_path(out), *flags]  # fmt: skip
+        inc = wsl_path(include) if include else ""
+        cmd = ["wsl", "-e", "env", f"OUT={wsl_path(out)}", f"inc={inc}", "bash", "-c", script,
+               wsl_path(cc1), wsl_path(source), wsl_path(out), *flags]  # fmt: skip
     result = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
     if result.returncode != 0 or not out.exists() or out.stat().st_size == 0:
         return diagnostic_message(result)
