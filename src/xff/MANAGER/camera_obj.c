@@ -1,18 +1,56 @@
-typedef int s128 __attribute__((mode(TI)));
-typedef union { s128 q; float f[4]; int i[4]; } Vec4;
+/* Camera objects: the layout object holding a camera's position, direction,
+ * up direction, clip screen and transform matrix set. */
 
-extern void create_original_view_matrix(int, int, int, int);
+typedef int s128 __attribute__((mode(TI)));
+typedef union {
+    s128 q;
+    float f[4];
+    int i[4];
+} Vec4;
+
+typedef struct {
+    char pad[8];
+    unsigned char type;
+} LayoutObj;
+
+typedef struct {
+    int pad0;
+    int active;
+    char pad8[0x3C - 0x8];
+    int id;
+} CamWork;
+
+extern void *memset(void *, int, unsigned int);
+extern char *_isysCreateObj(void *, int, int, int, void *, int);
+extern void isysInitISYSLetterObj(void *);
+extern void isysFlushISYSLetterObj(void *);
+extern void InitLayoutObj(void *, void *);
+extern int GetLayoutObjWorkSize(CamWork *);
+extern int create_clip_screen(void *, void *, void *, float);
+extern int create_transform_matrix_set(void *);
+extern void check_free_clip_screen(void *);
+extern void check_free_transform_matrix_set(void *);
+extern void set_screen_size(void *, int, int);
 extern void update_clip_screen(int);
 extern void update_transform_matrix_set(int, void *, int);
-extern char *get_camera_obj_layout_class(void *);
-extern void *get_transform_matrix_set(void *);
-extern Vec4 *get_camera_position(void *);
-extern Vec4 *get_camera_direction(void *);
-extern Vec4 *get_camera_up_direction(void *);
 extern void *get_WV_matrix(void *);
 extern void iosUnitMatrix(void *);
 extern void iosCopyMatrix(void *, void *);
 extern void GetQuaternionFromMatrix(void *, void *);
+extern int iosSetCameraMatrix();
+
+void set_camera_position(char *dst, Vec4 *src);
+void set_camera_direction(char *a0, Vec4 *a1);
+void set_camera_up_direction(char *a0, Vec4 *a1);
+void update_camera_obj(char *cam);
+Vec4 *get_camera_position(char *cam);
+Vec4 *get_camera_direction(char *cam);
+Vec4 *get_camera_up_direction(char *cam);
+char *get_camera_obj_layout_class(char *cam);
+void *get_transform_matrix_set(char *cam);
+int create_original_view_matrix(char *a, char *b, char *c, char *d);
+static int func_000E7CA8(CamWork *w);
+static void T_000E7CE8(void *obj);
 
 static inline void vecScale(Vec4 *out, Vec4 *in, float s)
 {
@@ -115,7 +153,35 @@ static inline void matMul(void *dst, void *a, void *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-static void func_000E7930(void *cam)
+char *create_camera_obj(void *sys, void *a1, void *a2, float f)
+{
+    Vec4 pos;
+    Vec4 dir;
+    Vec4 up;
+    char layout[0x80];
+    char *obj;
+
+    memset(&pos, 0, 0x10);
+    pos.f[3] = 1.0f;
+    memset(&dir, 0, 0x10);
+    dir.f[2] = 1.0f;
+    memset(&up, 0, 0x10);
+    up.f[1] = 1.0f;
+    obj = _isysCreateObj(sys, 0x11, 0x260, func_000E7CA8((CamWork *)layout), T_000E7CE8, 0x10);
+    isysInitISYSLetterObj(obj);
+    InitLayoutObj(obj, layout);
+    set_camera_position(obj, &pos);
+    set_camera_direction(obj, &dir);
+    set_camera_up_direction(obj, &up);
+    *(int *)(obj + 0x250) = create_clip_screen(sys, a1, a2, f);
+    *(int *)(obj + 0x254) = create_transform_matrix_set(sys);
+    update_camera_obj(obj);
+    return obj;
+}
+
+/* Copies the camera into its layout class: position, orientation and the
+ * world-view matrices. */
+static void func_000E7930(char *cam)
 {
     Vec4 m[4];
     char *lc;
@@ -141,10 +207,116 @@ static void func_000E7930(void *cam)
     matMul(*(void **)(lc + 0x16C), *(void **)(lc + 0x158), *(void **)(lc + 0x168));
 }
 
-void update_camera_obj(void *arg0)
+void set_camera_obj_screen_size(char *camera, int width, int height)
 {
-    create_original_view_matrix(arg0 + 0x210, arg0 + 0x1E0, arg0 + 0x1F0, arg0 + 0x200);
-    update_clip_screen((*(int *)((char *)(arg0) + 0x250)));
-    update_transform_matrix_set((*(int *)((char *)(arg0) + 0x254)), arg0, (*(int *)((char *)(arg0) + 0x250)));
-    func_000E7930(arg0);
+    set_screen_size(*(void **)(camera + 0x250), width, height);
+}
+
+LayoutObj *dynamic_cast_to_camera_obj(LayoutObj *p)
+{
+    if (p->type != 0x11) {
+        __asm__ __volatile__("break 0");
+        return 0;
+    }
+    return p;
+}
+
+void update_camera_obj(char *cam)
+{
+    create_original_view_matrix(cam + 0x210, cam + 0x1E0, cam + 0x1F0, cam + 0x200);
+    update_clip_screen(*(int *)(cam + 0x250));
+    update_transform_matrix_set(*(int *)(cam + 0x254), cam, *(int *)(cam + 0x250));
+    func_000E7930(cam);
+}
+
+void set_camera_position(char *dst, Vec4 *src)
+{
+    *(s128 *)(dst + 0x1E0) = src->q;
+}
+
+void set_camera_direction(char *a0, Vec4 *a1)
+{
+    __asm__ __volatile__(".set noreorder\n"
+        "lqc2 vf5, 0x0(%0)\n"
+        "vmul.xyz vf7, vf5, vf5\n"
+        "vmulax.w ACC, vf0, vf7x\n"
+        "vmadday.w ACC, vf0, vf7y\n"
+        "vmaddz.w vf7, vf0, vf7z\n"
+        "vrsqrt Q, vf0w, vf7w\n"
+        "vwaitq\n"
+        "vmulq.xyz vf5, vf5, Q\n"
+        "sqc2 vf5, 0x0(%1)\n"
+        ".set reorder\n"
+        : : "r"(a1), "r"((char *)a0 + 0x1F0) : "memory");
+}
+
+void set_camera_up_direction(char *a0, Vec4 *a1)
+{
+    __asm__ __volatile__(".set noreorder\n"
+        "lqc2 vf5, 0x0(%0)\n"
+        "vmul.xyz vf7, vf5, vf5\n"
+        "vmulax.w ACC, vf0, vf7x\n"
+        "vmadday.w ACC, vf0, vf7y\n"
+        "vmaddz.w vf7, vf0, vf7z\n"
+        "vrsqrt Q, vf0w, vf7w\n"
+        "vwaitq\n"
+        "vmulq.xyz vf5, vf5, Q\n"
+        "sqc2 vf5, 0x0(%1)\n"
+        ".set reorder\n"
+        : : "r"(a1), "r"((char *)a0 + 0x200) : "memory");
+}
+
+Vec4 *get_camera_position(char *cam)
+{
+    return (Vec4 *)(cam + 0x1E0);
+}
+
+Vec4 *get_camera_direction(char *cam)
+{
+    return (Vec4 *)(cam + 0x1F0);
+}
+
+Vec4 *get_camera_up_direction(char *cam)
+{
+    return (Vec4 *)(cam + 0x200);
+}
+
+char *get_camera_obj_layout_class(char *cam)
+{
+    return cam + 0x20;
+}
+
+void *get_clip_screen(char *cam)
+{
+    return *(void **)(cam + 0x250);
+}
+
+void *get_transform_matrix_set(char *cam)
+{
+    return *(void **)(cam + 0x254);
+}
+
+int create_original_view_matrix(char *a, char *b, char *c, char *d)
+{
+    return iosSetCameraMatrix(a, b, c, d);
+}
+
+static int func_000E7CA8(CamWork *w)
+{
+    memset(w, 0, 0x7C);
+    w->active = 1;
+    w->id = -1;
+    return GetLayoutObjWorkSize(w);
+}
+
+/* Delete callback of a camera object. */
+static void T_000E7CE8(void *obj)
+{
+    char *cam = (char *)dynamic_cast_to_camera_obj(obj);
+
+    if (cam) {
+        isysFlushISYSLetterObj(cam);
+        check_free_clip_screen(cam + 0x250);
+        check_free_transform_matrix_set(cam + 0x254);
+    }
 }
