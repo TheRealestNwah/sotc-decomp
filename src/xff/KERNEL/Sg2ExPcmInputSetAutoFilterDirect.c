@@ -23,10 +23,12 @@ extern void func_0002E728(PcmChannel *in, int ch, int arg1, int arg2, float f0, 
 
 #ifdef NONMATCHING
 /*
- * Parked: 10 words differ. Pinning intr to $s1 gives the original's
+ * Parked: 8 words differ. An empty asm on fp keeps it in $t1 like the
+ * Original (10 before). Pinning intr to $s1 gives the original's
  * callee-saved assignment (ch=s2, arg2=s3, arg1=s4, base=s0, intr=s1). The
- * remaining diffs are the filter pointer: the original builds it in $t1 and
- * copies it to $s0 after base is passed in $a0; here it is built in $s0.
+ * remaining diffs: the original copies fp to $s0 after base is passed in
+ * $a0 and stores through it; here the inline's copy goes to $v1, and the
+ * -1 constant and the a0 move are scheduled differently.
  * Pinning the inline's copy to $s0 as well clobbers base (wrong code).
  */
 static inline void filterReset(Filter *f)
@@ -51,6 +53,7 @@ void Sg2ExPcmInputSetAutoFilterDirect(unsigned int port, int ch, int arg1, int a
         int off = ch * sizeof(PcmChannel);
         register int foff __asm__("$8") = off + 0x30;
         register Filter *fp __asm__("$9") = (Filter *)((char *)base + foff);
+        __asm__("" : "+r"(fp));
         ((PcmChannel *)((char *)base + off))->filter.a = 0;
         filterReset(fp);
     }
