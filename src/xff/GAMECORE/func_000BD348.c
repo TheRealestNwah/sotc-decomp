@@ -1,4 +1,4 @@
-/* Parked at 23 diffs: draws a 44-segment ring (makeRing, also used by func_000BE108) as GS line strips twice: once with a blended color lerped by 1 - D_0017B008.f8, then with blend mode 0x4A/0xA (|0x80 when the fade factor is 1). Remaining diffs are all FPU register allocation in the color block (0x248-0x2BC): the Original gives the 38/42 constants f5/f6 and the B*D loads f7/f8 and computes the 46 term before B*D; ours numbers them differently. Statement order and separate r/g/b/alpha variables do not change it. */
+/* Parked at 19 diffs: draws a 44-segment ring (makeRing, also used by func_000BE108) as GS line strips twice: once with a blended color lerped by 1 - D_0017B008.f8, then with blend mode 0x4A/0xA (|0x80 when the fade factor is 1). The B_0019CCD0.f4 and D_0017B000 loads for the alpha term are pinned to $f7/$f8 as in the Original. Remaining diffs are FPU register allocation in the color block (0x248-0x2BC): the Original gives the 38/42 constants f5/f6, computes the 46 term before B*D and converts every channel through f0. Pinning the constants or the sums makes it worse. */
 #ifdef NONMATCHING
 extern float D_0017AFF0;
 extern float D_0017B000;
@@ -48,11 +48,11 @@ static void func_000BD348(int *buf)
     gsReg(1, ((long)(int)(B_0019CCD0.f4 * D_0017B000 * 128.0f) << 0x18) | (((long)0x3F800000 << 0x10 | 0xA3) << 0x10 | 0x93B9));
     gsReg(4, ((long)((0x8A0 - ((0x1C0 - getDrawScreenHeight()) >> 1)) * 0x10) << 0x10) | ((long)0xFFFE524F << 0x20) | 0x8A00);
     t = 1.0f - D_0017B008.f8;
+    { register float bv asm("$f7") = B_0019CCD0.f4; register float dv asm("$f8") = D_0017B000;
     r = t * 46.0f + 139.0f;
-    g = t * 38.0f + 109.0f;
-    bb = t * 42.0f + 121.0f;
+    g = t * 38.0f + 109.0f; bb = t * 42.0f + 121.0f;
     gsReg(1, (long)r | ((long)g << 8) | ((long)bb << 0x10) |
-             ((long)(int)((t * 0.0f + 128.0f - 0.0f) * (B_0019CCD0.f4 * D_0017B000)) << 0x18) | ((long)0xFE00 << 0x2E));
+             ((long)(int)((t * 0.0f + 128.0f - 0.0f) * (bv * dv)) << 0x18) | ((long)0xFE00 << 0x2E)); }
     z = (long)0xFFFE524F << 0x20;
     q = buf;
     for (i = 0; i < 0x2C; i++) {
