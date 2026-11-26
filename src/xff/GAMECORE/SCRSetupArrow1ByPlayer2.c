@@ -1,10 +1,3 @@
-/* Parked: 4 diffs, same size. Matches except instruction scheduling of
-   the dir lw 0x13C before quatToDir, which the Original loads after the
-   f44 store and the mov.s of rg (the &v addiu goes first there). The pool
-   pointer goes through an empty asm so the pos copy is stored before the
-   free-list load, and an empty asm before the first switch keeps the f48
-   load ahead of the case constant. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } Vec __attribute__((aligned(16)));
 
@@ -248,12 +241,12 @@ void SCRSetupArrow1ByPlayer2(int unused, int type, Vec *dir, Vec *pos)
         n->fB0 = r1 * r2 * getNowPowerRatio();
     }
     resetAttackPower();
-    q = *(void **)(lc + 0x13C);
+    q = &v;
     sp = 0.0f;
     n->f44 = sp;
     rg = sp;
-    quatToDir(&v, *(Vec **)(lc + 0x13C));
-    __asm__ __volatile__("");
+    __asm__ __volatile__("" : : : "memory");
+    quatToDir(q, *(Vec **)(lc + 0x13C));
     switch (n->f48) {
     case 4:
     case 6:
@@ -299,6 +292,3 @@ void SCRSetupArrow1ByPlayer2(int unused, int type, Vec *dir, Vec *pos)
         SetScriptObjDeleteCallBackFunc(n->obj90, func_00034970, n);
     }
 }
-#else
-extern void SCRSetupArrow1ByPlayer2();
-#endif
