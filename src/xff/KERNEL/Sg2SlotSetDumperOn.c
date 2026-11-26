@@ -1,9 +1,6 @@
-extern unsigned char B_000DE370[];
+#include "kernel/sg2slot.h"
 
-void Sg2SlotSetDumperOn(int arg0)
+void Sg2SlotSetDumperOn(int slot)
 {
-    int *temp_v0;
-
-    temp_v0 = B_000DE370 + (arg0 * 0xE0);
-    *temp_v0 |= 8;
+    B_000DE370[slot].flags |= 8;
 }

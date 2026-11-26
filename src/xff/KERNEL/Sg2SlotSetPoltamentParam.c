@@ -1,25 +1,20 @@
-extern unsigned char B_000DE370[];
+#include "kernel/sg2slot.h"
 
-void Sg2SlotSetPoltamentParam(int arg0, int arg1, float fparg0)
+void Sg2SlotSetPoltamentParam(int slot, int target, float step)
 {
-    float var_f12;
-    int temp_v0;
-    int temp_v0_2;
-    void *temp_v1;
+    Sg2Slot *s = &B_000DE370[slot];
+    int flags = s->flags;
 
-    var_f12 = fparg0;
-    temp_v1 = B_000DE370 + (arg0 * 0xE0);
-    temp_v0 = (*(int *)((char *)(temp_v1) + 0));
-    if (!(temp_v0 & 0x200)) {
-        temp_v0_2 = (*(int *)((char *)(temp_v1) + 0x24));
-        (*(int *)((char *)(temp_v1) + 0)) = (int) (temp_v0 | 0x200);
-        (*(int *)((char *)(temp_v1) + 0xDC)) = 0;
-        (*(int *)((char *)(temp_v1) + 0xCC)) = temp_v0_2;
-        (*(int *)((char *)(temp_v1) + 0xD0)) = temp_v0_2;
+    if (!(flags & 0x200)) {
+        int note = s->note;
+        s->flags = flags | 0x200;
+        s->poltaTime = 0;
+        s->poltaStart = note;
+        s->poltaCur = note;
     }
-    (*(int *)((char *)(temp_v1) + 0xD4)) = arg1;
-    if (arg1 < (*(int *)((char *)(temp_v1) + 0xD0))) {
-        var_f12 = -var_f12;
+    s->poltaTarget = target;
+    if (target < s->poltaCur) {
+        step = -step;
     }
-    (*(float *)((char *)(temp_v1) + 0xD8)) = var_f12;
+    s->poltaStep = step;
 }
