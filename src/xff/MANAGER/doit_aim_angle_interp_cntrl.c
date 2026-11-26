@@ -26,10 +26,10 @@ float doit_aim_angle_interp_cntrl(AimAngleControl *state, int force,
 }
 
 /* Parked draft: eases an aim yaw towards the target, with the step scaled by rate * parameter and
-   the result clamped to maximum * parameter. 21 diffs, same size. Register pins put diff, v and step
-   where the Original has them; left: -diff is computed into the copy rather than into step, and
-   step * |diff / step| is written straight into step instead of through a temporary (one word
-   longer in the Original, which shifts the later branch offsets). */
+   the result clamped to maximum * parameter. 2 diffs, same size. Register pins put diff, v and step
+   where the Original has them, and step * |diff / step| goes through a laundered $f0 temporary;
+   left: -diff is computed into the copy ($f2) rather than into step ($f12). Tried: nd = step copies,
+   $f2 pins, launders on step or the copy. */
 #ifdef NONMATCHING
 extern float GAMEUTIL_get_move_radi_from_yaw1_to_yaw2_extend(int, int, float, float);
 extern int GAMEUTIL_is_nearly_equal_zero(float, float);
@@ -55,7 +55,11 @@ static float func_000097E0(int mode, float cur, float target, float delta, float
             if (step != 0.0f) {
                 a = diff / step;
                 if (a < 0.0f) a = -a;
-                step = step * a;
+                {
+                    register float t __asm__("$f0") = step * a;
+                    __asm__("" : "+f"(t));
+                    step = t;
+                }
             }
         }
         v += step;
@@ -73,9 +77,9 @@ static float func_000097E0(int mode, float cur, float target, float delta, float
 #endif
 
 /* Parked draft: the pitch counterpart of func_000097E0, clamped to +-85 degrees by
-   GAMEUTIL_near_to_aim_pitch_angle. 21 diffs, same size. Left: the same -diff/step copy order and
-   step * |diff / step| temporary as func_000097E0, and -0.0f is negated from v's copy instead of
-   from the zero constant. */
+   GAMEUTIL_near_to_aim_pitch_angle. 3 diffs, same size. Left: the same -diff/step copy order as
+   func_000097E0, and -0.0f is negated from v's copy instead of from the zero constant (a shared
+   zero variable or an $f1 pin makes it worse). */
 #ifdef NONMATCHING
 extern float GAMEUTIL_get_difference_pitch_and_pitch(float, float);
 extern int GAMEUTIL_near_to_aim_pitch_angle(float *out, int, int, float, float, float, float, float);
@@ -99,7 +103,11 @@ static float func_000099A0(float cur, float target, float delta, float rate, flo
             if (step != 0.0f) {
                 a = diff / step;
                 if (a < 0.0f) a = -a;
-                step = step * a;
+                {
+                    register float t __asm__("$f0") = step * a;
+                    __asm__("" : "+f"(t));
+                    step = t;
+                }
             }
         }
         v += step;
