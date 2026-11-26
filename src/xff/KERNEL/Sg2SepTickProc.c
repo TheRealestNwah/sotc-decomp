@@ -1,26 +1,5 @@
-typedef union { long l; double d; } DL;
-typedef struct Sep {
-    int status;
-    int unk4;
-    int serial;
-    int vab;
-    int mod;
-    int seq;
-    int flags;
-    int pad1C;
-    DL tick;
-    DL time;
-    DL count;
-    int unk38;
-    int data;
-    unsigned char *ptr;
-    unsigned char skip;
-    char pad45[3];
-    unsigned int cmd;
-    char pad4C[4];
-} Sep;
+#include "kernel/sg2sep.h"
 
-extern Sep B_000DD700[];
 extern int B_000DE320;
 extern unsigned char B_000DE220[];
 extern int B_000DE210;
@@ -90,7 +69,7 @@ void Sg2SepTickProc(void)
                 t = __floatdidf((v & 1) | (v >> 1));
                 t = dpadd(t, t);
             }
-            { DL u; u.l = t; sep->count.d = u.d; }
+            { SepTime u; u.l = t; sep->count.d = u.d; }
             sep->time.d = 0;
         }
         if (B_000DE210 != 0)

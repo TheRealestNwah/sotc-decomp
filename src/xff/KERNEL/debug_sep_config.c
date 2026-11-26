@@ -1,11 +1,5 @@
-typedef struct {
-    int status;
-    char pad04[0x28 - 0x4];
-    double pos;
-    char pad30[0x50 - 0x30];
-} Sep;
+#include "kernel/sg2sep.h"
 
-extern Sep B_000DD700[];
 extern int D_00041470;
 extern int D_00041474;
 extern int D_00041478;
@@ -38,7 +32,7 @@ void debug_sep_config(int i, char *out)
 
     strcpy(out, "");
     if (i >= 0) {
-        pos = sep->pos;
+        pos = sep->time.d;
         if (pos != 0.0) {
             t = pos / 480.0;
             if (t < 0.0)

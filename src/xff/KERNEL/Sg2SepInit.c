@@ -1,5 +1,4 @@
-typedef struct { int status, previous, unk8, vab, mod, x14, x18; char pad1C[52]; } Sep;
-extern Sep B_000DD700[];
+#include "kernel/sg2sep.h"
 extern int B_000DE100;
 extern void *memset(void *, int, unsigned int);
 extern int Sg2CtrlEntryTickProcById(int, void (*)(void));
