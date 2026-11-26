@@ -15,11 +15,9 @@ extern Ptn rootPtn;
 extern unsigned char RO_0017D138[];
 extern void *_gcCreateChildScriptObj(void *, void *, Ptn *, int, int, int, void *, void *);
 
-#ifdef NONMATCHING
 /* Thread that bootTexAlphaAnim starts: steps cur toward target by step, rescaling the
-   texture's CLUT alpha each frame. 18 differing words: the original keeps a separate
-   texScaleClutAlpha call and busy store for step == 0 after the shared tail, where gcc
-   folds the zero case into it. */
+   texture's CLUT alpha each frame. The step == 0 case keeps its own texScaleClutAlpha
+   call and shares only the busy store with the other paths. */
 static void func_000420B8(TexAlphaAnim *p)
 {
     void *mop = texSearchMopByName(p->name);
@@ -49,15 +47,20 @@ static void func_000420B8(TexAlphaAnim *p)
             p->cur = p->target;
         }
     } else {
-        p->cur = p->target;
+        goto zero;
     }
 done:
     texScaleClutAlpha(mop, p->cur);
+    goto end;
+zero:
+    {
+        float t = p->target;
+        p->cur = t;
+        texScaleClutAlpha(mop, t);
+    }
+end:
     p->busy = 0;
 }
-#else
-extern void func_000420B8();
-#endif
 
 void bootTexAlphaAnim(void *parent, int *st, float a, float b)
 {
