@@ -4,7 +4,6 @@ typedef struct {
     unsigned char mode;
     char p31[0xF];
 } LightSlot;
-
 typedef struct {
     LightSlot slots[3];
     char pC0[0x50];
@@ -16,12 +15,10 @@ typedef struct {
     char p128[0x1C];
     int p144;
 } GlobalLightWork;
-
 typedef struct {
     int p0;
     int name;
 } GlobalLightDef;
-
 extern char *GetLightColMan();
 extern void **isysGroupForFirst(void *, int);
 extern void **isysGroupForNext(void **, int);
@@ -30,6 +27,17 @@ extern void isysAddGroupWithLinkParam(void *, void *, int, int);
 extern void _isysDeleteGroup(void *, void *, int);
 extern int strcmp(const char *, const char *);
 extern int func_0007C670(GlobalLightWork *, GlobalLightDef *, int);
+
+float GameLightCalcImpact(void *arg0, float fparg0)
+{
+    float var_f0;
+
+    var_f0 = (*(float *)((char *)(arg0) + 0x40)) * (1.0f - (fparg0 / (*(float *)((char *)(arg0) + 0x28))));
+    if (var_f0 < 0.0f) {
+        var_f0 = -var_f0;
+    }
+    return var_f0;
+}
 
 GlobalLightWork *AddGlLightMan(GlobalLightDef *def, int arg)
 {
