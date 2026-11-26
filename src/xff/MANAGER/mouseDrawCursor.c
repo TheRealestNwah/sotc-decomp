@@ -1,4 +1,4 @@
-/* Parked: 18 words off, only the branch layout of the cursor-type chain differs (original shares a tail via goto). */
+/* Parked at 11 diffs: the cursor-type chain shares the default tail via goto; the original reloads u = 0x30 in the arg0 >= 3 arm and orders v0 = 2 before ox = -8. */
 #ifdef NONMATCHING
 extern float D_00137724;
 extern void gsReg(int, long);
@@ -31,25 +31,22 @@ void mouseDrawCursor(int arg0, float x, float y)
             oy = -8;
             u = 0x20;
             v = 0x10;
-            if (arg0 != 1) {
-                ox = 0;
-                oy = 0;
-                u = 0x20;
-                v = 0;
-            }
+            if (arg0 != 1)
+                goto def;
         } else {
             oy = -8;
             u = 0x30;
             v = 0x10;
             if (arg0 != 3) {
-                if (arg0 != 4) {
+                if (arg0 == 4) {
+                    u = 0x20;
+                    v = 0x20;
+                } else {
+                def:
                     ox = 0;
                     oy = 0;
                     u = 0x20;
                     v = 0;
-                } else {
-                    u = 0x20;
-                    v = 0x20;
                 }
             }
         }
