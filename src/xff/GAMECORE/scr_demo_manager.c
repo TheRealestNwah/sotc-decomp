@@ -1,7 +1,10 @@
-typedef int s128 __attribute__((mode(TI)));
+#include "common.h"
+#include "gamecore/scr_demo_manager.h"
+
 typedef struct {
     float x, y, z, w;
 } __attribute__((aligned(16))) Vec4;
+
 extern char gcGlobalVar[];
 extern char *GetCharacterClass(void *);
 extern char *GetLayoutClass(void *);
