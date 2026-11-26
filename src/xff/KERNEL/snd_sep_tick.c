@@ -1,3 +1,98 @@
+extern int D_00040FA4;
+
+void isysDebugSetSubThreadSleepProtection(int arg0)
+{
+    D_00040FA4 = arg0;
+}
+
+typedef unsigned long u64;
+
+typedef struct {
+    short unk0;
+    short unk2;
+    int id;
+    union {
+        struct {
+            u64 lo : 34;
+            u64 mode : 3;
+        } b;
+        int w;
+        u64 d;
+    } f;
+    char pad10[0x10];
+    float cur;
+    float target;
+    short volTarget;
+    short vol;
+    short unk2C;
+    short unk2E;
+    short unk30;
+} SepVoice;
+
+extern int D_00040FAC;
+extern int Sg2SepSetParam(unsigned int id, int selector, int value, int extra);
+
+static void func_0001DC58(SepVoice *v)
+{
+    int id = v->id;
+    float t;
+    int n;
+    short vol;
+    int d;
+
+    if (D_00040FAC != 0 && ((v->f.d >> 34) & 7) != 1) {
+        t = 0.0f;
+        vol = v->vol;
+    } else {
+        t = v->volTarget;
+        __asm__ __volatile__(""); /* keeps the vol load after the volTarget conversion */
+        vol = v->vol;
+    }
+    if (vol != t) {
+        d = vol - t;
+        if (vol < 0) {
+            v->vol = t;
+        } else if (d > 0) {
+            if (d < 10) {
+                v->vol = t;
+            } else {
+                v->vol = (float)(vol - 10);
+            }
+        } else if (d < -9) {
+            v->vol = (float)(vol + 10);
+        } else {
+            v->vol = t;
+        }
+        Sg2SepSetParam(id, 2, v->vol, 0);
+    }
+    if (v->cur != v->target) {
+        float cur = v->cur;
+        float tg = v->target;
+        float diff = cur - tg;
+        if (cur < 0.0f) {
+            v->cur = tg;
+        } else if (diff > 0.0f) {
+            if (diff < 2.5) {
+                v->cur = tg;
+            } else {
+                v->cur = cur - 2.5;
+            }
+        } else if (diff > -2.5) {
+            v->cur = tg;
+        } else {
+            v->cur = cur + 2.5;
+        }
+        Sg2SepSetParam(id, 4, (int)v->cur, 0);
+    }
+    if (v->f.w & 4) {
+        Sg2SepSetParam(id, 0x40, v->unk2C, 0);
+    }
+    if (v->f.w & 8) {
+        Sg2SepSetParam(id, 0x80, v->unk2E, v->unk30);
+    }
+    v->f.w = 0;
+}
+
 typedef struct SepData { int pad0; int id; } SepData;
 typedef struct SepEntry SepEntry;
 struct SepEntry {
@@ -19,7 +114,7 @@ extern int Sg2SepPlay(int, int, int, int);
 extern int Sg2SepStatus(int);
 extern void Sg2SepStop(int);
 extern void Sg2SepStopSndOff(int);
-extern void func_0001DC58(SepEntry *);
+
 extern SepEntry B_000C2910[32];
 
 void sndSepTickProc(void)
@@ -77,7 +172,7 @@ void sndSepTickProc(void)
                 }
             }
             if (notify) {
-                func_0001DC58(e);
+                func_0001DC58((SepVoice *)e);
             }
             break;
         case 3:
