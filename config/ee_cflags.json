@@ -125,7 +125,7 @@
   "src/xff/GAMECORE/func_000B2890.c": [
     "-fno-strict-aliasing"
   ],
-  "src/xff/GAMECORE/doit_camera_etc_condition.c": [
+  "src/xff/GAMECORE/camera_etc_condition.c": [
     "-fno-strict-aliasing"
   ],
   "src/xff/GAMECORE/playerlifebar_script.c": [
