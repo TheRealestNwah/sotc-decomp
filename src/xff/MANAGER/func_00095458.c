@@ -1,11 +1,11 @@
-/* Parked: 11 diffs, same size (209 words) (23 before; flag -fno-strict-aliasing). spriteDrawSprite takes its six floats before the two ints (pri, then the text's 0x70 field), like func_00095218 and func_00099118. Earlier fixes: a real float `y` (zero, copied from x) for the `+ 0.0f` y offset (original keeps it in f23), alpha as the last float argument in a conditional (`cond ? alpha * 0.6f : alpha`), `fdy` converted before the layout loads, 0.6f, and the missing-glyph branch as `if (i > 0) x += w; else x += w * 0.5f`. Remaining: the string address setup order before the first iosSPrintf, and load scheduling around the two spriteSetPosition/spriteDrawSprite calls. */
+/* Parked: 2 diffs, same size (214 words) (5 before; flag -fno-strict-aliasing). spriteDrawSprite takes its six floats before the two ints (pri, then the text's 0x70 field), like func_00095218 and func_00099118. Fixes: a real float `y` (zero, copied from x) for the `+ 0.0f` y offset (original keeps it in f23), alpha as the last float argument in a conditional (`cond ? alpha * 0.6f : alpha`), `fdy` converted before the layout loads, 0.6f, the missing-glyph branch as `if (i > 0) x += w; else x += w * 0.5f`, layout+0x1C read into a local before the flags (fixes its order against pri), and iosSPrintf declared void (fixes the format lui order). Remaining: the Original finishes the format address (addiu a1) before the table copy and puts `a0 = buf` in the first iosSPrintf's delay slot. */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern char RO_00140670[];
 extern char RO_00140678[];
 extern char RO_00140680[];
 extern int getDrawScreenHeight(void);
-extern int iosSPrintf(char *, const char *, ...);
+extern void iosSPrintf(char *, const char *, ...);
 extern unsigned int strlen(const char *);
 extern char *strcpy(char *, const char *);
 extern char *strcat(char *, const char *);
@@ -69,9 +69,10 @@ void func_00095458(int *spr, char *layout, char *text, int width, float alpha)
                 {
                     int dy = getDrawScreenHeight() >= 0x1C0 ? 0 : *(int *)(*(char **)layout + 8);
                     float fdy = (float)dy;
+                    float lx = *(float *)(layout + 0x1C);
                     unsigned int flags = *(unsigned int *)(layout + 8);
                     spriteDrawSprite(spr, *(int *)(layout + 0x24),
-                                     *(float *)(layout + 0x1C), *(float *)(layout + 0x20) + fdy,
+                                     lx, *(float *)(layout + 0x20) + fdy,
                                      *(float *)(layout + 0x28), *(float *)(layout + 0x2C),
                                      *(float *)(layout + 0x30),
                                      (!((flags >> 20) & 1) && (*(unsigned int *)(layout + 0x38) & 0x1FF)) ? alpha * 0.6f : alpha,
