@@ -1,4 +1,4 @@
-/* 20 diffs. Returns the cached independent surface boundary of collision node `node`, entry `idx`, computing it on a miss: unpacks 4 shorts (vitof15, then scale and offset by the node's dequant record) or takes the float vector, transforms it by the layout's node matrix with w = 1, stores w * layout scale in .w and registers the entry with EntryModifiedManager. Only the unpacking block differs: the Original stores x and y and copies that half first, ours schedules z and w first; the node matrix base and index also swap $a0/$v0. */
+/* 4 diffs. Returns the cached independent surface boundary of collision node `node`, entry `idx`, computing it on a miss: unpacks 4 shorts (vitof15, then scale and offset by the node's dequant record) or takes the float vector, transforms it by the layout's node matrix with w = 1, stores w * layout scale in .w and registers the entry with EntryModifiedManager. The unpacked shorts go through a function-level Vec4 temporary, which keeps the Original's store/copy order. Remaining: the shape index ($v0 vs $v1) and the node matrix base and index ($a0/$v0) swap registers. */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -98,6 +98,7 @@ Vec4 *getLayoutClassCollisionIndepSurfBoundary(LayoutClass *layout, int node, in
     Vec4 tmp;
     float w;
     Dequant *dq;
+    Vec4 dv;
 
     cache = &layout->model->nodes[node].cache;
     out = &cache->values[idx];
@@ -108,13 +109,12 @@ Vec4 *getLayoutClassCollisionIndepSurfBoundary(LayoutClass *layout, int node, in
         cn = &layout->collision->resource->nodes[node];
         if (cn->packed) {
             short *sh = (short *)cn->shapes + idx * 4;
-            IVec d;
 
-            d.x = sh[0];
-            d.y = sh[1];
-            d.z = sh[2];
-            d.w = (unsigned short)sh[3];
-            tmp.i = d;
+            dv.i.x = sh[0];
+            dv.i.y = sh[1];
+            dv.i.z = sh[2];
+            dv.i.w = (unsigned short)sh[3];
+            tmp.i = dv.i;
             dq = cn->dequant;
             tmp.i.w >>= 1;
             itof15(&tmp);
