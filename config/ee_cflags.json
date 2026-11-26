@@ -318,5 +318,8 @@
   ],
   "src/xff/MANAGER/get_particle_parameter_blend_doit.c": [
     "-fno-strict-aliasing"
+  ],
+  "src/xff/MANAGER/InitSpriteObj.c": [
+    "-fno-strict-aliasing"
   ]
 }
