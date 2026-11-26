@@ -1,6 +1,7 @@
-/* Parked: 7 diffs (scheduling). Storing out[] through a float/int union keeps the flag loads
-   after each store as in the Original. Remaining: ZeroVector/d address setup uses v0 instead
-   of v1, and the mov.s f12/f13 order before GAMEUTIL_is_nearly_equal_zero(len, eps). */
+/* Parked: 2 diffs (scheduling). Storing out[] through a float/int union keeps the flag loads
+   after each store as in the Original. The mtc1 of the vector length sits inside the vlen3 asm,
+   so the f12/f13 argument moves for GAMEUTIL_is_nearly_equal_zero(len, eps) keep source order.
+   Remaining: the diff address (v1) and vel address (s3) setup before vsub3 are swapped. */
 #ifdef NONMATCHING
 extern int GAMEUTIL_is_nearly_equal_zero(float, float);
 extern float GAMEUTIL_get_difference_value(float, float, int);
@@ -86,8 +87,9 @@ static inline float vlen3(float *v)
                          "vmaddz.w vf7, vf0, vf7z\n"
                          "vsqrt Q, vf7w\n"
                          "vwaitq\n"
-                         "cfc2.ni %0, $vi22\n"
-                         : "=r"(d) : "r"(v));
+                         "cfc2.ni $2, $vi22\n"
+                         "mtc1 $2, %0\n"
+                         : "=f"(d) : "r"(v) : "$2");
     return d;
 }
 
