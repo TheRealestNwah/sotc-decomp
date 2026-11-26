@@ -35,10 +35,9 @@ static inline char *resourceData(unsigned int *reference)
     return 0;
 }
 
-#ifdef NONMATCHING /* 15 diffs: scheduling of the req[] stores and the req[6] float load before GetMotionNodeQuaternionPos */
 /* Deletes the previous torch-fall object, then spawns the TORCH_FALL_ANIM layout object at the player's sword node
    (or the layout position when the collision clip finds the path blocked). */
-void func_0007A670(int obj)
+static void func_0007A670(int obj)
 {
     int req[16];
     float p[4] __attribute__((aligned(16)));
@@ -76,13 +75,13 @@ void func_0007A670(int obj)
     req[8] = 0;
     req[4] = *(int *)(StageLayout_TORCH_FALL_ANIM + 8);
     req[5] = (int)resourceData((unsigned int *)(StageLayout_TORCH_FALL_ANIM + 0x3C));
-    *(float *)&req[6] = *(float *)(StageLayout_TORCH_FALL_ANIM + 0x40);
+    ((union { int i; float f; } *)&req[6])->f = *(float *)(StageLayout_TORCH_FALL_ANIM + 0x40);
+    req[7] = *(int *)(StageLayout_TORCH_FALL_ANIM + 0x44);
     req[9] = 0;
     req[10] = 0;
-    req[7] = *(int *)(StageLayout_TORCH_FALL_ANIM + 0x44);
     req[11] = 1;
-    req[13] = 0;
     req[12] = *(int *)(StageLayout_TORCH_FALL_ANIM + 0x14);
+    req[13] = 0;
     req[14] = 0;
     GetMotionNodeQuaternionPos(q, p, obj, *(int *)(SkelFocusDef_PLAYER_SWORD + 8), 1);
     lay = GetLayoutClass(obj);
@@ -96,4 +95,3 @@ void func_0007A670(int obj)
     *(float *)&req[6] = 5.0f;
     *(int *)(w + 0x150) = loadObj(StageLayout_TORCH_FALL_ANIM + 4, req, rootPtn, gcGlobalVar + 0x280, 0, 4);
 }
-#endif
