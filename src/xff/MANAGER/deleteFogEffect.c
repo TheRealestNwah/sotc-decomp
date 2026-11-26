@@ -1,4 +1,0 @@
-void deleteFogEffect(void)
-{
-
-}
