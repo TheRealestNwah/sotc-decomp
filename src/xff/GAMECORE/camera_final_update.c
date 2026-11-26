@@ -1,3 +1,5 @@
+#include "gamecore/camera_final_update.h"
+
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 typedef struct {
