@@ -22,7 +22,6 @@ extern int D_0013616C;
 extern int D_00136170;
 extern DcInfo *D_0013617C;
 
-#ifdef NONMATCHING
 void shadowReset(void)
 {
     int rect[4];
@@ -40,11 +39,13 @@ void shadowReset(void)
         gsRegBegin();
         {
             int x = (-w / 2) * 16;
-            int y = (-h / 2) * 16;
-            rect[1] = y;
-            rect[0] = x;
+            int y = -h / 2;
+
             rect[2] = w * 16;
             rect[3] = h * 16;
+            __asm__("" : "+r"(y));
+            rect[0] = x;
+            rect[1] = y * 16;
         }
         memset(col, 0, 0x10);
         col[3] = 0x80;
@@ -62,6 +63,3 @@ void shadowReset(void)
         iosDlPopLayer();
     }
 }
-#else
-extern void shadowReset(void);
-#endif
