@@ -82,8 +82,8 @@ static inline void quatMul(void *dst, void *a, void *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-#ifdef NONMATCHING /* 5 diffs: quatRotateVector returning int (value unused) and the register pins on the two (idx<<N)+base temps come from the permuter; left: addu operand order at the two pinned address temps and v0/v1 numbering of the quatMul address */
-float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip)
+typedef struct { s128 v; } E16;
+static float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip)
 {
     Vec4 d __attribute__((aligned(16)));
     float *new_var;
@@ -101,7 +101,7 @@ float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip
     register float ang2 __asm__("$f25");
     register char *pos __asm__("$3");
 
-    { int ix = *(int *)(o + 0x14); register char *bs __asm__("$2") = *(char **)(o + 8); pos = (ix << 6) + bs; pos += 0x30; }
+    { register int ix __asm__("$3") = *(int *)(o + 0x14); register char *bs __asm__("$2") = *(char **)(o + 8); ix <<= 6; ix += (int)bs; pos = (char *)ix + 0x30; }
 
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                          "lqc2 vf6, 0x0(%2)\n"
@@ -142,8 +142,8 @@ float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip
                          "sqc2 vf5, 0x0(%1)\n"
                          : : "r"(&d), "r"(&n) : "memory");
     {
-    register int ix2 __asm__("$2") = *(int *)(o + 0x14);
-    register char *ap __asm__("$2") = (ix2 << 4) + *(char **)(o + 0xC);
+    register char *ap __asm__("$2") = (char *)(*(int *)(o + 0x14) << 4);
+    ap += (int)*(char **)(o + 0xC);
     __asm__ __volatile__("lqc2 vf11, 0x0(%1)\n"
                          "vsubw.x vf5, vf0, vf0w\n"
                          "vmulx.xyz vf11, vf11, vf5x\n"
@@ -152,9 +152,8 @@ float func_00091CE0(char *o, s128 *tgt, char *unused, char *a, char *b, int flip
     }
     quatRotateVector(&r, (float *)&c, &n);
     GetDifferencialQuaternionWithNoRegularize(q, (float *)&r, ZUnitVectorInv, o + 0x20);
-    quatMul((*(int *)(o + 0x14) << 4) + *(char **)(o + 4), (*(int *)(o + 0x14) << 4) + *(char **)(o + 4), q);
+    quatMul(&(*(E16 **)(o + 4))[*(int *)(o + 0x14)], &(*(E16 **)(o + 4))[*(int *)(o + 0x14)], q);
     RotQuaternionXExact((float *)((*(int *)(o + 0x14) << 4) + *(char **)(o + 4)),
                         (float *)((*(int *)(o + 0x14) << 4) + *(char **)(o + 4)), ang2);
     return ang1;
 }
-#endif
