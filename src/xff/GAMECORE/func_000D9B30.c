@@ -1,5 +1,4 @@
-/* Parked: 19 diffs, same size. Cliff-rise camera probe: a state machine on p+0x140. State 0 copies the cliff-rise parameters (angles converted to radians, distances scaled by 0.6 while delayed) and casts a probe forward from the target position; state 1 steps along the probe, ray-casting downward at 60 degrees through func_000DA638 and keeping the steepest rise angle; state 2 casts toward the highest hit to find the camera point and its weight; state 3 checks the step beyond it. States 4 and 5 publish the result to p+0x160 and arm the hold timer at p+0x150. Remaining: the Original loads prm+0x114 in the jal delay slot after the float copies (ours hoists it), sets t0 instead of v1 for the 0.95 lerp factor with addiu v0,sp,0x40 before the lui, and orders the state 5 stores lq/sw 1E0/sq 1D0/sw 1E4. */
-#ifdef NONMATCHING
+/* Cliff-rise camera probe: a state machine on p+0x140. State 0 copies the cliff-rise parameters (angles converted to radians, distances scaled by 0.6 while delayed) and casts a probe forward from the target position; state 1 steps along the probe, ray-casting downward at 60 degrees through func_000DA638 and keeping the steepest rise angle; state 2 casts toward the highest hit to find the camera point and its weight; state 3 checks the step beyond it. States 4 and 5 publish the result to p+0x160 and arm the hold timer at p+0x150. The step count at prm+0x114 is read through an int/float union so gcc keeps it after the float copies, and LERP moves its factor through $t0 inside the asm. */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef union {
@@ -54,7 +53,7 @@ extern float iosGetATanfExact(float);
                          : "r"(o), "r"(a), "r"(s)                                        \
                          : "memory")
 #define LERP(o, a, b, t)                                                                 \
-    __asm__ __volatile__("qmtc2 %3, vf7\n"                                               \
+    __asm__ __volatile__("mfc1 $8, %3\n" "qmtc2 $8, vf7\n"                                               \
                          "lqc2 vf5, 0x0(%1)\n"                                           \
                          "lqc2 vf6, 0x0(%2)\n"                                           \
                          "vsubx.w vf8, vf0, vf7x\n"                                      \
@@ -62,8 +61,8 @@ extern float iosGetATanfExact(float);
                          "vmaddw.xyz vf5, vf6, vf8w\n"                                   \
                          "sqc2 vf5, 0x0(%0)\n"                                           \
                          :                                                               \
-                         : "r"(o), "r"(a), "r"(b), "r"(t)                                \
-                         : "memory")
+                         : "r"(o), "r"(a), "r"(b), "f"(t)                                \
+                         : "$8", "memory")
 #define DISTXZ(r, a, b)                                                                  \
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"                                           \
                          "lqc2 vf6, 0x0(%2)\n"                                           \
@@ -91,7 +90,7 @@ extern float iosGetATanfExact(float);
                          : "r"(a)                                                        \
                          : "$2")
 
-void func_000D9B30(char *p, char *cam, Vec *dir, void *c, float dt)
+static void func_000D9B30(char *p, char *cam, Vec *dir, void *c, float dt)
 {
     Hit hit;
     Vec b;
@@ -127,7 +126,7 @@ void func_000D9B30(char *p, char *cam, Vec *dir, void *c, float dt)
                     F(0x1F0) = *(float *)(prm + 0x108) * k;
                     F(0x1F4) = *(float *)(prm + 0x10C);
                     F(0x1F8) = *(float *)(prm + 0x110);
-                    I(0x1FC) = *(int *)(prm + 0x114);
+                    I(0x1FC) = ((union { int i; float f; } *)(prm + 0x114))->i;
                     if (is_cliff_rise_delay_camera_place_status(cam + 0x1270) == 1) {
                         F(0x1F4) = F(0x1F4) * 0.6f;
                         F(0x1F8) = F(0x1F8) * 0.6f;
@@ -270,4 +269,3 @@ void func_000D9B30(char *p, char *cam, Vec *dir, void *c, float dt)
         func_000D98F0(p);
     }
 }
-#endif
