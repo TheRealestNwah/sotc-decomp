@@ -19,14 +19,12 @@ extern void func_000A9FA8(void *);
 extern void func_000AABE8(void);
 extern void func_000A9A10(void);
 
-#ifdef NONMATCHING
-/* Parked: 18 words differ. The Original keeps a second copy of the path pointer for the event-list loop in $s2, made in the delay slot of the second CharaCtrlResetCtrlStatus call; reusing c for that copy (with an empty asm barrier before Kite_SetAnimalID_KitePathWork so CSE keeps it) gives the partition id and the path $s1 as in the Original. Remaining: the work pointer and c swap $s2/$s3. */
 void nico_SmallKiteSpecialStart(void)
 {
     int i = 0;
     void *th = isysGetThisSubThread();
     int part = iosCreatePartition(rootPtn, 0x943);
-    char *c;
+    register char *c __asm__("$18");
     char *w;
     char *path;
 
@@ -43,7 +41,7 @@ void nico_SmallKiteSpecialStart(void)
     AI_InitAnimalWork(w, 8);
     func_000AA150(w);
     Kite_InitKitePathWork(path, isysGetThisSubThread(), *(float *)(*(char **)(w + 0x20) + 0xE8), *(float *)(*(char **)(w + 0x20) + 0xE4));
-    __asm__("" : "+r"(c));
+
     Kite_SetAnimalID_KitePathWork(path, 8);
     func_000A9D40(w);
     *(int *)(w + 0x360) = 0;
@@ -53,6 +51,3 @@ void nico_SmallKiteSpecialStart(void)
     SetScriptObjDeleteCallBackFunc(isysGetThisSubThread(), func_000AABE8, w);
     isysJumpSubThread(func_000A9A10, w);
 }
-#else
-void nico_SmallKiteSpecialStart(void);
-#endif
