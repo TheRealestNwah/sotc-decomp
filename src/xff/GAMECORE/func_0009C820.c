@@ -1,6 +1,6 @@
-/* Parked: 20 diffs, same size. Remaining: case 2 register assignment
-   (YUnitVector/t2/b2/inv in s1/s0/s2 vs the Original's s0/s2/s1, and the
-   0x1F0 load base). */
+/* Parked: 19 diffs, same size. Remaining: case 2 register assignment
+   (YUnitVector/t2/b2/inv in s1/s0/s2 vs the Original's s0/s2/s1). The
+   0x1F0 offset through new_var2 (from the permuter) fixes the copy's load base. */
 #ifdef NONMATCHING
 
 typedef int s128 __attribute__((mode(TI)));
@@ -86,6 +86,7 @@ sqc2 vf11, 0x0(%0)" : : "r"(out), "r"(q) : "memory");
 
 void func_0009C820(char *o)
 {
+  unsigned long new_var2;
   Vec4 q;
   char *new_var;
   Vec4 inv;
@@ -130,8 +131,9 @@ void func_0009C820(char *o)
       char *l2;
       Vec4 *i2;
       *((int *) (o + 0x494)) = 1;
+      new_var2 = 0x1F0;
       *((float *) (o + 0x1B8)) = 1.0f;
-      new_var = o + 0x1F0;
+      new_var = o + new_var2;
       func_0009C638(o, YUnitVector, 1.0f);
       *((s128 *) (o + 0x200)) = *((s128 *) (o + 0x1F0));
       t2 = (Vec4 *) new_var;
