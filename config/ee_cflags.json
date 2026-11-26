@@ -29,9 +29,6 @@
   "src/xff/MANAGER/spriteInitObject.c": [
     "-fno-strict-aliasing"
   ],
-  "src/xff/KERNEL/isysRequestDeleteObj.c": [
-    "-fno-strict-aliasing"
-  ],
   "src/xff/KERNEL/atanf.c": [
     "-fno-builtin"
   ],
@@ -209,13 +206,7 @@
   "src/xff/KERNEL/iosintr.c": [
     "-fno-strict-aliasing"
   ],
-  "src/xff/KERNEL/isysDeleteGroupAllObj.c": [
-    "-fno-strict-aliasing"
-  ],
   "src/xff/KERNEL/isysGetXffEntryPointPreRelocation.c": [
-    "-fno-strict-aliasing"
-  ],
-  "src/xff/KERNEL/func_00019820.c": [
     "-fno-strict-aliasing"
   ],
   "src/xff/KERNEL/isysJumpSubThread.c": [
@@ -320,6 +311,9 @@
     "-fno-strict-aliasing"
   ],
   "src/xff/MANAGER/InitSpriteObj.c": [
+    "-fno-strict-aliasing"
+  ],
+  "src/xff/KERNEL/isys_object.c": [
     "-fno-strict-aliasing"
   ]
 }
