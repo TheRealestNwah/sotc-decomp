@@ -1,4 +1,4 @@
-/* Parked: 16 diffs, same size. Builds a quaternion/translation matrix from the character class, then for each of n 0x20-byte hang segments transforms both endpoints, casts a collision ray (SCRGetCollisionCallBack with func_00091AB8) and either sets the segment's script-control status (dld-linked def) or records edge/hand grip geometry from func_00090408. An empty asm after v[0] = v[1] keeps the second endpoint's loads after the first copy, as in the Original. Remaining: the first endpoint loads x into f2 (ours f0), and the Original issues only the first ld of the copy before the second endpoint's loads, storing both halves after v[2] is filled. */
+/* Parked: 3 diffs, same size. Builds a quaternion/translation matrix from the character class, then for each of n 0x20-byte hang segments transforms both endpoints, casts a collision ray (SCRGetCollisionCallBack with func_00091AB8) and either sets the segment's script-control status (dld-linked def) or records edge/hand grip geometry from func_00090408. Pinning the first endpoint's x to $f2, loading the second endpoint into temporaries and placing the empty asm between v[0] = v[1] and v[1] = v[2] reproduce the Original's interleaving of the copy with the second endpoint's loads. Remaining: the Original stores v[2].f[3] (swc1 $f20, 0x8C) before the sd pair of v[0] = v[1]; ours stores it after. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -94,16 +94,24 @@ static int func_000910B0(void *edge, void *hand, void *obj, char *item, int n)
     ch = GetCharacterClass(obj);
     quatMatrix(m, *(Vec4 **)(ch + 0x13C), *(Vec4 **)(ch + 0x134));
     while (n-- != 0) {
-        v[1].f[0] = ((float *)item)[0];
+        {
+            register float x asm("$f2") = ((float *)item)[0];
+            v[1].f[0] = x;
+        }
         v[1].f[1] = ((float *)item)[1];
         v[1].f[2] = ((float *)item)[2];
         v[1].f[3] = 1.0f;
+        {
+            float a = ((float *)item)[3];
+            float b = ((float *)item)[4];
+            float c = ((float *)item)[5];
+            v[2].f[0] = a;
+            v[2].f[1] = b;
+            v[2].f[2] = c;
+            v[2].f[3] = 1.0f;
+        }
         v[0] = v[1];
         __asm__ __volatile__("");
-        v[2].f[0] = ((float *)item)[3];
-        v[2].f[1] = ((float *)item)[4];
-        v[2].f[2] = ((float *)item)[5];
-        v[2].f[3] = 1.0f;
         v[1] = v[2];
         mulVec(&a, m, &v[0]);
         mulVec(&b, m, &v[1]);
