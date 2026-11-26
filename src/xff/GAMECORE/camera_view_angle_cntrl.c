@@ -1,3 +1,5 @@
+#include "gamecore/camera_view_angle_cntrl.h"
+
 extern char *get_cur_using_lws_anime_mode_base_class(void *);
 extern int is_view_angle_exist_lws_anime_mode_base(void *);
 extern void reset_double_spring_interp_cntrl(char *, float);
