@@ -1,4 +1,4 @@
-/* Parked: 18 diffs, same size (161 words incl. the split tail func_00047C40 tail call). Path-follow state update: when A0 < A4 re-derives the heading (normalised via VU0 unless AI_CheckNormZero fails, then ZUnitVector), randomises it by f21, scales by -f20 and by the speed ratio (o+0x354 / o+0x350) with qmtc2 multiplies, refreshes A0/A4 from gcGlobalVar.f190 * o+0x350, calls the three AI_GetAccel*3XYZ helpers, then position/velocity. Float-to-int bits go through `mfc1` asm outputs (memory round trips cost 67 diffs). Setting s5 after the second accel call fixes most argument-move order. Remaining: mfc1 vs sub.s order, some call argument moves, and hi/lo placement of the gcGlobalVar load. */
+/* Parked: 14 diffs, same size (161 words incl. the split tail func_00047C40 tail call). Path-follow state update: when A0 < A4 re-derives the heading (normalised via VU0 unless AI_CheckNormZero fails, then ZUnitVector), randomises it by f21, scales by -f20 and by the speed ratio (o+0x354 / o+0x350) with qmtc2 multiplies, refreshes A0/A4 from gcGlobalVar.f190 * o+0x350, calls the three AI_GetAccel*3XYZ helpers, then position/velocity. The floats go straight into the qmtc2 asm as "r" operands, so gcc emits and schedules the mfc1 itself (mfc1 asm outputs cost 4 more diffs; memory round trips cost 67). Setting s5 after the second accel call fixes most argument-move order. Remaining: the gcGlobalVar address and the p+0x80 copy get v1/v0 swapped with the copy's lq scheduled later (statement order and locals don't change it), and the first accel call moves t1 last instead of first. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -39,7 +39,6 @@ void func_000479F0(char *o, char *p, float f21, float f22, float f20)
     char *s1;
     float lim;
     float ratio;
-    int bits;
 
     float a4 = *(float *)(p + 0xA4);
 
@@ -68,14 +67,13 @@ void func_000479F0(char *o, char *p, float f21, float f22, float f20)
         {
             float nf = -f20;
 
-            __asm__("mfc1 %0, %1" : "=r"(bits) : "f"(nf));
 
             __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                                  "qmtc2.ni %1, vf6\n"
                                  "vmulx.xyzw vf5, vf5, vf6x\n"
                                  "sqc2 vf5, 0x0(%2)\n"
                                  :
-                                 : "r"(&L.n), "r"(bits), "r"(&L.t)
+                                 : "r"(&L.n), "r"(nf), "r"(&L.t)
                                  : "memory");
         }
         *(s128 *)(p + 0x60) = L.k.q;
@@ -85,13 +83,12 @@ void func_000479F0(char *o, char *p, float f21, float f22, float f20)
         s3 = p + 0x30;
         ratio = *(float *)(o + 0x354) / *(float *)(o + 0x350);
         fp = p + 0x90;
-        __asm__("mfc1 %0, %1" : "=r"(bits) : "f"(ratio));
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "qmtc2.ni %1, vf6\n"
                              "vmulx.xyzw vf5, vf5, vf6x\n"
                              "sqc2 vf5, 0x0(%2)\n"
                              :
-                             : "r"(fp), "r"(bits), "r"(s3)
+                             : "r"(fp), "r"(ratio), "r"(s3)
                              : "memory");
         *(float *)(p + 0xA0) = f22;
         *(s128 *)(p + 0x50) = *(s128 *)(p + 0x80);
