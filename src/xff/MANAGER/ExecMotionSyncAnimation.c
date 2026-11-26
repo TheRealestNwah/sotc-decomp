@@ -1,8 +1,10 @@
-/* Parked: 23 diffs. Synchronised motion: resets the damage class, and if the layout has a sync
+/* Parked: 21 diffs. Synchronised motion: resets the damage class, and if the layout has a sync
    list, takes the parent node's quaternion matrix and runs func_0008D6D0 for each active entry
    at the current float frame. The node++/node-- pair (from the permuter) gets the Original's
-   register split for node and parent. Remaining: loop counter, id and entry pointer use
-   s0/s1/s2 in a different order, and node/parent swap between fp and the sp+0x80 spill. */
+   register split for node and parent; an empty asm after the fr[2] store keeps it ahead of the
+   count load like the Original (23 before). Remaining: loop counter, id and entry pointer use
+   s0/s1/s2 in a different order, node and the kinds offset swap between s7 and fp, and the
+   i = 0 / node = 0 moves are scheduled differently. */
 #ifdef NONMATCHING
 extern int GetDamageClass(void *);
 extern void ResetDamageClass(int);
@@ -98,6 +100,7 @@ int ExecMotionSyncAnimation(char *obj, int arg1, float t, float dt)
             node = 0;
         }
         fr[2] = *(float *)(ac + 8);
+        __asm__ volatile("");
         cnt = h->n;
         e = *(AnimEnt **)(cls + 0x338);
         i = 0;
