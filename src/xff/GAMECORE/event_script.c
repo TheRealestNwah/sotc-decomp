@@ -1,3 +1,6 @@
+extern void *isysGetThisSubThread(void);
+extern void bootTexAlphaAnim(void *, void *, float, float);
+extern int D_0017AF88[], D_0017AFA0[], D_0017AFB8[];
 extern int (*D_0017AFD4)(int);
 extern int D_0017AFD0;
 extern int D_0017AFD8;
@@ -6,7 +9,6 @@ extern char gcGlobalVar[];
 extern int opflowAdvertiseDemoStat;
 extern void *DldSysUndefSymbol;
 extern int SH_GameObjectKITE_ADVERTISE[];
-extern int isysGetThisSubThread(void);
 extern void PauseGame(int);
 extern void ReleaseGame(void);
 extern void scrRunM(int);
@@ -18,9 +20,27 @@ extern int *isysGroupForNext(int *, int);
 extern void isysGroupForExit(int, int);
 extern char *getEventScriptClass(int);
 extern void execSCRBaseFunc(int, int);
-extern void func_000BC4D0(void);
 extern void *SCRGetFirstObj(void *);
 extern void updateSmallManager(void *);
+extern void D_000BC4F0(void *obj, int arg);
+extern void scrInit(void *);
+extern void initSScriptSystem(void *);
+extern void initSmallManager(void);
+extern void SetScriptObjDeleteCallBackFunc(void *, void (*func)(void *obj, int arg), int);
+extern void isysJumpSubThread(void *, int);
+extern char *GameObject_KITE_ADVERTISE;
+extern void terminateSmallManager(void);
+
+static void func_000BC4D0(void);
+
+void nico_snakeAllTexEnd(void)
+{
+    void *th = isysGetThisSubThread();
+
+    bootTexAlphaAnim(th, D_0017AF88, 0.0f, -0.05f);
+    bootTexAlphaAnim(th, D_0017AFA0, 0.0f, -0.05f);
+    bootTexAlphaAnim(th, D_0017AFB8, 0.0f, -0.05f);
+}
 
 static void func_000BC250(void)
 {
@@ -77,4 +97,43 @@ static void func_000BC250(void)
         }
         scrRunM(1);
     }
+}
+
+void nico_soundScriptStart(void)
+{
+    void *t = isysGetThisSubThread();
+    scrInit(t);
+    initSScriptSystem(t);
+    initSmallManager();
+    SetScriptObjDeleteCallBackFunc(t, D_000BC4F0, 0);
+    scrRunM(1);
+    D_0017AFD0 = 0;
+    D_0017AFD4 = 0;
+    isysJumpSubThread(func_000BC250, 0);
+}
+
+int getNowExecEventScriptObj(void)
+{
+    return D_0017AFCC;
+}
+
+void setLoadingCheckFunc(int arg0, int arg1)
+{
+    (*(int *)&D_0017AFD4) = arg0;
+    D_0017AFD0 = arg1;
+}
+
+void setEventScriptEnable(int arg0)
+{
+    D_0017AFD8 = arg0;
+}
+
+static void func_000BC4D0(void)
+{
+    ((void (*)(int))updateSmallManager)(*(int *)(GameObject_KITE_ADVERTISE + 8));
+}
+
+static void T_000BC4F0(void)
+{
+    terminateSmallManager();
 }
