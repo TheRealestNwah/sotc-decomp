@@ -47,7 +47,7 @@ extern int fadeChkStat(int stat);
 extern int getGameClearCnt(void);
 extern int GetNumOmakeItem(void);
 extern void scrRun(void);
-extern void func_000755C8(void);
+static void func_000755C8(unsigned char *menu, PauseMenu *state, int flags, int id);
 extern void OptionMenuStart(int *ready, int *cancel);
 
 /* The main list layer: the one with the extras entry once the game has been
@@ -231,9 +231,25 @@ void pauseMenuScript(SpriteParam *parameters)
     pm.cancel = 0;
     pm.result = local.result;
     while (!func_00075210(thread, menu, &pm)) {
-        menu->exec(thread, gcGlobalVar.speed, pm.ready ? pm.input : 0, func_000755C8, &pm);
+        menu->exec(thread, gcGlobalVar.speed, pm.ready ? pm.input : 0, (void (*)(void))func_000755C8, &pm);
         menu->draw(thread);
         scrRun();
     }
     ScrSpriteParamEnd(&local, 1);
+}
+
+/* Pad callback of the whole menu: passes the pad to the current layer's. */
+static void func_000755C8(unsigned char *menu, PauseMenu *state, int flags, int id)
+{
+    switch (state->state) {
+    case 2:
+        func_00074AC8(menu, state, flags, id);
+        return;
+    case 4:
+        func_00074E78(menu, state, flags, id);
+        return;
+    case 5:
+        func_000750B8(menu, state, flags, id);
+        break;
+    }
 }
