@@ -1,4 +1,4 @@
-/* Parked: 25 diffs. Motion-shift step for one entry of the character class motion table: resolves the info relocatable ref to the current motion resource, decides from info->xC whether the shift fires, then either leaves the old motion (callbacks, two CallMotShiftCallBackElemLeaveFunc calls, ReleaseCharacterClassAddMotSyncAnim, func_00051A60) or restarts it (func_00051958), runs info->fn and sets the blend frames. Remaining: prologue argument spills, register choice for the ref decode and the class+0x2C8 pointer. The `long` return type came from a 25-minute permuter run (27 diffs with `int`); the Original most likely returns int. */
+/* Parked: 22 diffs. Motion-shift step for one entry of the character class motion table: resolves the info relocatable ref to the current motion resource, decides from info->xC whether the shift fires, then either leaves the old motion (callbacks, two CallMotShiftCallBackElemLeaveFunc calls, ReleaseCharacterClassAddMotSyncAnim, func_00051A60) or restarts it (func_00051958), runs info->fn and sets the blend frames. One pointer `p` walks the two leave callbacks at mot+0xA8 and is then reused for class+0x2C8, which puts that in $s0 like the Original (25 before). Remaining: prologue argument spills and register choice for the ref decode and the tab[i].xC limit. The `long` return type came from a 25-minute permuter run (27 diffs with `int`); the Original most likely returns int. */
 #ifdef NONMATCHING
 typedef struct {
     char pad0[4];
@@ -48,13 +48,13 @@ long func_00053058(int obj, int idx, MotInfo *info_, int res, float f)
     void (*fn)(int);
     register char *chr __asm__("$22");
     char *mot;
-    void (**cb)(int);
     int i;
     int n;
     float lim;
     int changed;
     int stopped;
     int fr;
+    char *p;
 
     vidx = idx;
     cls = GetCharacterClass(obj);
@@ -88,14 +88,15 @@ long func_00053058(int obj, int idx, MotInfo *info_, int res, float f)
             chr = GetCharacterClass(obj);
             mot = ent->mot;
             ent->x44 = -2;
-            cb = (void (**)(int))(mot + 0xA8);
+            p = mot + 0xA8;
             for (n = 1; n >= 0; n--) {
-                if (*cb != 0)
-                    (*cb)(obj);
-                cb++;
+                if (*(void (**)(int))p != 0)
+                    (*(void (**)(int))p)(obj);
+                p += 4;
             }
-            CallMotShiftCallBackElemLeaveFunc(chr + 0x2C8, mot, obj);
-            CallMotShiftCallBackElemLeaveFunc(chr + 0x2C8, mot, obj);
+            p = chr + 0x2C8;
+            CallMotShiftCallBackElemLeaveFunc(p, mot, obj);
+            CallMotShiftCallBackElemLeaveFunc(p, mot, obj);
             ReleaseCharacterClassAddMotSyncAnim(ent);
             func_00051A60(obj, vcls, vidx, cur, f);
         } else {
