@@ -1,4 +1,7 @@
-/* Parked at 22 diffs: opt/mask swapped in s4/s5, n in v1, final-block register order. */
+/* Parked at 10 diffs. Pinning opt to $s4 and moving the final transform into an inline helper
+   (with the positions address as off + (int)positions) fix the s4/s5 swap and the last block.
+   Remaining: the n loads use $v0 where the Original uses $v1, and the sll for off is scheduled
+   before the inner loop invariants instead of after them. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; int i[4]; } Vec4;
@@ -15,6 +18,21 @@ typedef struct {
 extern int GetMotionOptionNodeParentId(void *, int);
 extern int GetCharacterClassOptionNodeLocalQuaternionPos(Vec4 *, Vec4 *, Cls *, int, int);
 
+static inline void xformPos(void *dst, void *m, void *v)
+{
+    __asm__ __volatile__("lqc2 vf8, 0x0(%2)\n"
+                             "lqc2 vf14, 0x0(%1)\n"
+                             "lqc2 vf15, 0x10(%1)\n"
+                             "lqc2 vf16, 0x20(%1)\n"
+                             "lqc2 vf17, 0x30(%1)\n"
+                             "vmulax.xyzw ACC, vf14, vf8x\n"
+                             "vmadday.xyzw ACC, vf15, vf8y\n"
+                             "vmaddaz.xyzw ACC, vf16, vf8z\n"
+                             "vmaddw.xyzw vf10, vf17, vf8w\n"
+                             "sqc2 vf10, 0x0(%0)\n"
+                             : : "r"(dst), "r"(m), "r"(v) : "memory");
+}
+
 void func_00041488(Cls *c)
 {
     Vec4 pos;
@@ -22,7 +40,7 @@ void func_00041488(Cls *c)
     Vec4 ppos;
     Vec4 pquat;
     volatile int n;
-    int *opt;
+    register int *opt asm("$20");
     int i;
     int p;
     int off;
@@ -77,17 +95,7 @@ void func_00041488(Cls *c)
                                  : : "r"(&pos), "r"(&ppos), "r"(&pquat) : "memory");
             p = GetMotionOptionNodeParentId(opt, p);
         } while (1);
-        __asm__ __volatile__("lqc2 vf8, 0x0(%2)\n"
-                             "lqc2 vf14, 0x0(%1)\n"
-                             "lqc2 vf15, 0x10(%1)\n"
-                             "lqc2 vf16, 0x20(%1)\n"
-                             "lqc2 vf17, 0x30(%1)\n"
-                             "vmulax.xyzw ACC, vf14, vf8x\n"
-                             "vmadday.xyzw ACC, vf15, vf8y\n"
-                             "vmaddaz.xyzw ACC, vf16, vf8z\n"
-                             "vmaddw.xyzw vf10, vf17, vf8w\n"
-                             "sqc2 vf10, 0x0(%0)\n"
-                             : : "r"((char *)c->positions + off), "r"(c->matrices[p]), "r"(&pos) : "memory");
+        xformPos((void *)(off + (int)c->positions), c->matrices[p], &pos);
     }
 }
 #endif
