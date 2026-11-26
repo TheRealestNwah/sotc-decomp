@@ -1,4 +1,4 @@
-/* Parked: 22 diffs. For every motion-shift entry of the character class (relocatable table at class+0x10EC), resolves the kind and target refs; a non-ALWAYS entry whose target matches looks up the active motion slot and hands it to func_00053058 (returning when that fires). If nothing was found, every ALWAYS entry for the target goes to func_00052EA8. Remaining: the first ref decode goes through v0 instead of a0 with the found=0 store scheduled later, v0/v1 swapped for the decoded target compare, and findSlot keeps the count in a0 instead of copying it from v0. */
+/* Parked: 12 diffs. For every motion-shift entry of the character class (relocatable table at class+0x10EC), resolves the kind and target refs; a non-ALWAYS entry whose target matches looks up the active motion slot and hands it to func_00053058 (returning when that fires). If nothing was found, every ALWAYS entry for the target goes to func_00052EA8. Writing the first table decode out with found=0 inside it puts the result in a0 and the store in the branch delay slot like the Original (22 before). Remaining: v0/v1 swapped for the decoded target compare (both loops) and the found test, and findSlot keeps the count in a0 instead of copying it from v0. */
 #ifdef NONMATCHING
 extern int DldSysUndefSymbol;
 extern int MotionKind_ALWAYS;
@@ -64,8 +64,11 @@ void func_000532C8(int obj, int target, float f)
     cls = GetCharacterClass(obj);
     h = *(unsigned int **)(cls + 0x10EC);
     always = MotionKind_ALWAYS;
-    t = dldTable(h);
-    found = 0;
+    {
+        unsigned int off = *h & 0x3FFFF;
+        found = 0;
+        t = off != 0 ? *(DldTable **)((char *)h - off) : 0;
+    }
     n = (t != 0 && (int)t != DldSysUndefSymbol) ? t->count : 0;
     t = dldTable(h);
     tab = (t != 0 && (int)t != DldSysUndefSymbol) ? (Shift *)t->data : 0;
