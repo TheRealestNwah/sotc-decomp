@@ -1,8 +1,3 @@
-/* Parked: 8 diffs, 664 words (same length). Remaining: instruction scheduling only.
- * The Original keeps the 16-byte copies into p (from pos at the top, from obj+0x110
- * in the passage branch) ahead of the following int loads/stores of wk (lw 0x30,
- * sw 0x40); gcc schedules those int accesses past the sq. */
-#ifdef NONMATCHING
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef unsigned int u_long128 __attribute__((mode(TI)));
 
@@ -151,7 +146,7 @@ static inline void slerpTo(float *dst, float *q, float t)
     lerpNorm(dst, q, c, t);
 }
 
-void func_001010F8(u_long128 *pos, float *dir, int arg2, int arg3, int arg4, char *obj)
+static void func_001010F8(u_long128 *pos, float *dir, int arg2, int arg3, int arg4, char *obj)
 {
     Vec4 p;
     Vec4 d;
@@ -167,8 +162,8 @@ void func_001010F8(u_long128 *pos, float *dir, int arg2, int arg3, int arg4, cha
     float len;
 
     go = 1;
-    wk = *(char **)(obj + 0xCC);
     *(u_long128 *)p = *pos;
+    __asm__ __volatile__("" : "=r"(wk) : "0"(*(char **)(obj + 0xCC)));
     pw = *(char **)(obj + 4);
     if (WI(0x30) != 0) {
         getCalcAttackPassagePoint2(p, obj);
@@ -181,6 +176,7 @@ void func_001010F8(u_long128 *pos, float *dir, int arg2, int arg3, int arg4, cha
             arg2 = 0;
             arg3 = 0;
             *(u_long128 *)p = *(u_long128 *)(obj + 0x110);
+            __asm__ __volatile__("" ::: "memory");
             WI(0x40) = 1;
         } else {
             func_00100D78(p, pos, dir, obj);
@@ -363,4 +359,3 @@ void func_001010F8(u_long128 *pos, float *dir, int arg2, int arg3, int arg4, cha
         GetQuaternionByEulerYXZ((float *)(wk + 0x260), pitch, turn, 0.0f);
     }
 }
-#endif
