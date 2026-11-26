@@ -24,15 +24,9 @@ extern void constructor_camera_collision_data(void *);
 extern void func_000ECB78(void *, void *);
 extern void func_000ECBA0(void *);
 
-#ifdef NONMATCHING /* 13 diffs: only the order of the three swc1 stores and the sq of +0x20 inside each of the five initPt blocks differs (the Original interleaves them differently per copy); calls, offsets and constants match */
-static inline void initPt(Vec4 *v, float zero)
-{
-    v[0] = ZeroPoint;
-    v[1] = ZeroPoint;
-    v[2] = ZUnitVector;
-    ((float *)&v[3])[0] = ((float *)&v[3])[1] = zero;
-    ((float *)&v[3])[2] = 4.5f;
-}
+#ifdef NONMATCHING /* 10 diffs: only the order of the three swc1 stores and the sq of +0x20 in the 0x60, 0x120 and 0x160 init blocks differs. The Original schedules each copy differently, so each block spells out its own store order (13 diffs with one shared inline); calls, offsets and constants match */
+#define PT(v, o) Vec4 *v = (Vec4 *)(p + (o))
+#define W(v, k) (((float *)&v[3])[k])
 
 #define F(o) (*(float *)(p + (o)))
 #define I(o) (*(int *)(p + (o)))
@@ -48,11 +42,48 @@ void func_000E6140(char *p, void *a1)
     F(0x10) = zero;
     F(0xC) = zero;
     constructor_game_camera_mode_local_parameter(p + 0x14);
-    initPt((Vec4 *)(p + 0x60), zero);
-    initPt((Vec4 *)(p + 0xA0), zero);
-    initPt((Vec4 *)(p + 0xE0), zero);
-    initPt((Vec4 *)(p + 0x120), zero);
-    initPt((Vec4 *)(p + 0x160), zero);
+    {
+        PT(v, 0x60);
+        v[0] = ZeroPoint;
+        v[1] = ZeroPoint;
+        v[2] = ZUnitVector;
+        W(v, 0) = zero;
+        W(v, 1) = zero;
+        W(v, 2) = 4.5f;
+    }
+    {
+        PT(v, 0xA0);
+        v[0] = ZeroPoint;
+        v[1] = ZeroPoint;
+        v[2] = ZUnitVector;
+        W(v, 0) = W(v, 1) = zero;
+        W(v, 2) = 4.5f;
+    }
+    {
+        PT(v, 0xE0);
+        v[0] = ZeroPoint;
+        v[1] = ZeroPoint;
+        v[2] = ZUnitVector;
+        W(v, 0) = W(v, 1) = zero;
+        W(v, 2) = 4.5f;
+    }
+    {
+        PT(v, 0x120);
+        v[0] = ZeroPoint;
+        v[1] = ZeroPoint;
+        W(v, 0) = zero;
+        W(v, 1) = zero;
+        v[2] = ZUnitVector;
+        W(v, 2) = 4.5f;
+    }
+    {
+        PT(v, 0x160);
+        v[0] = ZeroPoint;
+        v[1] = ZeroPoint;
+        v[2] = ZUnitVector;
+        W(v, 0) = W(v, 1) = zero;
+        W(v, 2) = 4.5f;
+    }
     F(0x1A0) = one;
     constructor_double_spring_interp_cntrl(p + 0x1A4, eps);
     F(0x1C4) = zero;
