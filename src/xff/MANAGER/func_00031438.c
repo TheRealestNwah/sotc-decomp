@@ -1,3 +1,9 @@
+/* func_00031438 and the motion-track samplers that call it (func_00033DE0 to
+ * func_00035C78). They share one file because the samplers only match with
+ * func_00031438 defined in the same translation unit: with its body known,
+ * reorg fills interpRot's null-test branch as a plain beqz instead of beql.
+ * Each sampler's helpers carry its address as a suffix until the group's
+ * Source cleanup merges them. */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -264,4 +270,706 @@ static int func_00031438(Vec4 *o, int type, void *data, int idx)
         break;
     }
     return 0;
+}
+
+
+typedef struct {
+    int types; /* track types: data2 in bits 0-3, data1 in 8-11, data0 in 16-19 */
+    void *data0;
+    void *data1;
+    void *data2;
+} Track_33DE0;
+
+extern void func_00033868(void *out, int type, void *data, int i0, int i1, float frac);
+extern int func_00032B78(void *out, int type, void *data, int frame);
+static inline void lerp4_33DE0(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyzw ACC, vf5, vf7x\n"
+                         "vmaddw.xyzw vf9, vf6, vf8w\n"
+                         "sqc2 vf9, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+static inline void setFrame_33DE0(int *i0, int *i1, float *frac, float t, int n)
+{
+    if ((float)n < t) {
+        if (n == 1) {
+            t -= (float)(int)t;
+        } else {
+            t -= (float)((n - 1) * (int)(t / (float)(n - 1)));
+        }
+    }
+    *i0 = (int)t;
+    *i1 = *i0 + 1;
+    *frac = t - (float)*i0;
+}
+
+static inline void lerp3_33DE0(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyz ACC, vf5, vf7x\n"
+                         "vmaddw.xyz vf5, vf6, vf8w\n"
+                         "sqc2 vf5, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+
+static inline void interpRot_33DE0(void *out, int type, void **data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (*data != 0) {
+            func_00031438(out, type, *data, i0);
+        }
+    } else {
+        /* The copy keeps gcc from threading the null test past the second check. */
+        void *d = *data;
+        if (d != 0) {
+            func_00031438(&v[0], type, d, i0);
+        }
+        if (*data != 0) {
+            func_00031438(&v[1], type, *data, i1);
+        }
+        lerp4_33DE0(out, &v[1], &v[0], frac);
+    }
+}
+
+static inline void interpScale_33DE0(void *out, int type, void *data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (data != 0) {
+            func_00032B78(out, type, data, i0);
+        }
+    } else {
+        if (data != 0) {
+            func_00032B78(&v[0], type, data, i0);
+            func_00032B78(&v[1], type, data, i1);
+        }
+        lerp3_33DE0(out, &v[1], &v[0], frac);
+    }
+}
+
+static void func_00033DE0(char *out, Track_33DE0 *trk, int n, float t)
+{
+    int i0;
+    int i1;
+    float frac;
+
+    setFrame_33DE0(&i0, &i1, &frac, t, n);
+    func_00033868(out, (trk->types >> 16) & 0xF, trk->data0, i0, i1, frac);
+    interpRot_33DE0(out + 0x10, (trk->types >> 8) & 0xF, &trk->data1, i0, i1, frac);
+    interpScale_33DE0(out + 0x20, trk->types & 0xF, trk->data2, i0, i1, frac);
+}
+
+
+typedef struct {
+    int types; /* track types: data2 in bits 0-3, data1 in 8-11, data0 in 16-19 */
+    void *data0;
+    void *data1;
+    void *data2;
+    float value;
+} Track_34010;
+
+extern void func_00033868(void *out, int type, void *data, int i0, int i1, float frac);
+extern int func_00032B78(void *out, int type, void *data, int frame);
+static inline void lerp4_34010(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyzw ACC, vf5, vf7x\n"
+                         "vmaddw.xyzw vf9, vf6, vf8w\n"
+                         "sqc2 vf9, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+static inline void setFrame_34010(int *i0, int *i1, float *frac, float t, int n)
+{
+    if ((float)n < t) {
+        if (n == 1) {
+            t -= (float)(int)t;
+        } else {
+            t -= (float)((n - 1) * (int)(t / (float)(n - 1)));
+        }
+    }
+    *i0 = (int)t;
+    *i1 = *i0 + 1;
+    *frac = t - (float)*i0;
+}
+
+static inline void lerp3_34010(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyz ACC, vf5, vf7x\n"
+                         "vmaddw.xyz vf5, vf6, vf8w\n"
+                         "sqc2 vf5, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+
+static inline void interpRot_34010(void *out, int type, void **data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (*data != 0) {
+            func_00031438(out, type, *data, i0);
+        }
+    } else {
+        /* The copy keeps gcc from threading the null test past the second check. */
+        void *d = *data;
+        if (d != 0) {
+            func_00031438(&v[0], type, d, i0);
+        }
+        if (*data != 0) {
+            func_00031438(&v[1], type, *data, i1);
+        }
+        lerp4_34010(out, &v[1], &v[0], frac);
+    }
+}
+
+static inline void interpScale_34010(void *out, int type, void *data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (data != 0) {
+            func_00032B78(out, type, data, i0);
+        }
+    } else {
+        if (data != 0) {
+            func_00032B78(&v[0], type, data, i0);
+            func_00032B78(&v[1], type, data, i1);
+        }
+        lerp3_34010(out, &v[1], &v[0], frac);
+    }
+}
+
+static void func_00034010(char *out, Track_34010 *trk, int n, float t)
+{
+    int i0;
+    int i1;
+    float frac;
+
+    setFrame_34010(&i0, &i1, &frac, t, n);
+    func_00033868(out, (trk->types >> 16) & 0xF, trk->data0, i0, i1, frac);
+    interpRot_34010(out + 0x10, (trk->types >> 8) & 0xF, &trk->data1, i0, i1, frac);
+    interpScale_34010(out + 0x20, trk->types & 0xF, trk->data2, i0, i1, frac);
+    *(float *)(out + 0x30) = trk->value;
+}
+
+
+typedef struct {
+    unsigned int types; /* track types: data2 in bits 0-3, data1 in 8-11, data0 in 16-19 */
+    void *data0;
+    void *data1;
+    void *data2;
+} Track_34E18;
+
+extern void func_00033868(void *out, int type, void *data, int i0, int i1, float frac);
+extern int func_00032B78(void *out, int type, void *data, int frame);
+static inline void lerp4_34E18(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyzw ACC, vf5, vf7x\n"
+                         "vmaddw.xyzw vf9, vf6, vf8w\n"
+                         "sqc2 vf9, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+static inline void setFrame_34E18(int *i0, int *i1, float *frac, float t, int n, float t2)
+{
+    if ((float)n < t) {
+        if (n == 1) {
+            t -= (float)(int)t;
+        } else {
+            t -= (float)((n - 1) * (int)(t / (float)(n - 1)));
+        }
+    }
+    *i0 = (int)t;
+    *i1 = *i0 + 1;
+    {
+        float f;
+        if ((float)n < t2) {
+            f = t - (float)*i0;
+        } else {
+            f = t - (float)*i0;
+        }
+        *frac = f;
+        __asm__ __volatile__("" ::: "memory");
+    }
+}
+
+static inline void lerp3_34E18(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyz ACC, vf5, vf7x\n"
+                         "vmaddw.xyz vf5, vf6, vf8w\n"
+                         "sqc2 vf5, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+
+static inline void interpRot_34E18(void *out, int type_, void **data_, int i0, int i1, float frac)
+{
+    register void **data __asm__("$17") = data_;
+    register int type __asm__("$16") = type_;
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (*data != 0) {
+            func_00031438(out, type, *data, i0);
+        }
+    } else {
+        /* The copy keeps gcc from threading the null test past the second check. */
+        void *d = *data;
+        if (d != 0) {
+            func_00031438(&v[0], type, d, i0);
+        }
+        if (*data != 0) {
+            func_00031438(&v[1], type, *data, i1);
+        }
+        lerp4_34E18(out, &v[1], &v[0], frac);
+    }
+}
+
+static inline void interpScale_34E18(void *out, int type, void *data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (data != 0) {
+            func_00032B78(out, type, data, i0);
+        }
+    } else {
+        if (data != 0) {
+            func_00032B78(&v[0], type, data, i0);
+            func_00032B78(&v[1], type, data, i1);
+        }
+        lerp3_34E18(out, &v[1], &v[0], frac);
+    }
+}
+
+extern void func_000333C8(void *out, int type, void *data, float a, float b);
+
+static inline void evalKey_34E18(unsigned char *a, int type, void *data, int n, float t, float end)
+{
+    unsigned char b[16];
+
+    if (end <= t) {
+        func_000333C8(a, type, data, t, end);
+    } else {
+        func_000333C8(a, type, data, (float)(n - 1), end);
+        func_000333C8(b, type, data, t, 0.0f);
+        { int x = b[0]; a[1] = a[1] | b[1]; a[0] |= x; a[2] |= b[0]; }
+    }
+}
+
+/* Built on func_00035C78's and func_00034B30's inlines.
+ * frac is forced back to memory after setFrame_34E18 stores it, interpRot_34E18 pins
+ * data/type to $s1/$s0, and n is copied into $s5 after setFrame_34E18. */
+static void func_00034E18(char *out, Track_34E18 *trk, int n, float t, float t2)
+{
+    int i0;
+    int i1;
+    float frac;
+
+    setFrame_34E18(&i0, &i1, &frac, t, n, t2);
+    {
+        register int nn __asm__("$21") = n;
+        func_00033868(out, (trk->types >> 12) & 0xF, trk->data0, i0, i1, frac);
+        interpRot_34E18(out + 0x10, (trk->types >> 8) & 0xF, &trk->data1, i0, i1, frac);
+        interpScale_34E18(out + 0x20, (trk->types >> 4) & 0xF, trk->data2, i0, i1, frac);
+        evalKey_34E18((unsigned char *)out + 0x30, trk->types & 0xF, (char *)trk + 0x10, nn, t, t2);
+    }
+}
+
+
+typedef struct {
+    int types; /* track types: data2 in bits 0-7, data1 in 8-15, data0 in 16-23 */
+    void *data0;
+    void *data1;
+    void *data2;
+    unsigned int lo : 4;
+    unsigned int hi : 4;
+    unsigned int pad8 : 24;
+} Track_35120;
+
+
+extern void func_00033868(void *out, int type, void *data, int i0, int i1, float frac);
+extern int func_00032B78(void *out, int type, void *data, int frame);
+static inline void lerp4_35120(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyzw ACC, vf5, vf7x\n"
+                         "vmaddw.xyzw vf9, vf6, vf8w\n"
+                         "sqc2 vf9, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+static inline void setFrame_35120(int *i0, int *i1, float *frac, float t, int n)
+{
+    if ((float)n < t) {
+        if (n == 1) {
+            t -= (float)(int)t;
+        } else {
+            t -= (float)((n - 1) * (int)(t / (float)(n - 1)));
+        }
+    }
+    *i0 = (int)t;
+    *i1 = *i0 + 1;
+    *frac = t - (float)*i0;
+}
+
+static inline void lerp3_35120(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyz ACC, vf5, vf7x\n"
+                         "vmaddw.xyz vf5, vf6, vf8w\n"
+                         "sqc2 vf5, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+
+static inline void interpRot_35120(void *out, int type, void **data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (*data != 0) {
+            func_00031438(out, type, *data, i0);
+        }
+    } else {
+        /* The copy keeps gcc from threading the null test past the second check. */
+        void *d = *data;
+        if (d != 0) {
+            func_00031438(&v[0], type, d, i0);
+        }
+        if (*data != 0) {
+            func_00031438(&v[1], type, *data, i1);
+        }
+        lerp4_35120(out, &v[1], &v[0], frac);
+    }
+}
+
+static inline void interpScale_35120(void *out, int type, void *data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (data != 0) {
+            func_00032B78(out, type, data, i0);
+        }
+    } else {
+        if (data != 0) {
+            func_00032B78(&v[0], type, data, i0);
+            func_00032B78(&v[1], type, data, i1);
+        }
+        lerp3_35120(out, &v[1], &v[0], frac);
+    }
+}
+
+
+static void func_00035120(char *out, Track_35120 *trk, int n, float t)
+{
+    int i0;
+    int i1;
+    float frac;
+    unsigned int c;
+
+    setFrame_35120(&i0, &i1, &frac, t, n);
+    func_00033868(out, (trk->types >> 16) & 0xFF, trk->data0, i0, i1, frac);
+    interpRot_35120(out + 0x10, (trk->types >> 8) & 0xFF, &trk->data1, i0, i1, frac);
+    {
+    union {
+        s128 q;
+        float f[4];
+    } sc_35120;
+    interpScale_35120(&sc_35120, trk->types & 0xFF, trk->data2, i0, i1, frac);
+    *(float *)(out + 0x20) = sc_35120.f[0];
+    *(float *)(out + 0x24) = sc_35120.f[1];
+    if (0.0f <= sc_35120.f[2]) {
+        c = sc_35120.f[2];
+        *(float *)(out + 0x30) = (int)((c >> 16) & 0xFF);
+        *(float *)(out + 0x2C) = (int)((c >> 8) & 0xFF);
+        *(float *)(out + 0x28) = (int)(c & 0xFF);
+    } else {
+        *(float *)(out + 0x30) = ((unsigned char *)trk)[0x11];
+        *(float *)(out + 0x2C) = ((unsigned char *)trk)[0x12];
+        *(float *)(out + 0x28) = ((unsigned char *)trk)[0x13];
+    }
+    }
+    out[0x34] = trk->hi;
+    out[0x35] = trk->lo;
+}
+
+
+typedef struct {
+    int types; /* track types: data2 in bits 0-7, data1 in 8-15, data0 in 16-23 */
+    void *data0;
+    void *data1;
+    void *data2;
+    float pos[3];
+    unsigned int lo : 4;
+    unsigned int hi : 4;
+    unsigned int pad8 : 24;
+} Track_35710;
+
+
+extern void func_00033868(void *out, int type, void *data, int i0, int i1, float frac);
+extern int func_00032B78(void *out, int type, void *data, int frame);
+static inline void lerp4_35710(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyzw ACC, vf5, vf7x\n"
+                         "vmaddw.xyzw vf9, vf6, vf8w\n"
+                         "sqc2 vf9, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+static inline void setFrame_35710(int *i0, int *i1, float *frac, float t, int n)
+{
+    if ((float)n < t) {
+        if (n == 1) {
+            t -= (float)(int)t;
+        } else {
+            t -= (float)((n - 1) * (int)(t / (float)(n - 1)));
+        }
+    }
+    *i0 = (int)t;
+    *i1 = *i0 + 1;
+    *frac = t - (float)*i0;
+}
+
+static inline void lerp3_35710(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyz ACC, vf5, vf7x\n"
+                         "vmaddw.xyz vf5, vf6, vf8w\n"
+                         "sqc2 vf5, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+
+static inline void interpRot_35710(void *out, int type, void **data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (*data != 0) {
+            func_00031438(out, type, *data, i0);
+        }
+    } else {
+        /* The copy keeps gcc from threading the null test past the second check. */
+        void *d = *data;
+        if (d != 0) {
+            func_00031438(&v[0], type, d, i0);
+        }
+        if (*data != 0) {
+            func_00031438(&v[1], type, *data, i1);
+        }
+        lerp4_35710(out, &v[1], &v[0], frac);
+    }
+}
+
+static inline void interpScale_35710(void *out, int type, void *data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (data != 0) {
+            func_00032B78(out, type, data, i0);
+        }
+    } else {
+        if (data != 0) {
+            func_00032B78(&v[0], type, data, i0);
+            func_00032B78(&v[1], type, data, i1);
+        }
+        lerp3_35710(out, &v[1], &v[0], frac);
+    }
+}
+
+
+static void func_00035710(char *out, Track_35710 *trk, int n, float t)
+{
+    int i0;
+    int i1;
+    float frac;
+    unsigned int c;
+
+    setFrame_35710(&i0, &i1, &frac, t, n);
+    func_00033868(out, (trk->types >> 16) & 0xFF, trk->data0, i0, i1, frac);
+    interpRot_35710(out + 0x10, (trk->types >> 8) & 0xFF, &trk->data1, i0, i1, frac);
+    {
+    union {
+        s128 q;
+        float f[4];
+    } sc_35710;
+    interpScale_35710(&sc_35710, trk->types & 0xFF, trk->data2, i0, i1, frac);
+    *(float *)(out + 0x20) = sc_35710.f[0];
+    *(float *)(out + 0x24) = sc_35710.f[1];
+    if (0.0f <= sc_35710.f[2]) {
+        c = sc_35710.f[2];
+        *(float *)(out + 0x30) = (int)((c >> 16) & 0xFF);
+        *(float *)(out + 0x2C) = (int)((c >> 8) & 0xFF);
+        *(float *)(out + 0x28) = (int)(c & 0xFF);
+    } else {
+        *(float *)(out + 0x30) = ((unsigned char *)trk)[0x1D];
+        *(float *)(out + 0x2C) = ((unsigned char *)trk)[0x1E];
+        *(float *)(out + 0x28) = ((unsigned char *)trk)[0x1F];
+    }
+    }
+    out[0x34] = trk->hi;
+    out[0x35] = trk->lo;
+    *(float *)(out + 0x38) = trk->pos[0];
+    *(float *)(out + 0x3C) = trk->pos[1];
+    *(float *)(out + 0x40) = trk->pos[2];
+}
+
+
+typedef struct {
+    unsigned int types; /* track types: data2 in bits 0-3, data1 in 8-11, data0 in 16-19 */
+    void *data0;
+    void *data1;
+    void *data2;
+} Track_35C78;
+
+extern void func_00033868(void *out, int type, void *data, int i0, int i1, float frac);
+extern int func_00032B78(void *out, int type, void *data, int frame);
+static inline void lerp4_35C78(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyzw ACC, vf5, vf7x\n"
+                         "vmaddw.xyzw vf9, vf6, vf8w\n"
+                         "sqc2 vf9, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+static inline void setFrame_35C78(int *i0, int *i1, float *frac, float t, int n, float t2)
+{
+    if ((float)n < t) {
+        if (n == 1) {
+            t -= (float)(int)t;
+        } else {
+            t -= (float)((n - 1) * (int)(t / (float)(n - 1)));
+        }
+    }
+    *i0 = (int)t;
+    *i1 = *i0 + 1;
+    {
+        float f;
+        if ((float)n < t2) {
+            f = t - (float)*i0;
+        } else {
+            f = t - (float)*i0;
+        }
+        *frac = f;
+        __asm__ __volatile__("" ::: "memory");
+    }
+}
+
+static inline void lerp3_35C78(void *out, void *a, void *b, float t)
+{
+    __asm__ __volatile__("mfc1 $8, %3\n"
+                         "qmtc2.ni $8, vf7\n"
+                         "lqc2 vf5, 0x0(%1)\n"
+                         "lqc2 vf6, 0x0(%2)\n"
+                         "vsubx.w vf8, vf0, vf7x\n"
+                         "vmulax.xyz ACC, vf5, vf7x\n"
+                         "vmaddw.xyz vf5, vf6, vf8w\n"
+                         "sqc2 vf5, 0x0(%0)\n"
+                         : : "r"(out), "r"(a), "r"(b), "f"(t) : "$8", "memory");
+}
+
+static inline void interpRot_35C78(void *out, int type_, void **data_, int i0, int i1, float frac)
+{
+    register void **data __asm__("$17") = data_;
+    register int type __asm__("$16") = type_;
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (*data != 0) {
+            func_00031438(out, type, *data, i0);
+        }
+    } else {
+        /* The copy keeps gcc from threading the null test past the second check. */
+        void *d = *data;
+        if (d != 0) {
+            func_00031438(&v[0], type, d, i0);
+        }
+        if (*data != 0) {
+            func_00031438(&v[1], type, *data, i1);
+        }
+        lerp4_35C78(out, &v[1], &v[0], frac);
+    }
+}
+
+static inline void interpScale_35C78(void *out, int type, void *data, int i0, int i1, float frac)
+{
+    s128 v[2];
+
+    if (frac == 0.0f) {
+        if (data != 0) {
+            func_00032B78(out, type, data, i0);
+        }
+    } else {
+        if (data != 0) {
+            func_00032B78(&v[0], type, data, i0);
+            func_00032B78(&v[1], type, data, i1);
+        }
+        lerp3_35C78(out, &v[1], &v[0], frac);
+    }
+}
+
+/* The dead c.lt.s on t2 comes from setFrame_35C78's identical arms.
+ * frac is forced back to memory after setFrame_35C78 stores it, and
+ * interpRot_35C78 pins data to $s1 and type to $s0. */
+static void func_00035C78(char *out, Track_35C78 *trk, int id, int n, float t, float t2)
+{
+    int i0;
+    int i1;
+    float frac;
+
+    setFrame_35C78(&i0, &i1, &frac, t, n, t2);
+    func_00033868(out, (trk->types >> 12) & 0xF, trk->data0, i0, i1, frac);
+    interpRot_35C78(out + 0x10, (trk->types >> 8) & 0xF, &trk->data1, i0, i1, frac);
+    interpScale_35C78(out + 0x20, (trk->types >> 4) & 0xF, trk->data2, i0, i1, frac);
+    *(int *)(out + 0x30) = id;
+    *(int *)(out + 0x34) = 0;
+    *(int *)(out + 0x38) = ((unsigned char *)trk)[3];
 }
