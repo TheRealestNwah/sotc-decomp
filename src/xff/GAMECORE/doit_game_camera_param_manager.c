@@ -14,7 +14,7 @@ extern float get_interp_ratio_game_camera_param_manager(void *);
 extern float get_interp_time_game_camera_param_manager(void *);
 extern int is_reset_or_lws_movie_or_cutout_game_camera(int);
 
-#ifdef NONMATCHING /* 75 diffs: call sequence, pointer pins ($s0 cp, $s2 cur, $s3 sel, $s4 prev, $s5/$s6 args) and control flow right; the compiler hoists the m+0x664 address above the first calls and loads *cp through it, the original keeps base+offset loads */
+#ifdef NONMATCHING /* 63 diffs: call sequence, pointer pins ($s0 cp, $s2 cur, $s3 sel, $s4 prev, $s5/$s6 args) and control flow right; the else branch recomputes cur/prev through empty asm (the Original re-materializes both addresses there), and the timer update tests *m == 1 first. Remaining: the Original computes cur/prev at the top and m+0x664 after the second call, ours hoists m+0x664 to the top and loads *cp through it */
 void doit_game_camera_param_manager(char *m, int a10, int a2, int a30, float dt)
 {
     register int a1 __asm__("$22") = a10;
@@ -33,7 +33,7 @@ void doit_game_camera_param_manager(char *m, int a10, int a2, int a30, float dt)
     sp0 = 0;
     func_000F2970(m + 0x130C, &sp0, a1);
     func_000F27A0(m, *(char **)(m + 0x664), (char *)sp0, (char *)a2, a3, dt);
-    cp = (int *)(m + 0x664);
+    __asm__("" : "=r"(cp) : "0"(m + 0x664));
     sel = cp;
     if (sp0 != *(int *)(m + 0x664)) {
         func_000ED678(cur, prev);
@@ -41,21 +41,22 @@ void doit_game_camera_param_manager(char *m, int a10, int a2, int a30, float dt)
         *(int *)(m + 0x664) = sp0;
     } else {
         *(int *)m = 0;
-        cur = (int *)(m + 0x10);
-        prev = (int *)(m + 0xCB8);
+        __asm__("" : "=r"(cur) : "0"(m + 0x10));
+        __asm__("" : "=r"(prev) : "0"(m + 0xCB8));
     }
     func_000EEA28(cp, sp0, a1, a3);
     if (is_reset_or_lws_movie_or_cutout_game_camera(a3) == 1) {
         t = get_interp_time_game_camera_param_manager(m);
         *(float *)(m + 4) = t;
-    } else if (*(int *)m != 1) {
-        *(float *)(m + 4) = *(float *)(m + 4) + dt;
-    } else {
+    } else if (*(int *)m == 1) {
         *(float *)(m + 4) = 0.0f;
+    } else {
+        *(float *)(m + 4) = *(float *)(m + 4) + dt;
     }
     r = get_interp_ratio_game_camera_param_manager(m);
     inv = 1.0f - r;
-    sel = *cur != 0 ? cur : cp;
+    sel = cp;
+    if (*cur != 0) sel = cur;
     func_000ED678(prev, cp);
     func_000EED00(prev, sel, cp, func_000F2700(cp, sel), inv, r);
     func_000F29C0(m);
