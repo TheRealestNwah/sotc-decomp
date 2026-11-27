@@ -1,5 +1,3 @@
-/* Parked: 3 diffs, same length. Remaining: the Original sets the loop counter (li $s2, 3) after the func_0002D260 and B_00188730 address registers; gcc emits it between them. Same shape as func_00027968. */
-#ifdef NONMATCHING
 typedef struct {
     int pad0[2];
     unsigned int slot[37];
@@ -56,14 +54,16 @@ static void func_00026E38(int id)
     int key = ((id >> 5) & 0x3FF) << 5;
     int i;
 
-    for (i = 0; i < 4; i++, e++) {
-        int n = stageIndex((StageData *)dldResolve(&e->ref));
-        e->flags &= ~1;
-        if (n >= 0 && backStageCheckLoadSeg(&e->ref)) {
+    /* Indexing e[i] through a per-iteration pointer, not walking e, sets the loop counter after the
+       func_0002D260 and B_00188730 addresses like the Original. */
+    for (i = 0; i < 4; i++) {
+        SegRef *f = &e[i];
+        int n = stageIndex((StageData *)dldResolve(&f->ref));
+        f->flags &= ~1;
+        if (n >= 0 && backStageCheckLoadSeg(&f->ref)) {
             area = 0; z = area; gv = (void **)((g = gcGlobalVar) + 0x308);
             isysAddGroupWithLinkParam(createScriptObj(func_0002D260, (n << 15) | key, *gv, 0x1000, z, 1, z, z), B_00188730, 0, z);
-            e->flags |= 1;
+            f->flags |= 1;
         }
     }
 }
-#endif
