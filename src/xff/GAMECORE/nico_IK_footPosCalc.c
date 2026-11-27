@@ -22,9 +22,14 @@ extern s128 ZeroVector;
 extern char gcGlobalVar[];
 extern void GetMotionNodeQuaternionPosToolCoord(void *, void *, int, int);
 extern char *GetCharacterClass(int);
-extern void func_00038238(void *, int, void *, void *, void *);
+extern void func_00038238(void *, int, void *, void *, void *, int);
 
-#ifdef NONMATCHING /* 42 diffs, one word over. The Original sets a dead t0 = 1 at entry and a dead andi t1, t1, 1 (noHit) before the dld lookup, which no C tried here reproduces. Routing every zero through one variable (z = 0 before tp = tmp) lines up the tp copy and the DldSysUndefSymbol reuse, but stays two words short. */
+#ifdef NONMATCHING /* 18 diffs, same size. func_00038238 takes a sixth argument (as in the
+ * AimPositionXZ variants): the Original's andi t1, t1, 1 is that argument, noHit & 1, computed
+ * before the dld lookup with noHit pinned to $t1 so combine keeps the mask. The entry t0 = 1 is
+ * kept by an empty volatile asm reading the pinned si. Remaining: the prologue sd interleave (the
+ * barrier holds it back), the lui order before the DldSysUndefSymbol load, 1.0f in $f1, and the
+ * noHit block's lq/sq order. The permuter's best (17) only wraps the first calls in do/while (0). */
 void nico_IK_footPosCalc(FootIK *f)
 {
     float qv[4] __attribute__((aligned(16)));
@@ -39,19 +44,23 @@ void nico_IK_footPosCalc(FootIK *f)
     char *mod;
     char *data;
     float *tp;
-    int noHit;
+    register int noHit __asm__("$9");
+    int fl;
+    int z;
     register int si __asm__("$8") = 1;
+    __asm__ __volatile__("" : : "r"(si));
 
     GetMotionNodeQuaternionPosToolCoord(qv, tmp, obj, f->node);
     node = f->node;
+    z = 0;
     tp = tmp;
     chr = GetCharacterClass(obj);
-    ik = 0;
+    ik = (PinAttackIK *)z;
     if (DldSysUndefSymbol != CharIkTypeDef_PINATTACKIK &&
         *(int *)(chr + 0x1100) == *CharIkTypeDef_PINATTACKIK)
         ik = *(PinAttackIK **)(chr + 0x1110) + (node & 0xFFFEFFFF);
     noHit = 1;
-    if (ik != 0) {
+    if (ik != (PinAttackIK *)z) {
         float *pt = &ik->time;
         float *pw = &ik->weight;
         float t = *pt;
@@ -69,18 +78,19 @@ void nico_IK_footPosCalc(FootIK *f)
                                      "vmaddw.xyz vf5, vf6, vf8w\n"
                                      "sqc2 vf5, 0x0(%0)\n"
                                      : : "r"(&ik->pos), "r"(tp), "r"(si) : "memory");
-                noHit = 0;
                 ik->pos.f[3] = 1.0f;
+                noHit = 0;
                 *(s128 *)tmp = ik->pos.q;
             }
         }
         if (noHit) {
             ik->pos.q = *(s128 *)tmp;
-            ik->weight = -1.0f;
             ik->dir.q = ZeroVector;
             ik->time = -1.0f;
+            ik->weight = -1.0f;
         }
     }
+    fl = noHit & 1;
     ref = f->ref;
     enc = *ref;
     off = enc & 0x3FFFF;
@@ -88,7 +98,7 @@ void nico_IK_footPosCalc(FootIK *f)
     if (mod && mod != DldSysUndefSymbol)
         data = *(char **)(mod + 0x10) + ((enc >> 18) & 0xFFF) * *(int *)(*(char **)(mod + 8) + 0xC);
     else
-        data = 0;
-    func_00038238(f, 0, data, qv, tmp);
+        data = (char *)z;
+    func_00038238(f, z, data, qv, tmp, fl);
 }
 #endif
