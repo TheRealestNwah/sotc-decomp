@@ -1,8 +1,7 @@
-/* Parked: 4 diffs, same size. The Original addresses cand[best] as lq 0x50(&L + best*16) with &L (sp+0x10) in a register,
- * so cand sits 0x50 past L in one frame block; an empty asm barrier keeps &L in a register here (the cand
- * offset depends on that frame layout). Hoisting &M.d / &M.ofs into pointers ahead of the loop (a permuter find)
- * gives the Original's loop-pointer setup order. Remaining: $a0/$v1 swapped in the final cand[best] copy. */
-#ifdef NONMATCHING
+/* The Original addresses cand[best] as lq 0x50(&L + best*16) with &L (sp+0x10) in a register,
+ * so cand sits 0x50 past L in one frame block; an empty asm barrier keeps &L in a register here.
+ * Hoisting &M.d / &M.ofs into pointers ahead of the loop (a permuter find) gives the Original's
+ * loop-pointer setup order; pinning &L to $a0 and the copied quad to $v1 fixes the final copy. */
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float v[3]; } F3;
 
@@ -44,8 +43,8 @@ void CAM_get_safety_cam_and_look_at_posi(void *out, s128 *cam, s128 *look, s128 
     L.tgt = **(s128 **)(GetLayoutClass(CAM_get_target_obj(sub)) + 0x134);
     *cam = *src;
     if (mode == 1) {
-        float yaw[3] = { 0.0f, 3.14159250f, 0.0f };
-        float pitch[3] = { 0.0f, 0.0f, -1.57079625f };
+        float yaw[3] = { 0.0f, 3.14159251f, 0.0f };
+        float pitch[3] = { 0.0f, 0.0f, -1.57079626f };
         float dist[3] = { 0 };
         s128 cand[3];
         struct {
@@ -127,10 +126,9 @@ void CAM_get_safety_cam_and_look_at_posi(void *out, s128 *cam, s128 *look, s128 
                 if (dist[best] < dist[i])
                     best = i;
         }
-        { char *lp = (char *)&L; __asm__("" : "+r"(lp)); L.pos = ((s128 *)(lp + 0x50))[best]; }
+        { register char *lp asm("$4") = (char *)&L; __asm__("" : "+r"(lp)); { register s128 t asm("$3") = ((s128 *)(lp + 0x50))[best]; L.pos = t; } }
     } else {
         L.pos = *look;
     }
     CAM_get_warp_position(out, 0, &L.pos, cam, &L.tgt, col, CAM_get_target_riding_obj(sub), cm + 0x1814, 0.1f, 0.4f, 1);
 }
-#endif
