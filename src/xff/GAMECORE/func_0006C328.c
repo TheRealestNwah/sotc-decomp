@@ -1,5 +1,4 @@
-/* func_0006C328 parked: 2 diffs, same size (778 words). Projectile thread for the BUDDHA/TTS/PSD/YAMORI shots: sets up the shot LWS, homes the type-2 shot toward the player, moves it by the frame time, clips against the player and the world, then plays the hit LWS and sends the buddha explode damage. Remaining: in the explode-damage block the Original branches on the collision result with a plain bnez (lws loaded in its delay slot, nop after the next jal) where ours uses bnel, i.e. reorg predicts the branch differently. The 4.3f store goes through an int/float union so gcc keeps the info+8 load after it, as in the Original. */
-#ifdef NONMATCHING
+/* func_0006C328: projectile thread for the BUDDHA/TTS/PSD/YAMORI shots: sets up the shot LWS, homes the type-2 shot toward the player, moves it by the frame time, clips against the player and the world, then plays the hit LWS and sends the buddha explode damage. The lws argument of GetScriptAnimationGlobalBaseInfo is pinned to $a0 behind an empty asm so reorg fills the collision-result branch with the $a0 move as a plain bnez, as in the Original. The 4.3f store goes through an int/float union so gcc keeps the info+8 load after it. */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -179,7 +178,7 @@ static inline void normalize3(void *out, void *in)
 
 #define V(p, o) (*(char **)((char *)(p) + (o)))
 
-void func_0006C328(int *arg0)
+static void func_0006C328(int *arg0)
 {
     struct {
         float v10[4];
@@ -349,7 +348,7 @@ void func_0006C328(int *arg0)
                         add4(L.vE0, L.vE0, L.v80);
                         if (distXYZ2(V(l0, 0x134), L.v80) <= 18.489996f
                             && SCRGetCollisionCallBack(L.col, L.vE0, V(l0, 0x134), GC + 0x230, func_0006D1B0, 0) == 0) {
-                            char *info = GetScriptAnimationGlobalBaseInfo(lws);
+                            char *info; { register int a asm("$4") = lws; __asm__ __volatile__("" : : "r"(a)); info = GetScriptAnimationGlobalBaseInfo(a); }
                             sub4(L.vF0, V(l1, 0x134), V(l0, 0x134));
                             L.vF0[1] = 0.0f;
                             normalize3(L.vF0, L.vF0);
@@ -384,4 +383,3 @@ void func_0006C328(int *arg0)
         scrRunM(1);
     }
 }
-#endif
