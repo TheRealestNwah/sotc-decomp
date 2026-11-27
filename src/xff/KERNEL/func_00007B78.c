@@ -1,7 +1,8 @@
-/* Parked: 21 words differ. Callee-saved registers for a5, a6 and len are
- * rotated (s5/s6/s7), and the xC == 0 test becomes movz instead of the
- * Original's branch. The 3 nops in the last loop come from the assembler's
- * r5900 short-loop fix, not from source. */
+/* Parked: 3 words differ. Register pins on len ($s5), res ($s4) and a5 ($s7)
+ * give the Original's callee-saved assignment, but the first use of a5
+ * still reads $t1 instead of the pinned copy, and the obj->info store is
+ * scheduled after the mask's ori. The 3 nops in the last loop come from
+ * the assembler's r5900 short-loop fix, not from source. */
 #ifdef NONMATCHING
 typedef struct {
     char pad0[8];
@@ -56,14 +57,15 @@ extern void *func_0000A2C0(ModInfo *);
 extern void func_0000A078(void);
 extern void *T_0000A0A0(int);
 
-void *func_00007B78(ModInfo *info, ModObj *obj, int heap, void *a3, void *a4, int a5, void *a6, int a7)
+void *func_00007B78(ModInfo *info, ModObj *obj, int heap, void *a3, void *a4, int a5_, void *a6, int a7)
 {
+    register int a5 asm("$23") = a5_;
     int ok = 0;
     int total;
     int k;
     int nsym;
-    int len;
-    int *res;
+    register int len asm("$21");
+    register int *res asm("$20");
 
     if (a7 != 0) {
         info->x3C = (char *)info + info->x64;
@@ -90,10 +92,9 @@ void *func_00007B78(ModInfo *info, ModObj *obj, int heap, void *a3, void *a4, in
                 s++;
             }
         }
-        k = info->xC;
-        if (k == 0)
-            k++;
-        k++;
+        k = info->xC + 1;
+        if (info->xC == 0)
+            { __asm__ __volatile__(""); k = 2; }
         nsym = info->x24 - info->x1C - k;
         if (nsym != 0) {
             len = info->x24 << 4;
