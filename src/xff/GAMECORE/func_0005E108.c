@@ -28,10 +28,9 @@ static inline void mulMat4(float *dst, float *vec, char *mat)
                          : : "r"(dst), "r"(vec), "r"(mat) : "memory");
 }
 
-#ifdef NONMATCHING /* 39 diffs, same word count. Remaining: the Original computes the delta buffer address (sp+0x10) once before the row loop and copies it per row; gcc recomputes it per row. Register numbers follow from that. while (x-- != 0) loops give the Original addiu/beq -1 shape; $8 and $2 are pinned in the asm like the Original. */
-static inline void constrain(float *p, float *prev, float f3, float f4)
+#ifdef NONMATCHING /* 24 diffs, same word count. The per-row solveRow helper taking delta as a parameter gives the Original's hoisted sp+0x10 with a per-row copy. Remaining: tmp also goes through a parameter, so it is copied into $t1 instead of being addressed as $sp; with tmp local to collide, the slots swap (delta at sp+0). Register numbers follow from that. while (x-- != 0) loops give the Original addiu/beq -1 shape; $8 and $2 are pinned in the asm like the Original. */
+static inline void constrain(float *p, float *prev, float f3, float f4, float *delta)
 {
-    float delta[4] __attribute__((aligned(16)));
     float q;
 
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -60,9 +59,8 @@ static inline void constrain(float *p, float *prev, float f3, float f4)
     }
 }
 
-static inline void collide(float *p, char *col)
+static inline void collide(float *p, char *col, float *tmp)
 {
-    float tmp[4] __attribute__((aligned(16)));
 
     mulMat4(tmp, p, col + 0x40);
     if (*(float *)(col + 0x84) < tmp[2] && tmp[2] < 0.0f) {
@@ -89,6 +87,25 @@ static inline void collide(float *p, char *col)
     }
 }
 
+static inline void solveRow(float *prev, int cols, char *world, float f3, float f4, float *tmp, float *delta)
+{
+    int c = cols - 1;
+
+    while (c-- != 0) {
+        float *p = prev + 4;
+        char *col;
+        int k = *(int *)(world + 0x120);
+
+        col = world;
+        while (k-- != 0) {
+            collide(p, col, tmp);
+            col += 0x90;
+        }
+        constrain(p, prev, f3, f4, delta);
+        prev = p;
+    }
+}
+
 static void func_0005E108(ClothObj *cloth, int unused, char *world)
 {
     ClothDesc *desc = cloth->desc;
@@ -98,25 +115,13 @@ static void func_0005E108(ClothObj *cloth, int unused, char *world)
     int cols = desc->cols;
     float f3 = params[1];
     float f4 = params[2];
-    int c, k;
+    float tmp[4] __attribute__((aligned(16)));
+    float delta[4] __attribute__((aligned(16)));
 
     while (r-- != 0) {
         float *prev = *(float **)(row + 0x10);
 
-        c = cols - 1;
-        while (c-- != 0) {
-            float *p = prev + 4;
-            char *col;
-
-            k = *(int *)(world + 0x120);
-            col = world;
-            while (k-- != 0) {
-                collide(p, col);
-                col += 0x90;
-            }
-            constrain(p, prev, f3, f4);
-            prev = p;
-        }
+        solveRow(prev, cols, world, f3, f4, tmp, delta);
         row += 0x18;
     }
 }
