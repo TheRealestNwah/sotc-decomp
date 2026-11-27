@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 21 instruction diffs: target uses branch-likely for the *rot store and a different v0/v1 allocation for the sandwich vectors */
+#ifdef NONMATCHING /* Parked: 4 words differ (the "!= 1" constant lands in $a0 instead of $v0, so the two tail branches are not filled as branch-likely) */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; int i[4]; } Vec4;
 #define VU_OUTER_PRODUCT(dst, a, b) \
@@ -17,11 +17,12 @@ static inline int is_yaw_dir_sandwich(float *a, float *b, float *c)
     Vec4 t1;
     Vec4 t2;
     Vec4 t3;
-    int r;
+    register int r asm("$3");
     VU_OUTER_PRODUCT(&t1, b, a);
     VU_OUTER_PRODUCT(&t2, b, c);
     r = 0;
     if (t1.f[1] * t2.f[1] > 0.0f) {
+        __asm__ __volatile__("");
         VU_OUTER_PRODUCT(&t3, a, c);
         r = t2.f[1] * t3.f[1] > 0.0f;
     }
@@ -38,6 +39,7 @@ int GAMEUTIL_near_to_aim_yaw_dir(Vec4 *out, int *rot, Vec4 *cur, float speed, Ve
     if (rot != 0) {
         *rot = r;
     }
+    __asm__ __volatile__("");
     if (is_yaw_dir_sandwich(aim->f, v.f, out->f) != 1) {
         return 0;
     }
