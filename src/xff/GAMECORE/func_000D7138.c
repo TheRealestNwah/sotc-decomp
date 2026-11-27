@@ -1,7 +1,11 @@
 /* Updates the camera's target-visibility status from a ray check at the look-at camera position. */
 #ifdef NONMATCHING
-/* Parked attempt: 4 differing words, the order of the argument moves around
- * the CAM_act_ray_check_for_camera and GAMEUTIL_doit_status_manager calls.
+/* Parked attempt: 2 differing words, the order of the ray and pos
+ * argument moves (a1/a2) before CAM_act_ray_check_for_camera.
+ * GAMEUTIL_doit_status_manager goes through a cast with rate before the
+ * last int: EABI passes the same registers, and that order matches the
+ * Original's argument moves (was 4 diffs). Inlining the pointer
+ * expressions or swapping the pins doesn't move a1/a2.
  * Pinning the saved registers fixes the $s5-$s7 allocation (was 7 diffs). */
 typedef float Vec4[4] __attribute__((aligned(16)));
 
@@ -32,7 +36,7 @@ static void func_000D7138(char *cam_, char *a_, void *c, int mode, float rate)
     }
     GAMEUTIL_get_direction_by_yaw_pitch(dir, *(float *)(cam + 0x364), *(float *)(cam + 0x374));
     CAM_get_camera_position_by_look_at(pos, dir, a + 0x70, *(float *)(look + 0x38));
-    GAMEUTIL_doit_status_manager(sm, CAM_act_ray_check_for_camera(0, ray, pos, c, 0, CAM_get_target_riding_obj(ride)), 0, rate);
+    ((void (*)(char *, int, float, int))GAMEUTIL_doit_status_manager)(sm, CAM_act_ray_check_for_camera(0, ray, pos, c, 0, CAM_get_target_riding_obj(ride)), rate, 0);
     if (GAMEUTIL_get_status_continue_time_status_manager(sm) >= 1.0f)
         *(int *)(cam + 0x378) = GAMEUTIL_get_cur_status_status_manager(sm);
 }
