@@ -55,7 +55,7 @@ static inline float distXZ(const float *a, const float *b)
     return d;
 }
 
-#ifdef NONMATCHING /* 25 diffs: scheduling of the req[] stores before the loop and of the c[k] load around the k != 1 branch in the stage-center adds */
+#ifdef NONMATCHING /* 17 diffs: scheduling of the req[] stores before the loop (reordering the C stores only makes it worse). The stage-center adds read p[k] into a local after c[k], which gives the Original's load order around the k != 1 branch. */
 /* Drops up to six falling rocks on the Kirin slope: ranks the five high spawn points by XZ distance from the layout
    position (relative to the stage center), then spawns the three nearest high points and their two low points each. */
 void SCRFuncKirinSlopeFallRockLWSLoad(int obj, int a1, int a2, int a3, int t0, int t1, unsigned int *ref)
@@ -155,11 +155,12 @@ void SCRFuncKirinSlopeFallRockLWSLoad(int obj, int a1, int a2, int a3, int t0, i
                     p[2] = highPos[r][2];
                     GetStageCenter(c, LPOS(lay));
                     for (; k < 3; k++) {
-                        float v = c[k];
                         float *pk = &p[k];
+                        float v = c[k];
+                        float w = *pk;
                         if (k != 1)
                             v = -v;
-                        *pk = v + *pk;
+                        *pk = w + v;
                         if (k != 1)
                             *pk = -*pk;
                     }
@@ -170,16 +171,18 @@ void SCRFuncKirinSlopeFallRockLWSLoad(int obj, int a1, int a2, int a3, int t0, i
                     p[2] = lowPos[r][2];
                     GetStageCenter(c, LPOS(lay));
                     for (; k < 3; k++) {
-                        float v = c[k];
                         float *pk = &p[k];
+                        float v = c[k];
+                        float w = *pk;
                         if (k != 1)
                             v = -v;
-                        *pk = v + *pk;
+                        *pk = w + v;
                         if (k != 1)
                             *pk = -*pk;
                     }
                     c[1] = lowRot[r];
-                }                c[3] = 1.0f;
+                }
+                c[3] = 1.0f;
                 c[0] = 0.0f;
                 c[2] = 0.0f;
                 req[1] = (int)p;
