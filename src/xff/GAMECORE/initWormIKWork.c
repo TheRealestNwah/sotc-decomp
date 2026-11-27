@@ -4,7 +4,7 @@ extern char *GetCharacterClass(int);
 extern void *memset(void *, int, unsigned int);
 extern void ReflectIK_initWormDynamics(char *, void *, void *, void *, float);
 
-#ifdef NONMATCHING /* 74 diffs, 123 vs 127 words: work pointer lands in $s3 not $s2, n<=0 branch and count loop layout */
+#ifdef NONMATCHING /* 63 diffs, 124 vs 127 words: n is not copied into a second register on both paths of the n<=0 branch, so the post-loop constant and div.s schedule differs */
 void initWormIKWork(int obj, float k)
 {
     char *w = (char *)(((int)GetSCRCharaAIWorkPtr(obj) + 0x41B3) & -16);
@@ -17,8 +17,8 @@ void initWormIKWork(int obj, float k)
 
     memset(w, 0, 0x18D0);
     w[0x1298] = 0;
-    q = w;
     z = w + 0xEA0;
+    q = w;
     do {
         ReflectIK_initWormDynamics(q, ZeroVector, YUnitVector, ZeroVector, k);
         q += 0x50;
@@ -26,10 +26,8 @@ void initWormIKWork(int obj, float k)
     } while (--i >= 0);
     n = *(int *)(s5 + 4);
     *(int *)(w + 0x1294) = n;
-    if (n > 0) {
-        p = *(char **)(s5 + 8) + 0x10;
-        cnt = n;
-        do {
+    p = *(char **)(s5 + 8) + 0x10;
+    for (cnt = 0; cnt < n; cnt++) {
             float len;
             __asm__ __volatile__("lqc2 vf7, 0x0(%1)\n"
                                  "vmul.xyz vf7, vf7, vf7\n"
@@ -43,8 +41,6 @@ void initWormIKWork(int obj, float k)
                                  : "=f"(len) : "r"(p) : "$2");
             sum += len;
             p += 0x40;
-            cnt--;
-        } while (cnt != 0);
     }
     avg = sum / (float)(n - 1);
     *(float *)(w + 0x1280) = 10.0f;
@@ -52,15 +48,17 @@ void initWormIKWork(int obj, float k)
     *(float *)(w + 0x1288) = 0.5f;
     w[0x129B] = 1;
     *(float *)(w + 0x1290) = avg * 6.0f;
-    i = 0x1F;
-    z = w + 0xF00;
-    do {
-        *(int *)(z + 8) = 0;
-        *(int *)(z + 0xC) = 0;
-        *(int *)(z + 0x10) = 0;
-        *(int *)(z + 0x14) = 0;
-        z += 0x1C;
-    } while (--i >= 0);
+    {
+        int j = 0x1F;
+        char *y = w + 0xF00;
+        do {
+            *(int *)(y + 8) = 0;
+            *(int *)(y + 0xC) = 0;
+            *(int *)(y + 0x10) = 0;
+            *(int *)(y + 0x14) = 0;
+            y += 0x1C;
+        } while (--j >= 0);
+    }
     *(float *)(w + 0x128C) = 2.0f;
     {
         char *t = w + 0x12A0;
