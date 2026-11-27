@@ -1,4 +1,4 @@
-/* Parked: 60 diffs, same size (131 words). Arrow water spawn init: builds the effect work (func_00052EA8 edit-work init), 25 particles each placed by AI_GetRandomCircleOfsXZ plus the object's position (VU0 vadd.xyz), random sin/cos and sqc2 vf0 quad clears, then the free-list of 0x40-byte entries and the B_0018AD70 slot table. Float constant 2*pi is 6.2831854f (0x40C90FDA). Remaining: load order of the count/array/position, store order inside the particle loop, and the free-list loop register roles (original keeps the list header in a0 and re-reads its count every iteration). */
+/* Parked: 27 diffs, same size (131 words). Arrow water spawn init: builds the effect work (func_00052EA8 edit-work init), 25 particles each placed by AI_GetRandomCircleOfsXZ plus the object's position (VU0 vadd.xyz), random sin/cos and sqc2 vf0 quad clears, then the free-list of 0x40-byte entries and the B_0018AD70 slot table. Float constant 2*pi is 6.2831854f (0x40C90FDA). The free-list next pointer is stored as int so the count is re-read after it (type-based aliasing). Remaining: load order of the count/array/position, store order inside the particle loop, and register roles in the free-list loop ($a1 for the next pointer, header store through $a0). */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -68,38 +68,41 @@ void arrowWaterInit(char *obj)
         *(float *)(p + 8) = iosGetRandom();
         p += 0x80;
     } while (n >= 0);
+    e = ew + 0x120;
     ent = end;
     i = 0;
-    e = ew + 0x120;
     *(char **)(e + 4) = ent;
     if (*(int *)e > 0) {
         do {
             __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(ent) : "memory");
             *(int *)(ent + 0x38) = 0;
-            q = ent + 0x40;
             *(int *)(ent + 0x20) = 0;
             *(int *)(ent + 0x24) = 0;
             *(int *)(ent + 0x28) = 0;
             *(int *)(ent + 0x30) = 0;
             *(int *)(ent + 0x2C) = 0;
-            if (i++ < *(int *)e - 1) {
-                *(char **)(ent + 0x38) = q;
-            } else {
-                *(int *)(ent + 0x38) = 0;
-                q = ent + 0x40;
+            {
+                register int c __asm__("$2") = i < *(int *)e - 1;
+                i++;
+                if (c)
+                    *(int *)(ent + 0x38) = (int)(ent + 0x40);
+                else
+                    *(int *)(ent + 0x38) = 0;
             }
-            ent = q;
+            ent += 0x40;
         } while (i < *(int *)e);
     }
-    p = B_0018AD70;
-    k = 0x18;
-    do {
-        k--;
-        *(int *)p = 0;
-        *(int *)(p + 8) = 0;
-        *(int *)(p + 0xC) = 0;
-        *(int *)(p + 0x10) = 1;
-        p += 0x14;
-    } while (k >= 0);
+    {
+        char *b = B_0018AD70;
+        int m = 0x18;
+        do {
+            m--;
+            *(int *)b = 0;
+            *(int *)(b + 8) = 0;
+            *(int *)(b + 0xC) = 0;
+            *(int *)(b + 0x10) = 1;
+            b += 0x14;
+        } while (m >= 0);
+    }
 }
 #endif
