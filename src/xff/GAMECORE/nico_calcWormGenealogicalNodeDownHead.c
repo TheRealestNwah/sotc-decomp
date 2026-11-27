@@ -9,7 +9,7 @@ extern void GetQuaternionByAxisDirZY(void *, void *, void *);
 extern void GetMotionMatrix(int, int, int, int, int, int);
 extern void nico_calcWormGenealogicalNodeHeadBase(void *);
 
-#ifdef NONMATCHING /* 58 diffs: structure, VU blocks and call arguments match; the array-index address arithmetic (stride 0x50/0x10) is scheduled differently and the original reloads the counter each time */
+#ifdef NONMATCHING /* 40 diffs: structure, VU blocks and call arguments match. Pinning the tail counter to $3 stops gcc cross-jumping the two D_0017B8C8 += 1 tails. Left: gcc hoists the second copy's m+0x14/m+8 loads above the first sq (barriers do not help), and v0/v1/a0 choices in the stride-0x50/0x10 address adds */
 void nico_calcWormGenealogicalNodeDownHead(char *m)
 {
     char sp[0x20] __attribute__((aligned(16)));
@@ -74,8 +74,7 @@ void nico_calcWormGenealogicalNodeDownHead(char *m)
                              "vmulq.xyzw vf15, vf14, Q\n"
                              "sqc2 vf15, 0x0(%0)\n"
                              : : "r"(e) : "memory");
-        D_0017B8CC = 0;
-        D_0017B8C8 += 1;
+        { register int n __asm__("$3") = D_0017B8C8; D_0017B8CC = 0; D_0017B8C8 = n + 1; }
         return;
     }
     nico_calcWormGenealogicalNodeHeadBase(m);
