@@ -10,7 +10,7 @@ extern void SendCharaAttackMsg(void *, int, void *, int, float);
 extern float iosGetCosf(float);
 
 #ifdef NONMATCHING
-/* Parked: ~80 words differ (callee-saved register assignment of character class/collision/mask/match). */
+/* Parked: 11 words differ. Left: the match/mask result lives in $t1 instead of $v0, which also flips the branch layout of the two compare paths (the Original falls through to match == m). */
 int SCRConditionSendDamageToCollisionObject(void *obj, int u1, int u2, int u3, long mask, long match, float angle)
 {
     char *cc = GetCharacterClass();
@@ -31,10 +31,10 @@ int SCRConditionSendDamageToCollisionObject(void *obj, int u1, int u2, int u3, l
         ok = 1;
         if (mask != -1) {
             long m = attr & mask;
-            if (match != -1)
-                ok = (match == m);
-            else
+            if (match == -1)
                 ok = (m != 0);
+            else
+                ok = (match == m);
         }
         if (ok != 0) {
             layout = GetLayoutClass(obj);
@@ -70,7 +70,7 @@ int SCRConditionSendDamageToCollisionObject(void *obj, int u1, int u2, int u3, l
                                  "vmulq.xyz vf5, vf5, Q\n"
                                  "sqc2 vf5, 0x0(%0)\n"
                                  : : "r"(&dir) : "memory");
-            c = iosGetCosf(angle * 0.017453292f);
+            c = iosGetCosf(angle * 0.017453292519943295f);
             __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
                                  "lqc2 vf6, 0x0(%2)\n"
                                  "vaddw.x vf7, vf0, vf0w\n"
