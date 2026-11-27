@@ -1,9 +1,11 @@
-/* Parked: 15 words off. Probes a fan of eight directions (angles from RO_001813C8 in degrees,
+/* Parked: 11 diffs, same size. Probes a fan of eight directions (angles from RO_001813C8 in degrees,
    rotated about Y from ZDirVector) of length radius around center against the path collision,
    keeps the hit nearest center (true distance via vsqrt) and stores it pulled back by 0.1 along
-   the probe; returns whether any hit was found. Shape, frame and arguments match; the remaining
-   diffs are register choices: the RO_001813EC lui is hoisted to the top in $v1 (Original: $a2
-   after s3 is set, and $v0 at the end), and the 0.1 scale goes through $v0 instead of $a2. */
+   the probe; returns whether any hit was found. Shape, frame and arguments match; assigning best
+   after the out copy keeps the RO_001813EC lui in $a2 like the Original. Remaining: the Original
+   loads best right after the prologue, before the out copy and the two float constants; here it
+   is scheduled after them. Assigning it before the copy (with or without barriers) rehoists the
+   lui, and pinning the 0.1 scale to $a2 loses the $f21 constant. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -73,10 +75,11 @@ int getHitPosWayCollision(int path, Vec4 *out, Vec4 *center, float radius)
     struct { char pad[0x40]; Vec4 pos; } hit __attribute__((aligned(16)));
     Vec4 dir __attribute__((aligned(16)));
     Vec4 end __attribute__((aligned(16)));
-    float best = RO_001813EC;
+    float best;
     int i;
 
     out->q = center->q;
+    best = RO_001813EC;
     for (i = 0; i < 8; i++) {
         float d;
 
