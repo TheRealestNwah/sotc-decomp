@@ -1,4 +1,6 @@
-/* Parked: 28 words off; the changed flag lands in a callee-saved register instead of $v1, and the advance loop uses a likely branch. */
+/* Parked: 2 words off; "last = 0" is scheduled before the argument setup instead of into the delay
+   slot of the isysGroupForFirst call. "changed = 1" after the advance call keeps it in $v1, and an
+   empty asm barrier keeps "last = 0" before the call. */
 #ifdef NONMATCHING
 typedef struct Orient {
     char pad0[4];
@@ -44,15 +46,17 @@ void ExecLwsDemoOrientManagerObj(char *obj, float a, float dt)
         float f1 = cur->f4;
         if (f1 > 0.0f && f1 < t) {
 advance:
-            changed = 1;
             cur = GetDemoOrientNext(list);
+            changed = 1;
         }
     }
     {
         char *sub = g + 0x98;
         if (changed != 0) {
             int last = 0;
-            int *e = isysGroupForFirst(sub, 0);
+            int *e;
+            __asm__ __volatile__("");
+            e = isysGroupForFirst(sub, 0);
             if (e != 0) {
                 do {
                     last = *e;
