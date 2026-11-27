@@ -1,5 +1,4 @@
-/* Parked: 3 diffs, same size (includes the split tail func_00092920). Shoulder edge fit: while the geometry pointer is an edge (type 4) and the root dynamics allow it, offsets the pointer position along the class quaternion axes and tries charrootdyn_detectCharClimbableWall; on a hit it clamps the hit parameter to [0, 1], otherwise it clips the edge parameter against the planes through both edge vertices, intersects the edge with the target plane and the class plane, and pushes the result off any collision found by ClipCollisionFinderCallBack. The object-space offset of B_0018B7C0 (x and w zeroed) is added and func_00091CE0 stores B_0018B800, setting B_0018B804. Remaining: t1 (cc + 0xE20) is set before the f14/f15 moves in the detect call; the Original puts it in the jal delay slot. The hit clamp passes p through an opaque asm so w is reloaded through a1, and the zeroed x/w go through one float local, stored w first. */
-#ifdef NONMATCHING
+/* Includes the split tail func_00092920. Shoulder edge fit: while the geometry pointer is an edge (type 4) and the root dynamics allow it, offsets the pointer position along the class quaternion axes and tries charrootdyn_detectCharClimbableWall; on a hit it clamps the hit parameter to [0, 1], otherwise it clips the edge parameter against the planes through both edge vertices, intersects the edge with the target plane and the class plane, and pushes the result off any collision found by ClipCollisionFinderCallBack. The object-space offset of B_0018B7C0 (x and w zeroed) is added and func_00091CE0 stores B_0018B800, setting B_0018B804. The detect call goes through a function type with the cc + 0xE20 argument last: EABI still passes it in $t1, and this order puts it in the jal delay slot like the Original. The hit clamp passes p through an opaque asm so w is reloaded through a1, and the zeroed x/w go through one float local, stored w first. */
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { float x, y, z, w; } Vec4 __attribute__((aligned(16)));
 typedef struct { Vec4 v; char pad[0x30]; Vec4 pos; char pad2[0x50]; } ColResult;
@@ -221,7 +220,7 @@ void nico_player_edgecolfit_Shoulder(int *obj)
                 add(&g, &g, &b);
                 axisX(&c, *(void **)(cc + 0x13C));
                 zero = 0.0f;
-                if (charrootdyn_detectCharClimbableWall(&res, GetGeometryPointerCollisionDB(gp), 1, B_0018B7B0, &g, cc + 0xE20, 0.29999999f, 0.5f, 0.5f, zero)) {
+                if (((int (*)(void *, int, int, void *, void *, float, float, float, float, void *))charrootdyn_detectCharClimbableWall)(&res, GetGeometryPointerCollisionDB(gp), 1, B_0018B7B0, &g, 0.29999999f, 0.5f, 0.5f, zero, cc + 0xE20)) {
                     p = &res.pos;
                     if (!(zero <= p->w))
                         p->w = zero;
@@ -282,4 +281,3 @@ void nico_player_edgecolfit_Shoulder(int *obj)
         }
     }
 }
-#endif
