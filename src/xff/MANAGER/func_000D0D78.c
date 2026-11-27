@@ -1,5 +1,5 @@
 #ifdef NONMATCHING
-/* Parked: 30 words differ (register allocation and scheduling) */
+/* Parked: 15 words differ (the owner pointer lands at sp+0x20 and pos at sp+0; the Original has them the other way round, plus scheduling) */
 typedef struct { long a; long b; } R16;
 typedef struct Node {
     void **win;
@@ -48,6 +48,7 @@ void func_000D0D78(Win *w)
     Node *n;
     Node *p;
     float pos[2];
+    float pad[4];
 
     n = *(Node **)(o + 0x3E0);
     if (it->onSelect != 0)
