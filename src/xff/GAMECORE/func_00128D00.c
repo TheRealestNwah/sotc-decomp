@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 8 words: the two quats + idx*16 store addresses (v0/v1 swapped) and the order of the a1/a3 argument moves at 0x294 */
+#ifdef NONMATCHING /* 4 words: the order of the a1/a3 argument moves at 0x294 and the sll/lq order of the else-branch quat store */
 typedef float Vec4[4] __attribute__((aligned(16)));
 typedef int s128 __attribute__((mode(TI)));
 
@@ -239,10 +239,10 @@ void func_00128D00(float *out, WormNode *n, float *a, float *b, float *q, float 
         GetQuaternionByAxisDirZY(rq, dir, tgt);
         DivQuaternion(lq, rq, dq);
         GetLimitationQuaternion(lq, lq, 0.26179937f);
-        quatMul((float *)(n->quats + n->idx * sz), dq, lq);
+        quatMul((float *)(char *)&((s128 *)n->quats)[n->idx], dq, lq);
     } else {
         GetLimitationQuaternion(dq, dq, 2.0f * (deg * 0.0174532924f));
-        *(s128 *)(n->quats + n->idx * sz) = *(s128 *)dq;
+        *(s128 *)(char *)&((s128 *)n->quats)[n->idx] = *(s128 *)dq;
         __asm__ __volatile__("" : : : "memory");
     }
     GetMotionMatrixOfTargetFromParent(n->p8, n->pC, n->p10, n->quats, n->pB4, n->pB8, n->idx);
