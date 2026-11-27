@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 28 diffs: v0/v1 and f0-f3 temp numbering (pointer temps for src+0x10/buf, float temps in the scale step) */
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; int i[4]; } Vec4;
 
@@ -9,16 +8,17 @@ static inline void zero(s128 *v)
     __asm__ __volatile__("sq $0, 0(%0)" : : "r"(v) : "memory");
 }
 
-int func_0007B8D0(char *out, char *src, char *c)
+static int func_0007B8D0(char *out, char *src, char *c)
 {
     Vec4 buf[2];
     register char *s0 __asm__("$16");
     s128 v;
-    float f0;
+    register float f0 asm("$f0");
     float f1;
     float f2;
     float f3;
     int flags;
+    register float t2 asm("$f2");
 
     if (out != 0) {
     *(int *)(out + 0x30) = 0;
@@ -29,7 +29,9 @@ int func_0007B8D0(char *out, char *src, char *c)
         *(int *)(out + 0x30) = 8;
     } else if (*(int *)(c + 0x18) != 0) {
         *(int *)(out + 0x30) = 4;
-        *(s128 *)out = *(s128 *)src;
+        __asm__ __volatile__("");
+        { register s128 q asm("$3") = *(s128 *)src; *(s128 *)out = q; }
+        __asm__ __volatile__("");
         *(float *)(out + 0x3C) = *(float *)(src + 0x28);
     } else {
         *(int *)(out + 0x30) = 8;
@@ -40,7 +42,7 @@ int func_0007B8D0(char *out, char *src, char *c)
         flags = *(int *)(src + 0x2C);
     }
     if (flags & 0x1C) {
-        __asm__ __volatile__("lqc2 vf4, 0x0(%0)\n"
+        __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
                              "vmul.xyzw vf5, vf4, vf4\n"
                              "vmr32.xyzw vf6, vf4\n"
                              "vmul.xyzw vf7, vf6, vf4\n"
@@ -54,8 +56,8 @@ int func_0007B8D0(char *out, char *src, char *c)
                              "vadd.w vf5, vf0, vf0\n"
                              "vmulw.xyz vf6, vf6, vf5w\n"
                              "vaddw.z vf6, vf6, vf0w\n"
-                             "sqc2 vf6, 0x0(%1)\n"
-                             : : "r"(src + 0x10), "r"(&buf[1]) : "memory");
+                             "sqc2 vf6, 0x0(%0)\n"
+                             : : "r"(&buf[1]), "r"(src + 0x10) : "memory");
     }
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                          "lqc2 vf6, 0x0(%1)\n"
@@ -78,17 +80,19 @@ int func_0007B8D0(char *out, char *src, char *c)
     else
         v = buf[0].q;
     *(s128 *)(out + 0x10) = v;
+    __asm__ __volatile__("");
     *(int *)(out + 0x34) = *(int *)(src + 0x30);
     s0 = out + 0x20;
     iosIColToFvec(s0, *(int *)(src + 0x3C));
-    f0 = *(float *)(src + 0x24) * (1.0f - *(float *)(c + 0x10) / *(float *)(src + 0x28));
+    { register float q asm("$f2"); register float d asm("$f3"); register float o asm("$f1"); q = *(float *)(c + 0x10); d = *(float *)(src + 0x28); o = 1.0f; q = q / d; f0 = *(float *)(src + 0x24); o = o - q; f0 = f0 * o; }
     __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                          "qmtc2.ni %1, vf6\n"
                          "vmulx.xyz vf5, vf5, vf6x\n"
                          "sqc2 vf5, 0x0(%0)\n"
                          : : "r"(s0), "r"(f0) : "memory");
-    *(float *)(out + 0x38) = *(float *)(c + 0x14);
-    if (*(float *)(c + 0x1C) < *(float *)(src + 0x48)) {
+    { register float t asm("$f1") = *(float *)(c + 0x14); *(float *)(out + 0x38) = t; }
+    t2 = *(float *)(src + 0x48);
+    if (*(float *)(c + 0x1C) < t2) {
         f0 = *(float *)(c + 0x20);
         __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
                              "qmtc2.ni %1, vf6\n"
@@ -100,4 +104,3 @@ int func_0007B8D0(char *out, char *src, char *c)
     }
     return 0;
 }
-#endif
