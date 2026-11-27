@@ -24,12 +24,13 @@ extern void GetMotionNodeQuaternionPosToolCoord(void *, void *, int, int);
 extern char *GetCharacterClass(int);
 extern void func_00038238(void *, int, void *, void *, void *, int);
 
-#ifdef NONMATCHING /* 18 diffs, same size. func_00038238 takes a sixth argument (as in the
+#ifdef NONMATCHING /* 16 diffs, same size. func_00038238 takes a sixth argument (as in the
  * AimPositionXZ variants): the Original's andi t1, t1, 1 is that argument, noHit & 1, computed
  * before the dld lookup with noHit pinned to $t1 so combine keeps the mask. The entry t0 = 1 is
- * kept by an empty volatile asm reading the pinned si. Remaining: the prologue sd interleave (the
- * barrier holds it back), the lui order before the DldSysUndefSymbol load, 1.0f in $f1, and the
- * noHit block's lq/sq order. The permuter's best (17) only wraps the first calls in do/while (0). */
+ * kept by an empty volatile asm reading the pinned si. An empty asm using s after noHit = 0 keeps
+ * $f0 live so 1.0f goes to $f1. Remaining: the prologue sd interleave (the
+ * barrier holds it back), the lui order before the DldSysUndefSymbol load, and the
+ * noHit block's lq/sq order. An earlier permuter run (17 from 18) only wrapped the first calls in do/while (0). */
 void nico_IK_footPosCalc(FootIK *f)
 {
     float qv[4] __attribute__((aligned(16)));
@@ -80,6 +81,7 @@ void nico_IK_footPosCalc(FootIK *f)
                                      : : "r"(&ik->pos), "r"(tp), "r"(si) : "memory");
                 ik->pos.f[3] = 1.0f;
                 noHit = 0;
+                __asm__("" : : "f"(s));
                 *(s128 *)tmp = ik->pos.q;
             }
         }
