@@ -1,4 +1,4 @@
-/* Parked: 15 diffs, same size. The first two SetQuaternionByAxisRotateVWithNoRegularize addresses pass through an opaque asm so gcc recomputes them after the call like the Original. Shoulder collision probe: transforms the motion node tool position, B_0018B7B0 and the class origin into object space, casts a cyclic Z/Y one-way collision probe along the class quaternion turned by -0x8000 about Z and -0x2000 about X, and on a hit writes either the hit position or a point rotated by the arcsine of the target direction. Called as T_00092958 from nico_player_colfit_Shoulder.c. Remaining: the s0 = &qD0 setup sits after the first call (before it in the Original), the t2/f12 argument setup order, and the q130 call still CSEs its address and swaps the q120/q130 registers. */
+/* Parked: 4 diffs, same size. Shoulder collision probe: transforms the motion node tool position, B_0018B7B0 and the class origin into object space, casts a cyclic Z/Y one-way collision probe along the class quaternion turned by -0x8000 about Z and -0x2000 about X, and on a hit writes either the hit position or a point rotated by the arcsine of the target direction. Called as T_00092958 from nico_player_colfit_Shoulder.c. The SetQuaternionByAxisRotateVWithNoRegularize destinations pass through an opaque asm so gcc recomputes them, while &qD0 and &q120 are held in pointer variables (s0) like the Original. The probe's float argument is declared before the filter callback (EABI passes it in $f12 either way) so its mov.s is scheduled before the callback's addiu. Remaining: the XUnitVector address is set up after the mul.s and &q130 before it, the reverse of the Original. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -16,7 +16,7 @@ extern char XUnitVector[], ZUnitVector[];
 extern char *GetCharacterClass(int);
 extern void GetMotionNodeQuaternionPosToolCoord(void *, void *, int, int, int);
 extern void SetQuaternionByAxisRotateVWithNoRegularize(void *, short, void *);
-extern int charrootdyn_getCyclicCollisionDetectZYOneWayCB(void *, void *, void *, int, int, void *, void *, int, float);
+extern int charrootdyn_getCyclicCollisionDetectZYOneWayCB(void *, void *, void *, int, int, void *, float, void *, int);
 extern int character_ikcolattrfilter();
 extern float iosGetASinfExact(float);
 
@@ -163,6 +163,7 @@ static int func_00092958(s128 *out, int *obj0)
     float len;
     char *m;
     void *rq;
+    void *pd;
 
     actor = obj[0];
     cc = GetCharacterClass(actor);
@@ -183,12 +184,13 @@ static int func_00092958(s128 *out, int *obj0)
     vC0.y = zero;
     __asm__ __volatile__(""); /* bare asm flushes cse before lengthXYZ */
     len = lengthXYZ(&vC0);
+    pd = &qD0;
     rq = *(void **)(cc + 0x13C);
     { void *pa = &qE0; __asm__("" : "+r"(pa)); SetQuaternionByAxisRotateVWithNoRegularize(pa, -0x8000, ZUnitVector); }
-    quatMul(&qD0, rq, &qE0);
+    quatMul(pd, rq, &qE0);
     { void *pb = &qF0; __asm__ __volatile__("" : "+r"(pb)); SetQuaternionByAxisRotateVWithNoRegularize(pb, -0x2000, XUnitVector); }
-    quatMul(&qD0, &qD0, &qF0);
-    if (charrootdyn_getCyclicCollisionDetectZYOneWayCB(&res, &v60, &qD0, 4, 1, cc + 0xE20, character_ikcolattrfilter, 0, len) ) {
+    quatMul(pd, pd, &qF0);
+    if (charrootdyn_getCyclicCollisionDetectZYOneWayCB(&res, &v60, pd, 4, 1, cc + 0xE20, len, character_ikcolattrfilter, 0) ) {
     matVec(&qE0, m, &res.pos);
     subXYZW(&v100, &qE0, &v50);
     normalize(&qF0, &v100);
@@ -200,11 +202,12 @@ static int func_00092958(s128 *out, int *obj0)
     }
     if (qF0.y <= zero) {
         short ang = (short)(int)(iosGetASinfExact(v110.y) * 32768.0f / 3.1415926f);
+        void *p120 = &q120;
         rq = *(void **)(cc + 0x13C);
-        SetQuaternionByAxisRotateVWithNoRegularize(&q130, ang, XUnitVector);
-        quatMul(&q120, rq, &q130);
+        { void *pc = &q130; __asm__("" : "+r"(pc)); SetQuaternionByAxisRotateVWithNoRegularize(pc, ang, XUnitVector); }
+        quatMul(p120, rq, &q130);
         v100.w = 1.0f;
-        quatPosTransform(out, &v100, &v60, &q120);
+        quatPosTransform(out, &v100, &v60, p120);
         return 1;
     }
     }
