@@ -24,7 +24,7 @@ extern void GetMotionNodeQuaternionPosToolCoord(void *, void *, int, int);
 extern char *GetCharacterClass(int);
 extern void func_00038238(void *, int, void *, void *, void *, int);
 
-#ifdef NONMATCHING /* 18 diffs, same size and same fixes as nico_IK_footPosCalc (tail call passes 1); the remaining differences are the same scheduling ones. */
+#ifdef NONMATCHING /* 16 diffs, same size and same fixes as nico_IK_footPosCalc (tail call passes 1, empty asm using s after noHit = 0 so 1.0f lands in $f1); the remaining differences are the same scheduling ones. */
 void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
 {
     float qv[4] __attribute__((aligned(16)));
@@ -75,6 +75,7 @@ void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
                                      : : "r"(&ik->pos), "r"(tp), "r"(si) : "memory");
                 ik->pos.f[3] = 1.0f;
                 noHit = 0;
+                __asm__("" : : "f"(s));
                 *(s128 *)tmp = ik->pos.q;
             }
         }
