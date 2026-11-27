@@ -10,20 +10,23 @@ extern int AI_JudgeNotCharaObjFunc();
 extern int AI_JudgeColAttrFunc();
 typedef int s128 __attribute__((mode(TI)));
 
-/* Parked: 12 diffs (same size, 133 words). Pinning cc to $s4 fixes the
- * callee-saved rotation. Remaining: the ClipCollisionDirectCallBack a0/a1
- * setup order, the clip helper's result landing in $a0 instead of $a1 (the
- * Original sets a0 = sp+0x40 before the beqz), and the 0.5f constant loaded
- * after the plane lq/sq instead of before. */
+/* Parked: 11 diffs (same size, 133 words). Pinning cc to $s4 fixes the
+ * callee-saved rotation; pinning the clip helper's result to $a1 puts it
+ * where the Original keeps it. Remaining: the ClipCollisionDirectCallBack
+ * a0 = sp+0x40 setup comes last instead of right after a1, the post-call
+ * a0 = sp+0x40 lands in the jal delay slot instead of before the beqz, and
+ * the 0.5f constant is loaded after the plane lq/sq instead of before. */
 #ifdef NONMATCHING
 static inline int clipTarget(void *p, void *tgt, s128 *out, s128 *plane)
 {
     char geom[0x50] __attribute__((aligned(16)));
-    if (ClipCollisionDirectCallBack(geom, p, tgt, gcGlobalVar + 0x230, AI_JudgeNotCharaObjFunc, 0, 0, AI_JudgeColAttrFunc, 0) == 0)
-        return 0;
-    *plane = *(s128 *)GetCollisionDBPlane(GetGeometryPointerCollisionDB(geom, 0));
-    *out = *(s128 *)(geom + 0x40);
-    return 1;
+    register int r __asm__("$5") = 0;
+    if (ClipCollisionDirectCallBack(geom, p, tgt, gcGlobalVar + 0x230, AI_JudgeNotCharaObjFunc, 0, 0, AI_JudgeColAttrFunc, 0) != 0) {
+        *plane = *(s128 *)GetCollisionDBPlane(GetGeometryPointerCollisionDB(geom, 0));
+        *out = *(s128 *)(geom + 0x40);
+        r = 1;
+    }
+    return r;
 }
 
 static int func_000B4690(char *a, s128 *out, s128 *plane)
