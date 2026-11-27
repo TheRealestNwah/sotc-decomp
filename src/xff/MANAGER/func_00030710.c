@@ -99,3 +99,16 @@ static void func_00030710(VramNode *n)
         nodeRelease(b->owner, ((VramPool *)b->pool));
     }
 }
+
+/* Defined next to its static callee: with func_00030710 in the same file the
+ * flags test branches past the duplicate ra restore, as in the Original. The
+ * barrier keeps the call from becoming a tail call. */
+void vramFree(VramNode *v)
+{
+    if (v->blk.state == (VramNode *)2) {
+        if (!v->blk.flag) {
+            func_00030710(v);
+            __asm__ __volatile__("");
+        }
+    }
+}
