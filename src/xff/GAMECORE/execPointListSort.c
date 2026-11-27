@@ -1,9 +1,11 @@
-/* Parked draft: collects every path point of the active area (B_001A57E8 table) within the
-   squared radius at +0x3B8 of the given object, as 8-byte {index, area, squared distance}
-   entries after the count in out[0], then selection-sorts them by distance (the swaps are
-   unaligned 8-byte struct copies, ldl/ldr in the original). Written from the m2c draft; not yet
-   compared closely. */
+/* Parked: 28 words off. Collects every path point of the active area (B_001A57E8 table) within
+   the squared radius at +0x3B8 of the given object, as 8-byte {index, area, squared distance}
+   entries after the count in out[0], then selection-sorts them by distance. The VU distance
+   temp and the swap temp share sp+0 in the original (a union here), and the point loop and the
+   sort share one counter. Remaining: the out[0] = 0 store is scheduled before the radius load,
+   $a0/$v1 swapped in the sort's address math, and out[0]++ is loaded before the swap. */
 #ifdef NONMATCHING
+#include "vu0.h"
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
 
@@ -11,7 +13,7 @@ typedef struct {
     unsigned short index;
     short area;
     float dist;
-} __attribute__((packed)) PointEntry;
+} PointEntry;
 
 typedef struct {
     char *owner;
@@ -25,53 +27,37 @@ typedef struct {
 } AreaTable;
 
 extern char B_001A57E8[];
-extern Vec4 *getPointDataByAreaIdx(char *, unsigned int, int, char *);
+extern Vec4 *getPointDataByAreaIdx(char *, int, int);
 
-static inline float distSq(Vec4 *a, Vec4 *b)
-{
-    float r;
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
-                         "lqc2 vf6, 0x0(%2)\n"
-                         "vsub.xyzw vf7, vf5, vf6\n"
-                         "sqc2 vf7, 0x0(%3)\n"
-                         "lqc2 vf5, 0x0(%3)\n"
-                         "lqc2 vf6, 0x0(%3)\n"
-                         "vaddw.x vf7, vf0, vf0w\n"
-                         "vmul.xyz vf6, vf5, vf6\n"
-                         "vaddax.x ACC, vf0, vf6x\n"
-                         "vmadday.x ACC, vf7, vf6y\n"
-                         "vmaddz.x vf6, vf7, vf6z\n"
-                         "qmfc2.ni $2, vf6\n"
-                         "mtc1 $2, %0\n"
-                         : "=f"(r) : "r"(a), "r"(b), "r"(&r) : "$2", "memory");
-    return r;
-}
-
-void execPointListSort(char *obj, int *out, int unused)
+void execPointListSort(char *obj, int *out, Vec4 *pos)
 {
     PointEntry *entries = (PointEntry *)(out + 1);
-    AreaTable *table = (AreaTable *)(B_001A57E8 + *(int *)(obj + 0x3C50) * 0x98);
-    float radius = *(float *)(obj + 0x3B8);
-    float radiusSq = radius * radius;
+    AreaTable *table;
+    float radius;
+    float radiusSq;
     unsigned int n = 0;
     unsigned int i;
     int a;
+    union { Vec4 v; PointEntry e; } u __attribute__((aligned(16)));
 
+    table = (AreaTable *)(B_001A57E8 + *(int *)(obj + 0x3C50) * 0x98);
+    radius = *(float *)(obj + 0x3B8);
     out[0] = 0;
+    radiusSq = radius * radius;
     for (a = 0; a < table->count; a++) {
         int *list = table->rec[a].list;
         int area = *(int *)(table->rec[a].owner + 0x1C);
 
-        if (list != 0 && *list != 0) {
-            unsigned int k;
+        if (list != 0) {
+            for (i = 0; i < (unsigned int)*list; i++) {
+                Vec4 *p = getPointDataByAreaIdx(obj, i, area);
+                float d;
 
-            for (k = 0; k < (unsigned int)*list; k++) {
-                Vec4 *p = getPointDataByAreaIdx(obj, k, area, obj);
-                float d = distSq((Vec4 *)obj, p);
-
+                vu0_sub4(&u.v, pos, p);
+                d = vu0_dot3(&u.v, &u.v);
                 if (d <= radiusSq) {
                     entries[n].dist = d;
-                    entries[n].index = k;
+                    entries[n].index = i;
                     entries[n].area = area;
                     n++;
                 }
@@ -81,15 +67,14 @@ void execPointListSort(char *obj, int *out, int unused)
     for (i = 0; i < n; i++) {
         unsigned int best = i;
         unsigned int j;
-        PointEntry tmp;
 
         for (j = i + 1; j < n; j++) {
             if (entries[j].dist < entries[best].dist)
                 best = j;
         }
-        tmp = entries[i];
+        u.e = entries[i];
         entries[i] = entries[best];
-        entries[best] = tmp;
+        entries[best] = u.e;
         out[0]++;
     }
 }
