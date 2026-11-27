@@ -6,18 +6,16 @@ extern void GetEulerYXZFromQuaternion(float *, float *, float *, float *);
 extern void GetEulerYXZFromQuaternionZHalfPI(float *, float *, float *, float *);
 extern void GetQuaternionByEulerYXZ(float *, float, float, float);
 
-/* Parked: 93 words off; structure and both VU blocks follow the asm. Left: register assignment of q/r (original keeps the result buffer pointer in $t1 and q in $a3) and constant rounding of the degree-to-radian factor. */
+/* Parked: 33 words off; structure and both VU blocks follow the asm. Left: the Original holds the result buffer pointer in $t1 and keeps q in $a3 and cur in $a2 until after the first VU block (ours copies q to $t1 and cur to $s0 early), plus the load order of the Euler angles. */
 #ifdef NONMATCHING
 void _setNodeHPB(int idx, char *obj, char *base, float *q, int halfPi, float h, float p, float b)
 {
     struct { Vec4 r; Vec4 q10; Vec4 e; Vec4 neg; } L;
     float *cur = (float *)(base + idx * 16);
     char *node = *(char **)(obj + 8) + idx * 64;
-    float *r;
 
     if (*(int *)(node + 0x38) >= 0)
         q = IdentityQuaternion;
-    r = L.r;
     *(s128 *)L.q10 = *(s128 *)q;
     __asm__ __volatile__("lqc2 vf11, 0x0(%0)\n"
                          "vsubw.x vf5, vf0, vf0w\n"
@@ -36,15 +34,15 @@ void _setNodeHPB(int idx, char *obj, char *base, float *q, int halfPi, float h, 
                          "vadd.xyz vf13, vf14, vf15\n"
                          "vadd.xyz vf13, vf13, vf16\n"
                          "sqc2 vf13, 0x0(%3)\n"
-                         : : "r"(L.q10), "r"(L.neg), "r"(cur), "r"(r) : "memory");
+                         : : "r"(L.q10), "r"(L.neg), "r"(cur), "r"(L.r) : "memory");
     if (halfPi)
-        GetEulerYXZFromQuaternionZHalfPI(L.e, r, cur, q);
+        GetEulerYXZFromQuaternionZHalfPI(L.e, L.r, cur, q);
     else
-        GetEulerYXZFromQuaternion(L.e, r, cur, q);
-    L.e[0] += -p * 0.017453292f;
-    L.e[1] += h * 0.017453292f;
-    L.e[2] += b * 0.017453292f;
-    GetQuaternionByEulerYXZ(r, L.e[0], L.e[1], L.e[2]);
+        GetEulerYXZFromQuaternion(L.e, L.r, cur, q);
+    L.e[0] += -p * 0.017453292519943295f;
+    L.e[1] += h * 0.017453292519943295f;
+    L.e[2] += b * 0.017453292519943295f;
+    GetQuaternionByEulerYXZ(L.r, L.e[0], L.e[1], L.e[2]);
     __asm__ __volatile__("lqc2 vf11, 0x0(%0)\n"
                          "lqc2 vf12, 0x0(%1)\n"
                          "vmul.xyzw vf13, vf11, vf12\n"
@@ -67,7 +65,7 @@ void _setNodeHPB(int idx, char *obj, char *base, float *q, int halfPi, float h, 
                          "vwaitq\n"
                          "vmulq.xyzw vf15, vf14, Q\n"
                          "sqc2 vf15, 0x0(%2)\n"
-                         : : "r"(L.q10), "r"(r), "r"(cur) : "memory");
+                         : : "r"(L.q10), "r"(L.r), "r"(cur) : "memory");
 }
 #else
 extern void _setNodeHPB(int idx, char *obj, char *base, float *q, int halfPi, float h, float p, float b);
