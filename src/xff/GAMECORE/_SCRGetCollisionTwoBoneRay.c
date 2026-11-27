@@ -1,5 +1,4 @@
-#ifdef NONMATCHING
-/* Parked: 2 diffs, same size. Probes four rays between the current and last positions of two nodes (lastB-curB, lastA-curA, lastB-curA, lastA-curB) with ClipCollisionDirectCallBack, ClipCollisionFinderCallBack or ClipCollisionFinder, and copies the hit geometry into *out. The dead chr parameter doubles as the hit flag, which keeps the final sltu. The fourth ray uses its own copy of the inline (ray4), storing the start w before the end w, which puts the start w store in the call's delay slot like the Original. Remaining: the Original stores the stack argument f2 before the end w (0x1BC); ours stores the end w first. */
+/* Probes four rays between the current and last positions of two nodes (lastB-curB, lastA-curA, lastB-curA, lastA-curB) with ClipCollisionDirectCallBack, ClipCollisionFinderCallBack or ClipCollisionFinder, and copies the hit geometry into *out. The dead chr parameter doubles as the hit flag, which keeps the final sltu. The fourth ray uses its own copy of the inline (ray4), storing the start w before the end w through a union, so gcc schedules them against the s128 copies and the stack argument as in the Original. */
 typedef int s128 __attribute__((mode(TI)));
 
 extern char *GetCharacterClass(void *);
@@ -32,8 +31,8 @@ static inline int ray4(void *out, Ray *R, s128 *a, s128 *b, void *cb, void *f1, 
     int r;
     R->s = *a;
     R->e = *b;
-    ((float *)&R->s)[3] = 1.0f;
-    ((float *)&R->e)[3] = 1.0f;
+    ((union { s128 q; float f[4]; } *)&R->s)->f[3] = 1.0f;
+    ((union { s128 q; float f[4]; } *)&R->e)->f[3] = 1.0f;
     r = ClipCollisionDirectCallBack(R->g, &R->s, &R->e, cb, 0, 0, 0, f1, f2);
     if (r) {
         if (out)
@@ -85,4 +84,3 @@ int _SCRGetCollisionTwoBoneRay(void *out, int nodeB, int nodeA, void *cb, int ch
     }
     return chr != 0;
 }
-#endif
