@@ -4,7 +4,12 @@
    re-parents to the hit or starts SCRFall; while the global time scale is positive it runs the
    per-frame helpers (func_000B1128, 000AEAD0, 000AFCE8, 000B1378, 000B1BC8) and sets the
    character's float-frame flag. Never returns (loops on scrRunM). Continues in func_000B1FA8.
-   Written from the m2c draft; not yet compared closely. */
+   Parked: 105 diffs (same size, 143 words). The 52C flag stores are byte stores, and the
+   re-enter block is an inline helper taking the hit/offset/end/from buffers, which moves frameArg
+   to sp+0x94 like the Original. Remaining: inArea lands in $s6 instead of $s3, the hit address is
+   hoisted into $s7 where the Original addresses sp+0x10 directly, the Original keeps a copy of the
+   offset address (s4 = s7) around the rotate, bnel instead of bnez on inArea, and the gcGlobalVar
+   address taken via addiu before the 0x190 float load. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union { s128 q; float f[4]; } Vec4;
@@ -76,6 +81,20 @@ static inline void addXYZ(Vec4 *out, Vec4 *a, Vec4 *b)
                          : : "r"(out), "r"(a), "r"(b) : "memory");
 }
 
+static inline void reenter(Vec4 *hit, Vec4 *offset, Vec4 *end, Vec4 *from)
+{
+    int t2 = isysGetThisSubThread();
+    char *l2 = GetLayoutClass(t2);
+
+    rotateByQuat(offset, *(Vec4 **)(l2 + 0x13C), &YUnitVectorInv);
+    from->q = **(s128 **)(l2 + 0x134);
+    addXYZ(end, from, offset);
+    if (ClipCollisionDirectCallBack(hit, from, end, gcGlobalVar + 0x230, AI_JudgeNotCharaObjFunc, 0, 0, AI_JudgeColAttrFunc, 0) != 0)
+        ParentLayoutObj(t2, hit);
+    else
+        CharaCtrlSetScriptCtrlStatus(t2, ScriptCtrlDef_SCRFall->ctrl);
+}
+
 static void func_000B1D88(int self)
 {
     Vec4 hit[5];
@@ -95,16 +114,7 @@ static void func_000B1D88(int self)
         SCRSetRootScaleRatio(t, 1.0f);
         if (StageManagerCheckAreaExist(*(int *)(layout + 0x134)) != 0) {
             if (inArea == 0) {
-                int t2 = isysGetThisSubThread();
-                char *l2 = GetLayoutClass(t2);
-
-                rotateByQuat(&offset, *(Vec4 **)(l2 + 0x13C), &YUnitVectorInv);
-                from.q = **(s128 **)(l2 + 0x134);
-                addXYZ(&end, &from, &offset);
-                if (ClipCollisionDirectCallBack(hit, &from, &end, gcGlobalVar + 0x230, AI_JudgeNotCharaObjFunc, 0, 0, AI_JudgeColAttrFunc, 0) != 0)
-                    ParentLayoutObj(t2, hit);
-                else
-                    CharaCtrlSetScriptCtrlStatus(t2, ScriptCtrlDef_SCRFall->ctrl);
+                reenter(hit, &offset, &end, &from);
             }
             inArea = 1;
             if (*(float *)(gcGlobalVar + 0x190) > 0.0f) {
@@ -118,9 +128,9 @@ static void func_000B1D88(int self)
                 t3 = isysGetThisSubThread();
                 cc = GetCharacterClass(t3);
                 if (AI_OptFloatFrameSample(t3, frameArg) != 0)
-                    *(int *)(cc + 0x52C) = 1;
+                    *(char *)(cc + 0x52C) = 1;
                 else
-                    *(int *)(cc + 0x52C) = 0;
+                    *(char *)(cc + 0x52C) = 0;
                 func_000B1BC8(self);
                 inArea = 1;
             }
