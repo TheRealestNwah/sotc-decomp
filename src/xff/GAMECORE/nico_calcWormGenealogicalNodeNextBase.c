@@ -24,7 +24,7 @@ static inline void quatMul(void *dst, void *a, void *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-#ifdef NONMATCHING /* 38 diffs, same size: the m+8/m+4/m+0xC element addresses are written as array indexing (shift first in the addu, like the Original), and a memory barrier between the two else-branch copies keeps the second copy's loads after the first store. Remaining: register numbering of the index arithmetic around the two func_00128D00 calls and in the asm argument setup */
+#ifdef NONMATCHING /* 35 diffs, same size: the sqrt operand pins m+0x10 to $2, the index to $3 and the address to $3, which matches the first asm argument setup; the m+8/m+4/m+0xC element addresses are written as array indexing (shift first in the addu, like the Original), and a memory barrier between the two else-branch copies keeps the second copy's loads after the first store. Remaining: register numbering of the index arithmetic around the two func_00128D00 calls and in the asm argument setup */
 void nico_calcWormGenealogicalNodeNextBase(char *m)
 {
     char sp[0x20] __attribute__((aligned(16)));
@@ -34,6 +34,10 @@ void nico_calcWormGenealogicalNodeNextBase(char *m)
     float len;
 
     if (*(signed char *)(wk + 0x1298) != 0) {
+        register char *b10 __asm__("$2") = *(char **)(m + 0x10);
+        register int ix __asm__("$3") = *(int *)(m + 0x14);
+        register char *src __asm__("$3");
+        src = *(char **)(b10 + 8) + (ix << 6) + 0x10;
         __asm__ __volatile__("lqc2 vf7, 0x0(%1)\n"
                              "vmul.xyz vf7, vf7, vf7\n"
                              "vmulax.w ACC, vf0, vf7x\n"
@@ -43,7 +47,7 @@ void nico_calcWormGenealogicalNodeNextBase(char *m)
                              "vwaitq\n"
                              "cfc2.ni $2, $vi22\n"
                              "mtc1 $2, %0\n"
-                             : "=f"(len) : "r"(*(char **)(*(char **)(m + 0x10) + 8) + (*(int *)(m + 0x14) << 6) + 0x10) : "$2");
+                             : "=f"(len) : "r"(src) : "$2");
         lay = GetLayoutClass(s2);
         if (func_00128510(sp, sp + 0x10, len * *(float *)(lay + 0x98), wk + 0x12A0, wk + D_0017B8C8 * 0x50 + 0x10)) {
             e = wk + D_0017B8C8 * 0x50;
