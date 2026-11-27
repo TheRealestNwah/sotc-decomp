@@ -39,7 +39,7 @@ static inline void normalize3to(float *dst, float *v)
                          : : "r"(dst), "r"(v) : "memory");
 }
 
-#ifdef NONMATCHING /* 22 diffs, same word count: the 1.0f constant is materialized before the first call (orig: after the second) and the dir pointer is set up later */
+#ifdef NONMATCHING /* 21 diffs, same word count. The empty volatile asm before AI_GetPosition3XYZ moves the 1.0f load into that call's argument setup (two words earlier than the Original). Remaining: the prologue float-save order, the a0 move in GetLayoutClass's delay slot instead of the 0x290 load, and the dir pointer and pos[3] store set up after the 0x134 copy. */
 static void func_000A5900(char *p_)
 {
     register char *p __asm__("$18") = p_;
@@ -55,9 +55,9 @@ static void func_000A5900(char *p_)
     obj = GetLayoutClass((int)isysGetThisSubThread());
     t = *(float *)(p + 0x290);
     AI_GetVelocity3XYZ(vel, (float *)(p + 0x6B0), (float *)(p + 0x6C0), (float *)(p + 0x6D0), (float *)(p + 0x6E0), t);
+    __asm__ __volatile__("");
     AI_GetPosition3XYZ(pos, (float *)(p + 0x6B0), (float *)(p + 0x6C0), (float *)(p + 0x6D0), (float *)(p + 0x700), (float *)(p + 0x6E0), t);
     pos[3] = 1.0f;
-    __asm__ __volatile__("");
     **(s128 **)(obj + 0x134) = *(s128 *)pos;
     *(s128 *)dir = *(s128 *)vel;
     do {
