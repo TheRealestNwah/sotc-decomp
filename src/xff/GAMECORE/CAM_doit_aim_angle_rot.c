@@ -1,14 +1,11 @@
-/* Parked: 4 diffs, same size. Remaining: the pitch branch's
- * temporaries ($f25/$f21 in the Original, $f22/$f21 here; reordering the
- * statements, separate locals or reusing VA for lo don't change them).
- * The region-check and func_000E16F0 calls go through casts with w moved
+/* The region-check and func_000E16F0 calls go through casts with w moved
  * after the floats: EABI passes the same registers, and that order sets
- * $a2/$a0 before $f12 like the Original (was 8 diffs). Folding the yaw
- * branch's scaled step back into hi keeps it in $f21 like the Original.
- * The hp pointer to half is a permuter find that fixes the half/0.5f
- * registers. */
+ * $a2/$a0 before $f12 like the Original. Folding the yaw branch's scaled
+ * step back into hi keeps it in $f21 like the Original. The hp pointer to
+ * half is a permuter find that fixes the half/0.5f registers. In the pitch
+ * branch, the scaled velB goes back into VA (velA's pinned $f21) and the
+ * scaled velA into a fresh local h2, which gets $f25 like the Original. */
 
-#ifdef NONMATCHING
 
 extern int CAM_is_inside_of_region_aim_angle_rot(float *, float *, void *, float, float, float);
 extern float GAMEUTIL_doit_interp_ratio_cntrl(void *, float);
@@ -76,15 +73,15 @@ float CAM_doit_aim_angle_rot(AimRot *w, int mode, float cur, float center, float
                 hi = hi * powf(func_000E15F8(d, half), expo);
                 vel = lo + hi;
             } else {
-                float t;
+                float t, h2;
                 half = range * 0.5f * 0.017453292519943295f;
-                hi = VA * 0.017453292519943295f;
+                h2 = VA * 0.017453292519943295f;
                 d = GAMEUTIL_get_difference_pitch_and_pitch(cur, target);
-                lo = VB * 0.017453292519943295f;
+                VA = VB * 0.017453292519943295f;
                 t = 1.0f;
                 if (!(*hp <= d))
                     t = d / half;
-                vel = lo + (hi - lo) * powf(t, expo);
+                vel = VA + (h2 - VA) * powf(t, expo);
             }
             if (w->maxVel >= 0.0f && w->maxVel < vel)
                 vel = w->maxVel;
@@ -105,4 +102,3 @@ float CAM_doit_aim_angle_rot(AimRot *w, int mode, float cur, float center, float
     return out;
 }
 
-#endif
