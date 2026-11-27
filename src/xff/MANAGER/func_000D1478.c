@@ -1,6 +1,6 @@
-/* Parked: 21 diffs, same size (956 words).
+/* Parked: 20 diffs, same size (956 words).
  * Remaining: register allocation in two places.
- * - Int dialog (0xB44-0xB5C): the Original loads the name into a0 and stores
+ * - Int dialog (0xB48-0xB5C): with the name pinned to a0, the Original stores
  *   d->val before d->name, then reloads SC into v1; here v1/v0 are swapped
  *   and d->val is stored after the SC reload.
  * - Float path changed() calls (0xD6C-0xDBC): v0/v1 swapped, and in the
@@ -272,7 +272,7 @@ void func_000D1478(int a0, Win *w)
         } else if (fp || s6) {
             NumDlg *d = iosMallocAlign(rootPtn, 0x30, 0x10);
             float *min;
-            d->name = items[SC->cur].name;
+            {register char *nm asm("$4") = items[SC->cur].name; d->name = nm;}
             min = &items[SC->cur].min;
             d->val = (int)p;
             d->min = min;
