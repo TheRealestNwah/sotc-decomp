@@ -1,4 +1,4 @@
-/* Parked: 28 diffs, same size. Horse control update: target tracking in the horse local frame, turn and speed limits, and the VU0 scale/normalize/apply sequences. Remaining: v0/v1 swaps in the scratch registers of the scale3 qmtc2 sequences and the 0x280/0x284 flag stores, one reordering of the 0x13C load and quaternion copy before GetQuaternionByAxisDirZX, and the final sq/swc1 store order. A 30-minute permuter run went from 440 to 350 without reducing the word diffs. */
+/* Parked: 10 diffs, same size. Horse control update: target tracking in the horse local frame, turn and speed limits, and the VU0 scale/normalize/apply sequences. The first scale3 call pins its float to $2 (scale3r2), and blend4 negates through negate4b, which forces -1.0f into an FPR and then moves it to a $3 pin (mfc1 v1, as in the Original). Remaining: the 0x13C load and quaternion copy before blend4 are scheduled before the argument setup (the Original loads them after daddu a1), the x88/x190 load order for the first scale3, and the final sq/swc1 store order of x50/x60 (locals and a barrier do not help). A 30-minute permuter run on the 28-diff version went from 440 to 350 without reducing the word diffs. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -280,6 +280,16 @@ static inline void matInverse(float *dst, float *src)
                          : : "r"(dst), "r"(src) : "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15", "memory");
 }
 
+static inline void scale3r2(void *d, void *a, float s)
+{
+    register float t __asm__("$2") = s;
+    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
+                         "qmtc2.ni %2, vf6\n"
+                         "vmulx.xyz vf5, vf5, vf6x\n"
+                         "sqc2 vf5, 0x0(%0)\n"
+                         : : "r"(d), "r"(a), "r"(t) : "memory");
+}
+
 static inline void scale3(void *d, void *a, float s)
 {
     __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
@@ -361,6 +371,19 @@ static inline float dot4(Vec *a, Vec *b)
     return r;
 }
 
+static inline void negate4b(Vec *v)
+{
+    float m0 = -1.0f;
+    register float m __asm__("$3");
+    __asm__("" : "+f"(m0));
+    m = m0;
+    __asm__ __volatile__("lqc2 vf5, 0x0(%0)\n"
+                         "qmtc2.ni %1, vf6\n"
+                         "vmulx.xyzw vf5, vf5, vf6x\n"
+                         "sqc2 vf5, 0x0(%0)\n"
+                         : : "r"(v), "r"(m) : "memory");
+}
+
 static inline void negate4(Vec *v)
 {
     float m = -1.0f;
@@ -390,7 +413,7 @@ static inline void blend4(Vec *out, Vec *b, Vec *a, float t)
     dsign = dot4(a, b);
     __asm__("" : "+m"(dsign));
     if (*(int *)&dsign < 0)
-        negate4(b);
+        negate4b(b);
     lerp4(out, a, b, t);
     normalize4(out);
 }
@@ -465,9 +488,9 @@ void updateHorseCtrlWork(void *th, Ctrl *ctrl, Lay *lay)
         GetQuaternionByAxisDirZY(&c, &d, &YUnitVector);
         obj = p->obj;
         t = getRatioFromInterp(1.0f, gcGlobalVar.x190);
-        e.q = obj->quat->q;
+        { register Vec *qp __asm__("$2") = obj->quat; e.q = qp->q; }
         blend4(&c, &e, &c, t);
-        scale3(&a, &a, ctrl->x88 * gcGlobalVar.x190);
+        { float g = gcGlobalVar.x190; scale3r2(&a, &a, ctrl->x88 * g); }
         vadd3(&b, &a, p->obj->pos);
         b.v.w = 1.0f;
         SetObjectGeoAndUnparent(p->x8, &c, &b);
