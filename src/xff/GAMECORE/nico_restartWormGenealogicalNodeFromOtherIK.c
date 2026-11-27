@@ -9,7 +9,7 @@ typedef struct Node {
 
 extern int GetSCRCharaAIWorkPtr(int);
 
-/* Parked: 76 words off. Structure and VU blocks follow the asm; left: register naming (original keeps the worm base copy in $t7, a 0x20 constant in $t8 and the node-flag base in $t3) and loop-counter scheduling. */
+/* Parked: 62 words off. Structure and VU blocks follow the asm; tmp is re-laundered every iteration and the node index is reread after a memory barrier, as the Original reloads it. Left: register naming (original keeps a 0x20 constant in $t8 and the node-flag base in $t3) and loop-counter scheduling. */
 #ifdef NONMATCHING
 void nico_restartWormGenealogicalNodeFromOtherIK(int *arg0)
 {
@@ -18,12 +18,12 @@ void nico_restartWormGenealogicalNodeFromOtherIK(int *arg0)
     s128 *src = (s128 *)(base + 0xA10);
     char *nrm = base + 0xC20;
     Vec4 tmpbuf;
-    float *tmp = tmpbuf;
+    float *tmp;
     int n;
 
-    __asm__("" : "+r"(tmp));
-
     for (n = 31; n >= 0; n--) {
+        tmp = tmpbuf;
+        __asm__("" : "+r"(tmp));
         __asm__ __volatile__("lqc2 vf4, 0x0(%0)\n"
                              "vmul.xyzw vf5, vf4, vf4\n"
                              "vmr32.xyzw vf6, vf4\n"
@@ -39,7 +39,7 @@ void nico_restartWormGenealogicalNodeFromOtherIK(int *arg0)
                              "vaddw.y vf6, vf6, vf0w\n"
                              "sqc2 vf6, 0x0(%1)\n"
                              : : "r"(nrm), "r"(tmp) : "memory");
-        if (*(signed char *)(w + 0x60C) != 0) {
+        { char *w2 = w; __asm__("" : "+r"(w2)); if (*(signed char *)(w2 + 0x60C) != 0) {
             Node *p = (Node *)w;
             char *flag = w + 0x60D;
             int i;
@@ -50,7 +50,7 @@ void nico_restartWormGenealogicalNodeFromOtherIK(int *arg0)
                 *flag++ = 1;
             }
             *(signed char *)(w + 0x60C) = 0;
-        }
+        } }
         {
             int idx = *(int *)(w + 0x604);
             Node *cur = (Node *)(w + idx * 0x30);
@@ -72,6 +72,7 @@ void nico_restartWormGenealogicalNodeFromOtherIK(int *arg0)
             *(signed char *)(w + 0xD + idx + 0x600) = 0;
         }
         *(s128 *)(w + *(int *)(w + 0x604) * 0x30) = *src;
+        __asm__("" ::: "memory");
         src -= 5;
         *(s128 *)(w + *(int *)(w + 0x604) * 0x30 + 0x10) = *(s128 *)tmp;
         nrm -= 0x10;
