@@ -1,4 +1,4 @@
-/* Parked: 5 diffs, same size. Appends the path from the current point to the goal onto the way list: walks the parent chain from func_000FA7E0's node to count its depth (giving up past the group's max), then fills the free way slots back to front from the chain, and appends the goal position itself when the last way is the goal point. The two inlined initWay copies are separate helpers with their own store orders, and the goal append passes -1 through a local with a barrier before g->n++. Remaining: the store order of idx/link and x10/x18 in the first (setWay) copy, and one addu operand order before it. */
+/* Parked: 4 diffs, same size. Appends the path from the current point to the goal onto the way list: walks the parent chain from func_000FA7E0's node to count its depth (giving up past the group's max), then fills the free way slots back to front from the chain, and appends the goal position itself when the last way is the goal point. The two inlined initWay copies are separate helpers with their own store orders, and the goal append passes -1 through a local with a barrier before g->n++. Remaining: the store order of idx/link and x10/x18 in the first (setWay) copy; the slot address is written as (Way *)((char *)g + (k << 5)) + 8 to get the Original's addu operand order. */
 #ifdef NONMATCHING
 typedef unsigned int u128 __attribute__((mode(TI)));
 
@@ -79,7 +79,7 @@ static inline void initWayA(Way *w, u128 *pos, int area, int idx, int link)
 static inline int setWay(PathCtrl *g, int k, u128 *pos, int area, int idx, int link)
 {
     if (k < 20) {
-        initWayA(&g->way[k], pos, area, idx, link);
+        initWayA((Way *)((char *)g + (k << 5)) + 8, pos, area, idx, link);
         return 1;
     }
     return 0;
