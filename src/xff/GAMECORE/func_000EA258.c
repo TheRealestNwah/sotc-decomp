@@ -1,5 +1,3 @@
-/* Parked attempt: 2 differing words (the Original sets $a2 before $f12 for CAM_get_camera_position_by_look_at). The dst stores go through a union so they may alias the following *mode loads. */
-#ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
 extern char *get_camera_lws_animation_param(int);
@@ -53,7 +51,9 @@ static void func_000EA258(char *cam, char **mode, int arg2)
         }
         look[0] = *(s128 *)((char *)mode + 0xFD0);
         func_000EA508(dir, look, cam, mode);
-        CAM_get_camera_position_by_look_at(pos, dir, look, dist);
+        /* Called through a (pos, dir, dist, look) type: EABI passes dist in $f12 either way, and this
+           argument order is what sets $a2 before $f12 like the Original. */
+        ((void (*)(void *, void *, float, void *))CAM_get_camera_position_by_look_at)(pos, dir, dist, look);
         if (I(cam, 0xD8) == 2) {
             CAM_get_safety_cam_and_look_at_posi(pos, look, pos, look, mode, arg2, 1);
         } else {
@@ -69,4 +69,3 @@ static void func_000EA258(char *cam, char **mode, int arg2)
         break;
     }
 }
-#endif
