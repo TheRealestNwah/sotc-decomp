@@ -1,4 +1,4 @@
-/* Parked attempt, 18 diffs, same size (281 words incl. the split tail func_00046F10). Path-follow init (sibling of func_00046F48 / func_00047278): rotates RO_0017D1A0 (-0.02, 0.1, 0, 0) and ZUnitVectorInv by the layout's quaternion, adds the offset to the layout position, forces the direction's y to 1.0 and normalises it, scales w+0x90 and the direction into w+0x30 / w+0x40, gets the travel time from AI_GetTimeFromAccelC3 (projected speeds along the normalised chord), clamps it to 2pi / o+0x358 and dt * o+0x350, and calls AI_GetAccelC/A/B3XYZ. The inline getTime helper reproduces the early arg-register copies; rotate without the memory clobber rematerialises &off; a bare asm barrier before the lc+0x134 load puts the RO_0017D1A0 frame copy (ld 8 before ld 0) first. Taking &off into a local before the barrier and passing it to rotate_nm puts sp+0x20 before that copy as in the Original. Remaining: the Original passes &off to vadd3 in a0, copies pos to w+0x60 from sp rather than through s1, and orders the ZeroVector store / 2*o+0x358 and the first AI call's t1 differently around the argument copies. */
+/* Parked attempt, 11 diffs, same size (281 words incl. the split tail func_00046F10). Path-follow init (sibling of func_00046F48 / func_00047278): rotates RO_0017D1A0 (-0.02, 0.1, 0, 0) and ZUnitVectorInv by the layout's quaternion, adds the offset to the layout position, forces the direction's y to 1.0 and normalises it, scales w+0x90 and the direction into w+0x30 / w+0x40, gets the travel time from AI_GetTimeFromAccelC3 (projected speeds along the normalised chord), clamps it to 2pi / o+0x358 and dt * o+0x350, and calls AI_GetAccelC/A/B3XYZ. The inline getTime helper reproduces the early arg-register copies; rotate without the memory clobber rematerialises &off; a bare asm barrier before the lc+0x134 load puts the RO_0017D1A0 frame copy (ld 8 before ld 0) first. Taking &off into a local before the barrier and passing it to rotate_nm puts sp+0x20 before that copy as in the Original. A call-site VADD3 macro with &off pinned to $4 gives the Original's a0; pinning the w+0x60 copy to $2 and laundering the ZeroVector copy after w40 fix most of the store order. Remaining: the Original loads pos for the w+0x60 copy from sp rather than through s1, the ZeroVector store sits after the getTime argument copies, and the first AI call sets t1 first. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 typedef union {
@@ -200,6 +200,12 @@ static inline float getTime(void *p1, void *p0, void *v0, void *v1, float acc)
     return AI_GetTimeFromAccelC3(a, b, len, acc);
 }
 
+#define VADD3(out, a, b) __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n" \
+                         "lqc2 vf6, 0x0(%2)\n" \
+                         "vadd.xyz vf5, vf5, vf6\n" \
+                         "sqc2 vf5, 0x0(%0)\n" \
+                         : : "r"(out), "r"(a), "r"(b) : "memory")
+
 static void func_00046AD0(char *o, char *w)
 {
     Vec4 pos;
@@ -216,17 +222,18 @@ static void func_00046AD0(char *o, char *w)
     __asm__ __volatile__("");
     pp->q = **(s128 **)(lc + 0x134);
     rotate_nm(po, *(void **)(lc + 0x13C));
-    vadd3(pp, pp, &off);
+    { register void *pa __asm__("$4") = &off; VADD3(pp, pp, pa); }
     dir.q = ZUnitVectorInv.q;
     rotate(pd, *(void **)(lc + 0x13C));
     dir.f[1] = 1.0f;
     normalize(pd);
     vscale4(w + 0x30, w + 0x90, F(o, 0x354) / F(o, 0x350));
     vscale4(w + 0x40, &dir, F(o, 0x358));
-    *(s128 *)(w + 0x60) = pp->q;
+    { register s128 a __asm__("$2") = pp->q;
+      *(s128 *)(w + 0x60) = a; }
     *(s128 *)(w + 0x50) = *(s128 *)(w + 0x80);
-    *(s128 *)(w + 0x70) = ZeroVector.q;
     w40 = w + 0x40;
+    { s128 zz = ZeroVector.q; __asm__("" : "+r"(zz)); *(s128 *)(w + 0x70) = zz; }
     t = getTime(w + 0x60, w + 0x80, w + 0x30, w40, F(o, 0x358) + F(o, 0x358));
     F(w, 0xA0) = t;
     F(w, 0xA4) = gcGlobalVar.dt * F(o, 0x350);
