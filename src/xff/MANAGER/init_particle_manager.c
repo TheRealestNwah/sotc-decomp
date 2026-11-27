@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* 17 diffs: the Original computes &D_001370CC into $s0 after the malloc call (hoisted before it here), swaps the a1/a2 order of the list and offset setup in the append loop, and schedules the three timer resets differently. Permuter (2 workers, 30 min): best output was 25 diffs. */
+#ifdef NONMATCHING /* 6 diffs: pinning the pool pointer to $s0 gives the Original's malloc-call setup and append loop. Left: the scheduler interleaves the three timer resets differently (other store orders score 9 or more). */
 typedef union GWork {
     struct {
         char pad0[0xA8];
@@ -70,7 +70,7 @@ static inline void resetTimer(ParticleTimer *t)
 void init_particle_manager(void)
 {
     int i;
-    char **pool = &D_001370CC;
+    register char **pool asm("$16") = &D_001370CC;
 
     *pool = malloc_from_root_partition(0x22600, "\xA5\xD1\xA1\xBC\xA5\xC6\xA5\xA3\xA5\xAF\xA5\xEB\xA5\xEF\xA1\xBC\xA5\xAF");
     B_001499B0.num = 0;
