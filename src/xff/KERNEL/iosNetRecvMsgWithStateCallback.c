@@ -17,7 +17,7 @@ extern int SignalSema(int);
 extern int sceSifCallRpc(void *, int, int, void *, int, void *, int, void *, void *);
 extern void *memcpy(void *, const void *, int);
 
-/* Parked: 18 words differ (order of the hoisted RPC buffer and slot addresses, and of the RPC client address load) */
+/* Parked: 5 words differ (the RPC client address addiu is scheduled first instead of right before the call) */
 #ifdef NONMATCHING
 int iosNetRecvMsgWithStateCallback(int sock, char *buf, int len, int timeout, void *ctx, void (*cb)(void *, int, int))
 {
@@ -43,12 +43,12 @@ int iosNetRecvMsgWithStateCallback(int sock, char *buf, int len, int timeout, vo
             }
             rs = size + 4;
             B_0004F880 = sock;
-            *(int *)B_0004F884 = size;
+            (&B_0004F880)[1] = size;
             WaitSema(B_000508A8);
             sceSifCallRpc(B_00050880, 2, 0, &B_0004F880, 8, &B_0004F880, rs, 0, 0);
             SignalSema(B_000508A8);
             n = B_0004F880;
-            memcpy(buf, B_0004F884, size);
+            memcpy(buf, &B_0004F880 + 1, size);
         }
         if (n < 0) {
             return n;
