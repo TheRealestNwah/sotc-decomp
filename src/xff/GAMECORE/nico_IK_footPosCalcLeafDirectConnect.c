@@ -22,9 +22,9 @@ extern s128 ZeroVector;
 extern char gcGlobalVar[];
 extern void GetMotionNodeQuaternionPosToolCoord(void *, void *, int, int);
 extern char *GetCharacterClass(int);
-extern void func_00038238(void *, int, void *, void *, void *);
+extern void func_00038238(void *, int, void *, void *, void *, int);
 
-#ifdef NONMATCHING /* 42 diffs, same shape as nico_IK_footPosCalc (tail call passes 1): the Original's dead t0 = 1 at entry and dead andi t1, t1, 1 before the dld lookup are not reproduced */
+#ifdef NONMATCHING /* 18 diffs, same size and same fixes as nico_IK_footPosCalc (tail call passes 1); the remaining differences are the same scheduling ones. */
 void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
 {
     float qv[4] __attribute__((aligned(16)));
@@ -39,19 +39,23 @@ void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
     char *mod;
     char *data;
     float *tp;
-    int noHit;
+    register int noHit __asm__("$9");
+    int fl;
+    int z;
     register int si __asm__("$8") = 1;
+    __asm__ __volatile__("" : : "r"(si));
 
     GetMotionNodeQuaternionPosToolCoord(qv, tmp, obj, f->node);
     node = f->node;
+    z = 0;
     tp = tmp;
     chr = GetCharacterClass(obj);
-    ik = 0;
+    ik = (PinAttackIK *)z;
     if (DldSysUndefSymbol != CharIkTypeDef_PINATTACKIK &&
         *(int *)(chr + 0x1100) == *CharIkTypeDef_PINATTACKIK)
         ik = *(PinAttackIK **)(chr + 0x1110) + (node & 0xFFFEFFFF);
     noHit = 1;
-    if (ik != 0) {
+    if (ik != (PinAttackIK *)z) {
         float *pt = &ik->time;
         float *pw = &ik->weight;
         float t = *pt;
@@ -69,18 +73,19 @@ void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
                                      "vmaddw.xyz vf5, vf6, vf8w\n"
                                      "sqc2 vf5, 0x0(%0)\n"
                                      : : "r"(&ik->pos), "r"(tp), "r"(si) : "memory");
-                noHit = 0;
                 ik->pos.f[3] = 1.0f;
+                noHit = 0;
                 *(s128 *)tmp = ik->pos.q;
             }
         }
         if (noHit) {
             ik->pos.q = *(s128 *)tmp;
-            ik->weight = -1.0f;
             ik->dir.q = ZeroVector;
             ik->time = -1.0f;
+            ik->weight = -1.0f;
         }
     }
+    fl = noHit & 1;
     ref = f->ref;
     enc = *ref;
     off = enc & 0x3FFFF;
@@ -88,7 +93,7 @@ void nico_IK_footPosCalcLeafDirectConnect(FootIK *f)
     if (mod && mod != DldSysUndefSymbol)
         data = *(char **)(mod + 0x10) + ((enc >> 18) & 0xFFF) * *(int *)(*(char **)(mod + 8) + 0xC);
     else
-        data = 0;
-    func_00038238(f, 1, data, qv, tmp);
+        data = (char *)z;
+    func_00038238(f, 1, data, qv, tmp, fl);
 }
 #endif
