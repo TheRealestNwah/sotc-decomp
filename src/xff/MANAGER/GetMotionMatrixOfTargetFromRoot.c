@@ -1,4 +1,4 @@
-#ifdef NONMATCHING /* parked draft: 12 diffs (VU0 helpers as in GetMotionMatrixOfChildsFromTarget.c). Pinning scale to $s1 and idx to $s2 gives the Original's saved-register order (&q in $s0); left: the idx & 0x10000 test lands in $v1 and the final qout[idx] address reuses $s2 */
+#ifdef NONMATCHING /* parked draft: 5 diffs (VU0 helpers as in GetMotionMatrixOfChildsFromTarget.c). Pinning scale to $s1 and idx to $s2 gives the Original's saved-register order (&q in $s0); empty asm barriers after iosCopyMatrix and the qout store keep ix live so qout[ix] uses a temporary. Left: the idx & 0x10000 test lands in $v1, and the loop copies c = ix before loading mot->nodes and tests c instead of ix */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -199,6 +199,8 @@ void GetMotionMatrixOfTargetFromRoot(Mtx *mtx, Vec *qout, Motion *mot, Vec *rot,
     mtxMul(&acc, (Mtx *)(g - 3), &acc);
     quatNormalize(&q);
     iosCopyMatrix(&mtx[ix], &acc);
+    __asm__ __volatile__("" : "+r"(ix));
     *(s128 *)&qout[ix] = *(s128 *)&q;
+    __asm__ __volatile__("" : : "r"(ix));
 }
 #endif
