@@ -1,6 +1,5 @@
-/* Parked: 25 diffs, 101 words. Horse reposition debug: VU0 vadd.xyz of the root position and the target offset (one asm run), then per group object reset + position copy + geometry update. Tricks: a goto loop (no loop notes, so 100.0f stays in the body; reorg still gives the bnel), 100.0f assigned to a local after GetCharacterClass so it isn't kept across the call, IdentityQuaternion/ZeroVector addresses hoisted into locals like the Original's s5/s4. Remaining: a load-delay nop at the loop head, the 0x134 pointer loaded into v1 and copied to a1, and argument order for charrootdyn_getRegularColFinderPosition and GetClothDynamics. */
+/* Parked: 13 diffs, 101 words. Horse reposition debug: VU0 vadd.xyz of the root position and the target offset (one asm run), then per group object reset + position copy + geometry update. Tricks: a real do-while loop (its loop note gives the Original's alignment nop before the loop head, and the else label then lands 8-aligned without padding), +0x40 copied from the just-stored root position so the pos reload matches, IdentityQuaternion/ZeroVector addresses hoisted into locals like the Original's s5/s4. Remaining: the 0x134 pointer loaded into v1 and copied to a1 (the Original loads it straight into a1), and argument setup order for charrootdyn_getRegularColFinderPosition and GetClothDynamics (the Original sets them up last argument first). */
 #ifdef NONMATCHING
-/* Parked: 53 diffs, 103 words vs 101 (96 for the straight draft). Horse reposition debug: VU0 vadd.xyz of the root position and the target offset (one asm run), then per group object reset + position copy + geometry update. Tricks: goto loop and an empty-asm launder on 100.0f stop constant hoisting; IdentityQuaternion/ZeroVector addresses are hoisted into locals like the Original's s5/s4. Remaining: launder adds mov.s (+2 words), and ordering of the hoisted address setup against the first lw. */
 typedef int s128 __attribute__((mode(TI)));
 
 extern char gcGlobalVar[];
@@ -47,33 +46,32 @@ void DebugSetHorsePositionWithTargetOfs(int obj, s128 *ofs)
     if (node != 0) {
         iq = IdentityQuaternion;
         zv = &ZeroVector;
-    top:
-        cur = *node;
-        ForceUnparentLayoutObj(cur);
-        CallLayoutObjDebugResetFunc(cur);
-        ResetCharacterObj(cur);
-        lay = GetLayoutClass(cur);
-        if (lay != 0) {
-            **(s128 **)(lay + 0x134) = pos;
-            *(s128 *)(lay + 0x40) = pos;
-            *(s128 *)(lay + 0x30) = *zv;
-            chr = GetCharacterClass(cur, *(void **)(lay + 0x134));
-            k = 100.0f;
-            if (chr != 0) {
-                UpdateCharacterClassGeometry(chr, k);
-                charrootdyn_getRegularColFinderPosition(chr + 0x4C0, chr, *(int *)(lay + 0x13C), *(int *)(lay + 0x134));
-                UpdateCharacterClassPastGeometry(chr);
-                SetCharacterObjDemoCutFinishFlag(cur, 1);
-            } else {
-                UpdateLayoutClassSimpleGeometry(lay, k);
-                GetClothDynamics(cur, 0.01f, 1, 0, 100.0f);
-                UpdateLayoutClassPastSimpleGeometry(lay);
+        do {
+            cur = *node;
+            ForceUnparentLayoutObj(cur);
+            CallLayoutObjDebugResetFunc(cur);
+            ResetCharacterObj(cur);
+            lay = GetLayoutClass(cur);
+            if (lay != 0) {
+                **(s128 **)(lay + 0x134) = pos;
+                *(s128 *)(lay + 0x40) = **(s128 **)(lay + 0x134);
+                *(s128 *)(lay + 0x30) = *zv;
+                chr = GetCharacterClass(cur, *(void **)(lay + 0x134));
+                k = 100.0f;
+                if (chr != 0) {
+                    UpdateCharacterClassGeometry(chr, k);
+                    charrootdyn_getRegularColFinderPosition(chr + 0x4C0, chr, *(int *)(lay + 0x13C), *(int *)(lay + 0x134));
+                    UpdateCharacterClassPastGeometry(chr);
+                    SetCharacterObjDemoCutFinishFlag(cur, 1);
+                } else {
+                    UpdateLayoutClassSimpleGeometry(lay, k);
+                    GetClothDynamics(cur, 0.01f, 1, 0, 100.0f);
+                    UpdateLayoutClassPastSimpleGeometry(lay);
+                }
+                SetLayoutClassRootQuaternion(lay, iq);
             }
-            SetLayoutClassRootQuaternion(lay, iq);
-        }
-        node = isysGroupForNext(node, 0);
-        if (node != 0)
-            goto top;
+            node = isysGroupForNext(node, 0);
+        } while (node != 0);
     }
     if (cur != 0)
         isysGroupForExit(cur, 0);
