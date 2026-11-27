@@ -48,8 +48,6 @@ static inline void vecAdd(void *out, void *a, void *b)
                          : : "r"(a), "r"(b), "r"(out) : "memory");
 }
 
-#ifdef NONMATCHING
-/* Parked: 77 words differ (callee-saved float register order for a/b/c, and block layout of the attribute switch). */
 void SCRFuncMinoCSetTemporaryTarget(void *obj, int u1, int u2, long long ex, long long ey, float a, float b, float c)
 {
     char buf[0x50];
@@ -85,19 +83,23 @@ void SCRFuncMinoCSetTemporaryTarget(void *obj, int u1, int u2, long long ex, lon
     vecNormalize(&L.nrm);
     {
         long long attr = GetGeometryPointerCharColAttr(buf);
-        if ((attr & 0x3F800000000000LL) == 0x2000000000000LL)
-            scale = c;
-        else if ((attr & 0x3F800000000000LL) == 0x1800000000000LL)
-            scale = b;
-        else
-            goto weak;
-        vecScale(&L.vA0, &L.nrm, scale);
-        if (*(int *)(work + 0x41FC) != 2) {
-            *(int *)(work + 0x41FC) = 2;
-            if (*(int *)(work + 0x41F8) == 0)
-                *(int *)(work + 0x41F8) = 1;
+        if ((attr & 0x3F800000000000LL) == 0x2000000000000LL) {
+            vecScale(&L.vA0, &L.nrm, c);
+            if (*(int *)(work + 0x41FC) != 2) {
+                *(int *)(work + 0x41FC) = 2;
+                if (*(int *)(work + 0x41F8) == 0)
+                    *(int *)(work + 0x41F8) = 1;
+            }
+            goto done;
+        } else if ((attr & 0x3F800000000000LL) == 0x1800000000000LL) {
+            vecScale(&L.vA0, &L.nrm, b);
+            if (*(int *)(work + 0x41FC) != 2) {
+                *(int *)(work + 0x41FC) = 2;
+                if (*(int *)(work + 0x41F8) == 0)
+                    *(int *)(work + 0x41F8) = 1;
+            }
+            goto done;
         }
-        goto done;
     weak:
         vecScale(&L.vA0, &L.nrm, a);
         if (*(int *)(work + 0x41FC) != 1) {
@@ -117,6 +119,3 @@ void SCRFuncMinoCSetTemporaryTarget(void *obj, int u1, int u2, long long ex, lon
 fail:
     *(int *)(work + 0x41F0) = 0;
 }
-#else
-void SCRFuncMinoCSetTemporaryTarget(void *obj, int u1, int u2, long long ex, long long ey, float a, float b, float c);
-#endif
