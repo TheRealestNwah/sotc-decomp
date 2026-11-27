@@ -1,11 +1,12 @@
-/* Parked: 8 diffs, same size. Remaining: argument scheduling (mov.s
- * $f12/$f14 from $f23 issues before the daddu a2/a0 copies of w at the
- * region-check and func_000E16F0 calls) and the pitch branch's
+/* Parked: 4 diffs, same size. Remaining: the pitch branch's
  * temporaries ($f25/$f21 in the Original, $f22/$f21 here; reordering the
- * statements or using separate locals doesn't change them). Folding the
- * yaw branch's scaled step back into hi keeps it in $f21 like the Original.
+ * statements, separate locals or reusing VA for lo don't change them).
+ * The region-check and func_000E16F0 calls go through casts with w moved
+ * after the floats: EABI passes the same registers, and that order sets
+ * $a2/$a0 before $f12 like the Original (was 8 diffs). Folding the yaw
+ * branch's scaled step back into hi keeps it in $f21 like the Original.
  * The hp pointer to half is a permuter find that fixes the half/0.5f
- * registers. A 9-minute permuter run from here found nothing better. */
+ * registers. */
 
 #ifdef NONMATCHING
 
@@ -57,7 +58,7 @@ float CAM_doit_aim_angle_rot(AimRot *w, int mode, float cur, float center, float
     } else {
         w->done = 0;
         hp = &half;
-        ret = CAM_is_inside_of_region_aim_angle_rot(&rs, &re, w, cur, center, W);
+        ret = ((int (*)(float *, float *, float, float, float, void *))CAM_is_inside_of_region_aim_angle_rot)(&rs, &re, cur, center, W, w);
         if (ret == 1) {
             w->done = ret;
             w->active = 0;
@@ -65,7 +66,7 @@ float CAM_doit_aim_angle_rot(AimRot *w, int mode, float cur, float center, float
             r = GAMEUTIL_get_interp_ratio_interp_ratio_cntrl(w->ratio);
             VA = r * VA;
             VB = r * VB;
-            target = func_000E16F0(w, rs, re, cur);
+            target = ((float (*)(float, float, float, void *))func_000E16F0)(rs, re, cur, w);
             if (w->pitch == 0) {
                 half = range * 0.5f * 0.017453292519943295f;
                 lo = VB * 0.017453292519943295f;
