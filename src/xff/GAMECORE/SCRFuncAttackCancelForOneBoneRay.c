@@ -1,3 +1,4 @@
+#include "vu0.h"
 typedef int s128 __attribute__((mode(TI)));
 typedef struct { long long x, y; } Pair;
 typedef float Vec4[4] __attribute__((aligned(16)));
@@ -19,7 +20,7 @@ static inline char *dldResolve(unsigned int *h)
     return (t != 0 && t != DldSysUndefSymbol) ? (char *)t[4] + ((v >> 18) & 0xFFF) * ((int *)t[2])[3] : 0;
 }
 
-/* Parked: 59 words differ (register assignment and scheduling after the first VU block). */
+/* Parked: 19 words differ (was 59). Splitting each scale+add into vu0_scale3 and vu0_add3, and laundering the v80 address for the first add, matches the Original, which rematerializes the address between the two. Remaining: the stack-arg load of key is scheduled late in the prologue, the v80 address sits in a0 instead of v0 in the matrix block, and the neg.s/lui 1.0f order before the second scale. */
 #ifdef NONMATCHING
 void SCRFuncAttackCancelForOneBoneRay(void *obj, int u1, int u2, long long mask, long long ex, int u3, unsigned int *bone, int u4, unsigned int *key, float limit, float x, float y, float z)
 {
@@ -73,25 +74,11 @@ void SCRFuncAttackCancelForOneBoneRay(void *obj, int u1, int u2, long long mask,
                          "vmaddw.xyzw vf10, vf18, vf8w\n"
                          "sqc2 vf10, 0x0(%1)\n"
                          : : "r"(pp), "r"(L.v80), "r"(pq) : "memory");
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
-                         "qmtc2.ni %2, vf6\n"
-                         "vmulx.xyz vf5, vf5, vf6x\n"
-                         "sqc2 vf5, 0x0(%0)\n"
-                         "lqc2 vf5, 0x0(%0)\n"
-                         "lqc2 vf6, 0x0(%3)\n"
-                         "vadd.xyz vf5, vf5, vf6\n"
-                         "sqc2 vf5, 0x0(%0)\n"
-                         : : "r"(L.a0), "r"(YUnitVector), "r"(limit), "r"(L.v80) : "memory");
+    vu0_scale3(L.a0, YUnitVector, limit);
+    { float *pv = L.v80; __asm__("" : "+r"(pv)); vu0_add3(L.a0, L.a0, pv); }
     L.a0[3] = 1.0f;
-    __asm__ __volatile__("lqc2 vf5, 0x0(%1)\n"
-                         "qmtc2.ni %2, vf6\n"
-                         "vmulx.xyz vf5, vf5, vf6x\n"
-                         "sqc2 vf5, 0x0(%0)\n"
-                         "lqc2 vf5, 0x0(%0)\n"
-                         "lqc2 vf6, 0x0(%3)\n"
-                         "vadd.xyz vf5, vf5, vf6\n"
-                         "sqc2 vf5, 0x0(%0)\n"
-                         : : "r"(L.b0), "r"(YUnitVector), "r"(-limit), "r"(L.v80) : "memory");
+    vu0_scale3(L.b0, YUnitVector, -limit);
+    vu0_add3(L.b0, L.b0, L.v80);
     L.b0[3] = 1.0f;
     if (ClipCollisionDirectCallBack(L.buf, L.a0, L.b0, gcGlobalVar + 0x238, 0, 0, 0, func_00119338, &L.held) != 0) {
         res = dldResolve(k);
