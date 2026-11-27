@@ -25,14 +25,16 @@ static inline void qmul(float *dst, float *a, float *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-/* Parked: 20 words off (was ~150); only scheduling of the node/cur address setup and of the lui/addiu pairs for the axis vectors differ. The stack-pointer launder recipe applies. */
+/* Parked: 9 words off (was ~150). Laundering cur and the node array base, and laundering p1 after each SetQuaternionByAxisRotateVWithNoRegularize call instead of before, fixed the prologue order and the axis argument setup. Remaining: v0/v1 swapped for the node address (with the bltz delay-slot fill that follows), and in the 2nd/3rd rotation the Original schedules the angle's neg.s/mul.s before the axis lui. */
 #ifdef NONMATCHING
 void _setNodeHPBIllegal(int idx, char *obj, char *base, float *q, float h, float p, float b)
 {
     struct { Vec4 a; Vec4 neg; Vec4 c; Vec4 r1; Vec4 r2; Vec4 r3; } L;
     float *cur = (float *)(base + idx * 16);
     float *x = (float *)obj;
-    char *node = *(char **)(obj + 8) + idx * 64;
+    char *node;
+    __asm__("" : "+r"(cur));
+    { char *nb = *(char **)(obj + 8); __asm__("" : "+r"(nb)); node = nb + idx * 64; }
 
     if (*(int *)(node + 0x38) >= 0) {
         x = (float *)(node + 0x20);
@@ -50,8 +52,8 @@ void _setNodeHPBIllegal(int idx, char *obj, char *base, float *q, float h, float
         short a1 = (short)(h * 182.04444f);
         float *p1, *p2;
         p1 = L.r1;
-        __asm__("" : "+r"(p1));
         SetQuaternionByAxisRotateVWithNoRegularize(p1, -a1, YUnitVector);
+        __asm__("" : "+r"(p1));
         p2 = L.r1;
         __asm__("" : "+r"(p2));
         qmul(cur, cur, p2);
@@ -60,8 +62,8 @@ void _setNodeHPBIllegal(int idx, char *obj, char *base, float *q, float h, float
         short a2 = (short)(-p * 182.04444f);
         float *p1, *p2;
         p1 = L.r2;
-        __asm__("" : "+r"(p1));
         SetQuaternionByAxisRotateVWithNoRegularize(p1, -a2, XUnitVector);
+        __asm__("" : "+r"(p1));
         p2 = L.r2;
         __asm__("" : "+r"(p2));
         qmul(cur, cur, p2);
@@ -70,8 +72,8 @@ void _setNodeHPBIllegal(int idx, char *obj, char *base, float *q, float h, float
         short a3 = (short)(b * 182.04444f);
         float *p1, *p2;
         p1 = L.r3;
-        __asm__("" : "+r"(p1));
         SetQuaternionByAxisRotateVWithNoRegularize(p1, -a3, ZUnitVector);
+        __asm__("" : "+r"(p1));
         p2 = L.r3;
         __asm__("" : "+r"(p2));
         qmul(cur, cur, p2);
