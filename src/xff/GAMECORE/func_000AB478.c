@@ -81,7 +81,10 @@ static inline float lerpf(float x, float x0, float x1, float y0, float y1)
 }
 
 
-/* Parked: 7 words differ with -fno-gcse (register allocation); permuter made no progress in 630 iterations */
+/* Parked: 30 words off. The two lerp branches select their operands and share one tail, as in
+   the Original, and a memory barrier keeps the clamp rereading x40/x48 instead of reusing the
+   branch loads. Remaining: float register numbering ($f6/$f7, $f4/$f5) and the operand order in
+   the branch bodies, plus the 1.0f constant scheduled after the v.f[2] load near the end. */
 #ifdef NONMATCHING
 static void func_000AB478(char *w)
 {
@@ -100,7 +103,13 @@ static void func_000AB478(char *w)
         if (d > 5.0f) d = 5.0f;
         mid = (p->x1C - p->x20) * (p->x2C - p->x28) / (p->x24 - p->x20) + p->x28;
         cur = *(float *)(w + 0x2CC);
-        t = cur <= mid ? lerpf(cur, p->x28, mid, p->x40, p->x44) : lerpf(cur, mid, p->x2C, p->x44, p->x48);
+        if (cur <= mid) {
+            num = p->x40; lo = cur - p->x28; den = p->x44; hi = mid - p->x28;
+        } else {
+            num = p->x44; lo = cur - mid; den = p->x48; hi = p->x2C - mid;
+        }
+        t = lo * (den - num) / hi + num;
+        __asm__ __volatile__("" ::: "memory");
         if (t < p->x40) t = p->x40;
         if (p->x48 < t) t = p->x48;
         *(float *)(w + 0x2D8) = t;
