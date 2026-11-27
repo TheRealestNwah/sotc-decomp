@@ -37,32 +37,29 @@ static inline void normalize4(void *v)
                          : : "r"(v) : "memory");
 }
 
-#ifdef NONMATCHING /* 50 diffs: out/s1 swapped in $s0/$s1 and the $a0/$a1 node-pointer load order */
+#ifdef NONMATCHING /* 14 diffs: $a0/$a1/$v1 choice for the node-pointer loads */
 int func_00125C38(float *out, float *out2, int id, char *w)
 {
     float tmp[4] __attribute__((aligned(16)));
     int chr = *(int *)w;
     int s1 = func_00127A48(id, w);
+    float *o = out;
 
     if (s1 == -1) {
         s1 = id - 1;
-        if (func_00127A48(s1, w) < 0)
+        if (func_00127A48(s1, w) < 0 || s1 < 0)
             return 0;
-        if (s1 < 0)
-            return 0;
-        *(s128 *)out = *(s128 *)(GetCharacterClass(chr) + 0x480);
+        *(s128 *)o = *(s128 *)(GetCharacterClass(chr) + 0x480);
         *(s128 *)out2 = **(s128 **)(GetLayoutClass(chr) + 0x134);
         return 1;
     }
     if (*(int *)(GetCharacterClass(chr) + 0x378) == s1) {
-        quatMul(out, GetCharacterClass(chr) + 0x480, (s1 << 6) + *(char **)(*(char **)(w + 0x10) + 8) + 0x20);
-        normalize4(out);
+        quatMul(o, GetCharacterClass(chr) + 0x480, (s1 << 6) + *(char **)(*(char **)(w + 0x10) + 8) + 0x20);
+        normalize4(o);
         func_00127AC8(out2, *(void **)(GetLayoutClass(chr) + 0x134), out, s1, w);
         return 1;
     }
-    if (s1 < 0)
-        return 0;
-    if (s1 > 0 && (s1 & 0x10000))
+    if (s1 < 0 || (s1 > 0 && (s1 & 0x10000)))
         return 0;
     {
         char *a = *(char **)(w + 4) + (s1 << 4);
@@ -73,10 +70,11 @@ int func_00125C38(float *out, float *out2, int id, char *w)
                              "sqc2 vf11, 0x0(%0)\n"
                              : : "r"(tmp), "r"(a) : "memory");
         b = *(char **)(w + 0xC) + (s1 << 4);
-        quatMul(out, b, tmp);
-        quatMul(out, out, (s1 << 6) + *(char **)(*(char **)(w + 0x10) + 8) + 0x20);
-        normalize4(out);
-        *(s128 *)out2 = *(s128 *)((s1 << 6) + *(char **)(w + 8) + 0x30);
+        quatMul(o, b, tmp);
+        quatMul(o, o, (s1 << 6) + *(char **)(*(char **)(w + 0x10) + 8) + 0x20);
+        normalize4(o);
+        b = *(char **)(w + 8);
+        *(s128 *)out2 = *(s128 *)((s1 << 6) + b + 0x30);
     }
     return 1;
 }
