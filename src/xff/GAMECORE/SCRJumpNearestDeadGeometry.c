@@ -14,10 +14,9 @@ extern int ClipCollisionDirect(void *, void *, void *, int);
 extern void ParentLayoutObj(void *, void *);
 extern void SetCharacterObjDemoCutFinishFlag(void *, int);
 
-/* Parked: 45 diffs, same size. Remaining: the original rematerializes the matrix address (sp+0x90) for xformPos, where ours reuses the mkMat register (a0, then copied to v1 by the "+r"), and schedules the vd0 copy before the swc1. */
-#ifdef NONMATCHING
 static inline void mkMat(float *mat, float *q)
 {
+    register float *m __asm__("$4") = mat;
     __asm__ __volatile__("vaddw.xyz vf12, vf0, vf0w\n"
                              "lqc2 vf11, 0x0(%1)\n"
                              "vmr32.w vf14, vf0\n"
@@ -45,11 +44,13 @@ static inline void mkMat(float *mat, float *q)
                              "sqc2 vf14, 0x0(%0)\n"
                              "sqc2 vf15, 0x10(%0)\n"
                              "sqc2 vf16, 0x20(%0)\n"
-                             : "+r"(mat) : "r"(q) : "memory");
+                             : "+r"(m) : "r"(q) : "memory");
 }
 
 static inline void xformPos(float *mat, float *v)
 {
+    register float *w __asm__("$2") = v;
+    register float *m __asm__("$3") = mat;
     __asm__ __volatile__("lqc2 vf8, 0x0(%1)\n"
                              "lqc2 vf14, 0x0(%0)\n"
                              "lqc2 vf15, 0x10(%0)\n"
@@ -60,7 +61,7 @@ static inline void xformPos(float *mat, float *v)
                              "vmaddaz.xyzw ACC, vf16, vf8z\n"
                              "vmaddw.xyzw vf10, vf17, vf8w\n"
                              "sqc2 vf10, 0x0(%1)\n"
-                             : : "r"(mat), "r"(v) : "memory");
+                             : : "r"(m), "r"(w) : "memory");
 }
 
 static inline void vecAdd(float *out, float *a, float *b)
@@ -87,7 +88,7 @@ static inline void vecSubSub(float *out, float *a, float *b)
 
 int SCRJumpNearestDeadGeometry(void *obj)
 {
-    struct { Vec4 q; Vec4 pos; char buf[0x50]; Vec4 a1; Vec4 a2; Vec4 mat[4]; Vec4 vd0; Pair ve0; } L;
+    struct { Vec4 q; Vec4 pos; char buf[0x50]; Vec4 a1; Vec4 a2; Vec4 mat[4]; Vec4 vd0; union { Pair p; float f[4]; } ve0; } L;
     char *chr;
     float *pos;
 
@@ -99,11 +100,14 @@ int SCRJumpNearestDeadGeometry(void *obj)
         ResetCharacterClassPositionMemoryInfo(chr);
         SetObjectGeo(obj, L.q, pos);
         memset(&L.ve0, 0, 0x10);
-        ((float *)&L.ve0)[1] = *(float *)(chr + 0xE34);
-        ((Pair *)L.vd0)->y = L.ve0.y;
-        ((Pair *)L.vd0)->x = L.ve0.x;
+        L.ve0.f[1] = *(float *)(chr + 0xE34);
+        ((Pair *)L.vd0)->y = L.ve0.p.y;
+        ((Pair *)L.vd0)->x = L.ve0.p.x;
         mkMat((float *)L.mat, L.q);
-        __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(L.mat[3]) : "memory");
+        {
+            register float *m3 __asm__("$3") = L.mat[3];
+            __asm__ __volatile__("sqc2 vf0, 0x0(%0)\n" : : "r"(m3) : "memory");
+        }
         xformPos((float *)L.mat, L.vd0);
         vecAdd(L.a1, pos, L.vd0);
         vecSubSub(L.a2, pos, L.vd0);
@@ -116,6 +120,3 @@ int SCRJumpNearestDeadGeometry(void *obj)
     }
     return 0;
 }
-#else
-extern int SCRJumpNearestDeadGeometry(void *obj);
-#endif
