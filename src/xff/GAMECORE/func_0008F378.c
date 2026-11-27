@@ -1,44 +1,47 @@
+/* Parked: 31 differing words, same size (was 105). Stick-input shaping step, the same body as func_0008F748 with other constants (+-1 / +-0.9 clamps, dead zone = arg * 2.5 degrees in radians): normalises each axis against the dead zone, raises the y ratio to 1.5 and interpolates x toward the dead-zone edge when its ratio is below, then calls func_0008E918. Remaining (as in func_0008F748): the prologue schedule and the final call's $f13 move order. */
 #ifdef NONMATCHING
-/* 105 diffs, same length (110 words). Draft from the asm; first of the func_0008F378 / 8F748 / 8F930 (+ 8FB18) stick-input shapers (likely the same code with other constants). Takes an input pair (x, y) and two scale args (a, b): clamps the max/min of x to +-1.0 and of y to +-0.9, gets a dist ratio for y (positive: ratio(y, 0.0436 * b, hi); negative: 1 - ratio(y, lo, -0.0436 * b)), raises it to 1.5 with powf, builds the matching ratio for x, and when it is below the y one interpolates x with GAMEUTIL_get_interp_value before calling func_0008E918(obj, x, y, a, b). Difference is register pressure: the Original saves $f20..$f28 (frame 0x70) because a and b stay live in $f28/$f27 and the clamp constants sit in $f24..$f26; ours saves $f20..$f27 (frame 0x60) and loads some constants later. Permuter (12 workers, 12 min): 4855 -> 4550. */
 extern float GAMEUTIL_get_dist_ratio(float, float, float);
 extern float GAMEUTIL_get_interp_value(float, float, float);
+extern void func_0008E918(int, float, float, float, float);
 extern float powf(float, float);
-extern void func_0008E918(void *, float, float, float, float);
 
-void func_0008F378(void *obj, float x, float y, float a, float b)
+void func_0008F378(int arg0, float a, float b, float c, float d)
 {
-    float st[2];
-    float hx = a * 0.04363323003053665f;
-    float hy = b * 0.04363323003053665f;
-    float maxX = 1.0f;
-    float minX = -1.0f;
-    float hi = 0.9f;
-    float lo = -0.9f;
-    float r;
-    float p;
-    float q;
+    float v[2];
+    register float *p __asm__("$16") = v;
+    register float cc __asm__("$f28") = c;
+    register float dd __asm__("$f27") = d;
+    register int ar __asm__("$17") = arg0;
+    float rc = cc * 0.04363323003053665f;
+    float rd = dd * 0.04363323003053665f;
+    float maxA = 1.0f, minA = -1.0f, maxB = 0.9f, minB = -0.9f;
+    float rb, ra;
+    float r0;
+    float nc = -rc, nd = -rd;
 
-    st[0] = x;
-    st[1] = y;
-    if (1.0f < x)
-        maxX = x;
-    if (x < -1.0f)
-        minX = x;
-    if (0.9f < y)
-        hi = y;
-    if (y < -0.9f)
-        lo = y;
-    if (0.0f <= y)
-        r = GAMEUTIL_get_dist_ratio(y, hy, hi);
+    v[1] = b;
+    v[0] = a;
+    if (maxA < a) maxA = a;
+    if (a < minA) minA = a;
+    if (maxB < b) maxB = b;
+    if (b < minB) minB = b;
+    if (0.0f <= b)
+        r0 = GAMEUTIL_get_dist_ratio(b, rd, maxB);
     else
-        r = 1.0f - GAMEUTIL_get_dist_ratio(y, lo, -hy);
-    p = powf(r, 1.5f);
-    if (0.0f <= x)
-        q = 1.0f - GAMEUTIL_get_dist_ratio(x, hx, maxX);
+        r0 = 1.0f - GAMEUTIL_get_dist_ratio(b, minB, nd);
+    rb = powf(r0, 1.5f);
+    if (0.0f <= a)
+        ra = 1.0f - GAMEUTIL_get_dist_ratio(a, rc, maxA);
     else
-        q = GAMEUTIL_get_dist_ratio(x, minX, -hx);
-    if (q < p)
-        st[0] = GAMEUTIL_get_interp_value(0.0f <= x ? hx : -hx, x, p - q);
-    func_0008E918(obj, st[0], y, a, b);
+        ra = GAMEUTIL_get_dist_ratio(a, minA, nc);
+    if (ra < rb) {
+        if (0.0f <= a)
+            *p = GAMEUTIL_get_interp_value(rc, a, rb - ra);
+        else
+            *p = GAMEUTIL_get_interp_value(nc, a, rb - ra);
+    } else
+        *p = a;
+    v[1] = b;
+    func_0008E918(ar, v[0], v[1], cc, dd);
 }
 #endif
