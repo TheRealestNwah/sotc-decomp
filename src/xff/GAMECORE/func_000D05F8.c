@@ -1,16 +1,13 @@
-/* Parked: 4 diffs, same size. Draws the two header sprites and the 16 layer
- * lists. Remaining: in the second and third spriteDrawSprite calls the
- * Original loads +0x1C (f12) ahead of +0x24 (a1). Permuter (30 min): no gain.
- * 1.1666667f spells 0x3F955555 under gcc 2.96. */
-
-#ifdef NONMATCHING
-
+/* 1.1666667f spells 0x3F955555 under gcc 2.96. */
 extern int MakeStrHashValue(char *);
 extern char *SpriteMenuGetLayerByHash(int, int);
 extern char *SpriteMenuGetPartsDefByHashStr(int, char *, char *);
 extern int SpriteMenuGetProgressiveOffset(char *);
 extern void SpriteMenuSetSpriteObjectParam(void *, void *);
 extern void spriteDrawSprite(void *, int, float, float, float, float, float, float, int, int);
+/* spriteDrawSprite with its first float moved before the int argument: EABI passes it in $f12 either way, and this
+   argument order loads layer +0x1C ahead of +0x24 like the Original. */
+#define spriteDrawSpriteXFirst ((void (*)(void *, float, int, float, float, float, float, float, int, int))spriteDrawSprite)
 extern void spriteSetPosition(void *, float, float);
 extern char B_0019FC50[];
 extern char B_0019FCA0[];
@@ -40,7 +37,7 @@ static void func_000D05F8(int menu)
     def = SpriteMenuGetPartsDefByHashStr(menu, RO_00180BE0, RO_00180BE8);
     spriteDrawSprite(B_0019FCA0, I(layer, 0x24), F(layer, 0x1C), F(layer, 0x20) + (float)SpriteMenuGetProgressiveOffset(layer), F(layer, 0x28), F(layer, 0x2C), F(layer, 0x30), F(layer, 0xC), (U(layer, 0x8) >> 14) & 0xF, I(def, 0x70));
     def = SpriteMenuGetPartsDefByHashStr(menu, RO_00180BE0, RO_00180BE0);
-    spriteDrawSprite(B_0019FC50, I(layer, 0x24), F(layer, 0x1C), F(layer, 0x20) + (float)SpriteMenuGetProgressiveOffset(layer), F(layer, 0x28), F(layer, 0x2C), F(layer, 0x30), F(layer, 0xC), (U(layer, 0x8) >> 14) & 0xF, I(def, 0x70));
+    spriteDrawSpriteXFirst(B_0019FC50, F(layer, 0x1C), I(layer, 0x24), F(layer, 0x20) + (float)SpriteMenuGetProgressiveOffset(layer), F(layer, 0x28), F(layer, 0x2C), F(layer, 0x30), F(layer, 0xC), (U(layer, 0x8) >> 14) & 0xF, I(def, 0x70));
     item = D_STR_0017B3B0;
     for (i = 0; i < 16; i++) {
         layer = SpriteMenuGetLayerByHash(menu, MakeStrHashValue(*item));
@@ -53,10 +50,8 @@ static void func_000D05F8(int menu)
             obj = *p;
             SpriteMenuSetSpriteObjectParam(spr, p);
             spriteSetPosition(spr, F(obj, 0x1C), F(obj, 0x20) * 1.1666667f);
-            spriteDrawSprite(spr, I(layer, 0x24), F(layer, 0x1C), F(layer, 0x20) + (float)SpriteMenuGetProgressiveOffset(layer), F(layer, 0x28), F(layer, 0x2C), F(layer, 0x30), F(layer, 0xC), (U(layer, 0x8) >> 14) & 0xF, I(obj, 0x70));
+            spriteDrawSpriteXFirst(spr, F(layer, 0x1C), I(layer, 0x24), F(layer, 0x20) + (float)SpriteMenuGetProgressiveOffset(layer), F(layer, 0x28), F(layer, 0x2C), F(layer, 0x30), F(layer, 0xC), (U(layer, 0x8) >> 14) & 0xF, I(obj, 0x70));
         }
         item++;
     }
 }
-
-#endif
