@@ -10,9 +10,11 @@ extern int AI_JudgeNotCharaObjFunc();
 extern int AI_JudgeColAttrFunc();
 typedef int s128 __attribute__((mode(TI)));
 
-/* Parked: 30 diffs (same size, 133 words). Remaining: callee-saved
- * assignment of out/cc/diff ($s3/$s4/$s2 in the Original, rotated here) and
- * the clip helper's result landing in $a0 instead of $a1. */
+/* Parked: 12 diffs (same size, 133 words). Pinning cc to $s4 fixes the
+ * callee-saved rotation. Remaining: the ClipCollisionDirectCallBack a0/a1
+ * setup order, the clip helper's result landing in $a0 instead of $a1 (the
+ * Original sets a0 = sp+0x40 before the beqz), and the 0.5f constant loaded
+ * after the plane lq/sq instead of before. */
 #ifdef NONMATCHING
 static inline int clipTarget(void *p, void *tgt, s128 *out, s128 *plane)
 {
@@ -32,7 +34,7 @@ static int func_000B4690(char *a, s128 *out, s128 *plane)
     char *p;
     int th = isysGetThisSubThread();
     char *lc = GetLayoutClass(th);
-    char *cc = GetCharacterClass(th);
+    register char *cc __asm__("$20") = GetCharacterClass(th);
     float eps = 0.05f;
     float len;
     int ok;
