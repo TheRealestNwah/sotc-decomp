@@ -1,4 +1,3 @@
-#ifdef NONMATCHING /* 2 diffs */
 typedef int s128 __attribute__((mode(TI)));
 
 typedef union {
@@ -308,7 +307,7 @@ void updateWormCtrlWork(void *th, Ctrl *ctrl, Lay *lay)
     p->x168 = 0;
     } while (0);
     ctrl->xD4 = 0;
-    if (p->chr->x750 == ctrl->x80 || p->chr->x750 == ctrl->x84) {
+    if (({ int c80 = ctrl->x80; __asm__ __volatile__(""); p->chr->x750 == c80; }) || p->chr->x750 == ctrl->x84) {
         scaleW(&u.a.v, &YUnitVector, 100.0f);
         vadd(&u.a.v, &u.a.v, p->obj->pos);
         u.a.v.v.w = 1.0f;
@@ -401,4 +400,3 @@ void updateWormCtrlWork(void *th, Ctrl *ctrl, Lay *lay)
     }
     func_00110DD8(p);
 }
-#endif
