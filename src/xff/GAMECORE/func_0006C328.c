@@ -1,4 +1,4 @@
-/* func_0006C328 parked: 2 diffs, same size (778 words). Projectile thread for the BUDDHA/TTS/PSD/YAMORI shots: sets up the shot LWS, homes the type-2 shot toward the player, moves it by the frame time, clips against the player and the world, then plays the hit LWS and sends the buddha explode damage. Remaining: in the explode-damage block the Original branches on the collision result with a plain bnez (lws loaded in its delay slot, nop after the next jal) where ours uses bnel, i.e. reorg predicts the branch differently. The 4.3f store goes through an int/float union so gcc keeps the info+8 load after it, as in the Original. T_0006CF58 (the speed setup inside its symbol range) compiles to a match on its own but the splice can only place it together with func_0006C328, so both stay parked. */
+/* func_0006C328 parked: 2 diffs, same size (778 words). Projectile thread for the BUDDHA/TTS/PSD/YAMORI shots: sets up the shot LWS, homes the type-2 shot toward the player, moves it by the frame time, clips against the player and the world, then plays the hit LWS and sends the buddha explode damage. Remaining: in the explode-damage block the Original branches on the collision result with a plain bnez (lws loaded in its delay slot, nop after the next jal) where ours uses bnel, i.e. reorg predicts the branch differently. The 4.3f store goes through an int/float union so gcc keeps the info+8 load after it, as in the Original. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -383,65 +383,5 @@ void func_0006C328(int *arg0)
             isysRequestDeleteObj(self);
         scrRunM(1);
     }
-}
-
-
-static inline void quatDirZ(void *out, void *q)
-{
-    __asm__ __volatile__("lqc2 vf4, 0x0(%1)\n"
-                         "vmul.xyzw vf5, vf4, vf4\n"
-                         "vmr32.xyzw vf6, vf4\n"
-                         "vmul.xyzw vf7, vf6, vf4\n"
-                         "vmr32.xyzw vf6, vf6\n"
-                         "vmul.xyzw vf8, vf6, vf4\n"
-                         "vsubx.z vf6, vf0, vf5x\n"
-                         "vsuby.z vf6, vf6, vf5y\n"
-                         "vaddw.y vf6, vf7, vf7w\n"
-                         "vsuby.x vf6, vf8, vf8y\n"
-                         "vsub.w vf6, vf0, vf0\n"
-                         "vadd.w vf5, vf0, vf0\n"
-                         "vmulw.xyz vf6, vf6, vf5w\n"
-                         "vaddw.z vf6, vf6, vf0w\n"
-                         "sqc2 vf6, 0x0(%0)\n"
-                         : : "r"(out), "r"(q) : "memory");
-}
-
-static void T_0006CF58(int *arg0)
-{
-    struct {
-        float v0[4];
-        float v10[4];
-    } L __attribute__((aligned(16)));
-    int self = isysGetThisSubThread();
-    char *l = GetLayoutClass(self);
-    float speed = 0.0f;
-    char *me;
-
-    switch (arg0[4]) {
-    case 0:
-        speed = 200.0f;
-        break;
-    case 1:
-        speed = 140.0f;
-        break;
-    case 2:
-    case 3:
-        speed = 160.0f;
-        break;
-    case 4:
-        speed = 300.0f;
-        break;
-    default:
-        arg0[4] = -1;
-        break;
-    }
-    quatDirZ(L.v0, V(l, 0x13C));
-    scale4(l + 0x30, L.v0, speed * 1000.0f / 3600.0f);
-    me = GetLayoutClass(self);
-    normalize3(L.v10, me + 0x30);
-    GetQuaternionByAxisDirZY(V(me, 0x13C), L.v10, YUnitVector);
-    UpdateLayoutClassGeometry(l);
-    scrRunM(1);
-    isysJumpSubThread(func_0006C328, arg0);
 }
 #endif
