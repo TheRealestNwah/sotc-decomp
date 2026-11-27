@@ -24,7 +24,7 @@ static inline void quatMul(void *dst, void *a, void *b)
                          : : "r"(dst), "r"(a), "r"(b) : "memory");
 }
 
-#ifdef NONMATCHING /* 69 diffs: array-index address arithmetic scheduling and &D_0017B8C8 kept in $s2 in the original */
+#ifdef NONMATCHING /* 38 diffs, same size: the m+8/m+4/m+0xC element addresses are written as array indexing (shift first in the addu, like the Original), and a memory barrier between the two else-branch copies keeps the second copy's loads after the first store. Remaining: register numbering of the index arithmetic around the two func_00128D00 calls and in the asm argument setup */
 void nico_calcWormGenealogicalNodeNextBase(char *m)
 {
     char sp[0x20] __attribute__((aligned(16)));
@@ -48,15 +48,15 @@ void nico_calcWormGenealogicalNodeNextBase(char *m)
         if (func_00128510(sp, sp + 0x10, len * *(float *)(lay + 0x98), wk + 0x12A0, wk + D_0017B8C8 * 0x50 + 0x10)) {
             e = wk + D_0017B8C8 * 0x50;
             func_00128D00(180.0f, e + 0x10, m, e - 0x40,
-                          *(char **)(m + 8) + (*(int *)(m + 0x14) << 6) + 0x30,
+                          (char *)&((char (*)[0x40])*(char **)(m + 8))[*(int *)(m + 0x14)] + 0x30,
                           wk + D_0017B8C8 * 0x10 + 0xA10, sp, sp + 0x10);
         } else {
             e = wk + D_0017B8C8 * 0x50;
             func_00128D00(*(float *)(e + 0x40), e + 0x10, m, e - 0x40,
-                          *(char **)(m + 8) + (*(int *)(m + 0x14) << 6) + 0x30,
+                          (char *)&((char (*)[0x40])*(char **)(m + 8))[*(int *)(m + 0x14)] + 0x30,
                           wk + D_0017B8C8 * 0x10 + 0xA10, e + 0x60, 0);
         }
-        quatMul(wk + D_0017B8C8 * 0x10 + 0xA20, wk + D_0017B8C8 * 0x10 + 0xA10, *(char **)(m + 4) + (*(int *)(m + 0x14) << 4));
+        quatMul(wk + D_0017B8C8 * 0x10 + 0xA20, wk + D_0017B8C8 * 0x10 + 0xA10, (char *)&((s128 *)*(char **)(m + 4))[*(int *)(m + 0x14)]);
         __asm__ __volatile__("lqc2 vf14, 0x0(%0)\n"
                              "vmul.xyzw vf15, vf14, vf14\n"
                              "vaddy.x vf15, vf15, vf15y\n"
@@ -68,8 +68,9 @@ void nico_calcWormGenealogicalNodeNextBase(char *m)
                              "sqc2 vf15, 0x0(%0)\n"
                              : : "r"(wk + D_0017B8C8 * 0x10 + 0xA20) : "memory");
     } else {
-        *(s128 *)(wk + D_0017B8C8 * 0x50 + 0x10) = *(s128 *)(*(char **)(m + 8) + (*(int *)(m + 0x14) << 6) + 0x30);
-        *(s128 *)(wk + D_0017B8C8 * 0x10 + 0xA20) = *(s128 *)(*(char **)(m + 0xC) + (*(int *)(m + 0x14) << 4));
+        *(s128 *)(wk + D_0017B8C8 * 0x50 + 0x10) = *(s128 *)((char *)&((char (*)[0x40])*(char **)(m + 8))[*(int *)(m + 0x14)] + 0x30);
+        __asm__ __volatile__("" ::: "memory");
+        *(s128 *)(wk + D_0017B8C8 * 0x10 + 0xA20) = *(s128 *)((char *)&((s128 *)*(char **)(m + 0xC))[*(int *)(m + 0x14)]);
     }
 }
 #endif
