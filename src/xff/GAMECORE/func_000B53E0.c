@@ -9,6 +9,7 @@ typedef struct Slot {
     short s52;
     int i54;
     struct Slot *next;
+    int pad5C;
 } Slot;
 
 typedef struct {
@@ -19,7 +20,7 @@ typedef struct {
 
 extern float RO_001800A0;
 
-#ifdef NONMATCHING /* 75 diffs: register numbering (original copies a1 to t5, c in t2) and the RO_001800A0 load is not hoisted out of the first loop */
+#ifdef NONMATCHING /* 52 diffs, same size (was 75): Slot is 0x60 bytes (pad after next), the RO_001800A0 load is hoisted into a local, and the first loop counts down a separate counter so a1 stays live in t5 like the Original. Left: register numbering (the Original has c in t2 and list in t1, and the loop temporaries in the reverse order); declaration order does not move it. */
 static void func_000B53E0(char *c, int a1, int a2)
 {
     List *list = (List *)(c + 0x244);
@@ -29,6 +30,8 @@ static void func_000B53E0(char *c, int a1, int a2)
     int *p;
     Slot *s;
     int i;
+    int k;
+    float f;
     char *b4 = c + 4, *b8 = c + 8, *bC = c + 0xC, *b10 = c + 0x10;
 
     *(int *)(c + 0x244) = 0;
@@ -41,10 +44,11 @@ static void func_000B53E0(char *c, int a1, int a2)
     p = (int *)(c + 0x14);
     off = 0;
     n = 9;
+    f = RO_001800A0;
     do {
         *(int *)(b4 + off) = -1;
         *(int *)(b8 + off) = -1;
-        *(float *)(bC + off) = RO_001800A0;
+        *(float *)(bC + off) = f;
         *(int *)(b10 + off) = 0;
         n--;
         off += 0x1C;
@@ -57,20 +61,20 @@ static void func_000B53E0(char *c, int a1, int a2)
     *(int *)(c + 0x9D0) = a1;
     if (a1 > 0) {
         s = (Slot *)(c + 0x250);
-        i = a1;
+        k = a1;
         do {
             if (s != 0) {
                 Slot *t = (Slot *)list->count;
 
-                if (t == 0)
-                    list->last = s;
-                else
+                if (t != 0)
                     t->next = s;
+                else
+                    list->last = s;
                 s->next = 0;
                 list->count = (int)s;
                 *(int *)(c + 0x244) = *(int *)(c + 0x244) + 1;
             }
-            i--;
+            k--;
             s->i0 = 0;
             s->i4 = 0;
             s->i8 = 0;
@@ -80,7 +84,7 @@ static void func_000B53E0(char *c, int a1, int a2)
             s->s50 = -1;
             s->s52 = -1;
             s++;
-        } while (i != 0);
+        } while (k != 0);
     }
     i = a1;
     if (i < 0x14) {
