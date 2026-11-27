@@ -10,7 +10,7 @@ extern void SendCharaAttackMsg(void *, int, void *, int, float);
 extern float iosGetCosf(float);
 
 #ifdef NONMATCHING
-/* Parked: 11 words differ. Left: the match/mask result lives in $t1 instead of $v0, which also flips the branch layout of the two compare paths (the Original falls through to match == m). */
+/* Parked: 6 words differ. Left: the Original computes attr & mask into $v0 in the second branch delay slot (overwriting ok = 1) and puts the GetLayoutClass argument copy in the first; ours computes it into $v1 one slot earlier. */
 int SCRConditionSendDamageToCollisionObject(void *obj, int u1, int u2, int u3, long mask, long match, float angle)
 {
     char *cc = GetCharacterClass();
@@ -27,14 +27,14 @@ int SCRConditionSendDamageToCollisionObject(void *obj, int u1, int u2, int u3, l
 
     coll = cc + 0xFF8;
     if (*(int *)(cc + 0xFF0) != 0) {
-        attr = *GetCollisionDBAttributeAdr(coll);
         ok = 1;
+        attr = *GetCollisionDBAttributeAdr(coll);
         if (mask != -1) {
             long m = attr & mask;
-            if (match == -1)
-                ok = (m != 0);
-            else
+            if (match != -1)
                 ok = (match == m);
+            else
+                ok = (m != 0);
         }
         if (ok != 0) {
             layout = GetLayoutClass(obj);
