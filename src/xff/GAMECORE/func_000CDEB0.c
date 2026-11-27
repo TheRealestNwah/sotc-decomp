@@ -17,7 +17,6 @@ extern Ring D_0017B370;
 extern Rec B_0019CF50[];
 extern float getAreaSize(void);
 
-#ifdef NONMATCHING /* 64 diffs: the first 0xB4 bytes (VU0 ftoi block, frame layout, flag handling) match; the ring-buffer tail differs in how the global table addresses are hoisted */
 typedef union {
     s128 q;
     float f[4];
@@ -33,9 +32,7 @@ static void func_000CDEB0(float *pos, int arg1)
     int flag = arg1 & 0xFFFF;
     float cur = *(float *)(gcGlobalVar + 0x178);
     float inv = 1.0f / getAreaSize();
-    Rec *r;
     int idx;
-    unsigned short a, b, c;
 
     if (D_0017B390 == 0.0f)
         D_0017B390 = cur;
@@ -53,26 +50,23 @@ static void func_000CDEB0(float *pos, int arg1)
                          "sqc2 vf6, 0x0(%0)
 "
                          : : "r"(&L.out), "r"(&L.in) : "memory");
-    a = L.out.w[0];
-    b = L.out.w[1];
-    c = L.out.w[2];
-    L.out.w[0] = a;
-    L.out.w[1] = b;
-    L.out.w[2] = c;
-    r = &B_0019CF50[D_0017B370.last];
-    if (r->x == a && r->y == b && r->z == c && flag == 0)
+    L.out.w[0] = (unsigned short)L.out.w[0];
+    L.out.w[1] = (unsigned short)L.out.w[1];
+    L.out.w[2] = (unsigned short)L.out.w[2];
+    if (B_0019CF50[D_0017B370.last].x == L.out.w[0] && B_0019CF50[D_0017B370.last].y == L.out.w[1]
+        && B_0019CF50[D_0017B370.last].z == L.out.w[2] && flag == 0)
         return;
     idx = D_0017B370.next;
-    B_0019CF50[idx].x = L.out.w[0];
+    { Rec *p = &B_0019CF50[idx];
+    p->x = L.out.w[0];
     B_0019CF50[idx].y = L.out.w[1];
     B_0019CF50[idx].z = L.out.w[2];
     D_0017B370.last = idx;
     D_0017B370.next = idx + 1;
-    B_0019CF50[idx].flags = (B_0019CF50[idx].flags & 0xFFFE) | (flag & 1);
+    p->flags = (p->flags & 0xFFFE) | (flag & 1); }
     if (D_0017B370.next >= 0x5A0)
         D_0017B370.next = 0;
     if (D_0017B370.next == D_0017B370.count)
         D_0017B370.count++;
     D_0017B390 = cur;
 }
-#endif
