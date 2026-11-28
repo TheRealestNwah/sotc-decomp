@@ -1,4 +1,4 @@
-/* Parked: 5 diffs, same size. Bird path attain: looks up the two event points, follows each one's connecting line to its neighbour, takes the dot of the normalized directions (layout->point, point->neighbour) and sets the attainment position to the point with the larger dot. The loop walks pts/dot through a pointer pinned to s4 with the counter pinned to s5 (an int counter otherwise loses the strength-reduced pointer; char adds a sign extension), and the first VU subtraction pins its operands. Remaining: the s4 pointer is set before the d0/d1 addresses instead of after, and the p move into a1 is scheduled after the pts load instead of before. */
+/* Parked: 2 diffs, same size. Bird path attain: looks up the two event points, follows each one's connecting line to its neighbour, takes the dot of the normalized directions (layout->point, point->neighbour) and sets the attainment position to the point with the larger dot. The loop walks pts/dot through a pointer pinned to s4 with the counter pinned to s5 (an int counter otherwise loses the strength-reduced pointer; char adds a sign extension), and the first VU subtraction pins its operands. The counter and the d0/d1 addresses (held in q0/q1) are set before the loop's pp init, so s4 is set after them as in the Original. Remaining: the p move into a1 is scheduled after the pts load instead of before. */
 #ifdef NONMATCHING
 
 typedef struct 
@@ -78,7 +78,10 @@ void SCRFuncBirdSetAttainPosForPathData(int obj, int ev0, int ev1)
     setAttainmentPos(work, pts[0]);
     return;
   }
-  for (i = 0, pp = pts; i < 2; i++, pp++)
+  {
+  float *q0, *q1;
+  i = 0; q0 = d0; q1 = d1;
+  for (pp = pts; i < 2; i++, pp++)
   {
     short *line = getLineData(info->lines, *getConnectLineArray(info->pts, ids[i]));
     short next;
@@ -104,14 +107,15 @@ void SCRFuncBirdSetAttainPosForPathData(int obj, int ev0, int ev1)
 "
                          "sqc2 vf7, 0x0(%0)
 "
-                         : : "r"(d0), "r"(pa), "r"(lp) : "memory");
+                         : : "r"(q0), "r"(pa), "r"(lp) : "memory");
     }
-    sub4(d1, p, (float *) *pp);
-    normalize3(d0);
-    normalize3(d1);
-    *(float *)(pp + 8) = dot3(d0, d1);
+    sub4(q1, p, (float *) *pp);
+    normalize3(q0);
+    normalize3(q1);
+    *(float *)(pp + 8) = dot3(q0, q1);
   }
 
+  }
   if (dot[0] > dot[1])
   {
     setAttainmentPos(work, pts[0]);
