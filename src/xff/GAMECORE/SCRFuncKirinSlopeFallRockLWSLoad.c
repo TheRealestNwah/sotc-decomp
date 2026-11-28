@@ -55,7 +55,7 @@ static inline float distXZ(const float *a, const float *b)
     return d;
 }
 
-#ifdef NONMATCHING /* 17 diffs: scheduling of the req[] stores before the loop (reordering the C stores only makes it worse). The stage-center adds read p[k] into a local after c[k], which gives the Original's load order around the k != 1 branch. */
+#ifdef NONMATCHING /* 16 diffs: scheduling of the req[] stores before the loop (reordering the C stores, pairwise or at random, only makes it worse). Holding req[11]'s 1 in a local set at entry saves one; the Original still loads 1.0f for p[3] before the req[6] float, which a 1.0f local or moving the p[3] store doesn't reproduce. The stage-center adds read p[k] into a local after c[k], which gives the Original's load order around the k != 1 branch. */
 /* Drops up to six falling rocks on the Kirin slope: ranks the five high spawn points by XZ distance from the layout
    position (relative to the stage center), then spawns the three nearest high points and their two low points each. */
 void SCRFuncKirinSlopeFallRockLWSLoad(int obj, int a1, int a2, int a3, int t0, int t1, unsigned int *ref)
@@ -69,6 +69,7 @@ void SCRFuncKirinSlopeFallRockLWSLoad(int obj, int a1, int a2, int a3, int t0, i
     char *s1 = resourceData(ref);
     char *d;
     int i, k, r, o;
+    int one = 1;
 
     if (*(int *)(fp + 0x41BC) == 0)
         return;
@@ -137,7 +138,7 @@ void SCRFuncKirinSlopeFallRockLWSLoad(int obj, int a1, int a2, int a3, int t0, i
             req[5] = (int)resourceData((unsigned int *)(s1 + 0x3C));
             *(float *)&req[6] = *(float *)(s1 + 0x40);
             req[7] = *(int *)(s1 + 0x44);
-            req[11] = 1;
+            req[11] = one;
             req[9] = 0;
             req[10] = 0;
             req[0] = (int)ZeroPoint;
