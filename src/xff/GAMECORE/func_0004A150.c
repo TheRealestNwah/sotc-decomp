@@ -1,4 +1,4 @@
-/* Parked: 95 diffs, same size (157 words incl. the split tail func_0004A398). Ribbon per-frame update (caller func_00049198's sibling): when gcGlobalVar.f190 is nonzero, builds the direction from the layout position minus o+0x50 scaled by 1/(f190*speed) (VU0), runs func_00048008/00049350/00049FF8 and fills the per-point width/alpha array (0.1 up to the start index, 0.5 past the end index, linear blend between); then calls func_00049198, copies the point array, advances the timers and returns whether state == 7. VU0 runs match word for word; float constants must be written as 0.1f (gcc 2.96 truncates, 0x3DCCCCCC). Remaining: the Original hoists o->pts/count/g340 into a1/a2/a3 before the loop (skip path reuses them) and runs the loop counter in a0, ours uses a3. */
+/* Parked: 84 diffs, same size (157 words incl. the split tail func_0004A398; the earlier header's 95 was stale, the previous version scored 120). Ribbon per-frame update (caller func_00049198's sibling): when gcGlobalVar.f190 is nonzero, builds the direction from the layout position minus o+0x50 scaled by 1/(f190*speed) (VU0), runs func_00048008/00049350/00049FF8 and fills the per-point width/alpha array (0.1 up to the start index, 0.5 past the end index, linear blend between); then calls func_00049198, copies the point array, advances the timers and returns whether state == 7. VU0 runs match word for word; float constants must be written as 0.1f (gcc 2.96 truncates, 0x3DCCCCCC). Storing through a float/int union, the loop counter pinned to $4, o->iB held in a local, the tail through o+0x100 and an if-return each save diffs. Remaining: the Original schedules the f190*speed load after the first VU0 run, hoists g340 into a3 before the loop (skip path reuses it), advances p by 3 after the float constants, and stores pos before the f304/f1A4/f254 updates. */
 #ifdef NONMATCHING
 typedef int s128 __attribute__((mode(TI)));
 
@@ -57,11 +57,14 @@ extern void func_00049FF8(Obj *);
 extern void func_00049198(Obj *, void *, int, int);
 extern void *memcpy(void *, const void *, unsigned int);
 
+typedef union { float f; int i; } FI;
+
 static int func_0004A150(Obj *o)
 {
-    float *p;
-    int i;
+    FI *p;
+    register int i __asm__("$4");
     int t0;
+    int end;
     int bi;
     float k;
     float inv;
@@ -98,22 +101,23 @@ static int func_0004A150(Obj *o)
         func_00048008(o);
         func_00049350(o, o->g340);
         func_00049FF8(o);
-        p = o->pts;
+        p = (FI *)o->pts;
         bi = (int)o->fA;
         i = 0;
         t0 = bi + 1;
         if (!(t0 < o->count))
             t0 = bi;
+        end = o->iB;
         p += 3;
         for (; i < o->count; i++) {
             if (i < t0) {
-                *p = 0.1f;
-            } else if (i >= o->iB) {
-                *p = 0.5f;
+                p->f = 0.1f;
+            } else if (i >= end) {
+                p->f = 0.5f;
             } else {
                 f2 = o->fA;
                 t = ((float)i - f2) / (o->fC - f2);
-                *p = t * 0.5f + (1.0f - t) * 0.1f;
+                p->f = t * 0.5f + (1.0f - t) * 0.1f;
             }
             p += 4;
         }
@@ -123,22 +127,26 @@ static int func_0004A150(Obj *o)
         return 0;
     memcpy(o->prev, o->pts, o->count << 4);
     {
-        float sp = o->f350;
+        float sp;
 
         o->state2 = o->state;
+        sp = o->f350;
         o->f354 = sp;
         o->f48 = o->f48 + gcGlobalVar.f190 * sp;
         o->f40 = o->f40 + gcGlobalVar.f190 * sp;
     }
     o->pos = *(s128 *)*(float **)(GetLayoutClass(o->owner) + 0x134);
     {
+        char *b = (char *)o + 0x100;
         float d = gcGlobalVar.f190 * o->f350;
 
-        o->q310 = o->q320;
-        o->f304 = o->f304 + d;
-        o->f1A4 = o->f1A4 + d;
-        o->f254 = o->f254 + d;
+        *(s128 *)(b + 0x210) = *(s128 *)(b + 0x220);
+        *(float *)(b + 0x204) += d;
+        *(float *)(b + 0xA4) += d;
+        *(float *)(b + 0x154) += d;
     }
-    return o->state == 7;
+    if (o->state == 7)
+        return 1;
+    return 0;
 }
 #endif
