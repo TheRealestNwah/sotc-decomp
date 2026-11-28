@@ -7,23 +7,25 @@ typedef struct {
 extern char *GetLayoutClass(void);
 extern void iosTransMatrixF(float *, int, float, float, float);
 extern void iosMulRotMatrixXInt16(float *, float *, int);
-extern void getClothDynamics(char *, char *, int, void *, float, float, float *);
+extern int getClothDynamics(void *, void *, float, float, int, void *, void *);
 extern char func_0005D2C8[];
 
-#ifdef NONMATCHING /* 113 diffs, 3 words over: matrix transpose in one asm block; loop flag handling and float constants */
-int nico_execHorseBriddle(int arg1, float f0, float f1)
+/* Horse bridle cloth step: builds the bridle matrix (translate 0.23 up the bone at layout+0x158, rotate -0x800 about X), inverts it with one VU0 block, then steps every cloth strip with getClothDynamics, alternating side sign per strip. The matrices and params share one stack block, passed as the last argument. */
+void nico_execHorseBriddle(int arg0, int arg1, float f0, float f1)
 {
-    float mat[16] __attribute__((aligned(16)));
-    float inv[16] __attribute__((aligned(16)));
-    float params[4] __attribute__((aligned(16)));
+    struct {
+        float mat[16];
+        float inv[16];
+        float params[4];
+    } w __attribute__((aligned(16)));
     char *lay = GetLayoutClass();
     ClothList *list;
     char *cloth;
     int i;
     int n;
 
-    iosTransMatrixF(mat, *(int *)(lay + 0x158) + 0x40, 0.0f, 0.22987f, 0.0f);
-    iosMulRotMatrixXInt16(mat, mat, -0x800);
+    iosTransMatrixF(w.mat, *(int *)(lay + 0x158) + 0x40, 0.0f, 0.23f, 0.0f);
+    iosMulRotMatrixXInt16(w.mat, w.mat, -0x800);
     __asm__ __volatile__("lqc2 vf24, 0x30(%0)\n"
                          "vsubw.x vf25, vf0, vf0w\n"
                          "vmulx.xyz vf28, vf24, vf25x\n"
@@ -53,18 +55,22 @@ int nico_execHorseBriddle(int arg1, float f0, float f1)
                          "sqc2 vf25, 0x10(%1)\n"
                          "sqc2 vf26, 0x20(%1)\n"
                          "sqc2 vf29, 0x30(%1)\n"
-                         : : "r"(mat), "r"(inv) : "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15", "memory");
+                         : : "r"(w.mat), "r"(w.inv) : "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15", "memory");
     list = *(ClothList **)(lay + 0x178);
     cloth = (char *)list->unk0;
     n = list->count;
     for (i = 0; i < n; ) {
-        params[0] = (i & 1) ? 0.01f : -0.01f;
-        params[1] = -0.59999996f;
-        *(int *)&params[2] = (i & 1) ? 1 : -1;
+        if (!(i & 1)) {
+            w.params[0] = -0.01f;
+            *(int *)&w.params[2] = -1;
+            w.params[1] = -0.6f;
+        } else {
+            w.params[0] = 0.01f;
+            *(int *)&w.params[2] = 1;
+            w.params[1] = -0.6f;
+        }
         i++;
-        getClothDynamics(cloth, lay, arg1, func_0005D2C8 + 0x18, f0, f1, params);
+        getClothDynamics(cloth, lay, f0, f1, arg1, func_0005D2C8 + 0x18, &w);
         cloth += 0x90;
     }
-    return 0;
 }
-#endif
